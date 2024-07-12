@@ -10,10 +10,10 @@ from vivarium.framework.values import Pipeline, list_combiner, union_post_proces
 from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
 from vivarium_public_health.utilities import get_lookup_columns
 
-from vivarium_gates_nutrition_optimization.components.children import NewChildren
-from vivarium_gates_nutrition_optimization.constants import data_keys, models
-from vivarium_gates_nutrition_optimization.constants.data_values import DURATIONS
-from vivarium_gates_nutrition_optimization.constants.metadata import (
+from vivarium_gates_lsff_by_wealth_quintile.components.children import NewChildren
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, models
+from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import DURATIONS
+from vivarium_gates_lsff_by_wealth_quintile.constants.metadata import (
     ARTIFACT_INDEX_COLUMNS,
 )
 

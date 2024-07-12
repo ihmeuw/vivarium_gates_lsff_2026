@@ -3,7 +3,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from vivarium_gates_nutrition_optimization.results_processing import process_results
+from vivarium_gates_lsff_by_wealth_quintile.results_processing import process_results
 
 
 def build_results(output_file: str, single_run: bool) -> None:

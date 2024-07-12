@@ -5,7 +5,7 @@ import pandas as pd
 import yaml
 from loguru import logger
 
-from vivarium_gates_nutrition_optimization.constants import results, scenarios
+from vivarium_gates_lsff_by_wealth_quintile.constants import results, scenarios
 
 SCENARIO_COLUMN = "scenario"
 GROUPBY_COLUMNS = [results.INPUT_DRAW_COLUMN, SCENARIO_COLUMN]

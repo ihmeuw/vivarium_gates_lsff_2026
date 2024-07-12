@@ -4,8 +4,8 @@ import click
 from loguru import logger
 from vivarium.framework.utilities import handle_exceptions
 
-from vivarium_gates_nutrition_optimization.constants import metadata, paths
-from vivarium_gates_nutrition_optimization.tools import (
+from vivarium_gates_lsff_by_wealth_quintile.constants import metadata, paths
+from vivarium_gates_lsff_by_wealth_quintile.tools import (
     build_artifacts,
     build_results,
     configure_logging_to_terminal,

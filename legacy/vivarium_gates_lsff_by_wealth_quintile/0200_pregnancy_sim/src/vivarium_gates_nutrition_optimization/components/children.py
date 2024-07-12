@@ -9,7 +9,7 @@ from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium_cluster_tools.utilities import mkdir
 
-from vivarium_gates_nutrition_optimization.constants import (
+from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
     data_values,
     models,
@@ -128,10 +128,12 @@ class LBWSGDistribution(Component):
     @staticmethod
     def _parse_description(description: str) -> Tuple:
         birth_weight = [
-            float(val) for val in description.split(", [")[1].split(")")[0].split(", ")
+            float(val)
+            for val in description.split(", [")[1].split(")")[0].split("]")[0].split(", ")
         ]
         gestational_age = [
-            float(val) for val in description.split("- [")[1].split(")")[0].split(", ")
+            float(val)
+            for val in description.split("- [")[1].split(")")[0].split("+")[0].split(", ")
         ]
         return *birth_weight, *gestational_age
 

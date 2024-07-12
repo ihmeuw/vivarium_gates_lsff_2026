@@ -26,16 +26,16 @@ from vivarium_inputs import interface
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 
-from vivarium_gates_nutrition_optimization.constants import (
+from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
     data_values,
     metadata,
     models,
     paths,
 )
-from vivarium_gates_nutrition_optimization.data import extra_gbd, sampling
-from vivarium_gates_nutrition_optimization.data.utilities import get_entity
-from vivarium_gates_nutrition_optimization.utilities import get_random_variable_draws
+from vivarium_gates_lsff_by_wealth_quintile.data import extra_gbd, sampling
+from vivarium_gates_lsff_by_wealth_quintile.data.utilities import get_entity
+from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable_draws
 
 ##Note: need to remove all instances where we limit the size of the data manually. This will be done when RT updates in the input files.
 

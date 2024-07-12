@@ -11,7 +11,7 @@ from vivarium.framework.values import Pipeline
 from vivarium_public_health.population import Mortality
 from vivarium_public_health.utilities import get_lookup_columns
 
-from vivarium_gates_nutrition_optimization.constants import data_keys
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
 
 
 class MaternalMortality(Mortality):

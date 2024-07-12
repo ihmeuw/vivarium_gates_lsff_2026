@@ -2,7 +2,7 @@ import itertools
 
 import pandas as pd
 
-from vivarium_gates_nutrition_optimization.constants import data_values, models
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_values, models
 
 #################################
 # Results columns and variables #

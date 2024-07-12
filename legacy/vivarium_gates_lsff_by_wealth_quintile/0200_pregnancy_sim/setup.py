@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     about = {}
     with open(
-        os.path.join(src_dir, "vivarium_gates_nutrition_optimization", "__about__.py")
+        os.path.join(src_dir, "vivarium_gates_lsff_by_wealth_quintile", "__about__.py")
     ) as f:
         exec(f.read(), about)
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         zip_safe=False,
         entry_points="""
             [console_scripts]
-            make_artifacts=vivarium_gates_nutrition_optimization.tools.cli:make_artifacts
-            make_results=vivarium_gates_nutrition_optimization.tools.cli:make_results
+            make_artifacts=vivarium_gates_lsff_by_wealth_quintile.tools.cli:make_artifacts
+            make_results=vivarium_gates_lsff_by_wealth_quintile.tools.cli:make_results
         """,
     )

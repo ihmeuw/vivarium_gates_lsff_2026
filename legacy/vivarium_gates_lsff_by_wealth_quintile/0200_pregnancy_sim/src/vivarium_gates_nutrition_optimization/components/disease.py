@@ -8,7 +8,7 @@ from vivarium_public_health.disease import DiseaseState, SusceptibleState
 from vivarium_public_health.disease.transition import ProportionTransition
 from vivarium_public_health.utilities import get_lookup_columns
 
-from vivarium_gates_nutrition_optimization.constants import models
+from vivarium_gates_lsff_by_wealth_quintile.constants import models
 
 
 class ParturitionSelectionState(SusceptibleState):

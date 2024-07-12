@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import vivarium_gates_nutrition_optimization
-from vivarium_gates_nutrition_optimization.constants import metadata
+import vivarium_gates_lsff_by_wealth_quintile
+from vivarium_gates_lsff_by_wealth_quintile.constants import metadata
 
-BASE_DIR = Path(vivarium_gates_nutrition_optimization.__file__).resolve().parent
+BASE_DIR = Path(vivarium_gates_lsff_by_wealth_quintile.__file__).resolve().parent
 
 ARTIFACT_ROOT = Path(
     f"/mnt/team/simulation_science/pub/models/{metadata.PROJECT_NAME}/artifacts/"

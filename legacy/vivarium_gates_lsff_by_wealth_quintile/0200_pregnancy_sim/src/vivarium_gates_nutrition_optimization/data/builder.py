@@ -15,8 +15,8 @@ import pandas as pd
 from loguru import logger
 from vivarium.framework.artifact import Artifact, EntityKey
 
-from vivarium_gates_nutrition_optimization.constants import data_keys
-from vivarium_gates_nutrition_optimization.data import loader
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
+from vivarium_gates_lsff_by_wealth_quintile.data import loader
 
 
 def open_artifact(output_path: Path, location: str) -> Artifact:

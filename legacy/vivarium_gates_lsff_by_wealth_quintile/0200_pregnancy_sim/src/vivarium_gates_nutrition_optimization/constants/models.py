@@ -1,4 +1,4 @@
-from vivarium_gates_nutrition_optimization.constants import data_keys
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
 
 
 class TransitionString(str):

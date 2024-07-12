@@ -16,12 +16,12 @@ import click
 import vivarium_cluster_tools as vct
 from loguru import logger
 
-from vivarium_gates_nutrition_optimization.constants import data_keys, metadata
-from vivarium_gates_nutrition_optimization.tools.app_logging import (
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, metadata
+from vivarium_gates_lsff_by_wealth_quintile.tools.app_logging import (
     add_logging_sink,
     decode_status,
 )
-from vivarium_gates_nutrition_optimization.utilities import (
+from vivarium_gates_lsff_by_wealth_quintile.utilities import (
     delete_if_exists,
     len_longest_location,
     sanitize_location,
@@ -139,7 +139,7 @@ def build_all_artifacts(output_dir: Path, verbose: int) -> None:
         called by the :func:`build_artifacts` function located in the same
         module.
     """
-    from vivarium_cluster_tools.psimulate.utilities import get_drmaa
+    from vivarium_cluster_tools.utilities import get_drmaa
 
     drmaa = get_drmaa()
 
@@ -221,7 +221,7 @@ def build_single_location_artifact(
         add_logging_sink(log_file, verbose=2)
 
     # Local import to avoid data dependencies
-    from vivarium_gates_nutrition_optimization.data import builder
+    from vivarium_gates_lsff_by_wealth_quintile.data import builder
 
     logger.info(f"Building artifact for {location} at {str(path)}.")
     artifact = builder.open_artifact(path, location)

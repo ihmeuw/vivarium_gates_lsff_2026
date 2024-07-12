@@ -1,8 +1,8 @@
 ===============================
-vivarium_gates_nutrition_optimization
+vivarium_gates_lsff_by_wealth_quintile
 ===============================
 
-Research repository for the vivarium_gates_nutrition_optimization project.
+Research repository for the vivarium_gates_lsff_by_wealth_quintile project.
 
 .. contents::
    :depth: 1
@@ -23,13 +23,13 @@ Once you have all three installed, you should open up your normal shell
 You'll then make an environment, clone this repository, then install
 all necessary requirements as follows::
 
-  :~$ conda create --name=vivarium_gates_nutrition_optimization python=3.11
+  :~$ conda create --name=vivarium_gates_lsff_by_wealth_quintile python=3.11
   ...conda will download python and base dependencies...
-  :~$ conda activate vivarium_gates_nutrition_optimization
-  (vivarium_gates_nutrition_optimization) :~$ git clone https://github.com/ihmeuw/vivarium_gates_nutrition_optimization.git
+  :~$ conda activate vivarium_gates_lsff_by_wealth_quintile
+  (vivarium_gates_lsff_by_wealth_quintile) :~$ git clone https://github.com/ihmeuw/vivarium_gates_lsff_by_wealth_quintile.git
   ...git will copy the repository from github and place it in your current directory...
-  (vivarium_gates_nutrition_optimization) :~$ cd vivarium_gates_nutrition_optimization
-  (vivarium_gates_nutrition_optimization) :~$ pip install -e .
+  (vivarium_gates_lsff_by_wealth_quintile) :~$ cd vivarium_gates_lsff_by_wealth_quintile
+  (vivarium_gates_lsff_by_wealth_quintile) :~$ pip install -e .
   ...pip will install vivarium and other requirements...
 
 
@@ -50,9 +50,9 @@ not something that can be specified and installed with the rest of the package's
 dependencies via ``pip``. If you encounter HDF5-related errors, you should
 install hdf tooling from within your environment like so::
 
-  (vivarium_gates_nutrition_optimization) :~$ conda install hdf5
+  (vivarium_gates_lsff_by_wealth_quintile) :~$ conda install hdf5
 
-The ``(vivarium_gates_nutrition_optimization)`` that precedes your shell prompt will probably show
+The ``(vivarium_gates_lsff_by_wealth_quintile)`` that precedes your shell prompt will probably show
 up by default, though it may not.  It's just a visual reminder that you
 are installing and running things in an isolated programming environment
 so it doesn't conflict with other source code and libraries on your
@@ -63,7 +63,7 @@ Usage
 -----
 
 You'll find six directories inside the main
-``src/vivarium_gates_nutrition_optimization`` package directory:
+``src/vivarium_gates_lsff_by_wealth_quintile`` package directory:
 
 - ``artifacts``
 
@@ -74,7 +74,7 @@ You'll find six directories inside the main
 - ``components``
 
   This directory is for Python modules containing custom components for
-  the vivarium_gates_nutrition_optimization project. You should work with the
+  the vivarium_gates_lsff_by_wealth_quintile project. You should work with the
   engineering staff to help scope out what you need and get them built.
 
 - ``data``
@@ -104,7 +104,7 @@ Running Simulations
 You can run your simulation from the command line. 
 With your conda environment active, you can run with, e.g.::
 
-   (vivarium_gates_nutrition_optimization) :~$ simulate run -vvv /<REPO_INSTALLATION_DIRECTORY>/vivarium_gates_nutrition_optimization/src/vivarium_gates_nutrition_optimization/model_specifications/model_spec.yaml -o /FILE/PATH/TO/SAVE/RESULTS -i src/vivarium_gates_nutrition_optimization/artifacts/<COUNTRY_TO_RUN_IN>.hdf
+   (vivarium_gates_lsff_by_wealth_quintile) :~$ simulate run -vvv /<REPO_INSTALLATION_DIRECTORY>/vivarium_gates_lsff_by_wealth_quintile/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml -o /FILE/PATH/TO/SAVE/RESULTS -i src/vivarium_gates_lsff_by_wealth_quintile/artifacts/<COUNTRY_TO_RUN_IN>.hdf
 
 The simulation will run in one location at a time, enter the country you wish to 
 run the simulation for in your call. Currently Ethiopia, Nigeria, and Paksitan are supported. 

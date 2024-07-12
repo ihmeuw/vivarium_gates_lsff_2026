@@ -2,11 +2,11 @@ from vivarium.framework.engine import Builder
 from vivarium_public_health.disease import DiseaseModel, DiseaseState, RecoveredState
 from vivarium_public_health.utilities import to_years
 
-from vivarium_gates_nutrition_optimization.components.disease import (
+from vivarium_gates_lsff_by_wealth_quintile.components.disease import (
     ParturitionSelectionState,
 )
-from vivarium_gates_nutrition_optimization.constants import data_keys, models
-from vivarium_gates_nutrition_optimization.constants.metadata import (
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, models
+from vivarium_gates_lsff_by_wealth_quintile.constants.metadata import (
     ARTIFACT_INDEX_COLUMNS,
 )
 

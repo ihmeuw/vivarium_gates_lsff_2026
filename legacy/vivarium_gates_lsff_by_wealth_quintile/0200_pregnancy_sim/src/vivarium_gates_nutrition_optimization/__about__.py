@@ -9,9 +9,9 @@ __all__ = [
     "__copyright__",
 ]
 
-__title__ = "vivarium_gates_nutrition_optimization"
-__summary__ = "Research repository for the vivarium_gates_nutrition_optimization project."
-__uri__ = "https://github.com/ihmeuw/vivarium_gates_nutrition_optimization"
+__title__ = "vivarium_gates_lsff_by_wealth_quintile"
+__summary__ = "Research repository for the vivarium_gates_lsff_by_wealth_quintile project."
+__uri__ = "https://github.com/ihmeuw/vivarium_gates_lsff_by_wealth_quintile"
 
 __version__ = "1.0.0"
 

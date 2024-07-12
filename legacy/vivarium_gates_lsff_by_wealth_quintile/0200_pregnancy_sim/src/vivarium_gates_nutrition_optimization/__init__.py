@@ -1,5 +1,5 @@
-"""vivarium_gates_nutrition_optimization
+"""vivarium_gates_lsff_by_wealth_quintile
 
-Research repository for the vivarium_gates_nutrition_optimization project.
+Research repository for the vivarium_gates_lsff_by_wealth_quintile project.
 
 """

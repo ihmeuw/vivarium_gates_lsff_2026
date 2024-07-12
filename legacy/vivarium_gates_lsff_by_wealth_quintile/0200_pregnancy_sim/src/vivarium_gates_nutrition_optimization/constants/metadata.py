@@ -6,7 +6,7 @@ import pandas as pd
 # Project metadata #
 ####################
 
-PROJECT_NAME = "vivarium_gates_nutrition_optimization"
+PROJECT_NAME = "vivarium_gates_lsff_by_wealth_quintile"
 CLUSTER_PROJECT = "proj_simscience_prod"
 
 CLUSTER_QUEUE = "all.q"

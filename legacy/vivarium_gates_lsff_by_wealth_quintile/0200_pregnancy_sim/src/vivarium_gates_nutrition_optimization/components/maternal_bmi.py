@@ -7,7 +7,7 @@ from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium.framework.population import SimulantData
 
-from vivarium_gates_nutrition_optimization.constants import (
+from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
     data_values,
     models,
