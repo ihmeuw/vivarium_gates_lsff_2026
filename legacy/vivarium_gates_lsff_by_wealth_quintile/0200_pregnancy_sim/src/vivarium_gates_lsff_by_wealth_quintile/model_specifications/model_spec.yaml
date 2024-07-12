@@ -17,7 +17,7 @@ components:
             - Hemoglobin()
             - Anemia()
             - MaternalBMIExposure()
-            - MaternalInterventions()
+            - IronFortification()
             - ResultsStratifier()
             - PregnancyObserver()
             - PregnancyOutcomeObserver()
@@ -26,7 +26,6 @@ components:
             - DisabilityObserver()
             - AnemiaObserver()
             - MaternalBMIObserver()
-            - MaternalInterventionObserver()
 
 configuration:
     input_data:

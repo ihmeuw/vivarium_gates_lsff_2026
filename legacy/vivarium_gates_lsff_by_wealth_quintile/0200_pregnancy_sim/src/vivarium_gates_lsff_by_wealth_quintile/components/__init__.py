@@ -1,6 +1,6 @@
 from .children import BirthRecorder
 from .hemoglobin import Anemia, Hemoglobin
-from .intervention import MaternalInterventions
+from .intervention import IronFortification
 from .maternal_bmi import MaternalBMIExposure
 from .maternal_disorders import MaternalDisorders, MaternalHemorrhage
 from .morbidity import BackgroundMorbidity
@@ -9,7 +9,6 @@ from .observers import (
     AnemiaObserver,
     DisabilityObserver,
     MaternalBMIObserver,
-    MaternalInterventionObserver,
     MaternalMortalityObserver,
     PregnancyObserver,
     PregnancyOutcomeObserver,

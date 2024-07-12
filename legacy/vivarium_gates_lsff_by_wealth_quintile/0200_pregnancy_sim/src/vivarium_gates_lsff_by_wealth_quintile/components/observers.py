@@ -35,7 +35,7 @@ class ResultsStratifier(ResultsStratifier_):
 
         builder.results.register_stratification(
             "intervention",
-            models.SUPPLEMENTATION_CATEGORIES,
+            models.FORTIFICATION_CATEGORIES,
             requires_columns=["intervention"],
         )
 
@@ -111,40 +111,6 @@ class MaternalBMIObserver(Component):
                 additional_stratifications=self.config.include,
                 excluded_stratifications=self.config.exclude,
                 when="time_step__prepare",
-            )
-
-
-class MaternalInterventionObserver(Component):
-    CONFIGURATION_DEFAULTS = {
-        "stratification": {
-            "maternal_interventions": {
-                "exclude": [],
-                "include": [],
-            }
-        }
-    }
-
-    #################
-    # Setup methods #
-    #################
-
-    # noinspection PyAttributeOutsideInit
-    def setup(self, builder: Builder) -> None:
-        self.step_size = builder.time.step_size()
-        self.config = builder.configuration.stratification.maternal_interventions
-        intervention_date = get_time_stamp(builder.configuration.time.start) + pd.Timedelta(
-            days=data_values.DURATIONS.INTERVENTION_DELAY_DAYS
-            - 2 * 7
-            ## 2 weeks between administration and effect
-        )
-
-        for intervention in models.SUPPLEMENTATION_CATEGORIES:
-            builder.results.register_observation(
-                name=f"intervention_{intervention}_count",
-                pop_filter=f'alive == "alive" and intervention == "{intervention}" and tracked == True and event_time > "{intervention_date}" and event_time <= "{intervention_date + self.step_size()}"',
-                requires_columns=["alive", "intervention"],
-                additional_stratifications=self.config.include,
-                excluded_stratifications=self.config.exclude,
             )
 
 

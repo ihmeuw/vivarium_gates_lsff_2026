@@ -87,10 +87,9 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70: get_hemoglobin_csv_data,
         data_keys.MATERNAL_BMI.PREVALENCE_LOW_BMI_ANEMIC: load_bmi_prevalence,
         data_keys.MATERNAL_BMI.PREVALENCE_LOW_BMI_NON_ANEMIC: load_bmi_prevalence,
-        data_keys.MATERNAL_INTERVENTIONS.IFA_COVERAGE: load_ifa_coverage,
-        data_keys.MATERNAL_INTERVENTIONS.IFA_EFFECT_SIZE: load_ifa_effect_size,
-        data_keys.MATERNAL_INTERVENTIONS.MMS_STILLBIRTH_RR: load_supplementation_stillbirth_rr,
-        data_keys.MATERNAL_INTERVENTIONS.BEP_STILLBIRTH_RR: load_supplementation_stillbirth_rr,
+        data_keys.IRON_FORTIFICATION.COVERAGE: load_iron_fortification_coverage,
+        data_keys.IRON_FORTIFICATION.EFFECT_SIZE: load_iron_fortification_effect_size,
+        data_keys.IRON_FORTIFICATION.STILLBIRTH_RR: load_iron_fortification_stillbirth_rr,
         # data_keys.POPULATION.BACKGROUND_MORBIDITY: load_background_morbidity,
     }
     return mapping[lookup_key](lookup_key, location)
@@ -512,28 +511,28 @@ def load_bmi_prevalence(key: str, location: str):
 ##########################
 
 
-def load_ifa_coverage(key: str, location: str) -> pd.DataFrame:
+def load_iron_fortification_coverage(key: str, location: str) -> pd.DataFrame:
     df = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT / "baseline_ifa_coverage" / (location + ".csv"), index_col=0
+        paths.CSV_RAW_DATA_ROOT / "baseline_iron_fortification_coverage" / (location + ".csv"), index_col=0
     )
     df = df.drop(columns=["location_id", "location_name"]).set_index(["draw"]).T
     return df
 
 
-def load_ifa_effect_size(key: str, location: str) -> pd.DataFrame:
-    loc, scale = data_values.IFA_EFFECT_SIZE
+def load_iron_fortification_effect_size(key: str, location: str) -> pd.DataFrame:
+    loc, scale = data_values.IRON_FORTIFICATION_EFFECT_SIZE
     dist = stats.norm(loc, scale)
-    rng = np.random.default_rng(get_hash(f"ifa_effect_size_{location}"))
+    rng = np.random.default_rng(get_hash(f"iron_fortification_effect_size_{location}"))
     draw_count = vi_globals.NUM_DRAWS
-    ifa_effect_size = pd.DataFrame(
+    iron_fortification_effect_size = pd.DataFrame(
         [dist.rvs(size=draw_count, random_state=rng)],
         columns=vi_globals.DRAW_COLUMNS,
         index=["value"],
     )
-    return ifa_effect_size
+    return iron_fortification_effect_size
 
 
-def load_supplementation_stillbirth_rr(key: str, location: str) -> pd.DataFrame:
+def load_iron_fortification_stillbirth_rr(key: str, location: str) -> pd.DataFrame:
     try:
         distribution = data_values.INTERVENTION_STILLBIRTH_RRS[key]
     except KeyError:

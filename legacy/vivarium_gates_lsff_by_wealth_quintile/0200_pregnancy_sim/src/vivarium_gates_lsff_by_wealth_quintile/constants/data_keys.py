@@ -154,22 +154,21 @@ class __MaternalBMI(NamedTuple):
 MATERNAL_BMI = __MaternalBMI()
 
 
-class __MaternalInterventions(NamedTuple):
-    IFA_COVERAGE: str = "maternal_interventions.ifa_coverage"
-    IFA_EFFECT_SIZE: str = "maternal_interventions.ifa_effect_size"
-    MMS_STILLBIRTH_RR: str = "maternal_interventions.mms_stillbirth_rr"
-    BEP_STILLBIRTH_RR: str = "maternal_interventions.bep_stillbirth_rr"
+class __IronFortification(NamedTuple):
+    COVERAGE: str = "iron_fortification.coverage"
+    EFFECT_SIZE: str = "iron_fortification.effect_size"
+    STILLBIRTH_RR: str = "iron_fortification.stillbirth_rr"
 
     @property
     def name(self):
-        return "maternal_interventions"
+        return "iron_fortification"
 
     @property
     def log_name(self):
-        return "maternal interventions"
+        return "iron fortification"
 
 
-MATERNAL_INTERVENTIONS = __MaternalInterventions()
+IRON_FORTIFICATION = __IronFortification()
 
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
@@ -179,5 +178,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     MATERNAL_HEMORRHAGE,
     HEMOGLOBIN,
     MATERNAL_BMI,
-    MATERNAL_INTERVENTIONS,
+    IRON_FORTIFICATION,
 ]
