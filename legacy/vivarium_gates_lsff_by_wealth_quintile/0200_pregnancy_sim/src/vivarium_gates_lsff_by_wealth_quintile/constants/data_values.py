@@ -82,8 +82,6 @@ ANEMIA_THRESHOLD_DATA = pd.DataFrame(
     ],
 )
 
-MATERNAL_BMI_ANEMIA_THRESHOLD = 100.0  # g/L, units of hemoglobin exposure distribution
-
 SEVERE_ANEMIA_AMONG_PREGNANT_WOMEN_THRESHOLD = 70.0  # g/L
 
 

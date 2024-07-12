@@ -24,10 +24,4 @@ HEMOGLOBIN_PREGNANCY_ADJUSTMENT_FACTORS_CSV = (
 HEMOGLOBIN_MATERNAL_DISORDERS_PAF_CSV = (
     CSV_RAW_DATA_ROOT / "hemoglobin_and_maternal_disorders_pafs.csv"
 )
-PREVALENCE_LOW_BMI_ANEMIC_CSV = (
-    CSV_RAW_DATA_ROOT / "prevalence_of_low_bmi_given_hemoglobin_below_10.csv"
-)
-PREVALENCE_LOW_BMI_NON_ANEMIC_CSV = (
-    CSV_RAW_DATA_ROOT / "prevalence_of_low_bmi_given_hemoglobin_above_10.csv"
-)
 INTERVENTION_COVERAGE_BY_SCENARIO_CSV = CSV_RAW_DATA_ROOT / "coverage_by_scenario.csv"

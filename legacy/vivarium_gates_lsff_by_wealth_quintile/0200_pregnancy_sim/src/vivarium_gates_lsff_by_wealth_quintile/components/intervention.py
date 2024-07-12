@@ -31,7 +31,7 @@ class IronFortification(Component):
 
     @property
     def columns_required(self) -> List[str]:
-        return ["maternal_bmi_anemia_category", "tracked"]
+        return ["tracked"]
 
     @property
     def initialization_requirements(self) -> Dict[str, List[str]]:

@@ -83,37 +83,6 @@ class AnemiaObserver(Component):
             )
 
 
-class MaternalBMIObserver(Component):
-    CONFIGURATION_DEFAULTS = {
-        "stratification": {
-            "maternal_bmi": {
-                "exclude": [],
-                "include": [],
-            }
-        }
-    }
-
-    #################
-    # Setup methods #
-    #################
-
-    # noinspection PyAttributeOutsideInit
-    def setup(self, builder: Builder) -> None:
-        self.step_size = builder.time.step_size()
-        self.config = builder.configuration.stratification.maternal_bmi
-
-        for bmi_category in models.BMI_ANEMIA_CATEGORIES:
-            builder.results.register_observation(
-                name=f"maternal_bmi_anemia_{bmi_category}_person_time",
-                pop_filter=f'alive == "alive" and maternal_bmi_anemia_category == "{bmi_category}" and tracked == True',
-                aggregator=partial(aggregate_state_person_time, self.step_size()),
-                requires_columns=["alive", "maternal_bmi_anemia_category"],
-                additional_stratifications=self.config.include,
-                excluded_stratifications=self.config.exclude,
-                when="time_step__prepare",
-            )
-
-
 class PregnancyOutcomeObserver(Component):
     CONFIGURATION_DEFAULTS = {
         "stratification": {
