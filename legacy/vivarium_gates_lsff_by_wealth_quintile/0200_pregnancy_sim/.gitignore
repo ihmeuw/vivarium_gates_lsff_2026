@@ -128,3 +128,8 @@ dmypy.json
 
 # VS Code Settings
 .vscode/
+
+artifact_building/
+sim_results/
+simulation_running/
+*.hdf
