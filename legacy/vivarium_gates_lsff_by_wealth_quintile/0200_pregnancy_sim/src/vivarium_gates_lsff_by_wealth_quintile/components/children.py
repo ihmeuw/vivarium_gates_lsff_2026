@@ -8,6 +8,7 @@ from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium_cluster_tools.utilities import mkdir
+from vivarium_public_health.utilities import get_lookup_columns
 
 from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
@@ -31,9 +32,20 @@ class NewChildren(Component):
 
     def setup(self, builder: Builder):
         self.randomness = builder.randomness.get_stream(self.name)
-        self.male_sex_percentage = data_values.INFANT_MALE_PERCENTAGES[
-            builder.data.load(data_keys.POPULATION.LOCATION)
-        ]
+
+        # NOTE: I did not add this to the configurable lookup tables because
+        # it is only used as the source for the pipeline.
+        male_sex_percentage = self.build_lookup_table(
+            builder,
+            builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
+            value_columns=["value"],
+        )
+
+        self.male_sex_percentage = builder.value.register_value_producer(
+            "new_children.male_sex_percentage",
+            source=male_sex_percentage,
+            requires_columns=get_lookup_columns([male_sex_percentage]),
+        )
 
     def empty(self, index: pd.Index) -> pd.DataFrame:
         return pd.DataFrame(
@@ -46,12 +58,12 @@ class NewChildren(Component):
         )
 
     def generate_children(self, index: pd.Index) -> pd.DataFrame:
-        sex_of_child = self.randomness.choice(
-            index,
-            choices=["Male", "Female"],
-            p=[self.male_sex_percentage, 1 - self.male_sex_percentage],
-            additional_key="sex_of_child",
+        male_sex_percentage = self.male_sex_percentage(index)
+        male_sex = self.randomness.filter_for_probability(
+            index, male_sex_percentage, additional_key="male_sex"
         )
+        sex_of_child = pd.Series("Female", index=index)
+        sex_of_child.loc[male_sex] = "Male"
         lbwsg = self.lbwsg(sex_of_child)
         return pd.DataFrame(
             {

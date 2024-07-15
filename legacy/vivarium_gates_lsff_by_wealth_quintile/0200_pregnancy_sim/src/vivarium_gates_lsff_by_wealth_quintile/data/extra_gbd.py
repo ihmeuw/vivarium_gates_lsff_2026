@@ -110,5 +110,22 @@ def get_hemoglobin_maternal_disorders_rr():
     )
     # Subset to a single sub-cause as the get_draws call returns values for 10 sub-causes within the
     # maternal disorders parent cause
+    # The RRs are all the same
+    assert (
+        (
+            data.groupby(
+                [
+                    c
+                    for c in data.columns
+                    if "draw" not in c and c != "cause_id" and c != "exposure"
+                ]
+            )
+            .nunique()
+            .filter(like="draw")
+            == 1
+        )
+        .all()
+        .all()
+    )
     data = data[data["cause_id"] == 367]
     return data

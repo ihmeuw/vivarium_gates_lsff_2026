@@ -44,15 +44,13 @@ class IronFortification(Component):
         self.randomness = builder.randomness.get_stream(self.name)
 
         self.scenario = builder.configuration.intervention.scenario
-        self.coverage = builder.data.load(
-            data_keys.IRON_FORTIFICATION.COVERAGE
-        ).value[0]
+        self.coverage = builder.data.load(data_keys.IRON_FORTIFICATION.COVERAGE).value[0]
         self.stillbirth_rr = builder.data.load(
             data_keys.IRON_FORTIFICATION.STILLBIRTH_RR
         ).value[0]
-        self.effect_size = builder.data.load(
-            data_keys.IRON_FORTIFICATION.EFFECT_SIZE
-        ).value[0]
+        self.effect_size = builder.data.load(data_keys.IRON_FORTIFICATION.EFFECT_SIZE).value[
+            0
+        ]
 
         builder.value.register_value_modifier(
             "hemoglobin.exposure",
@@ -81,7 +79,9 @@ class IronFortification(Component):
         pop_update["intervention"] = coverage["fortification"]
 
         unsampled_fortification = pop_update["intervention"] == "maybe"
-        pop_update.loc[unsampled_fortification, "intervention"] = baseline_fortification.loc[unsampled_fortification]
+        pop_update.loc[unsampled_fortification, "intervention"] = baseline_fortification.loc[
+            unsampled_fortification
+        ]
 
         self.population_view.update(pop_update)
 
@@ -107,7 +107,9 @@ class IronFortification(Component):
             1 - self.stillbirth_rr
         )
         # Then re-scale stillbirth probability
-        birth_outcome_probabilities.loc[on_treatment, models.STILLBIRTH_OUTCOME] *= self.stillbirth_rr
+        birth_outcome_probabilities.loc[
+            on_treatment, models.STILLBIRTH_OUTCOME
+        ] *= self.stillbirth_rr
         # This preserves normalization by construction
 
         return birth_outcome_probabilities

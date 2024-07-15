@@ -13,10 +13,13 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 
+import gbd_mapping
 import numpy as np
 import pandas as pd
+import risk_distributions
 import vivarium_inputs.validation.sim as validation
-from scipy import stats
+from joblib import Memory
+from scipy import integrate, stats
 from vivarium.framework.artifact import EntityKey
 from vivarium.framework.randomness import get_hash
 from vivarium_gbd_access import gbd
@@ -39,6 +42,7 @@ from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable
 
 ##Note: need to remove all instances where we limit the size of the data manually. This will be done when RT updates in the input files.
 
+memory = Memory("./.cachedir", verbose=0)
 
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
@@ -62,6 +66,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.POPULATION.AGE_BINS: load_age_bins,
         data_keys.POPULATION.DEMOGRAPHY: load_demographic_dimensions,
         data_keys.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
+        data_keys.POPULATION.INFANT_MALE_PERCENTAGE: load_infant_male_percentage,
         data_keys.PREGNANCY.ASFR: load_asfr,
         data_keys.PREGNANCY.SBR: load_sbr,
         data_keys.PREGNANCY.RAW_INCIDENCE_RATE_MISCARRIAGE: load_raw_incidence_data,
@@ -75,7 +80,9 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.MATERNAL_DISORDERS.INCIDENT_PROBABILITY: load_pregnant_maternal_disorders_incidence,
         data_keys.MATERNAL_DISORDERS.YLDS: load_maternal_disorders_ylds,
         data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN: load_hemoglobin_maternal_disorders_rr,
-        data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN: load_hemoglobin_maternal_disorders_paf,
+        data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN: memory.cache(
+            generate_hemoglobin_maternal_disorders_paf
+        ),
         data_keys.MATERNAL_HEMORRHAGE.RAW_INCIDENCE_RATE: load_raw_incidence_data,
         data_keys.MATERNAL_HEMORRHAGE.CSMR: load_maternal_csmr,
         data_keys.MATERNAL_HEMORRHAGE.INCIDENT_PROBABILITY: load_pregnant_maternal_hemorrhage_incidence,
@@ -84,7 +91,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.MATERNAL_HEMORRHAGE.MODERATE_HEMORRHAGE_PROBABILITY: get_moderate_hemorrhage_probability,
         data_keys.HEMOGLOBIN.MEAN: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.STANDARD_DEVIATION: get_hemoglobin_data,
-        data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70: get_hemoglobin_csv_data,
+        data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70: get_hemoglobin_below_70,
         data_keys.IRON_FORTIFICATION.COVERAGE: load_iron_fortification_coverage,
         data_keys.IRON_FORTIFICATION.EFFECT_SIZE: load_iron_fortification_effect_size,
         data_keys.IRON_FORTIFICATION.STILLBIRTH_RR: load_iron_fortification_stillbirth_rr,
@@ -121,6 +128,22 @@ def load_demographic_dimensions(key: str, location: str) -> pd.DataFrame:
 
 def load_theoretical_minimum_risk_life_expectancy(key: str, location: str) -> pd.DataFrame:
     return interface.get_theoretical_minimum_risk_life_expectancy()
+
+
+def load_infant_male_percentage(key: str, location: str) -> pd.DataFrame:
+    # We do not propagate uncertainty here, but GBD actually gives us this covariate with no uncertainty.
+    live_births_by_sex = interface.get_measure(
+        gbd_mapping.covariates.live_births_by_sex, "estimate", location
+    ).pipe(_only_mean)
+    live_births_overall = live_births_by_sex.groupby(
+        [c for c in live_births_by_sex.index.names if c != "sex"]
+    ).sum()
+    return (
+        live_births_by_sex.pipe(
+            lambda df: df[df.index.get_level_values("sex") == "Male"]
+        ).droplevel("sex")
+        / live_births_overall
+    )
 
 
 def load_standard_data(key: str, location: str) -> pd.DataFrame:
@@ -362,20 +385,89 @@ def load_hemoglobin_maternal_disorders_rr(key: str, location: str) -> pd.DataFra
     return rr
 
 
-def load_hemoglobin_maternal_disorders_paf(key: str, location: str) -> pd.DataFrame:
-    location_id = utility_data.get_location_id(location)
+def generate_hemoglobin_maternal_disorders_paf(key: str, location: str) -> pd.DataFrame:
+    # Generate a PAF of hemoglobin on maternal disorders *among pregnant and lactating
+    # women and people* (PLW).
+    # This used to be done on the research side, see
+    # https://github.com/ihmeuw/vivarium_research_iv_iron/blob/48caab2eede9d5ccf45af2bf9926c3665dc536b5/parameter_aggregation/hemoglobin_maternal_disorder_pafs/PAF%20calculation%20investigation%20-%20national%20locations.ipynb
+    # https://github.com/ihmeuw/vivarium_research_iv_iron/blob/48caab2eede9d5ccf45af2bf9926c3665dc536b5/parameter_aggregation/Generate%20weights.ipynb
+    # https://github.com/ihmeuw/vivarium_research_iv_iron/blob/48caab2eede9d5ccf45af2bf9926c3665dc536b5/parameter_aggregation/hemoglobin_maternal_disorder_pafs/PAF%20aggregation.ipynb
+    # It was then copied into NO:
+    # https://github.com/ihmeuw/vivarium_research_nutrition_optimization/blob/90d24a8299cd18ef5f79b48af9cd98ace864c073/data_prep/hemoglobin_maternal_disorder_pafs/PAF%20aggregation.ipynb
     demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location)
 
-    data = pd.read_csv(paths.HEMOGLOBIN_MATERNAL_DISORDERS_PAF_CSV)
-    data = data.set_index("location_id").loc[location_id]
-    age_bins = utility_data.get_age_bins()
-    data = data.merge(age_bins, on="age_group_id")
-    data.draw = data.draw.apply(lambda d: f"draw_{d}")
-    data = data.pivot(index=["age_start", "age_end"], columns="draw", values="paf")
-    data = data.reset_index(level="age_end", drop=True).reindex(
-        demography.index, level="age_start", fill_value=0.0
+    hemoglobin_mean_plw = _reformat_hemoglobin_data(
+        get_data(data_keys.HEMOGLOBIN.MEAN, location), location,
     )
-    return data
+    hemoglobin_std_plw = _reformat_hemoglobin_data(
+        get_data(data_keys.HEMOGLOBIN.STANDARD_DEVIATION, location), location,
+    )
+
+    hemoglobin_rr = _add_location(
+        get_data(data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN, location).pipe(
+            _among_wra
+        ),
+        location,
+    )
+
+    # The GBD risk called "iron deficiency" is measured in hemoglobin
+    risk = gbd_mapping.risk_factors.iron_deficiency
+    tmrel = 120  # TODO: Get this at the draw level from GBD!
+
+    pafs = pd.DataFrame(columns=vi_globals.DRAW_COLUMNS, index=demography.index, dtype=float)
+
+    for draw in pafs.columns:
+        for index in pafs.index:
+            assert (
+                (index in hemoglobin_mean_plw.index)
+                == (index in hemoglobin_std_plw.index)
+                == (index in hemoglobin_rr.index)
+            )
+            if index in hemoglobin_mean_plw.index:
+                # NOTE: This is an unusual ensemble distribution. We should add functionality to the
+                # EnsembleDistribution class to make this easier.
+                mean = hemoglobin_mean_plw.loc[index][draw]
+                sd = hemoglobin_std_plw.loc[index][draw]
+
+                hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
+
+                def pdf(x):
+                    return data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
+                        x
+                    ) + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(
+                        x
+                    )
+
+                rr = hemoglobin_rr.loc[index][draw]
+                with np.errstate(under="ignore"):
+                    weighted_burden = integrate.quad(
+                        lambda x: (
+                            pdf(x) * rr ** (max(x - tmrel, 0) / risk.relative_risk_scalar)
+                        ),
+                        0,
+                        data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.XMAX,
+                        epsabs=0.0001,
+                    )[0]
+
+                pafs.loc[index, draw] = (weighted_burden - 1) / weighted_burden
+            else:
+                pafs.loc[index, draw] = 0.0
+
+        assert pafs[draw].notnull().all()
+
+    return pafs
+
+
+def _only_mean(df):
+    return df[(df.index.get_level_values("parameter") == "mean_value")].droplevel("parameter")
+
+
+def _among_wra(df):
+    return df[
+        (df.index.get_level_values("sex") == "Female")
+        & (df.index.get_level_values("age_start") >= 15)
+        & (df.index.get_level_values("age_end") <= 55)
+    ]
 
 
 def get_moderate_hemorrhage_probability(key: str, location: str) -> pd.DataFrame:
@@ -458,20 +550,90 @@ def get_hemoglobin_data(key: str, location: str) -> pd.DataFrame:
     return hemoglobin_data * correction_factors
 
 
-def get_hemoglobin_csv_data(key: str, location: str):
-    location_id = utility_data.get_location_id(location)
+def get_hemoglobin_below_70(key: str, location: str):
     demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location)
 
-    data = pd.read_csv(paths.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70_CSV)
-    data = data.set_index("location_id").loc[location_id]
-    age_bins = utility_data.get_age_bins()
-    data = data.merge(age_bins, on="age_group_id")
-    data = data.pivot(index=["age_start", "age_end"], columns="draw", values="value")
-    data = data.reset_index(level="age_end", drop=True).reindex(
-        demography.index, level="age_start", fill_value=0.0
+    hemoglobin_mean_plw = _reformat_hemoglobin_data(
+        get_data(data_keys.HEMOGLOBIN.MEAN, location), location,
     )
-    return data
+    hemoglobin_std_plw = _reformat_hemoglobin_data(
+        get_data(data_keys.HEMOGLOBIN.STANDARD_DEVIATION, location), location,
+    )
 
+    result = pd.DataFrame(
+        columns=vi_globals.DRAW_COLUMNS, index=demography.index, dtype=float
+    )
+
+    for draw in result.columns:
+        for index in demography.index:
+            if index in hemoglobin_mean_plw.index and index in hemoglobin_std_plw.index:
+                mean = hemoglobin_mean_plw.loc[index][draw]
+                sd = hemoglobin_std_plw.loc[index][draw]
+                
+                hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part = _hemoglobin_distribution_parts_from_mean_sd(
+                    mean, sd
+                )
+
+                def cdf(x):
+                    gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
+                    # NOTE: There is a bug in this CDF function -- it is reversed!
+                    # https://github.com/ihmeuw/risk_distributions/issues/62
+                    mgumbel_cdf = (1 - hemoglobin_distribution_mgumbel_part.cdf(x))
+                    return data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * mgumbel_cdf
+
+                with np.errstate(under="ignore"):
+                    under_70 = cdf(70)
+
+                result.loc[index, draw] = under_70
+            else:
+                result.loc[index, draw] = 0.0
+
+        assert result[draw].notnull().all()
+
+    return result
+
+def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
+    # NOTE: This is an unusual ensemble distribution. We should add functionality to the
+    # EnsembleDistribution class to make this easier.
+    x_min = 0
+    x_max = data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.XMAX
+    gamma_params = risk_distributions.risk_distributions.Gamma.get_parameters(
+        mean=mean, sd=sd
+    )
+    # NOTE: We have to override these, otherwise Gamma is overly conservative in what values
+    # are computable
+    # https://github.com/ihmeuw/risk_distributions/issues/61
+    gamma_params["x_min"] = x_min
+    gamma_params["x_max"] = x_max
+    hemoglobin_distribution_gamma_part = (
+        risk_distributions.risk_distributions.Gamma(gamma_params)
+    )
+
+    # NOTE: Forced to duplicate https://github.com/ihmeuw/risk_distributions/blob/a9ed9d7e8372590018355012a7a7ffefa87b0819/src/risk_distributions/risk_distributions.py#L428-L434
+    # because it doesn't permit the custom x_min and x_max, and these are used in calculating the others
+    mgumbel_params = {
+        "loc": [x_max - mean - (np.euler_gamma * np.sqrt(6) / np.pi * sd)],
+        "scale": [np.sqrt(6) / np.pi * sd],
+        "x_min": [x_min],
+        "x_max": [x_max],
+    }
+    hemoglobin_distribution_mgumbel_part = (
+        risk_distributions.risk_distributions.MirroredGumbel(mgumbel_params)
+    )
+    return hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part
+
+def _reformat_hemoglobin_data(data, location):
+    data = data.droplevel(
+        ["measure_id", "metric_id", "model_version_id", "modelable_entity_id"]
+    ).pipe(_among_wra)
+    return _add_location(data, location)
+
+def _add_location(data, location):
+    return (
+        data.reset_index()
+        .assign(location=location)
+        .set_index(["location"] + data.index.names)
+    )
 
 ##########################
 # Maternal interventions #
@@ -480,7 +642,10 @@ def get_hemoglobin_csv_data(key: str, location: str):
 
 def load_iron_fortification_coverage(key: str, location: str) -> pd.DataFrame:
     df = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT / "baseline_iron_fortification_coverage" / (location + ".csv"), index_col=0
+        paths.CSV_RAW_DATA_ROOT
+        / "baseline_iron_fortification_coverage"
+        / (location + ".csv"),
+        index_col=0,
     )
     df = df.drop(columns=["location_id", "location_name"]).set_index(["draw"]).T
     return df

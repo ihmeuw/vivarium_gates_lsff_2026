@@ -21,13 +21,6 @@ class _Durations(NamedTuple):
 DURATIONS = _Durations()
 draw_count = 500
 
-
-INFANT_MALE_PERCENTAGES = {
-    "Ethiopia": 0.514271,
-    "Nigeria": 0.511785,
-    "Pakistan": 0.514583,
-}
-
 MATERNAL_HEMORRHAGE_HEMOGLOBIN_POSTPARTUM_SHIFT = 6.8  # g/L
 PROBABILITY_MODERATE_MATERNAL_HEMORRHAGE = (0.85, 0.81, 0.89)
 
@@ -120,9 +113,13 @@ INTERVENTION_SCENARIO_COVERAGE = pd.read_csv(
 ).set_index("scenario")
 
 # TODO: Replace with real value
-IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3) # (mean, sd) g/L
+IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3)  # (mean, sd) g/L
 
 INTERVENTION_STILLBIRTH_RRS = {
     # (center, lower, upper) 95% CI
-    data_keys.IRON_FORTIFICATION.STILLBIRTH_RR: (0.91, 0.71, 0.93), # TODO: Replace with real value
+    data_keys.IRON_FORTIFICATION.STILLBIRTH_RR: (
+        0.91,
+        0.71,
+        0.93,
+    ),  # TODO: Replace with real value
 }
