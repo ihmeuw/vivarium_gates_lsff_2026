@@ -58,6 +58,5 @@ if __name__ == "__main__":
         entry_points="""
             [console_scripts]
             make_artifacts=vivarium_gates_lsff_by_wealth_quintile.tools.cli:make_artifacts
-            make_results=vivarium_gates_lsff_by_wealth_quintile.tools.cli:make_results
         """,
     )
