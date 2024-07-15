@@ -44,6 +44,7 @@ from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable
 
 memory = Memory("./.cachedir", verbose=0)
 
+
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
 
@@ -397,10 +398,12 @@ def generate_hemoglobin_maternal_disorders_paf(key: str, location: str) -> pd.Da
     demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location)
 
     hemoglobin_mean_plw = _reformat_hemoglobin_data(
-        get_data(data_keys.HEMOGLOBIN.MEAN, location), location,
+        get_data(data_keys.HEMOGLOBIN.MEAN, location),
+        location,
     )
     hemoglobin_std_plw = _reformat_hemoglobin_data(
-        get_data(data_keys.HEMOGLOBIN.STANDARD_DEVIATION, location), location,
+        get_data(data_keys.HEMOGLOBIN.STANDARD_DEVIATION, location),
+        location,
     )
 
     hemoglobin_rr = _add_location(
@@ -429,7 +432,10 @@ def generate_hemoglobin_maternal_disorders_paf(key: str, location: str) -> pd.Da
                 mean = hemoglobin_mean_plw.loc[index][draw]
                 sd = hemoglobin_std_plw.loc[index][draw]
 
-                hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
+                (
+                    hemoglobin_distribution_gamma_part,
+                    hemoglobin_distribution_mgumbel_part,
+                ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
                 def pdf(x):
                     return data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
@@ -554,10 +560,12 @@ def get_hemoglobin_below_70(key: str, location: str):
     demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location)
 
     hemoglobin_mean_plw = _reformat_hemoglobin_data(
-        get_data(data_keys.HEMOGLOBIN.MEAN, location), location,
+        get_data(data_keys.HEMOGLOBIN.MEAN, location),
+        location,
     )
     hemoglobin_std_plw = _reformat_hemoglobin_data(
-        get_data(data_keys.HEMOGLOBIN.STANDARD_DEVIATION, location), location,
+        get_data(data_keys.HEMOGLOBIN.STANDARD_DEVIATION, location),
+        location,
     )
 
     result = pd.DataFrame(
@@ -569,17 +577,23 @@ def get_hemoglobin_below_70(key: str, location: str):
             if index in hemoglobin_mean_plw.index and index in hemoglobin_std_plw.index:
                 mean = hemoglobin_mean_plw.loc[index][draw]
                 sd = hemoglobin_std_plw.loc[index][draw]
-                
-                hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part = _hemoglobin_distribution_parts_from_mean_sd(
-                    mean, sd
-                )
+
+                (
+                    hemoglobin_distribution_gamma_part,
+                    hemoglobin_distribution_mgumbel_part,
+                ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
                 def cdf(x):
                     gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
                     # NOTE: There is a bug in this CDF function -- it is reversed!
                     # https://github.com/ihmeuw/risk_distributions/issues/62
-                    mgumbel_cdf = (1 - hemoglobin_distribution_mgumbel_part.cdf(x))
-                    return data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * mgumbel_cdf
+                    mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x)
+                    return (
+                        data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT
+                        * gamma_cdf
+                        + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT
+                        * mgumbel_cdf
+                    )
 
                 with np.errstate(under="ignore"):
                     under_70 = cdf(70)
@@ -591,6 +605,7 @@ def get_hemoglobin_below_70(key: str, location: str):
         assert result[draw].notnull().all()
 
     return result
+
 
 def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
     # NOTE: This is an unusual ensemble distribution. We should add functionality to the
@@ -605,8 +620,8 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
     # https://github.com/ihmeuw/risk_distributions/issues/61
     gamma_params["x_min"] = x_min
     gamma_params["x_max"] = x_max
-    hemoglobin_distribution_gamma_part = (
-        risk_distributions.risk_distributions.Gamma(gamma_params)
+    hemoglobin_distribution_gamma_part = risk_distributions.risk_distributions.Gamma(
+        gamma_params
     )
 
     # NOTE: Forced to duplicate https://github.com/ihmeuw/risk_distributions/blob/a9ed9d7e8372590018355012a7a7ffefa87b0819/src/risk_distributions/risk_distributions.py#L428-L434
@@ -622,11 +637,13 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
     )
     return hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part
 
+
 def _reformat_hemoglobin_data(data, location):
     data = data.droplevel(
         ["measure_id", "metric_id", "model_version_id", "modelable_entity_id"]
     ).pipe(_among_wra)
     return _add_location(data, location)
+
 
 def _add_location(data, location):
     return (
@@ -634,6 +651,7 @@ def _add_location(data, location):
         .assign(location=location)
         .set_index(["location"] + data.index.names)
     )
+
 
 ##########################
 # Maternal interventions #
