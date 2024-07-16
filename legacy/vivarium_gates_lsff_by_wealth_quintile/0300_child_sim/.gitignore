@@ -126,3 +126,7 @@ dmypy.json
 # Pycharm project settings
 .idea/
 .vscode/launch.json
+
+artifact_building/
+simulation_running/
+sim_results/
