@@ -424,7 +424,8 @@ def load_categorical_paf(key: str, location: Union[str, List[int]]) -> pd.DataFr
 
     exp = get_data(risk.EXPOSURE, location)
 
-    if key == data_keys.STUNTING.PAF or key == data_keys.WASTING.PAF:
+    subnational = isinstance(location, list)
+    if (key == data_keys.STUNTING.PAF or key == data_keys.WASTING.PAF) and subnational:
         national_location_id = get_national_location_id(location[0])
         rr = get_data(risk.RELATIVE_RISK, national_location_id)
         location_names = exp.reset_index().location.unique()
@@ -452,7 +453,7 @@ def load_categorical_paf(key: str, location: Union[str, List[int]]) -> pd.DataFr
 
 def load_wasting_transition_rates(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
     """Read in wasting transition rates from flat file and expand to include all years."""
-    national_location_id = get_national_location_id(location[0])
+    national_location_id = get_national_location_id(location[0]) if isinstance(location, list) else utility_data.get_location_id(location)
     demography = get_data(data_keys.POPULATION.DEMOGRAPHY, national_location_id)
     rates = pd.read_csv(paths.WASTING_TRANSITIONS_DATA_DIR / f"{national_location_id}.csv")
     rates = rates.rename({"parameter": "transition"}, axis=1)
@@ -537,7 +538,7 @@ def load_wasting_birth_prevalence(key: str, location: Union[str, List[int]]) -> 
 
     # Returns something national
     # read and process prevalence of low birth weight amongst infants who survive to 30 days
-    national_location_id = get_national_location_id(location[0])
+    national_location_id = get_national_location_id(location[0]) if isinstance(location, list) else utility_data.get_location_id(location)
     lbwsg_exposure = get_data(data_keys.LBWSG.EXPOSURE, national_location_id)
 
     # Convert the LBWSG into subnational so I can use it with the wasting prevalence data
@@ -841,7 +842,7 @@ def load_underweight_exposure(key: str, location: Union[str, List[int]]) -> pd.D
     and wasting) from file and transform. This data looks like standard
     categorical exposure distribution data but with stunting and wasting
     parameter values in the index."""
-    national_location_id = get_national_location_id(location[0])
+    national_location_id = get_national_location_id(location[0]) if isinstance(location, list) else utility_data.get_location_id(location)
     df = pd.read_csv(
         paths.UNDERWEIGHT_CONDITIONAL_DISTRIBUTIONS_DIR / f"{national_location_id}.csv"
     )
@@ -923,7 +924,7 @@ def load_underweight_exposure(key: str, location: Union[str, List[int]]) -> pd.D
 def load_gbd_2021_exposure(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
     # Get national location id to use national data probabilities
     entity_key = EntityKey(key)
-    national_location_id = get_national_location_id(location[0])
+    national_location_id = get_national_location_id(location[0]) if isinstance(location, list) else utility_data.get_location_id(location)
 
     data = load_standard_data(key, location)
     location_names = data.reset_index().location.unique()
@@ -1074,7 +1075,7 @@ def load_gbd_2021_rr(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
 
 
 def load_cgf_paf(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
-    national_location_id = get_national_location_id(location[0])
+    national_location_id = get_national_location_id(location[0]) if isinstance(location, list) else utility_data.get_location_id(location)
     data = pd.read_csv(
         paths.CGF_PAFS / f"{national_location_id}.csv"
     )  # .query("location_id==@location_id")
@@ -1823,7 +1824,7 @@ def load_sqlns_risk_ratios(key: str, location: Union[str, List[int]]) -> pd.Data
 
     # generate draws using distribution parameters for each row
     risk_ratios = pd.read_csv(paths.SQLNS_RISK_RATIOS)
-    national_location_id = get_national_location_id(location[0])
+    national_location_id = get_national_location_id(location[0]) if isinstance(location, list) else utility_data.get_location_id(location)
     risk_ratios = (
         risk_ratios.query("national_id==@national_location_id")
         .drop(["national_id", "location_id", "Unnamed: 0"], axis=1)
