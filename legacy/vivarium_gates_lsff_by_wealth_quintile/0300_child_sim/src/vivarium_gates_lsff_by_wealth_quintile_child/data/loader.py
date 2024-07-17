@@ -197,7 +197,7 @@ def get_data(
         data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
         data_keys.WASTING.CATEGORIES: load_metadata,
         data_keys.WASTING.EXPOSURE: load_gbd_2021_exposure,
-        data_keys.WASTING.RELATIVE_RISK: load_wasting_rr,
+        data_keys.WASTING.RELATIVE_RISK: load_gbd_2021_rr,
         data_keys.WASTING.PAF: load_categorical_paf,
         data_keys.WASTING.TRANSITION_RATES: load_wasting_transition_rates,
         data_keys.WASTING.BIRTH_PREVALENCE: load_wasting_birth_prevalence,
@@ -945,125 +945,21 @@ def load_gbd_2021_exposure(key: str, location: Union[str, List[int]]) -> pd.Data
     location_names = data.reset_index().location.unique()
 
     if entity_key == data_keys.WASTING.EXPOSURE:
-        # format probabilities of entering worse MAM state
-        probabilities = pd.read_csv(paths.PROBABILITIES_OF_WORSE_MAM_EXPOSURE)
-        # add early neonatal rows by duplicating late neonatal data
-        probabilities = probabilities.query("location_id==@national_location_id").drop(
-            ["Unnamed: 0", "location_id"], axis=1
-        )
-
-        probabilities = expand_data(probabilities, "location", location_names)
-
-        sex_list = ["Female", "Male"]
-        probabilities = expand_data(probabilities, "sex", sex_list)
-        # probabilities["sex"] = probabilities["sex"].str.capitalize()
-
-        # get age start and end from age group ID
-        probabilities = expand_data(
-            probabilities, "age_group_id", list(metadata.AGE_GROUP.GBD_2021)
-        )
-        enn_rows = probabilities.query("age_group_id==3").copy()
-        enn_rows["age_group_id"] = 2
-        probabilities = pd.concat([probabilities, enn_rows])
-
-        age_bins = get_data(data_keys.POPULATION.AGE_BINS, location).reset_index()
-        age_bins["age_group_id"] = list(metadata.AGE_GROUP.GBD_2021)
-        age_bins = age_bins.drop("age_group_name", axis=1)
-        probabilities = probabilities.merge(age_bins, on="age_group_id").drop(
-            "age_group_id", axis=1
-        )
-        # add year data
-        probabilities["year_start"] = 2021
-        probabilities["year_end"] = probabilities["year_start"] + 1
-
-        probabilities = (
-            pd.pivot_table(
-                probabilities,
-                values="exposure",
-                index=["location", "sex", "age_start", "age_end", "year_start", "year_end"],
-                columns="draw",
-            )
-            .sort_index()
-            .reset_index()
-        )
-
         # distribute probability of entering MAM state amongst worse MAM (cat2) and better MAM (cat2.5)
-        rows_to_keep = data.query("parameter != 'cat2'")
-        cat2_rows = data.query("age_start.isin([0., 0.01917808, 0.07671233, 0.5, 1.,2.])")
-        cat2_rows = cat2_rows.query("parameter=='cat2'").copy().sort_index().reset_index()
-        assert probabilities[metadata.DEMOGRAPHIC_COLUMNS].equals(
-            cat2_rows[metadata.DEMOGRAPHIC_COLUMNS]
+        cat2_rows = data.query("parameter=='cat2'").copy()
+        # update cat2 rows
+        data.loc[data.query("parameter=='cat2'").index] = (
+            cat2_rows * data_values.WASTING.PROBABILITY_OF_CAT2
+        )
+        # create cat2.5 rows
+        cat25_rows = cat2_rows * (1 - data_values.WASTING.PROBABILITY_OF_CAT2)
+        cat25_rows = (
+            cat25_rows.reset_index()
+            .replace({"parameter": {"cat2": "cat2.5"}})
+            .set_index(data.index.names)
         )
 
-        new_cat2_rows = cat2_rows.copy()
-        new_cat2_rows[metadata.ARTIFACT_COLUMNS] = (
-            cat2_rows[metadata.ARTIFACT_COLUMNS] * probabilities[metadata.ARTIFACT_COLUMNS]
-        )
-        new_cat2_rows = new_cat2_rows.set_index(
-            metadata.ARTIFACT_INDEX_COLUMNS + ["parameter"]
-        ).sort_index()
-
-        cat25_rows = cat2_rows.copy()
-        cat25_rows["parameter"] = "cat2.5"
-        cat25_rows[metadata.ARTIFACT_COLUMNS] = cat2_rows[metadata.ARTIFACT_COLUMNS] * (
-            1 - probabilities[metadata.ARTIFACT_COLUMNS]
-        )
-        cat25_rows = cat25_rows.set_index(
-            metadata.ARTIFACT_INDEX_COLUMNS + ["parameter"]
-        ).sort_index()
-
-        data = pd.concat([rows_to_keep, new_cat2_rows, cat25_rows]).sort_index()
-
-    return data
-
-
-def load_wasting_rr(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
-    if type(location) != int:
-        location_id = utility_data.get_location_id(location)
-    else:
-        location_id = location
-    data = pd.read_csv(paths.WASTING_RELATIVE_RISKS)
-    data = data.query("location_id==@location_id").drop(
-        ["Unnamed: 0", "index", "location_id"], axis=1
-    )
-
-    # get age start and end from age group ID
-    age_bins = get_data(data_keys.POPULATION.AGE_BINS, location).reset_index()
-    age_bins["age_group_id"] = list(metadata.AGE_GROUP.GBD_2021)
-    age_bins = age_bins.drop("age_group_name", axis=1)
-    data = data.merge(age_bins, on="age_group_id").drop("age_group_id", axis=1)
-    data["year_start"] = 2021
-    data["year_end"] = data["year_start"] + 1
-    data["location"] = location
-    data = pd.pivot_table(
-        data,
-        values="value",
-        index=metadata.ARTIFACT_INDEX_COLUMNS
-        + ["affected_entity", "affected_measure", "parameter"],
-        columns="draw",
-    )
-
-    data = data[metadata.ARTIFACT_COLUMNS]
-
-    inc = data.query('affected_measure == "incidence_rate"')
-    csmr = data.query('affected_measure == "cause_specific_mortality_rate"')
-    emr = csmr.droplevel("affected_measure") / inc.droplevel("affected_measure")
-    emr["affected_measure"] = "excess_mortality_rate"
-    emr = emr.set_index("affected_measure", append=True).reorder_levels(inc.index.names)
-
-    data = pd.concat([inc, emr])
-
-    # add neonatal data with relative risks of 1
-    # use stunting to get neonatal data
-    neonatal_data = get_data(data_keys.STUNTING.RELATIVE_RISK, location).query(
-        "age_start < .05"
-    )
-    cat25_rows = neonatal_data.query("parameter=='cat2'").copy().reset_index("parameter")
-    cat25_rows["parameter"] = "cat2.5"
-    cat25_rows = cat25_rows.set_index("parameter", append=True)
-    neonatal_data = pd.concat([neonatal_data, cat25_rows]).sort_index()
-    data = pd.concat([data, neonatal_data]).sort_index()
-
+        data = pd.concat([data, cat25_rows]).sort_index()
     return data
 
 
@@ -1085,7 +981,15 @@ def load_gbd_2021_rr(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
         # Remove neonatal relative risks
         neonatal_age_ends = data.index.get_level_values("age_end").unique().sort_values()[:2]
         data.loc[data.index.get_level_values("age_end").isin(neonatal_age_ends)] = 1.0
-
+    if key == data_keys.WASTING.RELATIVE_RISK:
+        # add wasting cat2.5 data by duplicating wasting cat2 data
+        cat2_rows = data.query("parameter=='cat2'").copy()
+        new_cat_rows = (
+            cat2_rows.reset_index()
+            .replace({"parameter": {"cat2": "cat2.5"}})
+            .set_index(data.index.names)
+        )
+        data = pd.concat([data, new_cat_rows]).sort_index()
     return data
 
 
