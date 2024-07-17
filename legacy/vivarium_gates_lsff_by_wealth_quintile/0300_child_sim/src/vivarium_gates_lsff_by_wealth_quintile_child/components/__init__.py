@@ -32,6 +32,4 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.risk import (
     CGFRiskEffect,
     ChildUnderweight,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.components.wasting import (
-    ChildWasting,
-)
+from vivarium_gates_lsff_by_wealth_quintile_child.components.wasting import ChildWasting

@@ -14,7 +14,10 @@ from vivarium_public_health.utilities import EntityString
 from vivarium_gates_lsff_by_wealth_quintile_child.components import (
     CGFPolytomousDistribution,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys, data_values
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
+    data_keys,
+    data_values,
+)
 
 
 class ChildUnderweight(Risk):
