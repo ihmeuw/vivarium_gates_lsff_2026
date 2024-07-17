@@ -278,7 +278,6 @@ def get_data(
         data_keys.MATERNAL_BMI_ANEMIA.EXPOSURE: load_maternal_bmi_anemia_exposure,
         data_keys.MATERNAL_BMI_ANEMIA.EXCESS_SHIFT: load_maternal_bmi_anemia_excess_shift,
         data_keys.MATERNAL_BMI_ANEMIA.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
-        data_keys.SQLNS_TREATMENT.RISK_RATIOS: load_sqlns_risk_ratios,
     }
 
     if lookup_key in NATIONAL_LEVEL_DATA_KEYS or not fetch_subnationals:

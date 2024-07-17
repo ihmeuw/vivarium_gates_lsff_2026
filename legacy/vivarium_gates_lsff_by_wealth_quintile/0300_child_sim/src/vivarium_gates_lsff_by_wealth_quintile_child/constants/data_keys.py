@@ -554,22 +554,6 @@ class __MMN_Supplementation(NamedTuple):
 MMN_SUPPLEMENTATION = __MMN_Supplementation()
 
 
-class __SQLNS_Treatment(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    RISK_RATIOS: TargetString = TargetString("risk_factor.sqlns_treatment.risk_ratios")
-
-    @property
-    def name(self):
-        return self.RISK_RATIOS.name
-
-    @property
-    def log_name(self):
-        return self.name.replace("_", " ")
-
-
-SQLNS_TREATMENT = __SQLNS_Treatment()
-
-
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -592,5 +576,4 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     BEP_SUPPLEMENTATION,
     IV_IRON,
     MATERNAL_BMI_ANEMIA,
-    SQLNS_TREATMENT,
 ]

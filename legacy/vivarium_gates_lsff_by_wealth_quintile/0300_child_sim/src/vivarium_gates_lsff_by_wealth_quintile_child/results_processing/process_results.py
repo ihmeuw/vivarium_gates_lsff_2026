@@ -9,14 +9,12 @@ from vivarium_gates_lsff_by_wealth_quintile_child.constants import results, scen
 
 SCENARIO_COLUMN = "child_scenario"
 MATERNAL_SCENARIO_COLUMN = "intervention.maternal_scenario"
-SQLNS_EFFECT_COLUMN = "run_configuration.run_key.intervention.sqlns_effect_size"
 SUBNATIONAL_COLUMN = "run_configuration.run_key.intervention.subnational"
 RANDOM_SEED_COLUMN = "random_seed"
 GROUPBY_COLUMNS = [
     results.INPUT_DRAW_COLUMN,
     SCENARIO_COLUMN,
     MATERNAL_SCENARIO_COLUMN,
-    SQLNS_EFFECT_COLUMN,
     SUBNATIONAL_COLUMN,
     # RANDOM_SEED_COLUMN,
 ]
