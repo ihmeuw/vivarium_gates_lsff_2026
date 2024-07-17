@@ -1837,39 +1837,6 @@ def load_maternal_bmi_anemia_excess_shift(key: str, location: str) -> pd.DataFra
     return excess_shift
 
 
-def load_sqlns_risk_ratios(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
-    """Load effects of SQ-LNS treatment on wasting incidence and stunting prevalence ratios."""
-    if key != data_keys.SQLNS_TREATMENT.RISK_RATIOS:
-        raise ValueError(f"Unrecognized key {key}")
-
-    # generate draws using distribution parameters for each row
-    risk_ratios = pd.read_csv(paths.SQLNS_RISK_RATIOS)
-    national_location_id = (
-        get_national_location_id(location[0])
-        if isinstance(location, list)
-        else utility_data.get_location_id(location)
-    )
-    risk_ratios = (
-        risk_ratios.query("national_id==@national_location_id")
-        .drop(["national_id", "location_id", "Unnamed: 0"], axis=1)
-        .reset_index()
-    )
-    distributions = get_lognorm_from_quantiles(
-        risk_ratios["median"], risk_ratios["lower"], risk_ratios["upper"]
-    )
-    draws = get_random_variable_draws(
-        metadata.ARTIFACT_COLUMNS, "sqlns_risk_ratios", distributions
-    )
-
-    # reshape
-    index_cols = ["location", "age_start", "age_end", "affected_outcome", "effect_size"]
-    draw_columns = pd.DataFrame(draw for draw in draws).T
-    draw_columns.columns = metadata.ARTIFACT_COLUMNS
-    data = pd.concat([risk_ratios[index_cols], draw_columns], axis=1).set_index(index_cols)
-
-    return data
-
-
 def reshape_to_vivarium_format(df, location):
     df = vi_utils.reshape(df, value_cols=DRAW_COLUMNS)
     df = vi_utils.scrub_gbd_conventions(df, location)

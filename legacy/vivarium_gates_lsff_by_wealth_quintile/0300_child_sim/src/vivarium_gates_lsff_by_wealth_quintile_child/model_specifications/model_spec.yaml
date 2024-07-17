@@ -9,12 +9,6 @@ components:
         risks:
             - Risk('risk_factor.child_stunting')
 
-            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
-            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_better_moderate_acute_malnutrition.transition_rate')
-            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_worse_moderate_acute_malnutrition.transition_rate')
-            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.better_moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
-            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.worse_moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
-
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
             - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
             - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
@@ -34,9 +28,6 @@ components:
             - LBWSGLineList()
             - ChildWasting()
             - ChildWastingObserver()
-            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
-            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
-            - SQLNSTreatment()
             - MaternalCharacteristics()
             - ChildUnderweight()
             - CGFRiskEffect('cause.diarrheal_diseases.incidence_rate')
@@ -48,11 +39,8 @@ components:
             - CGFRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
             - CGFRiskEffect('cause.malaria.excess_mortality_rate')
             - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.birth_weight.birth_exposure')
-            - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.birth_weight.birth_exposure')
-            - BEPEffectOnBirthweight()
-            - AdditiveRiskEffect('risk_factor.maternal_bmi_anemia', 'risk_factor.birth_weight.birth_exposure')
+            # - AdditiveRiskEffect('risk_factor.maternal_bmi_anemia', 'risk_factor.birth_weight.birth_exposure')
             - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.gestational_age.birth_exposure')
-            - MMSEffectOnGestationalAge()
             - BirthWeightShiftEffect()
             - SIS_with_birth_prevalence('diarrheal_diseases')
             - RiskAttributableDisease('cause.moderate_protein_energy_malnutrition', 'risk_factor.child_wasting')
@@ -123,7 +111,3 @@ configuration:
         default:
             - 'age_group'
             - 'sex'
-        child_wasting:
-            include: ['sam_treatment', 'mam_treatment']
-        child_stunting:
-            include: ['sqlns_coverage']

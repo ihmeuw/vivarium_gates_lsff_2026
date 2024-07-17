@@ -16,10 +16,8 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.lbwsg import (
 )
 from vivarium_gates_lsff_by_wealth_quintile_child.components.maternal_characteristics import (
     AdditiveRiskEffect,
-    BEPEffectOnBirthweight,
     BirthWeightShiftEffect,
     MaternalCharacteristics,
-    MMSEffectOnGestationalAge,
 )
 from vivarium_gates_lsff_by_wealth_quintile_child.components.observers import (  # BirthObserver,; MortalityHazardRateObserver,
     ChildWastingObserver,
@@ -34,10 +32,6 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.risk import (
     CGFRiskEffect,
     ChildUnderweight,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.components.treatment import (
-    SQLNSTreatment,
-)
 from vivarium_gates_lsff_by_wealth_quintile_child.components.wasting import (
     ChildWasting,
-    WastingTreatment,
 )
