@@ -149,43 +149,6 @@ class __MaternalCharacteristics(NamedTuple):
         get_norm_from_quantiles(mean=57.73, lower=7.66, upper=107.79),
     )
 
-    BASELINE_MMN_COVERAGE: float = 0.0
-    MMN_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "mmn_birth_weight_shift",
-        get_norm_from_quantiles(mean=45.16, lower=32.31, upper=58.02),
-    )
-
-    BASELINE_BEP_COVERAGE: float = 0.0
-    BEP_UNDERNOURISHED_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "bep_birth_weight_shift",
-        get_norm_from_quantiles(mean=66.96, lower=13.13, upper=120.78),
-    )
-    BEP_ADEQUATELY_NOURISHED_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "bep_birth_weight_shift",
-        get_norm_from_quantiles(mean=15.93, lower=-20.83, upper=52.69),
-    )
-
-    BASELINE_IV_IRON_COVERAGE: float = 0.0
-    IV_IRON_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "iv_iron_birth_weight_shift",
-        get_norm_from_quantiles(mean=50.0, lower=50.0, upper=50.0),
-    )
-
-    BMI_ANEMIA_CAT3_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "bmi_anemia_cat3_birth_weight_shift",
-        get_norm_from_quantiles(mean=-182.0, lower=-239.0, upper=-125.0),
-    )
-
-    BMI_ANEMIA_CAT2_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "bmi_anemia_cat2_birth_weight_shift",
-        get_norm_from_quantiles(mean=-94.0, lower=-142.0, upper=-46.0),
-    )
-
-    BMI_ANEMIA_CAT1_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
-        "bmi_anemia_cat1_birth_weight_shift",
-        get_norm_from_quantiles(mean=-275.0, lower=-336.0, upper=-213.0),
-    )
-
 
 MATERNAL_CHARACTERISTICS = __MaternalCharacteristics()
 

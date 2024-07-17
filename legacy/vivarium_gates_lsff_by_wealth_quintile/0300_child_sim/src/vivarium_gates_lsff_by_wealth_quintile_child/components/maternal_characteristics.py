@@ -38,28 +38,18 @@ class MaternalCharacteristics(Component):
             "rebinned_exposed": [],
             "category_thresholds": [],
         },
-        # "risk_factor.maternal_bmi_anemia": {
-        #     "data_sources": {
-        #         "exposure": "risk_factor.maternal_bmi_anemia.exposure",
-        #     },
-        #     "rebinned_exposed": [],
-        #     "category_thresholds": [],
-        # },
     }
 
     def __init__(self):
         super().__init__()
         self.supplementation_exposure_column_name = "maternal_supplementation_exposure"
-        # self.maternal_bmi_anemia_exposure_column_name = "maternal_bmi_anemia_exposure"
 
         self.ifa_exposure_pipeline_name = f"{IFA_SUPPLEMENTATION.name}.exposure"
-        # self.maternal_bmi_anemia_exposure_pipeline_name = "maternal_bmi_anemia.exposure"
 
     @property
     def columns_created(self) -> List[str]:
         return [
             self.supplementation_exposure_column_name,
-            # self.maternal_bmi_anemia_exposure_column_name,
         ]
 
     #################
@@ -74,11 +64,6 @@ class MaternalCharacteristics(Component):
             source=self._get_ifa_exposure,
             requires_columns=[self.supplementation_exposure_column_name],
         )
-        # self.maternal_bmi_anemia_exposure_pipeline = builder.value.register_value_producer(
-        #     self.maternal_bmi_anemia_exposure_pipeline_name,
-        #     source=self._get_maternal_bmi_anemia_exposure,
-        #     requires_columns=[self.maternal_bmi_anemia_exposure_column_name],
-        # )
 
     def build_all_lookup_tables(self, builder: Builder) -> None:
         # We need to call this method on each risk in the configuration defaults
@@ -114,10 +99,6 @@ class MaternalCharacteristics(Component):
                 maternal_supplementation
             )
 
-            # new_simulants[self.maternal_bmi_anemia_exposure_column_name] = new_births[
-            #     "joint_bmi_anemia_category"
-            # ]
-
         self.population_view.update(new_simulants)
 
     ##################################
@@ -131,13 +112,6 @@ class MaternalCharacteristics(Component):
         exposure = pd.Series(IFA_SUPPLEMENTATION.CAT1, index=index)
         exposure[has_ifa] = IFA_SUPPLEMENTATION.CAT2
         return exposure
-
-    # def _get_maternal_bmi_anemia_exposure(self, index: pd.Index) -> pd.Series:
-    #     exposure = self.population_view.get(index)[
-    #         self.maternal_bmi_anemia_exposure_column_name
-    #     ]
-    #     exposure.name = self.maternal_bmi_anemia_exposure_pipeline_name
-    #     return exposure
 
 
 class AdditiveRiskEffect(RiskEffect):
