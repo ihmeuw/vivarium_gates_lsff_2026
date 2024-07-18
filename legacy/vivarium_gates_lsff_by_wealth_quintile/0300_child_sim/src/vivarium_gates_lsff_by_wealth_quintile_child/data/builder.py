@@ -53,7 +53,12 @@ def open_artifact(output_path: Path, location: str) -> Artifact:
 
 
 def load_and_write_data(
-    artifact: Artifact, key: str, location: str, replace: bool, fetch_subnationals: bool, lbwsg_pafs: str
+    artifact: Artifact,
+    key: str,
+    location: str,
+    replace: bool,
+    fetch_subnationals: bool,
+    lbwsg_pafs: str,
 ):
     """Loads data and writes it to the artifact if not already present.
 

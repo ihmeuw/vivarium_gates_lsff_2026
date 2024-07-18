@@ -107,7 +107,10 @@ NATIONAL_LEVEL_DATA_KEYS = [
 
 
 def get_data(
-    lookup_key: str, location: Union[str, List[int]], lbwsg_pafs: str = None, fetch_subnationals: bool = False
+    lookup_key: str,
+    location: Union[str, List[int]],
+    lbwsg_pafs: str = None,
+    fetch_subnationals: bool = False,
 ) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
 
@@ -221,16 +224,16 @@ def get_data(
         # data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
     }
 
-    args = (lookup_key, )
+    args = (lookup_key,)
 
     if lookup_key in NATIONAL_LEVEL_DATA_KEYS or not fetch_subnationals:
-        args += (location, )
+        args += (location,)
     else:
         subnational_ids = fetch_subnational_ids(location)
-        args += (subnational_ids, )
+        args += (subnational_ids,)
 
     if lookup_key == data_keys.LBWSG.PAF:
-        args += (lbwsg_pafs, )
+        args += (lbwsg_pafs,)
 
     data = mapping[lookup_key](*args)
 
@@ -344,7 +347,7 @@ def load_metadata(key: str, location: Union[str, List[int]]):
     entity_metadata = entity[key.measure]
     if hasattr(entity_metadata, "to_dict"):
         entity_metadata = entity_metadata.to_dict()
-    if False: # key == data_keys.WASTING.CATEGORIES:
+    if False:  # key == data_keys.WASTING.CATEGORIES:
         entity_metadata["cat2"] = "Wasting Between -3 SD and -2.5 SD (post-ensemble)"
         entity_metadata["cat2.5"] = "Wasting Between -2.5 SD and -2 SD (post-ensemble)"
     return entity_metadata
@@ -1284,6 +1287,7 @@ def load_lbwsg_paf(key: str, location: str, lbwsg_paf_location: str) -> pd.DataF
     }
 
     import pathlib
+
     output_dir = pathlib.Path(lbwsg_paf_location) / location_mapper[location]
 
     def get_age_and_sex(measure_str):
@@ -1292,12 +1296,17 @@ def load_lbwsg_paf(key: str, location: str, lbwsg_paf_location: str) -> pd.DataF
 
         return age + "," + sex
 
-    df = pd.read_parquet(output_dir / "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet")
+    df = pd.read_parquet(
+        output_dir
+        / "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"
+    )
     df = (
         df.assign(input_draw="draw_" + df.input_draw.astype(str))
-            .pivot_table('value', [c for c in df if c not in ['input_draw', 'value']], 'input_draw')
-            .reset_index()
-            .drop(columns=["scenario", "random_seed"])
+        .pivot_table(
+            "value", [c for c in df if c not in ["input_draw", "value"]], "input_draw"
+        )
+        .reset_index()
+        .drop(columns=["scenario", "random_seed"])
     )
 
     age_start_dict = {"early_neonatal": 0.0, "late_neonatal": 0.01917808}

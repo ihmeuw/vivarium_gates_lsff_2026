@@ -138,7 +138,7 @@ class EvenlyDistributedPopulation(BasePopulation):
 
     @property
     def columns_created(self) -> List[str]:
-        return super().columns_created #+ ["subnational"]
+        return super().columns_created  # + ["subnational"]
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
@@ -166,7 +166,7 @@ class EvenlyDistributedPopulation(BasePopulation):
         #     self._distribute_subnational_locations(population.index)
         # else:
         #     population["subnational"] = self.subnational
-        
+
         self.population_view.update(population)
 
     # def _distribute_subnational_locations(self, pop_index: pd.Index) -> pd.Series:

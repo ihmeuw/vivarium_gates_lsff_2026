@@ -1,7 +1,7 @@
-from vivarium_gates_lsff_by_wealth_quintile_child.components.causes import (
-#     RiskAttributableDisease,
+from vivarium_gates_lsff_by_wealth_quintile_child.components.causes import (  # RiskAttributableDisease,
     SIS_with_birth_prevalence,
 )
+
 # from vivarium_gates_lsff_by_wealth_quintile_child.components.distribution import (
 #     CGFPolytomousDistribution,
 # )
@@ -14,13 +14,11 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.lbwsg import (
     LBWSGPAFCalculationRiskEffect,
     LBWSGPAFObserver,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.components.maternal_characteristics import (
+from vivarium_gates_lsff_by_wealth_quintile_child.components.maternal_characteristics import (  # BirthWeightShiftEffect,
     AdditiveRiskEffect,
-    # BirthWeightShiftEffect,
     MaternalCharacteristics,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.components.observers import (  # BirthObserver,; MortalityHazardRateObserver,
-    # ChildWastingObserver,
+from vivarium_gates_lsff_by_wealth_quintile_child.components.observers import (  # BirthObserver,; MortalityHazardRateObserver,; ChildWastingObserver,
     MortalityObserver,
     ResultsStratifier,
 )
@@ -28,6 +26,7 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.population import (
     EvenlyDistributedPopulation,
     PopulationLineList,
 )
+
 # from vivarium_gates_lsff_by_wealth_quintile_child.components.risk import (
 #     CGFRiskEffect,
 #     ChildUnderweight,

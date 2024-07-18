@@ -405,12 +405,8 @@ class __AffectedUnmodeledCauses(NamedTuple):
     DIARRHEAL_DISEASES_CSMR: TargetString = TargetString(
         "cause.diarrheal_diseases.cause_specific_mortality_rate"
     )
-    MEASLES_CSMR: TargetString = TargetString(
-        "cause.measles.cause_specific_mortality_rate"
-    )
-    MALARIA_CSMR: TargetString = TargetString(
-        "cause.malaria.cause_specific_mortality_rate"
-    )
+    MEASLES_CSMR: TargetString = TargetString("cause.measles.cause_specific_mortality_rate")
+    MALARIA_CSMR: TargetString = TargetString("cause.malaria.cause_specific_mortality_rate")
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 

@@ -72,7 +72,7 @@ def make_artifacts(
     no_lbwsg_pafs: bool,
     lbwsg_pafs: str,
 ) -> None:
-    location = location.title() # HACK
+    location = location.title()  # HACK
     # This is a flag for national level data but we want default to be to write subnational data
     fetch_subnationals = not build_national
     load_lbwsg_pafs = not no_lbwsg_pafs

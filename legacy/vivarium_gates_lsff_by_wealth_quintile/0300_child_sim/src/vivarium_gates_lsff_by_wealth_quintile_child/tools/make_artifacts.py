@@ -74,10 +74,17 @@ def check_for_existing(
 
 
 def build_single(
-    location: str, output_dir: str, replace_keys: Tuple, fetch_subnationals: bool, load_lbwsg_pafs: bool, lbwsg_pafs: str,
+    location: str,
+    output_dir: str,
+    replace_keys: Tuple,
+    fetch_subnationals: bool,
+    load_lbwsg_pafs: bool,
+    lbwsg_pafs: str,
 ) -> None:
     path = Path(output_dir) / f"{sanitize_location(location)}.hdf"
-    build_single_location_artifact(path, location, lbwsg_pafs, replace_keys, fetch_subnationals, load_lbwsg_pafs)
+    build_single_location_artifact(
+        path, location, lbwsg_pafs, replace_keys, fetch_subnationals, load_lbwsg_pafs
+    )
 
 
 def build_artifacts(
@@ -121,15 +128,31 @@ def build_artifacts(
     check_for_existing(output_dir, location, append, replace_keys)
 
     if location in metadata.LOCATIONS:
-        build_single(location, output_dir, replace_keys, fetch_subnationals, load_lbwsg_pafs, lbwsg_pafs)
+        build_single(
+            location,
+            output_dir,
+            replace_keys,
+            fetch_subnationals,
+            load_lbwsg_pafs,
+            lbwsg_pafs,
+        )
     elif location == "all":
         if running_from_cluster():
             # parallel build when on cluster
-            build_all_artifacts(output_dir, verbose, fetch_subnationals, load_lbwsg_pafs, lbwsg_pafs)
+            build_all_artifacts(
+                output_dir, verbose, fetch_subnationals, load_lbwsg_pafs, lbwsg_pafs
+            )
         else:
             # serial build when not on cluster
             for loc in metadata.LOCATIONS:
-                build_single(loc, output_dir, replace_keys, fetch_subnationals, load_lbwsg_pafs, lbwsg_pafs)
+                build_single(
+                    loc,
+                    output_dir,
+                    replace_keys,
+                    fetch_subnationals,
+                    load_lbwsg_pafs,
+                    lbwsg_pafs,
+                )
     else:
         raise ValueError(
             f'Location must be one of {metadata.LOCATIONS} or the string "all". '
@@ -137,7 +160,13 @@ def build_artifacts(
         )
 
 
-def build_all_artifacts(output_dir: Path, verbose: int, fetch_subnationals: bool, load_lbwsg_pafs: bool, lbwsg_pafs: str) -> None:
+def build_all_artifacts(
+    output_dir: Path,
+    verbose: int,
+    fetch_subnationals: bool,
+    load_lbwsg_pafs: bool,
+    lbwsg_pafs: str,
+) -> None:
     """Builds artifacts for all locations in parallel.
     Parameters
     ----------
@@ -162,7 +191,14 @@ def build_all_artifacts(output_dir: Path, verbose: int, fetch_subnationals: bool
 
             job_template = session.createJobTemplate()
             job_template.remoteCommand = shutil.which("python")
-            job_template.args = [__file__, str(path), f'"{location}"', fetch_subnationals, load_lbwsg_pafs, lbwsg_pafs]
+            job_template.args = [
+                __file__,
+                str(path),
+                f'"{location}"',
+                fetch_subnationals,
+                load_lbwsg_pafs,
+                lbwsg_pafs,
+            ]
             job_template.nativeSpecification = (
                 f"-V "  # Export all environment variables
                 f"-b y "  # Command is a binary (python)
@@ -264,5 +300,10 @@ if __name__ == "__main__":
     load_lbwsg_pafs = sys.argv[4]
     lbwsg_pafs = sys.argv[5]
     build_single_location_artifact(
-        artifact_path, artifact_location, lbwsg_pafs, fetch_subnationals, load_lbwsg_pafs, log_to_file=True
+        artifact_path,
+        artifact_location,
+        lbwsg_pafs,
+        fetch_subnationals,
+        load_lbwsg_pafs,
+        log_to_file=True,
     )
