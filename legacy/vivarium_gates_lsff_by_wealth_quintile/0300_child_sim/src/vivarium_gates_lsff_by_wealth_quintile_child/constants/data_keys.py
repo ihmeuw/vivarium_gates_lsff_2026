@@ -31,9 +31,9 @@ class __Population(NamedTuple):
 POPULATION = __Population()
 
 
-##########
-# Causes #
-##########
+# ##########
+# # Causes #
+# ##########
 
 
 class __DiarrhealDiseases(NamedTuple):
@@ -66,312 +66,272 @@ class __DiarrhealDiseases(NamedTuple):
 DIARRHEA = __DiarrhealDiseases()
 
 
-class __Measles(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    PREVALENCE: TargetString = TargetString("cause.measles.prevalence")
-    INCIDENCE_RATE: TargetString = TargetString("cause.measles.incidence_rate")
-    DISABILITY_WEIGHT: TargetString = TargetString("cause.measles.disability_weight")
-    EMR: TargetString = TargetString("cause.measles.excess_mortality_rate")
-    CSMR: TargetString = TargetString("cause.measles.cause_specific_mortality_rate")
-    RESTRICTIONS: TargetString = TargetString("cause.measles.restrictions")
-
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-
-    @property
-    def name(self):
-        return "measles"
-
-    @property
-    def log_name(self):
-        return "measles"
-
-
-MEASLES = __Measles()
-
-
-class __LowerRespiratoryInfections(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DURATION: TargetString = TargetString("cause.lower_respiratory_infections.duration")
-    PREVALENCE: TargetString = TargetString("cause.lower_respiratory_infections.prevalence")
-    INCIDENCE_RATE: TargetString = TargetString(
-        "cause.lower_respiratory_infections.incidence_rate"
-    )
-    REMISSION_RATE: TargetString = TargetString(
-        "cause.lower_respiratory_infections.remission_rate"
-    )
-    DISABILITY_WEIGHT: TargetString = TargetString(
-        "cause.lower_respiratory_infections.disability_weight"
-    )
-    EMR: TargetString = TargetString(
-        "cause.lower_respiratory_infections.excess_mortality_rate"
-    )
-    CSMR: TargetString = TargetString(
-        "cause.lower_respiratory_infections.cause_specific_mortality_rate"
-    )
-    RESTRICTIONS: TargetString = TargetString(
-        "cause.lower_respiratory_infections.restrictions"
-    )
-
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-
-    @property
-    def name(self):
-        return "lower_respiratory_infections"
-
-    @property
-    def log_name(self):
-        return "lower respiratory infections"
-
-
-LRI = __LowerRespiratoryInfections()
-
-
-class __Malaria(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DURATION: TargetString = TargetString("cause.malaria.duration")
-    PREVALENCE: TargetString = TargetString("cause.malaria.prevalence")
-    INCIDENCE_RATE: TargetString = TargetString("cause.malaria.incidence_rate")
-    REMISSION_RATE: TargetString = TargetString("cause.malaria.remission_rate")
-    DISABILITY_WEIGHT: TargetString = TargetString("cause.malaria.disability_weight")
-    EMR: TargetString = TargetString("cause.malaria.excess_mortality_rate")
-    CSMR: TargetString = TargetString("cause.malaria.cause_specific_mortality_rate")
-    RESTRICTIONS: TargetString = TargetString("cause.malaria.restrictions")
-    BIRTH_PREVALENCE: TargetString = TargetString("cause.malaria.birth_prevalence")
-
-    @property
-    def name(self):
-        return "malaria"
-
-    @property
-    def log_name(self):
-        return "malaria"
-
-
-MALARIA = __Malaria()
-
-
-class __ProteinEnergyMalnutrition(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    EMR: TargetString = TargetString(
-        "cause.protein_energy_malnutrition.excess_mortality_rate"
-    )
-    CSMR: TargetString = TargetString(
-        "cause.protein_energy_malnutrition.cause_specific_mortality_rate"
-    )
-    RESTRICTIONS: TargetString = TargetString(
-        "cause.protein_energy_malnutrition.restrictions"
-    )
-
-    @property
-    def name(self):
-        return "protein_energy_malnutrition"
-
-    @property
-    def log_name(self):
-        return "protein energy malnutrition"
+# class __Measles(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     PREVALENCE: TargetString = TargetString("cause.measles.prevalence")
+#     INCIDENCE_RATE: TargetString = TargetString("cause.measles.incidence_rate")
+#     DISABILITY_WEIGHT: TargetString = TargetString("cause.measles.disability_weight")
+#     EMR: TargetString = TargetString("cause.measles.excess_mortality_rate")
+#     CSMR: TargetString = TargetString("cause.measles.cause_specific_mortality_rate")
+#     RESTRICTIONS: TargetString = TargetString("cause.measles.restrictions")
+
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+
+#     @property
+#     def name(self):
+#         return "measles"
+
+#     @property
+#     def log_name(self):
+#         return "measles"
+
+
+# MEASLES = __Measles()
+
+
+# class __LowerRespiratoryInfections(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DURATION: TargetString = TargetString("cause.lower_respiratory_infections.duration")
+#     PREVALENCE: TargetString = TargetString("cause.lower_respiratory_infections.prevalence")
+#     INCIDENCE_RATE: TargetString = TargetString(
+#         "cause.lower_respiratory_infections.incidence_rate"
+#     )
+#     REMISSION_RATE: TargetString = TargetString(
+#         "cause.lower_respiratory_infections.remission_rate"
+#     )
+#     DISABILITY_WEIGHT: TargetString = TargetString(
+#         "cause.lower_respiratory_infections.disability_weight"
+#     )
+#     EMR: TargetString = TargetString(
+#         "cause.lower_respiratory_infections.excess_mortality_rate"
+#     )
+#     CSMR: TargetString = TargetString(
+#         "cause.lower_respiratory_infections.cause_specific_mortality_rate"
+#     )
+#     RESTRICTIONS: TargetString = TargetString(
+#         "cause.lower_respiratory_infections.restrictions"
+#     )
+
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+
+#     @property
+#     def name(self):
+#         return "lower_respiratory_infections"
+
+#     @property
+#     def log_name(self):
+#         return "lower respiratory infections"
+
+
+# LRI = __LowerRespiratoryInfections()
+
+
+# class __Malaria(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DURATION: TargetString = TargetString("cause.malaria.duration")
+#     PREVALENCE: TargetString = TargetString("cause.malaria.prevalence")
+#     INCIDENCE_RATE: TargetString = TargetString("cause.malaria.incidence_rate")
+#     REMISSION_RATE: TargetString = TargetString("cause.malaria.remission_rate")
+#     DISABILITY_WEIGHT: TargetString = TargetString("cause.malaria.disability_weight")
+#     EMR: TargetString = TargetString("cause.malaria.excess_mortality_rate")
+#     CSMR: TargetString = TargetString("cause.malaria.cause_specific_mortality_rate")
+#     RESTRICTIONS: TargetString = TargetString("cause.malaria.restrictions")
+#     BIRTH_PREVALENCE: TargetString = TargetString("cause.malaria.birth_prevalence")
+
+#     @property
+#     def name(self):
+#         return "malaria"
+
+#     @property
+#     def log_name(self):
+#         return "malaria"
+
+
+# MALARIA = __Malaria()
+
+
+# class __ProteinEnergyMalnutrition(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     EMR: TargetString = TargetString(
+#         "cause.protein_energy_malnutrition.excess_mortality_rate"
+#     )
+#     CSMR: TargetString = TargetString(
+#         "cause.protein_energy_malnutrition.cause_specific_mortality_rate"
+#     )
+#     RESTRICTIONS: TargetString = TargetString(
+#         "cause.protein_energy_malnutrition.restrictions"
+#     )
+
+#     @property
+#     def name(self):
+#         return "protein_energy_malnutrition"
+
+#     @property
+#     def log_name(self):
+#         return "protein energy malnutrition"
 
 
-PEM = __ProteinEnergyMalnutrition()
+# PEM = __ProteinEnergyMalnutrition()
 
 
-class __ModerateProteinEnergyMalnutrition(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISABILITY_WEIGHT: TargetString = TargetString(
-        "cause.moderate_protein_energy_malnutrition.disability_weight"
-    )
-    EMR: TargetString = TargetString(
-        "cause.moderate_protein_energy_malnutrition.excess_mortality_rate"
-    )
-    CSMR: TargetString = TargetString(
-        "cause.moderate_protein_energy_malnutrition.cause_specific_mortality_rate"
-    )
-    RESTRICTIONS: TargetString = TargetString(
-        "cause.moderate_protein_energy_malnutrition.restrictions"
-    )
-
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+# class __ModerateProteinEnergyMalnutrition(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DISABILITY_WEIGHT: TargetString = TargetString(
+#         "cause.moderate_protein_energy_malnutrition.disability_weight"
+#     )
+#     EMR: TargetString = TargetString(
+#         "cause.moderate_protein_energy_malnutrition.excess_mortality_rate"
+#     )
+#     CSMR: TargetString = TargetString(
+#         "cause.moderate_protein_energy_malnutrition.cause_specific_mortality_rate"
+#     )
+#     RESTRICTIONS: TargetString = TargetString(
+#         "cause.moderate_protein_energy_malnutrition.restrictions"
+#     )
+
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
-    @property
-    def name(self):
-        return "moderate_protein_energy_malnutrition"
+#     @property
+#     def name(self):
+#         return "moderate_protein_energy_malnutrition"
 
-    @property
-    def log_name(self):
-        return "moderate protein energy malnutrition"
+#     @property
+#     def log_name(self):
+#         return "moderate protein energy malnutrition"
 
 
-MODERATE_PEM = __ModerateProteinEnergyMalnutrition()
+# MODERATE_PEM = __ModerateProteinEnergyMalnutrition()
 
 
-class __SevereProteinEnergyMalnutrition(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISABILITY_WEIGHT: TargetString = TargetString(
-        "cause.severe_protein_energy_malnutrition.disability_weight"
-    )
-    EMR: TargetString = TargetString(
-        "cause.severe_protein_energy_malnutrition.excess_mortality_rate"
-    )
-    CSMR: TargetString = TargetString(
-        "cause.severe_protein_energy_malnutrition.cause_specific_mortality_rate"
-    )
-    RESTRICTIONS: TargetString = TargetString(
-        "cause.severe_protein_energy_malnutrition.restrictions"
-    )
+# class __SevereProteinEnergyMalnutrition(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DISABILITY_WEIGHT: TargetString = TargetString(
+#         "cause.severe_protein_energy_malnutrition.disability_weight"
+#     )
+#     EMR: TargetString = TargetString(
+#         "cause.severe_protein_energy_malnutrition.excess_mortality_rate"
+#     )
+#     CSMR: TargetString = TargetString(
+#         "cause.severe_protein_energy_malnutrition.cause_specific_mortality_rate"
+#     )
+#     RESTRICTIONS: TargetString = TargetString(
+#         "cause.severe_protein_energy_malnutrition.restrictions"
+#     )
 
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
-    @property
-    def name(self):
-        return "severe_protein_energy_malnutrition"
+#     @property
+#     def name(self):
+#         return "severe_protein_energy_malnutrition"
 
-    @property
-    def log_name(self):
-        return "severe protein energy malnutrition"
+#     @property
+#     def log_name(self):
+#         return "severe protein energy malnutrition"
 
 
-SEVERE_PEM = __SevereProteinEnergyMalnutrition()
+# SEVERE_PEM = __SevereProteinEnergyMalnutrition()
 
 
-################
-# Risk Factors #
-################
+# ################
+# # Risk Factors #
+# ################
 
 
-class __Wasting(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = "risk_factor.child_wasting.distribution"
-    ALT_DISTRIBUTION: TargetString = "alternative_risk_factor.child_wasting.distribution"
-    CATEGORIES: TargetString = "risk_factor.child_wasting.categories"
-    EXPOSURE: TargetString = "risk_factor.child_wasting.exposure"
-    RELATIVE_RISK: TargetString = "risk_factor.child_wasting.relative_risk"
-    PAF: TargetString = "risk_factor.child_wasting.population_attributable_fraction"
-    TRANSITION_RATES: TargetString = "risk_factor.child_wasting.transition_rates"
-    BIRTH_PREVALENCE: TargetString = "risk_factor.child_wasting.birth_prevalence"
+# class __Wasting(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DISTRIBUTION: TargetString = "risk_factor.child_wasting.distribution"
+#     ALT_DISTRIBUTION: TargetString = "alternative_risk_factor.child_wasting.distribution"
+#     CATEGORIES: TargetString = "risk_factor.child_wasting.categories"
+#     EXPOSURE: TargetString = "risk_factor.child_wasting.exposure"
+#     RELATIVE_RISK: TargetString = "risk_factor.child_wasting.relative_risk"
+#     PAF: TargetString = "risk_factor.child_wasting.population_attributable_fraction"
+#     TRANSITION_RATES: TargetString = "risk_factor.child_wasting.transition_rates"
+#     BIRTH_PREVALENCE: TargetString = "risk_factor.child_wasting.birth_prevalence"
 
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    CAT4 = "cat4"
-    CAT3 = "cat3"
-    CAT25 = "cat2.5"
-    CAT2 = "cat2"
-    CAT1 = "cat1"
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+#     CAT4 = "cat4"
+#     CAT3 = "cat3"
+#     CAT25 = "cat2.5"
+#     CAT2 = "cat2"
+#     CAT1 = "cat1"
 
-    @property
-    def name(self):
-        return "child_wasting"
+#     @property
+#     def name(self):
+#         return "child_wasting"
 
-    @property
-    def log_name(self):
-        return "child wasting"
+#     @property
+#     def log_name(self):
+#         return "child wasting"
 
 
-WASTING = __Wasting()
+# WASTING = __Wasting()
 
 
-class __Stunting(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = "risk_factor.child_stunting.distribution"
-    ALT_DISTRIBUTION: TargetString = "alternative_risk_factor.child_stunting.distribution"
-    CATEGORIES: TargetString = "risk_factor.child_stunting.categories"
-    EXPOSURE: TargetString = "risk_factor.child_stunting.exposure"
-    RELATIVE_RISK: TargetString = "risk_factor.child_stunting.relative_risk"
-    PAF: TargetString = "risk_factor.child_stunting.population_attributable_fraction"
+# class __Stunting(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DISTRIBUTION: TargetString = "risk_factor.child_stunting.distribution"
+#     ALT_DISTRIBUTION: TargetString = "alternative_risk_factor.child_stunting.distribution"
+#     CATEGORIES: TargetString = "risk_factor.child_stunting.categories"
+#     EXPOSURE: TargetString = "risk_factor.child_stunting.exposure"
+#     RELATIVE_RISK: TargetString = "risk_factor.child_stunting.relative_risk"
+#     PAF: TargetString = "risk_factor.child_stunting.population_attributable_fraction"
 
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    CAT4 = "cat4"
-    CAT3 = "cat3"
-    CAT2 = "cat2"
-    CAT1 = "cat1"
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+#     CAT4 = "cat4"
+#     CAT3 = "cat3"
+#     CAT2 = "cat2"
+#     CAT1 = "cat1"
 
-    @property
-    def name(self):
-        return "child_stunting"
+#     @property
+#     def name(self):
+#         return "child_stunting"
 
-    @property
-    def log_name(self):
-        return "child stunting"
+#     @property
+#     def log_name(self):
+#         return "child stunting"
 
 
-STUNTING = __Stunting()
+# STUNTING = __Stunting()
 
 
-class __Underweight(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = "risk_factor.child_underweight.distribution"
-    EXPOSURE: TargetString = "risk_factor.child_underweight.exposure"
-    CATEGORIES: TargetString = "risk_factor.child_underweight.categories"
-    RELATIVE_RISK: TargetString = "risk_factor.child_underweight.relative_risk"
+# class __Underweight(NamedTuple):
+#     # Keys that will be loaded into the artifact. must have a colon type declaration
+#     DISTRIBUTION: TargetString = "risk_factor.child_underweight.distribution"
+#     EXPOSURE: TargetString = "risk_factor.child_underweight.exposure"
+#     CATEGORIES: TargetString = "risk_factor.child_underweight.categories"
+#     RELATIVE_RISK: TargetString = "risk_factor.child_underweight.relative_risk"
 
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    CAT4 = "cat4"
-    CAT3 = "cat3"
-    CAT2 = "cat2"
-    CAT1 = "cat1"
+#     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+#     CAT4 = "cat4"
+#     CAT3 = "cat3"
+#     CAT2 = "cat2"
+#     CAT1 = "cat1"
 
-    @property
-    def name(self):
-        return "child_underweight"
+#     @property
+#     def name(self):
+#         return "child_underweight"
 
-    @property
-    def log_name(self):
-        return "child_underweight"
+#     @property
+#     def log_name(self):
+#         return "child_underweight"
 
 
-UNDERWEIGHT = __Underweight()
+# UNDERWEIGHT = __Underweight()
 
 
-class __ChildGrowthFailure(NamedTuple):
-    PAF: TargetString = "risk_factor.child_growth_failure.population_attributable_fraction"
+# class __ChildGrowthFailure(NamedTuple):
+#     PAF: TargetString = "risk_factor.child_growth_failure.population_attributable_fraction"
 
-    @property
-    def name(self):
-        return "child_growth_failure"
+#     @property
+#     def name(self):
+#         return "child_growth_failure"
 
-    @property
-    def log_name(self):
-        return "child_growth_failure"
+#     @property
+#     def log_name(self):
+#         return "child_growth_failure"
 
 
-CHILD_GROWTH_FAILURE = __ChildGrowthFailure()
-
-
-class __WastingTreatment(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    EXPOSURE: TargetString
-    DISTRIBUTION: TargetString
-    CATEGORIES: TargetString
-    RELATIVE_RISK: TargetString
-    PAF: TargetString
-
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    UNCOVERED = "cat1"
-    BASELINE_COVERAGE = "cat2"
-    ALTERNATIVE_COVERAGE = "cat3"
-
-    TMREL_CATEGORY = BASELINE_COVERAGE
-    COVERED_CATEGORIES = [BASELINE_COVERAGE, ALTERNATIVE_COVERAGE]
-    UNCOVERED_CATEGORIES = [UNCOVERED]
-
-    @property
-    def name(self):
-        return self.EXPOSURE.name
-
-    @property
-    def log_name(self):
-        return self.name.replace("_", " ")
-
-
-def _get_wasting_treatment_keys(treatment_type: str) -> __WastingTreatment:
-    return __WastingTreatment(
-        EXPOSURE=TargetString(f"risk_factor.{treatment_type}.exposure"),
-        DISTRIBUTION=TargetString(f"risk_factor.{treatment_type}.distribution"),
-        CATEGORIES=TargetString(f"risk_factor.{treatment_type}.categories"),
-        RELATIVE_RISK=TargetString(f"risk_factor.{treatment_type}.relative_risk"),
-        PAF=TargetString(f"risk_factor.{treatment_type}.population_attributable_fraction"),
-    )
-
-
-SAM_TREATMENT = _get_wasting_treatment_keys("severe_acute_malnutrition_treatment")
-MAM_TREATMENT = _get_wasting_treatment_keys("moderate_acute_malnutrition_treatment")
+# CHILD_GROWTH_FAILURE = __ChildGrowthFailure()
 
 
 class __LowBirthWeightShortGestation(NamedTuple):
@@ -439,11 +399,17 @@ class __AffectedUnmodeledCauses(NamedTuple):
     SIDS_CSMR: TargetString = TargetString(
         "cause.sudden_infant_death_syndrome.cause_specific_mortality_rate"
     )
-    NEONATAL_LRI_CSMR: TargetString = TargetString(
-        "cause.neonatal_lower_respiratory_infections.cause_specific_mortality_rate"
+    LRI_CSMR: TargetString = TargetString(
+        "cause.lower_respiratory_infections.cause_specific_mortality_rate"
     )
-    NEONATAL_DIARRHEAL_DISEASES_CSMR: TargetString = TargetString(
-        "cause.neonatal_diarrheal_diseases.cause_specific_mortality_rate"
+    DIARRHEAL_DISEASES_CSMR: TargetString = TargetString(
+        "cause.diarrheal_diseases.cause_specific_mortality_rate"
+    )
+    MEASLES_CSMR: TargetString = TargetString(
+        "cause.measles.cause_specific_mortality_rate"
+    )
+    MALARIA_CSMR: TargetString = TargetString(
+        "cause.malaria.cause_specific_mortality_rate"
     )
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
@@ -460,19 +426,19 @@ class __AffectedUnmodeledCauses(NamedTuple):
 AFFECTED_UNMODELED_CAUSES = __AffectedUnmodeledCauses()
 
 
-class CGFCategories(Enum):
-    UNEXPOSED = "unexposed"
-    MILD = "mild"
-    MODERATE = "moderate"
-    SEVERE = "severe"
+# class CGFCategories(Enum):
+#     UNEXPOSED = "unexposed"
+#     MILD = "mild"
+#     MODERATE = "moderate"
+#     SEVERE = "severe"
 
 
-class ChildWastingCategories(Enum):
-    UNEXPOSED = "unexposed"
-    MILD = "mild"
-    BETTER_MODERATE = "better_moderate"
-    WORSE_MODERATE = "worse_moderate"
-    SEVERE = "severe"
+# class ChildWastingCategories(Enum):
+#     UNEXPOSED = "unexposed"
+#     MILD = "mild"
+#     BETTER_MODERATE = "better_moderate"
+#     WORSE_MODERATE = "worse_moderate"
+#     SEVERE = "severe"
 
 
 class __AdditiveRisk(NamedTuple):
@@ -498,79 +464,33 @@ class __AdditiveRisk(NamedTuple):
         return self.name.replace("_", " ")
 
 
-def _get_additive_risk_keys(treatment_type: str) -> __AdditiveRisk:
-    return __AdditiveRisk(
-        EXPOSURE=TargetString(f"risk_factor.{treatment_type}.exposure"),
-        DISTRIBUTION=TargetString(f"risk_factor.{treatment_type}.distribution"),
-        CATEGORIES=TargetString(f"risk_factor.{treatment_type}.categories"),
-        EXCESS_SHIFT=TargetString(f"risk_factor.{treatment_type}.excess_shift"),
-        RISK_SPECIFIC_SHIFT=TargetString(f"risk_factor.{treatment_type}.risk_specific_shift"),
-    )
+# def _get_additive_risk_keys(treatment_type: str) -> __AdditiveRisk:
+#     return __AdditiveRisk(
+#         EXPOSURE=TargetString(f"risk_factor.{treatment_type}.exposure"),
+#         DISTRIBUTION=TargetString(f"risk_factor.{treatment_type}.distribution"),
+#         CATEGORIES=TargetString(f"risk_factor.{treatment_type}.categories"),
+#         EXCESS_SHIFT=TargetString(f"risk_factor.{treatment_type}.excess_shift"),
+#         RISK_SPECIFIC_SHIFT=TargetString(f"risk_factor.{treatment_type}.risk_specific_shift"),
+#     )
 
 
-IFA_SUPPLEMENTATION = _get_additive_risk_keys("iron_folic_acid_supplementation")
-BEP_SUPPLEMENTATION = _get_additive_risk_keys("balanced_energy_protein_supplementation")
-IV_IRON = _get_additive_risk_keys("iv_iron")
-
-class __MMN_Supplementation(NamedTuple):
-    # Keys that will be loaded into the artifact. must have a colon type declaration
-    EXPOSURE: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.exposure"
-    )
-    DISTRIBUTION: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.distribution"
-    )
-    CATEGORIES: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.categories"
-    )
-    EXCESS_SHIFT: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.excess_shift"
-    )
-    EXCESS_GA_SHIFT_SUBPOP_1: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.excess_gestational_age_shift_subpop_1"
-    )
-    EXCESS_GA_SHIFT_SUBPOP_2: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.excess_gestational_age_shift_subpop_2"
-    )
-    RISK_SPECIFIC_SHIFT: TargetString = TargetString(
-        "risk_factor.multiple_micronutrient_supplementation.risk_specific_shift"
-    )
-
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    CAT1 = "cat1"
-    CAT2 = "cat2"
-
-    @property
-    def name(self):
-        return self.EXPOSURE.name
-
-    @property
-    def log_name(self):
-        return self.name.replace("_", " ")
-
-
-MMN_SUPPLEMENTATION = __MMN_Supplementation()
+# IFA_SUPPLEMENTATION = _get_additive_risk_keys("iron_folic_acid_supplementation")
 
 
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
-    MEASLES,
-    LRI,
-    MALARIA,
-    STUNTING,
-    WASTING,
-    UNDERWEIGHT,
-    CHILD_GROWTH_FAILURE,
-    PEM,
-    MODERATE_PEM,
-    SEVERE_PEM,
-    SAM_TREATMENT,
-    MAM_TREATMENT,
+    # MEASLES,
+    # LRI,
+    # MALARIA,
+    # STUNTING,
+    # WASTING,
+    # UNDERWEIGHT,
+    # CHILD_GROWTH_FAILURE,
+    # PEM,
+    # MODERATE_PEM,
+    # SEVERE_PEM,
     LBWSG,
     AFFECTED_UNMODELED_CAUSES,
-    IFA_SUPPLEMENTATION,
-    MMN_SUPPLEMENTATION,
-    BEP_SUPPLEMENTATION,
-    IV_IRON,
+    # IFA_SUPPLEMENTATION,
 ]

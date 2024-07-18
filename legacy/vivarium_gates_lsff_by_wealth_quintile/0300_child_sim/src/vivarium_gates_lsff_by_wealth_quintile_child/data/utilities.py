@@ -564,9 +564,10 @@ def load_lbwsg_exposure(location: str):
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=[2, 3],
         release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        # This data set is big, so let's reduce it by a factor of ~40
+        year_id=2019,
     )
-    # This data set is big, so let's reduce it by a factor of ~40
-    data = data[data["year_id"] == 2019]
+
     return data
 
 

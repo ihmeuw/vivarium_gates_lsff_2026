@@ -19,32 +19,30 @@ from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
     data_keys,
     data_values,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.constants.data_keys import (
-    BEP_SUPPLEMENTATION,
-    IFA_SUPPLEMENTATION,
-    MMN_SUPPLEMENTATION,
-    STUNTING,
-    WASTING,
-)
+# from vivarium_gates_lsff_by_wealth_quintile_child.constants.data_keys import (
+#     IFA_SUPPLEMENTATION,
+#     STUNTING,
+#     WASTING,
+# )
 from vivarium_gates_lsff_by_wealth_quintile_child.utilities import get_random_variable
 
 
 class MaternalCharacteristics(Component):
     CONFIGURATION_DEFAULTS = {
-        f"risk_factor.{IFA_SUPPLEMENTATION.name}": {
-            "data_sources": {
-                "exposure": f"risk_factor.{IFA_SUPPLEMENTATION.name}.exposure",
-            },
-            "rebinned_exposed": [],
-            "category_thresholds": [],
-        },
+        # f"risk_factor.{IFA_SUPPLEMENTATION.name}": {
+        #     "data_sources": {
+        #         "exposure": f"risk_factor.{IFA_SUPPLEMENTATION.name}.exposure",
+        #     },
+        #     "rebinned_exposed": [],
+        #     "category_thresholds": [],
+        # },
     }
 
     def __init__(self):
         super().__init__()
         self.supplementation_exposure_column_name = "maternal_supplementation_exposure"
 
-        self.ifa_exposure_pipeline_name = f"{IFA_SUPPLEMENTATION.name}.exposure"
+        # self.ifa_exposure_pipeline_name = f"{IFA_SUPPLEMENTATION.name}.exposure"
 
     @property
     def columns_created(self) -> List[str]:
@@ -59,11 +57,11 @@ class MaternalCharacteristics(Component):
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         self.start_time = get_time_stamp(builder.configuration.time.start)
-        self.ifa_exposure_pipeline = builder.value.register_value_producer(
-            self.ifa_exposure_pipeline_name,
-            source=self._get_ifa_exposure,
-            requires_columns=[self.supplementation_exposure_column_name],
-        )
+        # self.ifa_exposure_pipeline = builder.value.register_value_producer(
+        #     self.ifa_exposure_pipeline_name,
+        #     source=self._get_ifa_exposure,
+        #     requires_columns=[self.supplementation_exposure_column_name],
+        # )
 
     def build_all_lookup_tables(self, builder: Builder) -> None:
         # We need to call this method on each risk in the configuration defaults
@@ -105,13 +103,13 @@ class MaternalCharacteristics(Component):
     # Pipeline sources and modifiers #
     ##################################
 
-    def _get_ifa_exposure(self, index: pd.Index) -> pd.Series:
-        pop = self.population_view.get(index)
-        has_ifa = pop[self.supplementation_exposure_column_name].isin(["ifa", "mms", "bep"])
+    # def _get_ifa_exposure(self, index: pd.Index) -> pd.Series:
+    #     pop = self.population_view.get(index)
+    #     has_ifa = pop[self.supplementation_exposure_column_name].isin(["ifa", "mms", "bep"])
 
-        exposure = pd.Series(IFA_SUPPLEMENTATION.CAT1, index=index)
-        exposure[has_ifa] = IFA_SUPPLEMENTATION.CAT2
-        return exposure
+    #     exposure = pd.Series(IFA_SUPPLEMENTATION.CAT1, index=index)
+    #     exposure[has_ifa] = IFA_SUPPLEMENTATION.CAT2
+    #     return exposure
 
 
 class AdditiveRiskEffect(RiskEffect):
@@ -205,100 +203,100 @@ class AdditiveRiskEffect(RiskEffect):
         return effect
 
 
-class BirthWeightShiftEffect(Component):
-    def __init__(self):
-        super().__init__()
-        self.ifa_effect_pipeline_name = f"{IFA_SUPPLEMENTATION.name}_on_birth_weight.effect"
+# class BirthWeightShiftEffect(Component):
+#     def __init__(self):
+#         super().__init__()
+#         self.ifa_effect_pipeline_name = f"{IFA_SUPPLEMENTATION.name}_on_birth_weight.effect"
 
-        self.stunting_exposure_parameters_pipeline_name = (
-            f"risk_factor.{STUNTING.name}.exposure_parameters"
-        )
+#         self.stunting_exposure_parameters_pipeline_name = (
+#             f"risk_factor.{STUNTING.name}.exposure_parameters"
+#         )
 
-        self.wasting_exposure_parameters_pipeline_name = (
-            f"risk_factor.{WASTING.name}.exposure_parameters"
-        )
+#         self.wasting_exposure_parameters_pipeline_name = (
+#             f"risk_factor.{WASTING.name}.exposure_parameters"
+#         )
 
-    #################
-    # Setup methods #
-    #################
+#     #################
+#     # Setup methods #
+#     #################
 
-    # noinspection PyAttributeOutsideInit
-    def setup(self, builder: Builder) -> None:
-        self.stunting_effect_per_gram = self._get_stunting_effect_per_gram(builder)
-        self.wasting_effect_per_gram = data_values.LBWSG.WASTING_EFFECT_PER_GRAM
+#     # noinspection PyAttributeOutsideInit
+#     def setup(self, builder: Builder) -> None:
+#         self.stunting_effect_per_gram = self._get_stunting_effect_per_gram(builder)
+#         self.wasting_effect_per_gram = data_values.LBWSG.WASTING_EFFECT_PER_GRAM
 
-        self.pipelines = {
-            pipeline_name: builder.value.get_value(pipeline_name)
-            for pipeline_name in [
-                self.ifa_effect_pipeline_name,
-            ]
-        }
+#         self.pipelines = {
+#             pipeline_name: builder.value.get_value(pipeline_name)
+#             for pipeline_name in [
+#                 self.ifa_effect_pipeline_name,
+#             ]
+#         }
 
-        builder.value.register_value_modifier(
-            self.stunting_exposure_parameters_pipeline_name,
-            modifier=self._modify_stunting_exposure_parameters,
-            requires_values=list(self.pipelines.keys()),
-        )
+#         builder.value.register_value_modifier(
+#             self.stunting_exposure_parameters_pipeline_name,
+#             modifier=self._modify_stunting_exposure_parameters,
+#             requires_values=list(self.pipelines.keys()),
+#         )
 
-        builder.value.register_value_modifier(
-            self.wasting_exposure_parameters_pipeline_name,
-            modifier=self._modify_wasting_exposure_parameters,
-            requires_values=list(self.pipelines.keys()),
-        )
+#         builder.value.register_value_modifier(
+#             self.wasting_exposure_parameters_pipeline_name,
+#             modifier=self._modify_wasting_exposure_parameters,
+#             requires_values=list(self.pipelines.keys()),
+#         )
 
-    ##################################
-    # Pipeline sources and modifiers #
-    ##################################
+#     ##################################
+#     # Pipeline sources and modifiers #
+#     ##################################
 
-    def _modify_stunting_exposure_parameters(
-        self, index: pd.Index, target: pd.DataFrame
-    ) -> pd.DataFrame:
-        cat3_increase = (
-            self._get_total_birth_weight_shift(index) * self.stunting_effect_per_gram
-        )
-        return self._apply_birth_weight_effect(target, cat3_increase)
+#     def _modify_stunting_exposure_parameters(
+#         self, index: pd.Index, target: pd.DataFrame
+#     ) -> pd.DataFrame:
+#         cat3_increase = (
+#             self._get_total_birth_weight_shift(index) * self.stunting_effect_per_gram
+#         )
+#         return self._apply_birth_weight_effect(target, cat3_increase)
 
-    def _modify_wasting_exposure_parameters(
-        self, index: pd.Index, target: pd.DataFrame
-    ) -> pd.DataFrame:
-        cat3_increase = (
-            self._get_total_birth_weight_shift(index) * self.wasting_effect_per_gram
-        )
-        return self._apply_birth_weight_effect(target, cat3_increase)
+#     def _modify_wasting_exposure_parameters(
+#         self, index: pd.Index, target: pd.DataFrame
+#     ) -> pd.DataFrame:
+#         cat3_increase = (
+#             self._get_total_birth_weight_shift(index) * self.wasting_effect_per_gram
+#         )
+#         return self._apply_birth_weight_effect(target, cat3_increase)
 
-    ##################
-    # Helper methods #
-    ##################
+#     ##################
+#     # Helper methods #
+#     ##################
 
-    def _get_total_birth_weight_shift(self, index: pd.Index) -> pd.Series:
-        return pd.concat(
-            [pipeline(index) for pipeline in self.pipelines.values()], axis=1
-        ).sum(axis=1)
+#     def _get_total_birth_weight_shift(self, index: pd.Index) -> pd.Series:
+#         return pd.concat(
+#             [pipeline(index) for pipeline in self.pipelines.values()], axis=1
+#         ).sum(axis=1)
 
-    # noinspection PyMethodMayBeStatic
-    def _get_stunting_effect_per_gram(self, builder: Builder) -> pd.Series:
-        return get_random_variable(
-            builder.configuration.input_data.input_draw_number,
-            *data_values.LBWSG.STUNTING_EFFECT_PER_GRAM,
-        )
+#     # noinspection PyMethodMayBeStatic
+#     def _get_stunting_effect_per_gram(self, builder: Builder) -> pd.Series:
+#         return get_random_variable(
+#             builder.configuration.input_data.input_draw_number,
+#             *data_values.LBWSG.STUNTING_EFFECT_PER_GRAM,
+#         )
 
-    @staticmethod
-    def _apply_birth_weight_effect(
-        target: pd.DataFrame, cat3_increase: pd.Series
-    ) -> pd.DataFrame:
-        # no changes if all probability in cat4
-        if (target["cat4"] == 1).all():
-            return target
+#     @staticmethod
+#     def _apply_birth_weight_effect(
+#         target: pd.DataFrame, cat3_increase: pd.Series
+#     ) -> pd.DataFrame:
+#         # no changes if all probability in cat4
+#         if (target["cat4"] == 1).all():
+#             return target
 
-        sam_and_mam = target["cat1"] + target["cat2"]
-        cat3 = target["cat3"]
+#         sam_and_mam = target["cat1"] + target["cat2"]
+#         cat3 = target["cat3"]
 
-        # can't remove more from a category than exists in its categories
-        true_cat3_increase = np.maximum(
-            np.minimum(sam_and_mam, cat3_increase), np.minimum(cat3, -cat3_increase)
-        )
+#         # can't remove more from a category than exists in its categories
+#         true_cat3_increase = np.maximum(
+#             np.minimum(sam_and_mam, cat3_increase), np.minimum(cat3, -cat3_increase)
+#         )
 
-        target["cat3"] = target["cat3"] + true_cat3_increase
-        target["cat2"] = target["cat2"] * (1 - true_cat3_increase / sam_and_mam)
-        target["cat1"] = target["cat1"] * (1 - true_cat3_increase / sam_and_mam)
-        return target
+#         target["cat3"] = target["cat3"] + true_cat3_increase
+#         target["cat2"] = target["cat2"] * (1 - true_cat3_increase / sam_and_mam)
+#         target["cat1"] = target["cat1"] * (1 - true_cat3_increase / sam_and_mam)
+#         return target

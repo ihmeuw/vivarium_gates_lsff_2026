@@ -1,6 +1,6 @@
 components:
     vivarium_public_health:
-        metrics:
+        results:
             - ResultsStratifier()
     vivarium_gates_lsff_by_wealth_quintile_child:
         components:
@@ -39,7 +39,8 @@ configuration:
         untracking_age: 0.03835616 # 14 days
 
     intervention:
-        scenario: 'baseline'
+        child_scenario: 'baseline'
+        maternal_scenario: 'baseline'
 
     stratification:
         default:

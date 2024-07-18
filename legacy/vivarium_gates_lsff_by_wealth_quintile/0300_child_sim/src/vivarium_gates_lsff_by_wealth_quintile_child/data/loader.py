@@ -53,40 +53,31 @@ NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.POPULATION.AGE_BINS,
     data_keys.POPULATION.DEMOGRAPHY,
     data_keys.POPULATION.TMRLE,
+    # NOTE: Diarrhea is necessary for calculating LBWSG PAFs!
     data_keys.DIARRHEA.DURATION,
     data_keys.DIARRHEA.REMISSION_RATE,
     data_keys.DIARRHEA.RESTRICTIONS,
-    data_keys.MEASLES.RESTRICTIONS,
-    data_keys.LRI.DURATION,
-    data_keys.LRI.REMISSION_RATE,
-    data_keys.LRI.RESTRICTIONS,
-    data_keys.MALARIA.DURATION,
-    data_keys.MALARIA.REMISSION_RATE,
-    data_keys.MALARIA.RESTRICTIONS,
-    data_keys.WASTING.DISTRIBUTION,
-    data_keys.WASTING.ALT_DISTRIBUTION,
-    data_keys.WASTING.CATEGORIES,
-    data_keys.WASTING.RELATIVE_RISK,
-    data_keys.STUNTING.DISTRIBUTION,
-    data_keys.STUNTING.ALT_DISTRIBUTION,
-    data_keys.STUNTING.CATEGORIES,
-    data_keys.STUNTING.RELATIVE_RISK,
-    data_keys.UNDERWEIGHT.RELATIVE_RISK,
-    data_keys.UNDERWEIGHT.DISTRIBUTION,
-    data_keys.UNDERWEIGHT.CATEGORIES,
-    data_keys.PEM.RESTRICTIONS,
-    data_keys.MODERATE_PEM.RESTRICTIONS,
-    data_keys.SEVERE_PEM.RESTRICTIONS,
-    data_keys.SAM_TREATMENT.EXPOSURE,
-    data_keys.SAM_TREATMENT.DISTRIBUTION,
-    data_keys.SAM_TREATMENT.CATEGORIES,
-    data_keys.SAM_TREATMENT.RELATIVE_RISK,
-    data_keys.SAM_TREATMENT.PAF,
-    data_keys.MAM_TREATMENT.EXPOSURE,
-    data_keys.MAM_TREATMENT.DISTRIBUTION,
-    data_keys.MAM_TREATMENT.CATEGORIES,
-    data_keys.MAM_TREATMENT.RELATIVE_RISK,
-    data_keys.MAM_TREATMENT.PAF,
+    # data_keys.MEASLES.RESTRICTIONS,
+    # data_keys.LRI.DURATION,
+    # data_keys.LRI.REMISSION_RATE,
+    # data_keys.LRI.RESTRICTIONS,
+    # data_keys.MALARIA.DURATION,
+    # data_keys.MALARIA.REMISSION_RATE,
+    # data_keys.MALARIA.RESTRICTIONS,
+    # data_keys.WASTING.DISTRIBUTION,
+    # data_keys.WASTING.ALT_DISTRIBUTION,
+    # data_keys.WASTING.CATEGORIES,
+    # data_keys.WASTING.RELATIVE_RISK,
+    # data_keys.STUNTING.DISTRIBUTION,
+    # data_keys.STUNTING.ALT_DISTRIBUTION,
+    # data_keys.STUNTING.CATEGORIES,
+    # data_keys.STUNTING.RELATIVE_RISK,
+    # data_keys.UNDERWEIGHT.RELATIVE_RISK,
+    # data_keys.UNDERWEIGHT.DISTRIBUTION,
+    # data_keys.UNDERWEIGHT.CATEGORIES,
+    # data_keys.PEM.RESTRICTIONS,
+    # data_keys.MODERATE_PEM.RESTRICTIONS,
+    # data_keys.SEVERE_PEM.RESTRICTIONS,
     data_keys.LBWSG.DISTRIBUTION,
     data_keys.LBWSG.CATEGORIES,
     data_keys.LBWSG.EXPOSURE,
@@ -103,18 +94,20 @@ NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR,
     data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR,
     data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_CSMR,
-    data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_LRI_CSMR,
-    data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_DIARRHEAL_DISEASES_CSMR,
-    data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION,
-    data_keys.IFA_SUPPLEMENTATION.CATEGORIES,
-    data_keys.IFA_SUPPLEMENTATION.EXPOSURE,
-    data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT,
-    data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT,
+    data_keys.AFFECTED_UNMODELED_CAUSES.LRI_CSMR,
+    data_keys.AFFECTED_UNMODELED_CAUSES.DIARRHEAL_DISEASES_CSMR,
+    data_keys.AFFECTED_UNMODELED_CAUSES.MEASLES_CSMR,
+    data_keys.AFFECTED_UNMODELED_CAUSES.MALARIA_CSMR,
+    # data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION,
+    # data_keys.IFA_SUPPLEMENTATION.CATEGORIES,
+    # data_keys.IFA_SUPPLEMENTATION.EXPOSURE,
+    # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT,
+    # data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT,
 ]
 
 
 def get_data(
-    lookup_key: str, location: Union[str, List[int]], fetch_subnationals: bool = False
+    lookup_key: str, location: Union[str, List[int]], lbwsg_pafs: str = None, fetch_subnationals: bool = False
 ) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
 
@@ -148,69 +141,59 @@ def get_data(
         data_keys.DIARRHEA.CSMR: load_neonatal_deleted_csmr,
         data_keys.DIARRHEA.RESTRICTIONS: load_metadata,
         data_keys.DIARRHEA.BIRTH_PREVALENCE: load_post_neonatal_birth_prevalence,
-        data_keys.MEASLES.PREVALENCE: load_standard_data,
-        data_keys.MEASLES.INCIDENCE_RATE: load_standard_data,
-        data_keys.MEASLES.DISABILITY_WEIGHT: load_standard_data,
-        data_keys.MEASLES.EMR: load_standard_data,
-        data_keys.MEASLES.CSMR: load_standard_data,
-        data_keys.MEASLES.RESTRICTIONS: load_metadata,
-        data_keys.LRI.DURATION: load_duration,
-        data_keys.LRI.INCIDENCE_RATE: load_standard_data,
-        data_keys.LRI.PREVALENCE: load_prevalence_from_incidence_and_duration,
-        data_keys.LRI.REMISSION_RATE: load_neonatal_deleted_remission_from_duration,
-        data_keys.LRI.DISABILITY_WEIGHT: load_standard_data,
-        data_keys.LRI.EMR: load_emr_from_csmr_and_prevalence,
-        data_keys.LRI.CSMR: load_neonatal_deleted_csmr,
-        data_keys.LRI.RESTRICTIONS: load_metadata,
-        data_keys.MALARIA.DURATION: load_duration,
-        data_keys.MALARIA.PREVALENCE: load_prevalence_from_incidence_and_duration,
-        data_keys.MALARIA.INCIDENCE_RATE: load_standard_data,
-        data_keys.MALARIA.REMISSION_RATE: load_neonatal_deleted_malaria_remission_from_duration,
-        data_keys.MALARIA.DISABILITY_WEIGHT: load_standard_data,
-        data_keys.MALARIA.EMR: load_emr_from_csmr_and_prevalence,
-        data_keys.MALARIA.CSMR: load_neonatal_deleted_csmr,
-        data_keys.MALARIA.RESTRICTIONS: load_metadata,
-        data_keys.MALARIA.BIRTH_PREVALENCE: load_post_neonatal_birth_prevalence,
-        data_keys.WASTING.DISTRIBUTION: load_metadata,
-        data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
-        data_keys.WASTING.CATEGORIES: load_metadata,
-        data_keys.WASTING.EXPOSURE: load_gbd_2021_exposure,
-        data_keys.WASTING.RELATIVE_RISK: load_gbd_2021_rr,
-        data_keys.WASTING.PAF: load_categorical_paf,
-        data_keys.WASTING.TRANSITION_RATES: load_wasting_transition_rates,
-        data_keys.WASTING.BIRTH_PREVALENCE: load_wasting_birth_prevalence,
-        data_keys.STUNTING.DISTRIBUTION: load_metadata,
-        data_keys.STUNTING.ALT_DISTRIBUTION: load_metadata,
-        data_keys.STUNTING.CATEGORIES: load_metadata,
-        data_keys.STUNTING.EXPOSURE: load_standard_data,
-        data_keys.STUNTING.RELATIVE_RISK: load_gbd_2021_rr,
-        data_keys.STUNTING.PAF: load_categorical_paf,
-        data_keys.UNDERWEIGHT.DISTRIBUTION: load_metadata,
-        data_keys.UNDERWEIGHT.EXPOSURE: load_underweight_exposure,
-        data_keys.UNDERWEIGHT.CATEGORIES: load_metadata,
-        data_keys.UNDERWEIGHT.RELATIVE_RISK: load_gbd_2021_rr,
-        data_keys.CHILD_GROWTH_FAILURE.PAF: load_cgf_paf,
-        data_keys.PEM.EMR: load_pem_emr,
-        data_keys.PEM.CSMR: load_pem_csmr,
-        data_keys.PEM.RESTRICTIONS: load_pem_restrictions,
-        data_keys.MODERATE_PEM.DISABILITY_WEIGHT: load_pem_disability_weight,
-        data_keys.MODERATE_PEM.EMR: load_pem_emr,
-        data_keys.MODERATE_PEM.CSMR: load_pem_csmr,
-        data_keys.MODERATE_PEM.RESTRICTIONS: load_pem_restrictions,
-        data_keys.SEVERE_PEM.DISABILITY_WEIGHT: load_pem_disability_weight,
-        data_keys.SEVERE_PEM.EMR: load_pem_emr,
-        data_keys.SEVERE_PEM.CSMR: load_pem_csmr,
-        data_keys.SEVERE_PEM.RESTRICTIONS: load_pem_restrictions,
-        data_keys.SAM_TREATMENT.EXPOSURE: load_wasting_treatment_exposure,
-        data_keys.SAM_TREATMENT.DISTRIBUTION: load_wasting_treatment_distribution,
-        data_keys.SAM_TREATMENT.CATEGORIES: load_wasting_treatment_categories,
-        data_keys.SAM_TREATMENT.RELATIVE_RISK: load_sam_treatment_rr,
-        data_keys.SAM_TREATMENT.PAF: load_categorical_paf,
-        data_keys.MAM_TREATMENT.EXPOSURE: load_wasting_treatment_exposure,
-        data_keys.MAM_TREATMENT.DISTRIBUTION: load_wasting_treatment_distribution,
-        data_keys.MAM_TREATMENT.CATEGORIES: load_wasting_treatment_categories,
-        data_keys.MAM_TREATMENT.RELATIVE_RISK: load_mam_treatment_rr,
-        data_keys.MAM_TREATMENT.PAF: load_categorical_paf,
+        # data_keys.MEASLES.PREVALENCE: load_standard_data,
+        # data_keys.MEASLES.INCIDENCE_RATE: load_standard_data,
+        # data_keys.MEASLES.DISABILITY_WEIGHT: load_standard_data,
+        # data_keys.MEASLES.EMR: load_standard_data,
+        # data_keys.MEASLES.CSMR: load_standard_data,
+        # data_keys.MEASLES.RESTRICTIONS: load_metadata,
+        # data_keys.LRI.DURATION: load_duration,
+        # data_keys.LRI.INCIDENCE_RATE: load_standard_data,
+        # data_keys.LRI.PREVALENCE: load_prevalence_from_incidence_and_duration,
+        # data_keys.LRI.REMISSION_RATE: load_neonatal_deleted_remission_from_duration,
+        # data_keys.LRI.DISABILITY_WEIGHT: load_standard_data,
+        # data_keys.LRI.EMR: load_emr_from_csmr_and_prevalence,
+        # data_keys.LRI.CSMR: load_neonatal_deleted_csmr,
+        # data_keys.LRI.RESTRICTIONS: load_metadata,
+        # data_keys.MALARIA.DURATION: load_duration,
+        # data_keys.MALARIA.PREVALENCE: load_prevalence_from_incidence_and_duration,
+        # data_keys.MALARIA.INCIDENCE_RATE: load_standard_data,
+        # data_keys.MALARIA.REMISSION_RATE: load_neonatal_deleted_malaria_remission_from_duration,
+        # data_keys.MALARIA.DISABILITY_WEIGHT: load_standard_data,
+        # data_keys.MALARIA.EMR: load_emr_from_csmr_and_prevalence,
+        # data_keys.MALARIA.CSMR: load_neonatal_deleted_csmr,
+        # data_keys.MALARIA.RESTRICTIONS: load_metadata,
+        # data_keys.MALARIA.BIRTH_PREVALENCE: load_post_neonatal_birth_prevalence,
+        # data_keys.WASTING.DISTRIBUTION: load_metadata,
+        # data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
+        # data_keys.WASTING.CATEGORIES: load_metadata,
+        # data_keys.WASTING.EXPOSURE: load_gbd_2021_exposure,
+        # data_keys.WASTING.RELATIVE_RISK: load_gbd_2021_rr,
+        # data_keys.WASTING.PAF: load_categorical_paf,
+        # data_keys.WASTING.TRANSITION_RATES: load_wasting_transition_rates,
+        # data_keys.WASTING.BIRTH_PREVALENCE: load_wasting_birth_prevalence,
+        # data_keys.STUNTING.DISTRIBUTION: load_metadata,
+        # data_keys.STUNTING.ALT_DISTRIBUTION: load_metadata,
+        # data_keys.STUNTING.CATEGORIES: load_metadata,
+        # data_keys.STUNTING.EXPOSURE: load_standard_data,
+        # data_keys.STUNTING.RELATIVE_RISK: load_gbd_2021_rr,
+        # data_keys.STUNTING.PAF: load_categorical_paf,
+        # data_keys.UNDERWEIGHT.DISTRIBUTION: load_metadata,
+        # data_keys.UNDERWEIGHT.EXPOSURE: load_underweight_exposure,
+        # data_keys.UNDERWEIGHT.CATEGORIES: load_metadata,
+        # data_keys.UNDERWEIGHT.RELATIVE_RISK: load_gbd_2021_rr,
+        # data_keys.CHILD_GROWTH_FAILURE.PAF: load_cgf_paf,
+        # data_keys.PEM.EMR: load_pem_emr,
+        # data_keys.PEM.CSMR: load_pem_csmr,
+        # data_keys.PEM.RESTRICTIONS: load_pem_restrictions,
+        # data_keys.MODERATE_PEM.DISABILITY_WEIGHT: load_pem_disability_weight,
+        # data_keys.MODERATE_PEM.EMR: load_pem_emr,
+        # data_keys.MODERATE_PEM.CSMR: load_pem_csmr,
+        # data_keys.MODERATE_PEM.RESTRICTIONS: load_pem_restrictions,
+        # data_keys.SEVERE_PEM.DISABILITY_WEIGHT: load_pem_disability_weight,
+        # data_keys.SEVERE_PEM.EMR: load_pem_emr,
+        # data_keys.SEVERE_PEM.CSMR: load_pem_csmr,
+        # data_keys.SEVERE_PEM.RESTRICTIONS: load_pem_restrictions,
         data_keys.LBWSG.DISTRIBUTION: load_metadata,
         data_keys.LBWSG.CATEGORIES: load_metadata,
         data_keys.LBWSG.EXPOSURE: load_lbwsg_exposure,  ## Still 2019 age bins, but doesn't have effect past NN
@@ -227,20 +210,29 @@ def get_data(
         data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
-        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_LRI_CSMR: load_neonatal_lri_csmr,
-        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_DIARRHEAL_DISEASES_CSMR: load_neonatal_diarrhea_csmr,
-        data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: load_intervention_distribution,
-        data_keys.IFA_SUPPLEMENTATION.CATEGORIES: load_intervention_categories,
-        data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
-        data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: load_ifa_excess_shift,
-        data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
+        data_keys.AFFECTED_UNMODELED_CAUSES.LRI_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.DIARRHEAL_DISEASES_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.MEASLES_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.MALARIA_CSMR: load_standard_data,
+        # data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: load_intervention_distribution,
+        # data_keys.IFA_SUPPLEMENTATION.CATEGORIES: load_intervention_categories,
+        # data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
+        # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: load_ifa_excess_shift,
+        # data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
     }
 
+    args = (lookup_key, )
+
     if lookup_key in NATIONAL_LEVEL_DATA_KEYS or not fetch_subnationals:
-        data = mapping[lookup_key](lookup_key, location)
+        args += (location, )
     else:
         subnational_ids = fetch_subnational_ids(location)
-        data = mapping[lookup_key](lookup_key, subnational_ids)
+        args += (subnational_ids, )
+
+    if lookup_key == data_keys.LBWSG.PAF:
+        args += (lbwsg_pafs, )
+
+    data = mapping[lookup_key](*args)
 
     return data
 
@@ -300,24 +292,24 @@ def load_standard_data(key: str, location: Union[str, List[int]]) -> pd.DataFram
     entity = utilities.get_entity(key)
 
     use_2019_data_keys = [
-        data_keys.MEASLES.PREVALENCE,
-        data_keys.MEASLES.INCIDENCE_RATE,
-        data_keys.MEASLES.DISABILITY_WEIGHT,
-        data_keys.MEASLES.EMR,
-        data_keys.MEASLES.CSMR,
-        data_keys.LRI.CSMR,
+        # data_keys.MEASLES.PREVALENCE,
+        # data_keys.MEASLES.INCIDENCE_RATE,
+        # data_keys.MEASLES.DISABILITY_WEIGHT,
+        # data_keys.MEASLES.EMR,
+        # data_keys.MEASLES.CSMR,
+        # data_keys.LRI.CSMR,
     ]
 
     neonatal_deleted_keys = [
-        data_keys.DIARRHEA.INCIDENCE_RATE,
-        data_keys.DIARRHEA.DISABILITY_WEIGHT,
-        data_keys.MALARIA.INCIDENCE_RATE,
-        data_keys.MALARIA.DISABILITY_WEIGHT,
+        # data_keys.DIARRHEA.INCIDENCE_RATE,
+        # data_keys.DIARRHEA.DISABILITY_WEIGHT,
+        # data_keys.MALARIA.INCIDENCE_RATE,
+        # data_keys.MALARIA.DISABILITY_WEIGHT,
     ]
 
     both_2019_and_neonatal_deleted = [
-        data_keys.LRI.INCIDENCE_RATE,
-        data_keys.LRI.DISABILITY_WEIGHT,
+        # data_keys.LRI.INCIDENCE_RATE,
+        # data_keys.LRI.DISABILITY_WEIGHT,
     ]
 
     no_age = [
@@ -352,7 +344,7 @@ def load_metadata(key: str, location: Union[str, List[int]]):
     entity_metadata = entity[key.measure]
     if hasattr(entity_metadata, "to_dict"):
         entity_metadata = entity_metadata.to_dict()
-    if key == data_keys.WASTING.CATEGORIES:
+    if False: # key == data_keys.WASTING.CATEGORIES:
         entity_metadata["cat2"] = "Wasting Between -3 SD and -2.5 SD (post-ensemble)"
         entity_metadata["cat2.5"] = "Wasting Between -2.5 SD and -2 SD (post-ensemble)"
     return entity_metadata
@@ -654,8 +646,8 @@ def load_duration(key: str, location: str) -> pd.DataFrame:
     try:
         distribution = {
             data_keys.DIARRHEA.DURATION: data_values.DIARRHEA_DURATION,
-            data_keys.LRI.DURATION: data_values.LRI_DURATION,
-            data_keys.MALARIA.DURATION: data_values.MALARIA_DURATION,
+            # data_keys.LRI.DURATION: data_values.LRI_DURATION,
+            # data_keys.MALARIA.DURATION: data_values.MALARIA_DURATION,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -670,13 +662,13 @@ def load_duration(key: str, location: str) -> pd.DataFrame:
         [duration_draws], columns=metadata.ARTIFACT_COLUMNS, index=demography.index
     )
 
-    if key == data_keys.LRI.DURATION:
-        duration = duration.reset_index()
-        duration["year_start"] = 2019
-        duration["year_end"] = 2020
-        duration = duration.set_index(
-            ["location", "sex", "age_start", "age_end", "year_start", "year_end"]
-        )
+    # if key == data_keys.LRI.DURATION:
+    #     duration = duration.reset_index()
+    #     duration["year_start"] = 2019
+    #     duration["year_end"] = 2020
+    #     duration = duration.set_index(
+    #         ["location", "sex", "age_start", "age_end", "year_start", "year_end"]
+    #     )
 
     return duration
 
@@ -687,8 +679,8 @@ def load_prevalence_from_incidence_and_duration(
     try:
         cause = {
             data_keys.DIARRHEA.PREVALENCE: data_keys.DIARRHEA,
-            data_keys.LRI.PREVALENCE: data_keys.LRI,
-            data_keys.MALARIA.PREVALENCE: data_keys.MALARIA,
+            # data_keys.LRI.PREVALENCE: data_keys.LRI,
+            # data_keys.MALARIA.PREVALENCE: data_keys.MALARIA,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -712,7 +704,7 @@ def load_neonatal_deleted_remission_from_duration(key: str, location: str) -> pd
     try:
         cause = {
             data_keys.DIARRHEA.REMISSION_RATE: data_keys.DIARRHEA,
-            data_keys.LRI.REMISSION_RATE: data_keys.LRI,
+            # data_keys.LRI.REMISSION_RATE: data_keys.LRI,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -750,8 +742,8 @@ def load_emr_from_csmr_and_prevalence(
     try:
         cause = {
             data_keys.DIARRHEA.EMR: data_keys.DIARRHEA,
-            data_keys.LRI.EMR: data_keys.LRI,
-            data_keys.MALARIA.EMR: data_keys.MALARIA,
+            # data_keys.LRI.EMR: data_keys.LRI,
+            # data_keys.MALARIA.EMR: data_keys.MALARIA,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -785,7 +777,7 @@ def load_post_neonatal_birth_prevalence(
     try:
         cause = {
             data_keys.DIARRHEA.BIRTH_PREVALENCE: data_keys.DIARRHEA,
-            data_keys.MALARIA.BIRTH_PREVALENCE: data_keys.MALARIA,
+            # data_keys.MALARIA.BIRTH_PREVALENCE: data_keys.MALARIA,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -1277,7 +1269,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
     return log_rr_interpolator
 
 
-def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
+def load_lbwsg_paf(key: str, location: str, lbwsg_paf_location: str) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f"Unrecognized key {key}")
 
@@ -1291,7 +1283,8 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
         "Pakistan": "pakistan",
     }
 
-    output_dir = paths.TEMPORARY_PAF_DIR / location_mapper[location]
+    import pathlib
+    output_dir = pathlib.Path(lbwsg_paf_location) / location_mapper[location]
 
     def get_age_and_sex(measure_str):
         age = measure_str.split("AGE_GROUP_")[1].split("SEX")[0][:-1]
@@ -1299,22 +1292,23 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
 
         return age + "," + sex
 
-    df = pd.read_hdf(output_dir / "output.hdf")  # this is 4096_simulants.hdf for example
-    df = df[[col for col in df.columns if "MEASURE" in col]].T
-    df.columns = [f"draw_{i}" for i in range(metadata.DRAW_COUNT)]
-    df = df.reset_index()
-    df["demographics"] = df["index"].apply(get_age_and_sex)
-    df = df.drop("index", axis=1)
-    df[["age", "sex"]] = df["demographics"].str.split(",", expand=True)
-    df = df.drop("demographics", axis=1)
+    df = pd.read_parquet(output_dir / "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet")
+    df = (
+        df.assign(input_draw="draw_" + df.input_draw.astype(str))
+            .pivot_table('value', [c for c in df if c not in ['input_draw', 'value']], 'input_draw')
+            .reset_index()
+            .drop(columns=["scenario", "random_seed"])
+    )
 
     age_start_dict = {"early_neonatal": 0.0, "late_neonatal": 0.01917808}
     age_end_dict = {"early_neonatal": 0.01917808, "late_neonatal": 0.07671233}
-    df["age_start"] = df["age"].replace(age_start_dict)
-    df["age_end"] = df["age"].replace(age_end_dict)
+    df["age_start"] = df["age_group"].replace(age_start_dict)
+    df["age_end"] = df["age_group"].replace(age_end_dict)
     df["year_start"] = 2021
     df["year_end"] = 2022
-    df = df.drop("age", axis=1)
+    df = df.drop("age_group", axis=1)
+    index_columns = ["sex", "age_start", "age_end", "year_start", "year_end"]
+    df = df[[c for c in df.columns if c not in index_columns] + index_columns]
 
     new_row_1 = [0] * metadata.DRAW_COUNT + ["Female", 0.07671233, 1.0, 2021, 2022]
     new_row_2 = [0] * metadata.DRAW_COUNT + ["Male", 0.07671233, 1.0, 2021, 2022]
@@ -1366,10 +1360,10 @@ def load_neonatal_diarrhea_csmr(key: str, location: str) -> pd.DataFrame:
 def load_intervention_distribution(key: str, location: str) -> str:
     try:
         return {
-            data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
-            data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
-            data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
-            data_keys.IV_IRON.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
+            # data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
+            # data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
+            # data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
+            # data_keys.IV_IRON.DISTRIBUTION: data_values.MATERNAL_CHARACTERISTICS.DISTRIBUTION,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -1378,10 +1372,10 @@ def load_intervention_distribution(key: str, location: str) -> str:
 def load_intervention_categories(key: str, location: str) -> str:
     try:
         return {
-            data_keys.IFA_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
-            data_keys.MMN_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
-            data_keys.BEP_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
-            data_keys.IV_IRON.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
+            # data_keys.IFA_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
+            # data_keys.MMN_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
+            # data_keys.BEP_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
+            # data_keys.IV_IRON.CATEGORIES: data_values.MATERNAL_CHARACTERISTICS.CATEGORIES,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -1390,12 +1384,12 @@ def load_intervention_categories(key: str, location: str) -> str:
 def load_dichotomous_treatment_exposure(key: str, location: str, **kwargs) -> pd.DataFrame:
     try:
         distribution_data = {
-            data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_baseline_ifa_supplementation_coverage(
-                location
-            ),
-            data_keys.MMN_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_CHARACTERISTICS.BASELINE_MMN_COVERAGE,
-            data_keys.BEP_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_CHARACTERISTICS.BASELINE_BEP_COVERAGE,
-            data_keys.IV_IRON.EXPOSURE: data_values.MATERNAL_CHARACTERISTICS.BASELINE_IV_IRON_COVERAGE,
+            # data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_baseline_ifa_supplementation_coverage(
+            #     location
+            # ),
+            # data_keys.MMN_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_CHARACTERISTICS.BASELINE_MMN_COVERAGE,
+            # data_keys.BEP_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_CHARACTERISTICS.BASELINE_BEP_COVERAGE,
+            # data_keys.IV_IRON.EXPOSURE: data_values.MATERNAL_CHARACTERISTICS.BASELINE_IV_IRON_COVERAGE,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -1411,9 +1405,9 @@ def load_ifa_excess_shift(key: str, location: str) -> pd.DataFrame:
 def load_treatment_excess_shift(key: str, location: str) -> pd.DataFrame:
     try:
         distribution_data = {
-            data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.IFA_BIRTH_WEIGHT_SHIFT,
-            data_keys.MMN_SUPPLEMENTATION.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.MMN_BIRTH_WEIGHT_SHIFT,
-            data_keys.IV_IRON.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.IV_IRON_BIRTH_WEIGHT_SHIFT,
+            # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.IFA_BIRTH_WEIGHT_SHIFT,
+            # data_keys.MMN_SUPPLEMENTATION.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.MMN_BIRTH_WEIGHT_SHIFT,
+            # data_keys.IV_IRON.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.IV_IRON_BIRTH_WEIGHT_SHIFT,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -1461,14 +1455,14 @@ def load_excess_gestational_age_shift(key: str, location: str) -> pd.DataFrame:
     Returns the sum of the shift data in the directories defined in data_dirs."""
     try:
         data_dirs = {
-            data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: [paths.IFA_GA_SHIFT_DATA_DIR],
-            data_keys.MMN_SUPPLEMENTATION.EXCESS_GA_SHIFT_SUBPOP_1: [
-                paths.MMS_GA_SHIFT_1_DATA_DIR
-            ],
-            data_keys.MMN_SUPPLEMENTATION.EXCESS_GA_SHIFT_SUBPOP_2: [
-                paths.MMS_GA_SHIFT_1_DATA_DIR,
-                paths.MMS_GA_SHIFT_2_DATA_DIR,
-            ],
+            # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: [paths.IFA_GA_SHIFT_DATA_DIR],
+            # data_keys.MMN_SUPPLEMENTATION.EXCESS_GA_SHIFT_SUBPOP_1: [
+            #     paths.MMS_GA_SHIFT_1_DATA_DIR
+            # ],
+            # data_keys.MMN_SUPPLEMENTATION.EXCESS_GA_SHIFT_SUBPOP_2: [
+            #     paths.MMS_GA_SHIFT_1_DATA_DIR,
+            #     paths.MMS_GA_SHIFT_2_DATA_DIR,
+            # ],
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
@@ -1517,7 +1511,7 @@ def reshape_shift_data(
 def load_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
     try:
         key_group: data_keys.__AdditiveRisk = {
-            data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.IFA_SUPPLEMENTATION,
+            # data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.IFA_SUPPLEMENTATION,
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")

@@ -130,3 +130,9 @@ dmypy.json
 artifact_building/
 simulation_running/
 sim_results/
+
+.snakemake/
+*.rdb
+artifacts/
+lbwsg_pafs/
+lbwsg_paf_artifacts/

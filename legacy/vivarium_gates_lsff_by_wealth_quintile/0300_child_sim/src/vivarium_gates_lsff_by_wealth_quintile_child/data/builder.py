@@ -53,7 +53,7 @@ def open_artifact(output_path: Path, location: str) -> Artifact:
 
 
 def load_and_write_data(
-    artifact: Artifact, key: str, location: str, replace: bool, fetch_subnationals: bool
+    artifact: Artifact, key: str, location: str, replace: bool, fetch_subnationals: bool, lbwsg_pafs: str
 ):
     """Loads data and writes it to the artifact if not already present.
 
@@ -74,7 +74,7 @@ def load_and_write_data(
         logger.debug(f"Data for {key} already in artifact.  Skipping...")
     else:
         logger.debug(f"Loading data for {key} for location {location}.")
-        data = loader.get_data(key, location, fetch_subnationals)
+        data = loader.get_data(key, location, lbwsg_pafs, fetch_subnationals)
         if isinstance(data, pd.DataFrame) and ("location" in data.index.names):
             data = rename_subnational_level(data)
         if key not in artifact:

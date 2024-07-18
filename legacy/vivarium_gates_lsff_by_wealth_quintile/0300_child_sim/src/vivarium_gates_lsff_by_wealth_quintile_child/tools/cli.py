@@ -17,17 +17,30 @@ from vivarium_gates_lsff_by_wealth_quintile_child.tools import (
     "--location",
     default="all",
     show_default=True,
-    type=click.Choice(metadata.LOCATIONS + ["all"]),
+    type=click.Choice(metadata.LOCATIONS + [l.lower() for l in metadata.LOCATIONS] + ["all"]),
     help=(
         "Location for which to make an artifact. Note: prefer building archives on the cluster.\n"
         'If you specify location "all" you must be on a cluster node.'
     ),
 )
 @click.option(
+    "--lbwsg-pafs",
+    default=str(paths.BASE_DIR / ".." / ".." / "lbwsg_pafs"),
+    show_default=True,
+    type=click.Path(),
+    help="Specify an output directory. Directory must exist.",
+)
+@click.option(
     "--national",
     "build_national",
     is_flag=True,
     help="Build artifacts at national level data instead of at the default subnational level.",
+)
+@click.option(
+    "--no-lbwsg-pafs",
+    "no_lbwsg_pafs",
+    is_flag=True,
+    help="Built artifact without LBWSG PAFs.",
 )
 @click.option(
     "-o",
@@ -56,9 +69,13 @@ def make_artifacts(
     verbose: int,
     with_debugger: bool,
     build_national: bool,
+    no_lbwsg_pafs: bool,
+    lbwsg_pafs: str,
 ) -> None:
+    location = location.title() # HACK
     # This is a flag for national level data but we want default to be to write subnational data
     fetch_subnationals = not build_national
+    load_lbwsg_pafs = not no_lbwsg_pafs
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(
         build_artifacts,
@@ -72,4 +89,6 @@ def make_artifacts(
         replace_keys,
         verbose,
         fetch_subnationals,
+        load_lbwsg_pafs,
+        lbwsg_pafs,
     )
