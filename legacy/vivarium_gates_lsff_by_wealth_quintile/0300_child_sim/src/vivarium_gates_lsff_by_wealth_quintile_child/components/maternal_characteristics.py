@@ -94,9 +94,9 @@ class MaternalCharacteristics(Component):
 
             maternal_supplementation = new_births["maternal_intervention"].copy()
             maternal_supplementation[maternal_supplementation == "invalid"] = "uncovered"
-            new_simulants[self.supplementation_exposure_column_name] = (
-                maternal_supplementation
-            )
+            new_simulants[
+                self.supplementation_exposure_column_name
+            ] = maternal_supplementation
 
         self.population_view.update(new_simulants)
 
