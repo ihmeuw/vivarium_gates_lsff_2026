@@ -92,7 +92,7 @@ class MaternalCharacteristics(Component):
             new_births = pop_data.user_data["new_births"]
             new_births.index = pop_data.index
 
-            maternal_supplementation = new_births["maternal_intervention"].copy()
+            maternal_supplementation = new_births["maternal_intervention"].copy().astype(str)
             maternal_supplementation[maternal_supplementation == "invalid"] = "uncovered"
             new_simulants[
                 self.supplementation_exposure_column_name

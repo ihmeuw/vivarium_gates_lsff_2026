@@ -1,0 +1,62 @@
+from snakemake.io import directory
+
+rule pregnancy_artifact_building_venv:
+    input: ["0200_pregnancy_sim/artifact_building_pip_lock.txt"]
+    output: [directory("0200_pregnancy_sim/artifact_building"), "0200_pregnancy_sim/artifact_building/bin/activate"]
+    shell:
+        f"""
+        cd 0200_pregnancy_sim
+        rm -rf artifact_building
+        python -m venv artifact_building
+        source artifact_building/bin/activate
+        pip install -r artifact_building_pip_lock.txt
+        pip install -e .[data]
+        """
+
+rule pregnancy_simulation_running_venv:
+    input: ["0200_pregnancy_sim/simulation_running_pip_lock.txt"]
+    output: [directory("0200_pregnancy_sim/simulation_running"), "0200_pregnancy_sim/simulation_running/bin/activate"]
+    shell:
+        f"""
+        cd 0200_pregnancy_sim
+        rm -rf simulation_running
+        python -m venv simulation_running
+        source simulation_running/bin/activate
+        pip install -r simulation_running_pip_lock.txt
+        pip install -e .[dev]
+        """
+
+rule pregnancy_artifacts:
+    input: ["0200_pregnancy_sim/artifact_building/bin/activate", "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"]
+    output: ["0200_pregnancy_sim/artifacts/{location}.hdf"]
+    shell:
+        f"""
+        cd 0200_pregnancy_sim
+        source artifact_building/bin/activate
+        rm -f artifacts/{{wildcards.location}}.hdf
+        make_artifacts -vvv -o ./artifacts -l {{wildcards.location}} -a
+        """
+
+import glob
+
+code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
+data_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.csv")
+
+rule pregnancy_simulations:
+    input:
+        [
+            "0200_pregnancy_sim/simulation_running/bin/activate",
+            "0200_pregnancy_sim/artifacts/{location}.hdf",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
+        ] + code_inputs + data_inputs
+    output: ["0200_pregnancy_sim/sim_results/{location}/births.parquet"]
+    shell:
+        f"""
+        cd 0200_pregnancy_sim
+        rm -rf sim_results/ || true
+        sleep 5
+        rm -rf sim_results/
+        source simulation_running/bin/activate
+        psimulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml -i artifacts/{{wildcards.location}}.hdf -o sim_results/ -P proj_simscience
+        mv sim_results/{{wildcards.location}}/*/results/births.parquet sim_results/{{wildcards.location}}
+        """

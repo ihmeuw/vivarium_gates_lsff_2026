@@ -1,50 +1,94 @@
 from snakemake.io import directory
 
-locations = [
-    "India",
-    "Nigeria",
-    "Ethiopia",
-]
-
-rule all:
-    input: [f"sim_results/{location.lower()}/deaths.parquet" for location in locations]
-
-rule artifact_for_lbwsg_pafs:
-    input: ["src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
-    output: ["lbwsg_paf_artifacts/{location}.hdf"]
+rule child_artifact_building_venv:
+    input: ["0300_child_sim/artifact_building_pip_lock.txt"]
+    output: [directory("0300_child_sim/artifact_building/"), "0300_child_sim/artifact_building/bin/activate"]
     shell:
         f"""
+        cd 0300_child_sim
+        rm -rf artifact_building
+        python -m venv artifact_building
         source artifact_building/bin/activate
-        make_artifacts -vvv --pdb -o ./lbwsg_paf_artifacts -l {{wildcards.location}} --no-lbwsg-pafs --national -a
+        pip install -r artifact_building_pip_lock.txt
+        pip install -e .[data]
+        """
+
+rule child_simulation_running_venv:
+    input: ["0300_child_sim/simulation_running_pip_lock.txt"]
+    output: [directory("0300_child_sim/simulation_running/"), "0300_child_sim/simulation_running/bin/activate"]
+    shell:
+        f"""
+        cd 0300_child_sim
+        rm -rf simulation_running
+        python -m venv simulation_running
+        source simulation_running/bin/activate
+        pip install -r simulation_running_pip_lock.txt
+        pip install -e .[dev]
+        """
+
+rule artifact_for_lbwsg_pafs:
+    input: ["0300_child_sim/artifact_building/bin/activate", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
+    output: ["0300_child_sim/lbwsg_paf_artifacts/{location}.hdf"]
+    shell:
+        f"""
+        cd 0300_child_sim
+        source artifact_building/bin/activate
+        rm -f lbwsg_paf_artifacts/{{wildcards.location}}.hdf
+        make_artifacts -vvv -o ./lbwsg_paf_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a
         """
 
 rule lbwsg_pafs:
-    input: ["lbwsg_paf_artifacts/{location}.hdf", "src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml", "src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml"]
-    output: ["lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"]
+    input: ["0300_child_sim/simulation_running/bin/activate", "0300_child_sim/lbwsg_paf_artifacts/{location}.hdf", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml"]
+    output: ["0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"]
     shell:
         f"""
+        cd 0300_child_sim
+        rm -rf lbwsg_pafs/{{wildcards.location}} || true
+        sleep 5
         rm -rf lbwsg_pafs/{{wildcards.location}}
         source simulation_running/bin/activate
-        psimulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml -i {{input[0]}} -o lbwsg_pafs/ -P proj_simscience
+        psimulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml -i lbwsg_paf_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ -P proj_simscience
         mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
         """
 
-rule artifacts:
-    input: ["lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet", "src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
-    output: ["artifacts/{location}.hdf"]
+rule child_artifacts:
+    input: 
+        [
+            "0300_child_sim/artifact_building/bin/activate",
+            "0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py",
+            "0200_pregnancy_sim/sim_results/{location}/births.parquet",
+        ]
+    output: ["0300_child_sim/artifacts/{location}.hdf"]
     shell:
         f"""
+        cd 0300_child_sim
         source artifact_building/bin/activate
+        rm -f artifacts/{{wildcards.location}}.hdf
         make_artifacts -vvv -o ./artifacts -l {{wildcards.location}} --national -a
         """
 
-rule simulations:
-    input: ["artifacts/{location}.hdf", "src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml"]
-    output: ["sim_results/{location}/deaths.parquet"]
+import glob
+
+code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
+data_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.csv")
+
+rule child_simulations:
+    input:
+        [
+            "0300_child_sim/simulation_running/bin/activate",
+            "0300_child_sim/artifacts/{location}.hdf",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
+        ] + code_inputs + data_inputs
+    output: ["0300_child_sim/sim_results/{location}/deaths.parquet"]
     shell:
         f"""
-        rm -rf sim_results/{{wildcards.location}}
+        cd 0300_child_sim
+        # NFS sometimes doesn't delete right away
+        rm -rf sim_results/ || true
+        sleep 5
+        rm -rf sim_results/
         source simulation_running/bin/activate
-        simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml -i {{input[0]}} -o sim_results/
+        psimulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml -i artifacts/{{wildcards.location}}.hdf -o sim_results/ -P proj_simscience
         mv sim_results/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.location}}
         """

@@ -17,9 +17,11 @@ numexpr==2.10.1
 numpy==1.26.4
 packaging==24.1
 pandas==2.2.2
+pandas-stubs==2.2.2.240603
 pluggy==1.5.0
 psutil==6.0.0
 py-cpuinfo==9.0.0
+pyarrow==17.0.0
 pytest==8.2.2
 python-dateutil==2.9.0.post0
 pytz==2024.1
@@ -31,8 +33,9 @@ rq==1.16.2
 scipy==1.14.0
 six==1.16.0
 tables==3.9.2
+types-pytz==2024.1.0.20240417
 tzdata==2024.1
 urllib3==2.2.2
-vivarium @ git+https://github.com/ihmeuw/vivarium.git@4865bb60ec506ca0433e979112dafaab6e921d62
-vivarium_cluster_tools @ git+https://github.com/ihmeuw/vivarium_cluster_tools.git@85a8542c59554a37d95f4d8bb294b8b6153dcd82
-vivarium_public_health @ git+https://github.com/ihmeuw/vivarium_public_health.git@21616df670685bbba2853e6eb8203dc472ee99bb
+vivarium @ git+https://github.com/ihmeuw/vivarium.git@79662743f6b1613e7880bb50dd35be92fb1f36aa
+vivarium_cluster_tools @ git+https://github.com/ihmeuw/vivarium_cluster_tools.git@9f84b19d45d0a93a54891fc97e36a39a90843238
+vivarium_public_health @ git+https://github.com/ihmeuw/vivarium_public_health.git@b97d6543b03ef93bf0f29bd37db045b9fcc8eb3b

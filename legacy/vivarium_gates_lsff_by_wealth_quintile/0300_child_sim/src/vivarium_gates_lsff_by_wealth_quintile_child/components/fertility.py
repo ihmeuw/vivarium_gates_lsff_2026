@@ -7,6 +7,7 @@ Fertility module to create simulants from existing data
 
 """
 
+import os
 from pathlib import Path
 from typing import List
 
@@ -16,6 +17,8 @@ from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium_public_health import utilities
+
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys
 
 PREGNANCY_DURATION = pd.Timedelta(days=9 * utilities.DAYS_PER_MONTH)
 
@@ -47,13 +50,12 @@ class FertilityLineList(Component):
         """
         Method to load existing fertility data to use as birth records.
         """
-        data_directory = Path(builder.configuration.input_data.fertility_input_data_path)
         scenario = builder.configuration.intervention.maternal_scenario
         draw = builder.configuration.input_data.input_draw_number
         seed = builder.configuration.randomness.random_seed
 
-        file_path = data_directory / f"scenario_{scenario}_draw_{draw}_seed_{seed}.hdf"
-        birth_records = pd.read_hdf(file_path)
+        birth_records = builder.data.load(data_keys.POPULATION.FERTILITY_DATA).reset_index()
+        birth_records = birth_records[(birth_records.value == draw) & (birth_records.scenario == scenario) & (birth_records.random_seed == seed)]
         birth_records["birth_date"] = pd.to_datetime(birth_records["birth_date"])
         return birth_records
 

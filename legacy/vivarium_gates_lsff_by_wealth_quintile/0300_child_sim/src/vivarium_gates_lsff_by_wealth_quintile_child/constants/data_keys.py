@@ -18,6 +18,7 @@ class __Population(NamedTuple):
     TMRLE: str = "population.theoretical_minimum_risk_life_expectancy"
     ACMR: str = "cause.all_causes.cause_specific_mortality_rate"
     CRUDE_BIRTH_RATE: str = "covariate.live_births_by_sex.estimate"
+    FERTILITY_DATA: str = "population.fertility_data"
 
     @property
     def name(self):

@@ -17,7 +17,7 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
     "--location",
     default="all",
     show_default=True,
-    type=click.Choice(metadata.LOCATIONS + ["all"]),
+    type=click.Choice(metadata.LOCATIONS + [l.lower() for l in metadata.LOCATIONS] + ["all"]),
     help=(
         "Location for which to make an artifact. Note: prefer building archives on the cluster.\n"
         'If you specify location "all" you must be on a cluster node.'
@@ -50,6 +50,7 @@ def make_artifacts(
     verbose: int,
     with_debugger: bool,
 ) -> None:
+    location = location.title()  # HACK
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
     main(location, output_dir, append or replace_keys, replace_keys, verbose)

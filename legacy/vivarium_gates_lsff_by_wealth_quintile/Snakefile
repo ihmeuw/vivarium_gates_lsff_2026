@@ -1,0 +1,13 @@
+include: "0200_pregnancy_sim/Snakefile"
+include: "0300_child_sim/Snakefile"
+
+from snakemake.io import directory
+
+locations = [
+    "India",
+    "Nigeria",
+    # "Ethiopia",
+]
+
+rule all:
+    input: [f"0300_child_sim/sim_results/{location.lower()}/deaths.parquet" for location in locations]

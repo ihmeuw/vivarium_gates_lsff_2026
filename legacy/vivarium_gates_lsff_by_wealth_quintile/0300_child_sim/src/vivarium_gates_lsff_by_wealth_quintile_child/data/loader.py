@@ -53,6 +53,7 @@ NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.POPULATION.AGE_BINS,
     data_keys.POPULATION.DEMOGRAPHY,
     data_keys.POPULATION.TMRLE,
+    data_keys.POPULATION.FERTILITY_DATA,
     # NOTE: Diarrhea is necessary for calculating LBWSG PAFs!
     data_keys.DIARRHEA.DURATION,
     data_keys.DIARRHEA.REMISSION_RATE,
@@ -109,7 +110,6 @@ NATIONAL_LEVEL_DATA_KEYS = [
 def get_data(
     lookup_key: str,
     location: Union[str, List[int]],
-    lbwsg_pafs: str = None,
     fetch_subnationals: bool = False,
 ) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
@@ -135,6 +135,7 @@ def get_data(
         data_keys.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
         data_keys.POPULATION.ACMR: load_standard_data,
         data_keys.POPULATION.CRUDE_BIRTH_RATE: load_standard_data,
+        data_keys.POPULATION.FERTILITY_DATA: load_fertility_data,
         data_keys.DIARRHEA.DURATION: load_duration,
         data_keys.DIARRHEA.PREVALENCE: load_prevalence_from_incidence_and_duration,
         data_keys.DIARRHEA.INCIDENCE_RATE: load_standard_data,
@@ -232,9 +233,6 @@ def get_data(
         subnational_ids = fetch_subnational_ids(location)
         args += (subnational_ids,)
 
-    if lookup_key == data_keys.LBWSG.PAF:
-        args += (lbwsg_pafs,)
-
     data = mapping[lookup_key](*args)
 
     return data
@@ -289,6 +287,10 @@ def load_theoretical_minimum_risk_life_expectancy(
 ) -> pd.DataFrame:
     return interface.get_theoretical_minimum_risk_life_expectancy()
 
+def load_fertility_data(key: str, location: str) -> pd.DataFrame:
+    df = pd.read_parquet(f'../0200_pregnancy_sim/sim_results/{location.lower()}/births.parquet')
+    df = df.set_index(list(df.columns))
+    return df
 
 def load_standard_data(key: str, location: Union[str, List[int]]) -> pd.DataFrame:
     key = EntityKey(key)
@@ -1272,7 +1274,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
     return log_rr_interpolator
 
 
-def load_lbwsg_paf(key: str, location: str, lbwsg_paf_location: str) -> pd.DataFrame:
+def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f"Unrecognized key {key}")
 
@@ -1288,7 +1290,7 @@ def load_lbwsg_paf(key: str, location: str, lbwsg_paf_location: str) -> pd.DataF
 
     import pathlib
 
-    output_dir = pathlib.Path(lbwsg_paf_location) / location_mapper[location]
+    output_dir = pathlib.Path('./lbwsg_pafs') / location_mapper[location]
 
     def get_age_and_sex(measure_str):
         age = measure_str.split("AGE_GROUP_")[1].split("SEX")[0][:-1]

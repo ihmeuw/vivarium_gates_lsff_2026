@@ -78,12 +78,11 @@ def build_single(
     output_dir: str,
     replace_keys: Tuple,
     fetch_subnationals: bool,
-    load_lbwsg_pafs: bool,
-    lbwsg_pafs: str,
+    for_lbwsg_pafs: bool,
 ) -> None:
     path = Path(output_dir) / f"{sanitize_location(location)}.hdf"
     build_single_location_artifact(
-        path, location, lbwsg_pafs, replace_keys, fetch_subnationals, load_lbwsg_pafs
+        path, location, replace_keys, fetch_subnationals, for_lbwsg_pafs
     )
 
 
@@ -94,8 +93,7 @@ def build_artifacts(
     replace_keys: Tuple,
     verbose: int,
     fetch_subnationals: bool,
-    load_lbwsg_pafs: bool,
-    lbwsg_pafs: str,
+    for_lbwsg_pafs: bool,
 ) -> None:
     """Main application function for building artifacts.
     Parameters
@@ -133,14 +131,13 @@ def build_artifacts(
             output_dir,
             replace_keys,
             fetch_subnationals,
-            load_lbwsg_pafs,
-            lbwsg_pafs,
+            for_lbwsg_pafs,
         )
     elif location == "all":
         if running_from_cluster():
             # parallel build when on cluster
             build_all_artifacts(
-                output_dir, verbose, fetch_subnationals, load_lbwsg_pafs, lbwsg_pafs
+                output_dir, verbose, fetch_subnationals, for_lbwsg_pafs
             )
         else:
             # serial build when not on cluster
@@ -150,8 +147,7 @@ def build_artifacts(
                     output_dir,
                     replace_keys,
                     fetch_subnationals,
-                    load_lbwsg_pafs,
-                    lbwsg_pafs,
+                    for_lbwsg_pafs,
                 )
     else:
         raise ValueError(
@@ -164,8 +160,7 @@ def build_all_artifacts(
     output_dir: Path,
     verbose: int,
     fetch_subnationals: bool,
-    load_lbwsg_pafs: bool,
-    lbwsg_pafs: str,
+    for_lbwsg_pafs: bool,
 ) -> None:
     """Builds artifacts for all locations in parallel.
     Parameters
@@ -196,8 +191,7 @@ def build_all_artifacts(
                 str(path),
                 f'"{location}"',
                 fetch_subnationals,
-                load_lbwsg_pafs,
-                lbwsg_pafs,
+                for_lbwsg_pafs,
             ]
             job_template.nativeSpecification = (
                 f"-V "  # Export all environment variables
@@ -244,10 +238,9 @@ def build_all_artifacts(
 def build_single_location_artifact(
     path: Union[str, Path],
     location: str,
-    lbwsg_pafs: str,
     replace_keys: Tuple = (),
     fetch_subnationals: bool = True,
-    load_lbwsg_pafs: bool = True,
+    for_lbwsg_pafs: bool = True,
     log_to_file: bool = False,
 ) -> None:
     """Builds an artifact for a single location.
@@ -281,13 +274,15 @@ def build_single_location_artifact(
     artifact = builder.open_artifact(path, location)
 
     for key_group in data_keys.MAKE_ARTIFACT_KEY_GROUPS:
+        if key_group == data_keys.DIARRHEA and not for_lbwsg_pafs:
+            continue
         logger.info(f"Loading and writing {key_group.log_name} data")
         for key in key_group:
-            if key == data_keys.LBWSG.PAF and not load_lbwsg_pafs:
+            if key in (data_keys.LBWSG.PAF, data_keys.POPULATION.FERTILITY_DATA) and for_lbwsg_pafs:
                 continue
             logger.info(f"   - Loading and writing {key} data")
             builder.load_and_write_data(
-                artifact, key, location, key in replace_keys, fetch_subnationals, lbwsg_pafs
+                artifact, key, location, key in replace_keys, fetch_subnationals
             )
 
     logger.info(f"**Done building -- {location}**")
@@ -297,13 +292,11 @@ if __name__ == "__main__":
     artifact_path = sys.argv[1]
     artifact_location = sys.argv[2]
     fetch_subnationals = sys.argv[3]
-    load_lbwsg_pafs = sys.argv[4]
-    lbwsg_pafs = sys.argv[5]
+    for_lbwsg_pafs = sys.argv[4]
     build_single_location_artifact(
         artifact_path,
         artifact_location,
-        lbwsg_pafs,
         fetch_subnationals,
-        load_lbwsg_pafs,
+        for_lbwsg_pafs,
         log_to_file=True,
     )
