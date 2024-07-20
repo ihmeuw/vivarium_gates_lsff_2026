@@ -1,5 +1,9 @@
 from snakemake.io import directory
 
+import os
+
+use_psimulate = "USE_PSIMULATE" in os.environ
+
 rule child_artifact_building_venv:
     input: ["0300_child_sim/artifact_building_pip_lock.txt"]
     output: [directory("0300_child_sim/artifact_building/"), "0300_child_sim/artifact_building/bin/activate"]
@@ -37,8 +41,19 @@ rule artifact_for_lbwsg_pafs:
         make_artifacts -vvv -o ./lbwsg_paf_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a
         """
 
+rule mean_draw_artifact_for_lbwsg_pafs:
+    input: ["0300_child_sim/lbwsg_paf_artifacts/{location}.hdf", "convert_artifact_to_mean_draw.py"]
+    output: ["0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf"]
+    shell:
+        f"""
+        cd 0300_child_sim
+        source artifact_building/bin/activate
+        rm -f lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf
+        python ../convert_artifact_to_mean_draw.py lbwsg_paf_artifacts/{{wildcards.location}}.hdf lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf
+        """
+
 rule lbwsg_pafs:
-    input: ["0300_child_sim/simulation_running/bin/activate", "0300_child_sim/lbwsg_paf_artifacts/{location}.hdf", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml"]
+    input: ["0300_child_sim/simulation_running/bin/activate", "0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml"]
     output: ["0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"]
     shell:
         f"""
@@ -47,7 +62,7 @@ rule lbwsg_pafs:
         sleep 5
         rm -rf lbwsg_pafs/{{wildcards.location}}
         source simulation_running/bin/activate
-        psimulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml -i lbwsg_paf_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ -P proj_simscience
+        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml' if use_psimulate else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience' if use_psimulate else ''}
         mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
         """
 
@@ -68,6 +83,17 @@ rule child_artifacts:
         make_artifacts -vvv -o ./artifacts -l {{wildcards.location}} --national -a
         """
 
+rule child_mean_draw_artifacts:
+    input: ["0300_child_sim/artifacts/{location}.hdf", "convert_artifact_to_mean_draw.py"]
+    output: ["0300_child_sim/mean_draw_artifacts/{location}.hdf"]
+    shell:
+        f"""
+        cd 0300_child_sim
+        source artifact_building/bin/activate
+        rm -f mean_draw_artifacts/{{wildcards.location}}.hdf
+        python ../convert_artifact_to_mean_draw.py artifacts/{{wildcards.location}}.hdf mean_draw_artifacts/{{wildcards.location}}.hdf
+        """
+
 import glob
 
 code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
@@ -77,7 +103,7 @@ rule child_simulations:
     input:
         [
             "0300_child_sim/simulation_running/bin/activate",
-            "0300_child_sim/artifacts/{location}.hdf",
+            "0300_child_sim/mean_draw_artifacts/{location}.hdf",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
         ] + code_inputs + data_inputs
     output: ["0300_child_sim/sim_results/{location}/deaths.parquet"]
@@ -89,6 +115,6 @@ rule child_simulations:
         sleep 5
         rm -rf sim_results/
         source simulation_running/bin/activate
-        psimulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml -i artifacts/{{wildcards.location}}.hdf -o sim_results/ -P proj_simscience
+        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml' if use_psimulate else ''} -i mean_draw_artifacts/{{wildcards.location}}.hdf -o sim_results/ {'-P proj_simscience' if use_psimulate else ''}
         mv sim_results/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.location}}
         """

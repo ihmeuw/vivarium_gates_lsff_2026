@@ -289,6 +289,12 @@ def load_theoretical_minimum_risk_life_expectancy(
 
 def load_fertility_data(key: str, location: str) -> pd.DataFrame:
     df = pd.read_parquet(f'../0200_pregnancy_sim/sim_results/{location.lower()}/births.parquet')
+    if "input_draw" not in df.columns:
+        df = df.assign(input_draw=0)
+    if "random_seed" not in df.columns:
+        df = df.assign(random_seed=0)
+    if "scenario" not in df.columns:
+        df = df.assign(scenario="baseline")
     df = df.set_index(list(df.columns))
     return df
 
@@ -1292,24 +1298,23 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
 
     output_dir = pathlib.Path('./lbwsg_pafs') / location_mapper[location]
 
-    def get_age_and_sex(measure_str):
-        age = measure_str.split("AGE_GROUP_")[1].split("SEX")[0][:-1]
-        sex = measure_str.split("AGE_GROUP_")[1].split("SEX")[1][1:]
-
-        return age + "," + sex
-
     df = pd.read_parquet(
         output_dir
         / "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"
     )
+    if "input_draw" in df.columns:
+        df = df.assign(input_draw="draw_" + df.input_draw.astype(str))
+    else:
+        df = df.assign(input_draw="draw_0")
     df = (
-        df.assign(input_draw="draw_" + df.input_draw.astype(str))
+        df
         .pivot_table(
             "value", [c for c in df if c not in ["input_draw", "value"]], "input_draw"
         )
         .reset_index()
-        .drop(columns=["scenario", "random_seed"])
     )
+    not_needed_columns = ["scenario", "random_seed"]
+    df = df.drop(columns=[c for c in df.columns if c in not_needed_columns])
 
     age_start_dict = {"early_neonatal": 0.0, "late_neonatal": 0.01917808}
     age_end_dict = {"early_neonatal": 0.01917808, "late_neonatal": 0.07671233}
@@ -1319,20 +1324,13 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
     df["year_end"] = 2022
     df = df.drop("age_group", axis=1)
     index_columns = ["sex", "age_start", "age_end", "year_start", "year_end"]
-    df = df[[c for c in df.columns if c not in index_columns] + index_columns]
+    df = df.set_index(index_columns)
+    unaffected_age_groups = [(0.07671233, 1.0), (1.0, 5.0)]
+    for age_start, age_end in unaffected_age_groups:
+        for sex in ["Male", "Female"]:
+            df.loc[(sex, age_start, age_end, 2021, 2022), :] = 0
 
-    new_row_1 = [0] * metadata.DRAW_COUNT + ["Female", 0.07671233, 1.0, 2021, 2022]
-    new_row_2 = [0] * metadata.DRAW_COUNT + ["Male", 0.07671233, 1.0, 2021, 2022]
-    new_row_3 = [0] * metadata.DRAW_COUNT + ["Female", 1.0, 5.0, 2021, 2022]
-    new_row_4 = [0] * metadata.DRAW_COUNT + ["Male", 1.0, 5.0, 2021, 2022]
-
-    df.loc[len(df)] = new_row_1
-    df.loc[len(df)] = new_row_2
-    df.loc[len(df)] = new_row_3
-    df.loc[len(df)] = new_row_4
-
-    df = df.set_index(["sex", "age_start", "age_end", "year_start", "year_end"]).sort_index()
-    return df
+    return df.sort_index()
 
 
 def load_sids_csmr(key: str, location: str) -> pd.DataFrame:

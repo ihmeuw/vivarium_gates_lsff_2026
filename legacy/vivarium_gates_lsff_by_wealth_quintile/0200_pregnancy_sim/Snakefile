@@ -1,5 +1,9 @@
 from snakemake.io import directory
 
+import os
+
+use_psimulate = "USE_PSIMULATE" in os.environ
+
 rule pregnancy_artifact_building_venv:
     input: ["0200_pregnancy_sim/artifact_building_pip_lock.txt"]
     output: [directory("0200_pregnancy_sim/artifact_building"), "0200_pregnancy_sim/artifact_building/bin/activate"]
@@ -37,6 +41,17 @@ rule pregnancy_artifacts:
         make_artifacts -vvv -o ./artifacts -l {{wildcards.location}} -a
         """
 
+rule pregnancy_mean_draw_artifacts:
+    input: ["0200_pregnancy_sim/artifacts/{location}.hdf", "convert_artifact_to_mean_draw.py"]
+    output: ["0200_pregnancy_sim/mean_draw_artifacts/{location}.hdf"]
+    shell:
+        f"""
+        cd 0200_pregnancy_sim
+        source artifact_building/bin/activate
+        rm -f mean_draw_artifacts/{{wildcards.location}}.hdf
+        python ../convert_artifact_to_mean_draw.py artifacts/{{wildcards.location}}.hdf mean_draw_artifacts/{{wildcards.location}}.hdf
+        """
+
 import glob
 
 code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
@@ -46,7 +61,7 @@ rule pregnancy_simulations:
     input:
         [
             "0200_pregnancy_sim/simulation_running/bin/activate",
-            "0200_pregnancy_sim/artifacts/{location}.hdf",
+            "0200_pregnancy_sim/mean_draw_artifacts/{location}.hdf",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
         ] + code_inputs + data_inputs
     output: ["0200_pregnancy_sim/sim_results/{location}/births.parquet"]
@@ -57,6 +72,6 @@ rule pregnancy_simulations:
         sleep 5
         rm -rf sim_results/
         source simulation_running/bin/activate
-        psimulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml -i artifacts/{{wildcards.location}}.hdf -o sim_results/ -P proj_simscience
+        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml' if use_psimulate else ''} -i mean_draw_artifacts/{{wildcards.location}}.hdf -o sim_results/ {'-P proj_simscience' if use_psimulate else ''}
         mv sim_results/{{wildcards.location}}/*/results/births.parquet sim_results/{{wildcards.location}}
         """
