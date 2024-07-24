@@ -46,6 +46,9 @@ MALARIA_DURATION: Tuple = (
 # and duration within the bin is bin_duration / 2
 EARLY_NEONATAL_CAUSE_DURATION: float = 3.5
 
+# TODO: Replace with real values
+IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3)  # (mean, sd) (g of birthweight)/(mcg/day)
+
 
 ##########################
 # LBWSG Model Parameters #

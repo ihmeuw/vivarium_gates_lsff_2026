@@ -75,7 +75,6 @@ class FertilityLineList(Component):
         # everyone is currently born on the first time step so this is always empty after the first time step
         if born_previous_step.empty:
             return
-        born_previous_step.loc[:, "maternal_id"] = born_previous_step.index
         # stillbirths should be initialized as dead and with exit time
         born_previous_step.loc[:, "alive"] = "alive"
         born_previous_step.loc[:, "exit_time"] = np.datetime64("NaT")

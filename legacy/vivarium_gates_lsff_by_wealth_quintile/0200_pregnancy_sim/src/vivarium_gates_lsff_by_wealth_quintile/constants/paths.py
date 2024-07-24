@@ -15,5 +15,3 @@ CSV_RAW_DATA_ROOT = BASE_DIR / "data" / "raw_data"
 HEMOGLOBIN_PREGNANCY_ADJUSTMENT_FACTORS_CSV = (
     CSV_RAW_DATA_ROOT / "mean_pregnancy_adjustment_factor_draws.csv"
 )
-
-INTERVENTION_COVERAGE_BY_SCENARIO_CSV = CSV_RAW_DATA_ROOT / "coverage_by_scenario.csv"

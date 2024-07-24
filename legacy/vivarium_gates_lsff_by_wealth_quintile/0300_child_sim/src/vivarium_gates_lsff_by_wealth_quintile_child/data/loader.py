@@ -20,7 +20,9 @@ import numpy as np
 import pandas as pd
 from gbd_mapping import Cause, RiskFactor, sequelae
 from scipy.interpolate import RectBivariateSpline, griddata
+from scipy import stats
 from vivarium.framework.artifact import EntityKey
+from vivarium.framework.randomness import get_hash
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_inputs import extract
@@ -104,6 +106,7 @@ NATIONAL_LEVEL_DATA_KEYS = [
     # data_keys.IFA_SUPPLEMENTATION.EXPOSURE,
     # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT,
     # data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT,
+    data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE,
 ]
 
 
@@ -223,6 +226,7 @@ def get_data(
         # data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
         # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: load_ifa_excess_shift,
         # data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
+        data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE: load_iron_fortification_effect_on_birth_weight,
     }
 
     args = (lookup_key,)
@@ -1365,6 +1369,18 @@ def load_neonatal_diarrhea_csmr(key: str, location: str) -> pd.DataFrame:
     data.loc[data.index.get_level_values("age_start") >= metadata.NEONATAL_END_AGE, :] = 0
     return data
 
+def load_iron_fortification_effect_on_birth_weight(key: str, location: str):
+    loc, scale = data_values.IRON_FORTIFICATION_EFFECT_SIZE
+    dist = stats.norm(loc, scale)
+    rng = np.random.default_rng(get_hash(f"iron_fortification_effect_size_{location}"))
+    draw_count = vi_globals.NUM_DRAWS
+    iron_fortification_effect_size = pd.DataFrame(
+        [dist.rvs(size=draw_count, random_state=rng)],
+        columns=vi_globals.DRAW_COLUMNS,
+        index=["value"],
+    )
+    return iron_fortification_effect_size
+
 
 def load_intervention_distribution(key: str, location: str) -> str:
     try:
@@ -1535,25 +1551,6 @@ def load_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
         .sum()
     )
     return risk_specific_shift
-
-
-def load_baseline_ifa_supplementation_coverage(location: str) -> pd.DataFrame:
-    index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    location_id = utility_data.get_location_id(location)
-    data = pd.read_csv(paths.BASELINE_IFA_COVERAGE_CSV).drop("Unnamed: 0", axis=1)
-    data = (
-        data.query("location_id==@location_id")
-        .drop("location_id", axis=1)
-        .reset_index(drop=True)
-    )
-
-    draw_values = pd.pivot_table(data, values="value", columns="draw")
-    coverage = pd.DataFrame(
-        np.repeat(draw_values.values, len(index), axis=0), columns=draw_values.columns
-    )
-    coverage.index = index
-
-    return coverage
 
 
 def reshape_to_vivarium_format(df, location):

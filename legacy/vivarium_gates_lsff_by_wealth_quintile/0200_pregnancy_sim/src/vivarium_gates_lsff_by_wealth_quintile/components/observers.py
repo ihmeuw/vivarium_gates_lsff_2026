@@ -42,11 +42,11 @@ class ResultsStratifier(ResultsStratifier_):
         #     requires_columns=["maternal_bmi_anemia_category"],
         # )
 
-        builder.results.register_stratification(
-            "intervention",
-            models.FORTIFICATION_CATEGORIES,
-            requires_columns=["intervention"],
-        )
+        # builder.results.register_stratification(
+        #     "intervention",
+        #     models.FORTIFICATION_CATEGORIES,
+        #     requires_columns=["intervention"],
+        # )
 
         builder.results.register_stratification(
             "pregnancy_outcome",
@@ -235,12 +235,14 @@ def aggregate_state_person_time(step_size, df: pd.DataFrame) -> float:
 class BirthObserver(Observer):
 
     COL_MAPPING = {
+        "entrance_time": "maternal_entrance_time",
+        "age": "maternal_age",
         "sex_of_child": "sex",
         "birth_weight": "birth_weight",
-        # "maternal_bmi_anemia_category": "joint_bmi_anemia_category",
         "gestational_age": "gestational_age",
         "pregnancy_outcome": "pregnancy_outcome",
-        "intervention": "maternal_intervention",
+        "baseline_iron_consumption_from_fortification_mcg": "baseline_iron_consumption_from_fortification_mcg",
+        "iron_consumption_from_fortification_mcg": "iron_consumption_from_fortification_mcg",
     }
 
     def register_observations(self, builder: Builder) -> None:

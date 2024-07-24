@@ -68,6 +68,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.POPULATION.DEMOGRAPHY: load_demographic_dimensions,
         data_keys.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
         data_keys.POPULATION.INFANT_MALE_PERCENTAGE: load_infant_male_percentage,
+        data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: load_wealth_quintile_probabilities,
         data_keys.PREGNANCY.ASFR: load_asfr,
         data_keys.PREGNANCY.SBR: load_sbr,
         data_keys.PREGNANCY.RAW_INCIDENCE_RATE_MISCARRIAGE: load_raw_incidence_data,
@@ -93,9 +94,11 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.HEMOGLOBIN.MEAN: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.STANDARD_DEVIATION: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70: get_hemoglobin_below_70,
-        data_keys.IRON_FORTIFICATION.COVERAGE: load_iron_fortification_coverage,
-        data_keys.IRON_FORTIFICATION.EFFECT_SIZE: load_iron_fortification_effect_size,
-        data_keys.IRON_FORTIFICATION.STILLBIRTH_RR: load_iron_fortification_stillbirth_rr,
+        data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: load_consumed_any_vehicle,
+        data_keys.VEHICLE_CONSUMPTION.MEAN: get_consumption_data,
+        data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: get_consumption_data,
+        data_keys.IRON_FORTIFICATION.BASELINE_COVERAGE: load_baseline_iron_fortification_coverage,
+        data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: load_iron_fortification_hemoglobin_effect_size,
         # data_keys.POPULATION.BACKGROUND_MORBIDITY: load_background_morbidity,
     }
     return mapping[lookup_key](lookup_key, location)
@@ -145,6 +148,15 @@ def load_infant_male_percentage(key: str, location: str) -> pd.DataFrame:
         ).droplevel("sex")
         / live_births_overall
     )
+
+def load_wealth_quintile_probabilities(key: str, location: str) -> pd.DataFrame:
+    # These would be uniform, except that we are modeling pregnancies
+    df = pd.read_csv(
+        paths.CSV_RAW_DATA_ROOT
+        / "wealth_quintile_probabilities"
+        / (location + ".csv"),
+    )
+    return df.set_index([c for c in df.columns if c != 'value'])
 
 
 def load_standard_data(key: str, location: str) -> pd.DataFrame:
@@ -652,24 +664,48 @@ def _add_location(data, location):
         .set_index(["location"] + data.index.names)
     )
 
+#######################
+# Vehicle consumption #
+#######################
+
+
+def load_consumed_any_vehicle(key: str, location: str) -> pd.DataFrame:
+    df = pd.read_csv(
+        paths.CSV_RAW_DATA_ROOT
+        / "consumed_any_vehicle"
+        / (location + ".csv"),
+    )
+    return df.set_index([c for c in df.columns if c != 'value'])
+
+
+def get_consumption_data(key: str, location: str) -> pd.DataFrame:
+    name = {
+        data_keys.VEHICLE_CONSUMPTION.MEAN: "mean_vehicle_consumption",
+        data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: "sd_vehicle_consumption",
+    }[key]
+    df = pd.read_csv(
+        paths.CSV_RAW_DATA_ROOT
+        / name
+        / (location + ".csv"),
+    )
+    return df.set_index([c for c in df.columns if c != 'value'])
+
 
 ##########################
 # Maternal interventions #
 ##########################
 
 
-def load_iron_fortification_coverage(key: str, location: str) -> pd.DataFrame:
+def load_baseline_iron_fortification_coverage(key: str, location: str) -> pd.DataFrame:
     df = pd.read_csv(
         paths.CSV_RAW_DATA_ROOT
         / "baseline_iron_fortification_coverage"
         / (location + ".csv"),
-        index_col=0,
     )
-    df = df.drop(columns=["location_id", "location_name"]).set_index(["draw"]).T
-    return df
+    return df.set_index([c for c in df.columns if c != 'value'])
 
 
-def load_iron_fortification_effect_size(key: str, location: str) -> pd.DataFrame:
+def load_iron_fortification_hemoglobin_effect_size(key: str, location: str) -> pd.DataFrame:
     loc, scale = data_values.IRON_FORTIFICATION_EFFECT_SIZE
     dist = stats.norm(loc, scale)
     rng = np.random.default_rng(get_hash(f"iron_fortification_effect_size_{location}"))

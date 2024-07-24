@@ -38,7 +38,8 @@ class PopulationLineList(BasePopulation):
             "location",
             "entrance_time",
             "exit_time",
-            "maternal_id",
+            "maternal_entrance_time",
+            "maternal_age",
         ]
 
     @property
@@ -98,7 +99,8 @@ class PopulationLineList(BasePopulation):
             new_simulants["location"] = self.location
             new_simulants["entrance_time"] = pop_data.creation_time
             new_simulants["exit_time"] = new_births["exit_time"]
-            new_simulants["maternal_id"] = new_births["maternal_id"]
+            new_simulants["maternal_entrance_time"] = new_births["maternal_entrance_time"]
+            new_simulants["maternal_age"] = new_births["maternal_age"]
 
         self.register_simulants(new_simulants[self.key_columns])
 

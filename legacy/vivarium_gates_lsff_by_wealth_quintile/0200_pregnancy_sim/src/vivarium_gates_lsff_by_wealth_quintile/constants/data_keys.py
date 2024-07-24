@@ -16,6 +16,7 @@ class __Population(NamedTuple):
     DEMOGRAPHY: str = "population.demographic_dimensions"
     TMRLE: str = "population.theoretical_minimum_risk_life_expectancy"
     INFANT_MALE_PERCENTAGE: str = "population.infant_male_percentage"
+    WEALTH_QUINTILE_PROBABILITIES: str = "population.wealth_quintile_probabilities"
     #    BACKGROUND_MORBIDITY: str = "cause.other_causes.disability_weight"
 
     @property
@@ -139,10 +140,25 @@ class _Hemoglobin(NamedTuple):
 HEMOGLOBIN = _Hemoglobin()
 
 
+class __VehicleConsumption(NamedTuple):
+    ANY_CONSUMED: str = "vehicle_consumption.any_consumed"
+    MEAN: str = "vehicle_consumption.mean"
+    STANDARD_DEVIATION: str = "vehicle_consumption.standard_deviation"
+
+    @property
+    def name(self):
+        return "vehicle_consumption"
+
+    @property
+    def log_name(self):
+        return "vehicle consumption"
+
+VEHICLE_CONSUMPTION = __VehicleConsumption()
+
+
 class __IronFortification(NamedTuple):
-    COVERAGE: str = "iron_fortification.coverage"
-    EFFECT_SIZE: str = "iron_fortification.effect_size"
-    STILLBIRTH_RR: str = "iron_fortification.stillbirth_rr"
+    BASELINE_COVERAGE: str = "iron_fortification.baseline_coverage"
+    HEMOGLOBIN_EFFECT_SIZE: str = "iron_fortification.hemoglobin_effect_size"
 
     @property
     def name(self):
@@ -162,5 +178,6 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     MATERNAL_DISORDERS,
     MATERNAL_HEMORRHAGE,
     HEMOGLOBIN,
+    VEHICLE_CONSUMPTION,
     IRON_FORTIFICATION,
 ]

@@ -16,6 +16,7 @@ components:
             # - BackgroundMorbidity()
             - Hemoglobin()
             - Anemia()
+            - VehicleConsumption()
             - IronFortification()
             - ResultsStratifier()
             - PregnancyObserver()
@@ -24,6 +25,7 @@ components:
             - MaternalMortalityObserver()
             - DisabilityObserver()
             - AnemiaObserver()
+            - WealthQuintile()
 
 configuration:
     input_data:

@@ -473,6 +473,18 @@ class __AdditiveRisk(NamedTuple):
 
 # IFA_SUPPLEMENTATION = _get_additive_risk_keys("iron_folic_acid_supplementation")
 
+class __IronFortification(NamedTuple):
+    BIRTH_WEIGHT_EFFECT_SIZE: TargetString = TargetString("risk.iron_fortification.effect_size")
+
+    @property
+    def name(self):
+        return "iron_fortification"
+
+    @property
+    def log_name(self):
+        return self.name.replace("_", " ")
+
+IRON_FORTIFICATION = __IronFortification()
 
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
@@ -490,4 +502,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     LBWSG,
     AFFECTED_UNMODELED_CAUSES,
     # IFA_SUPPLEMENTATION,
+    IRON_FORTIFICATION,
 ]

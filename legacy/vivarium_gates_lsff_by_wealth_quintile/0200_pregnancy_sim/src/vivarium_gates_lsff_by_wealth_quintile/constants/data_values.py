@@ -108,18 +108,15 @@ RR_MATERNAL_HEMORRHAGE_ATTRIBUTABLE_TO_HEMOGLOBIN = (
     10.4,
 )  # (median, lower, upper) 95% CI
 
-INTERVENTION_SCENARIO_COVERAGE = pd.read_csv(
-    paths.INTERVENTION_COVERAGE_BY_SCENARIO_CSV
-).set_index("scenario")
-
-# TODO: Replace with real value
-IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3)  # (mean, sd) g/L
-
-INTERVENTION_STILLBIRTH_RRS = {
-    # (center, lower, upper) 95% CI
-    data_keys.IRON_FORTIFICATION.STILLBIRTH_RR: (
-        0.91,
-        0.71,
-        0.93,
-    ),  # TODO: Replace with real value
+INTERVENTION_SCENARIO_COVERAGE_AMONG_BASELINE_UNCOVERED = {
+    "baseline": 0,
+    "20_percent": 0.2,
+    "50_percent": 0.5,
+    "80_percent": 0.8,
+    "full": 1,
 }
+
+# TODO: Replace with real values
+IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3)  # (mean, sd) (g/L)/(mcg/day)
+
+IRON_FORTIFICATION_CONCENTRATION = 50.0 # mcg/g
