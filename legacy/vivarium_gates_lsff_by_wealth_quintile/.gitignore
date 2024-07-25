@@ -129,6 +129,7 @@ dmypy.json
 
 artifact_building/
 simulation_running/
+.venv/
 
 .snakemake/
 *.rdb

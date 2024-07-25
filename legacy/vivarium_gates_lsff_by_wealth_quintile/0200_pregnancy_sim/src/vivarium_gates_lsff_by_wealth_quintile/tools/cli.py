@@ -37,6 +37,12 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
 @click.option("-r", "--replace-keys", multiple=True, help="Specify keys to overwrite")
 @click.option("-v", "verbose", count=True, help="Configure logging verbosity.")
 @click.option(
+    "--mean",
+    "mean_draw",
+    is_flag=True,
+    help="Generate a mean draw artifact.",
+)
+@click.option(
     "--pdb",
     "with_debugger",
     is_flag=True,
@@ -48,9 +54,10 @@ def make_artifacts(
     append: bool,
     replace_keys: Tuple[str, ...],
     verbose: int,
+    mean_draw: bool,
     with_debugger: bool,
 ) -> None:
     location = location.title()  # HACK
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
-    main(location, output_dir, append or replace_keys, replace_keys, verbose)
+    main(location, output_dir, append or replace_keys, replace_keys, mean_draw, verbose)

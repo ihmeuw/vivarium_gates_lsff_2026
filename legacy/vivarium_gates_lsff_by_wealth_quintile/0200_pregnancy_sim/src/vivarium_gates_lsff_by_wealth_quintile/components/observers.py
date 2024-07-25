@@ -243,6 +243,7 @@ class BirthObserver(Observer):
         "pregnancy_outcome": "pregnancy_outcome",
         "baseline_iron_consumption_from_fortification_mcg": "baseline_iron_consumption_from_fortification_mcg",
         "iron_consumption_from_fortification_mcg": "iron_consumption_from_fortification_mcg",
+        "wealth_quintile": "wealth_quintile",
     }
 
     def register_observations(self, builder: Builder) -> None:

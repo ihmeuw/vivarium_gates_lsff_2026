@@ -30,32 +30,34 @@ rule pregnancy_simulation_running_venv:
         pip install -e .[dev]
         """
 
-rule pregnancy_artifacts:
-    input: ["0200_pregnancy_sim/artifact_building/bin/activate", "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"]
-    output: ["0200_pregnancy_sim/artifacts/{location}.hdf"]
-    shell:
-        f"""
-        cd 0200_pregnancy_sim
-        source artifact_building/bin/activate
-        rm -f artifacts/{{wildcards.location}}.hdf
-        make_artifacts -vvv -o ./artifacts -l {{wildcards.location}} -a
-        """
+import glob
 
-rule pregnancy_mean_draw_artifacts:
-    input: ["0200_pregnancy_sim/artifacts/{location}.hdf", "convert_artifact_to_mean_draw.py"]
+data_inputs = [
+    f"0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/{item}/{{location}}.csv"
+    for item in [
+        "baseline_iron_fortification_coverage",
+        "consumed_any_vehicle",
+        "maternal_disorders_incidence_disparities",
+        "mean_hemoglobin_disparities",
+        "mean_vehicle_consumption",
+        "sd_hemoglobin_disparities",
+        "sd_vehicle_consumption",
+        "wealth_quintile_probabilities"
+    ]
+]
+
+rule pregnancy_artifacts:
+    input: ["0200_pregnancy_sim/artifact_building/bin/activate", "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"] + data_inputs
     output: ["0200_pregnancy_sim/mean_draw_artifacts/{location}.hdf"]
     shell:
         f"""
         cd 0200_pregnancy_sim
         source artifact_building/bin/activate
-        rm -f mean_draw_artifacts/{{wildcards.location}}.hdf
-        python ../convert_artifact_to_mean_draw.py artifacts/{{wildcards.location}}.hdf mean_draw_artifacts/{{wildcards.location}}.hdf
+        rm -f artifacts/{{wildcards.location}}.hdf
+        make_artifacts -vvv -o ./mean_draw_artifacts -l {{wildcards.location}} -a --mean
         """
 
-import glob
-
 code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
-data_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.csv")
 
 rule pregnancy_simulations:
     input:
@@ -65,12 +67,13 @@ rule pregnancy_simulations:
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml",
         ] + code_inputs + data_inputs
-    output: [
-        "0200_pregnancy_sim/sim_results/{location}/births.parquet",
-        "0200_pregnancy_sim/sim_results/{location}/deaths.parquet",
-        "0200_pregnancy_sim/sim_results/{location}/ylds.parquet",
-        "0200_pregnancy_sim/sim_results/{location}/dalys.parquet",
-    ]
+    output:
+        [
+            "0200_pregnancy_sim/sim_results/{location}/births.parquet",
+            "0200_pregnancy_sim/sim_results/{location}/deaths.parquet",
+            "0200_pregnancy_sim/sim_results/{location}/ylds.parquet",
+            "0200_pregnancy_sim/sim_results/{location}/ylls.parquet",
+        ]
     shell:
         f"""
         cd 0200_pregnancy_sim

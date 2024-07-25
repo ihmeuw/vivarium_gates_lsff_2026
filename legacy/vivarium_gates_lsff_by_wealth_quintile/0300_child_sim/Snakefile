@@ -32,24 +32,13 @@ rule child_simulation_running_venv:
 
 rule artifact_for_lbwsg_pafs:
     input: ["0300_child_sim/artifact_building/bin/activate", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
-    output: ["0300_child_sim/lbwsg_paf_artifacts/{location}.hdf"]
-    shell:
-        f"""
-        cd 0300_child_sim
-        source artifact_building/bin/activate
-        rm -f lbwsg_paf_artifacts/{{wildcards.location}}.hdf
-        make_artifacts -vvv -o ./lbwsg_paf_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a
-        """
-
-rule mean_draw_artifact_for_lbwsg_pafs:
-    input: ["0300_child_sim/lbwsg_paf_artifacts/{location}.hdf", "convert_artifact_to_mean_draw.py"]
     output: ["0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf"]
     shell:
         f"""
         cd 0300_child_sim
         source artifact_building/bin/activate
         rm -f lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf
-        python ../convert_artifact_to_mean_draw.py lbwsg_paf_artifacts/{{wildcards.location}}.hdf lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf
+        make_artifacts -vvv -o ./lbwsg_paf_mean_draw_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a --mean
         """
 
 rule lbwsg_pafs:
@@ -75,24 +64,13 @@ rule child_artifacts:
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py",
             "0200_pregnancy_sim/sim_results/{location}/births.parquet",
         ]
-    output: ["0300_child_sim/artifacts/{location}.hdf"]
-    shell:
-        f"""
-        cd 0300_child_sim
-        source artifact_building/bin/activate
-        rm -f artifacts/{{wildcards.location}}.hdf
-        make_artifacts -vvv -o ./artifacts -l {{wildcards.location}} --national -a
-        """
-
-rule child_mean_draw_artifacts:
-    input: ["0300_child_sim/artifacts/{location}.hdf", "convert_artifact_to_mean_draw.py"]
     output: ["0300_child_sim/mean_draw_artifacts/{location}.hdf"]
     shell:
         f"""
         cd 0300_child_sim
         source artifact_building/bin/activate
         rm -f mean_draw_artifacts/{{wildcards.location}}.hdf
-        python ../convert_artifact_to_mean_draw.py artifacts/{{wildcards.location}}.hdf mean_draw_artifacts/{{wildcards.location}}.hdf
+        make_artifacts -vvv -o ./mean_draw_artifacts -l {{wildcards.location}} --national -a --mean
         """
 
 import glob
@@ -108,11 +86,12 @@ rule child_simulations:
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml",
         ] + code_inputs + data_inputs
-    output: [
-        "0300_child_sim/sim_results/{location}/deaths.parquet",
-        "0300_child_sim/sim_results/{location}/ylds.parquet",
-        "0300_child_sim/sim_results/{location}/ylls.parquet",
-    ]
+    output:
+        [
+            "0300_child_sim/sim_results/{location}/deaths.parquet",
+            "0300_child_sim/sim_results/{location}/ylds.parquet",
+            "0300_child_sim/sim_results/{location}/ylls.parquet",
+        ]
     shell:
         f"""
         cd 0300_child_sim

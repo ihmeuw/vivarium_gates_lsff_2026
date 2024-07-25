@@ -9,6 +9,7 @@ from vivarium_public_health.utilities import get_lookup_columns
 
 from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
+    data_values,
 )
 
 
@@ -34,7 +35,7 @@ class WealthQuintile(Component):
         quintile_probabilities = self.build_lookup_table(
             builder,
             builder.data.load(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES),
-            value_columns=["lowest", "second", "middle", "fourth", "highest"]
+            value_columns=data_values.WEALTH_QUINTILES,
         )
 
         self.quintile_probabilities = builder.value.register_value_producer(

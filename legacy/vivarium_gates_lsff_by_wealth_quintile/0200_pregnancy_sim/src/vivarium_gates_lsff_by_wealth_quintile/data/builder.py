@@ -48,7 +48,7 @@ def open_artifact(output_path: Path, location: str) -> Artifact:
     return artifact
 
 
-def load_and_write_data(artifact: Artifact, key: str, location: str, replace: bool):
+def load_and_write_data(artifact: Artifact, key: str, location: str, mean_draw: bool, replace: bool):
     """Loads data and writes it to the artifact if not already present.
 
     Parameters
@@ -68,7 +68,7 @@ def load_and_write_data(artifact: Artifact, key: str, location: str, replace: bo
         logger.debug(f"Data for {key} already in artifact.  Skipping...")
     else:
         logger.debug(f"Loading data for {key} for location {location}.")
-        data = loader.get_data(key, location)
+        data = loader.get_data(key, location, mean_draw)
         if key not in artifact:
             logger.debug(f"Writing data for {key} to artifact.")
             artifact.write(key, data)

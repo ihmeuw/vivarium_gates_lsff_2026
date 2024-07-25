@@ -120,3 +120,5 @@ INTERVENTION_SCENARIO_COVERAGE_AMONG_BASELINE_UNCOVERED = {
 IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3)  # (mean, sd) (g/L)/(mcg/day)
 
 IRON_FORTIFICATION_CONCENTRATION = 50.0 # mcg/g
+
+WEALTH_QUINTILES = ["lowest", "second", "middle", "fourth", "highest"]

@@ -77,12 +77,13 @@ def build_single(
     location: str,
     output_dir: str,
     replace_keys: Tuple,
+    mean_draw: bool,
     fetch_subnationals: bool,
     for_lbwsg_pafs: bool,
 ) -> None:
     path = Path(output_dir) / f"{sanitize_location(location)}.hdf"
     build_single_location_artifact(
-        path, location, replace_keys, fetch_subnationals, for_lbwsg_pafs
+        path, location, replace_keys, mean_draw, fetch_subnationals, for_lbwsg_pafs
     )
 
 
@@ -92,6 +93,7 @@ def build_artifacts(
     append: bool,
     replace_keys: Tuple,
     verbose: int,
+    mean_draw: bool,
     fetch_subnationals: bool,
     for_lbwsg_pafs: bool,
 ) -> None:
@@ -130,6 +132,7 @@ def build_artifacts(
             location,
             output_dir,
             replace_keys,
+            mean_draw,
             fetch_subnationals,
             for_lbwsg_pafs,
         )
@@ -137,7 +140,7 @@ def build_artifacts(
         if running_from_cluster():
             # parallel build when on cluster
             build_all_artifacts(
-                output_dir, verbose, fetch_subnationals, for_lbwsg_pafs
+                output_dir, mean_draw, verbose, fetch_subnationals, for_lbwsg_pafs
             )
         else:
             # serial build when not on cluster
@@ -146,6 +149,7 @@ def build_artifacts(
                     loc,
                     output_dir,
                     replace_keys,
+                    mean_draw,
                     fetch_subnationals,
                     for_lbwsg_pafs,
                 )
@@ -158,6 +162,7 @@ def build_artifacts(
 
 def build_all_artifacts(
     output_dir: Path,
+    mean_draw: bool,
     verbose: int,
     fetch_subnationals: bool,
     for_lbwsg_pafs: bool,
@@ -190,6 +195,7 @@ def build_all_artifacts(
                 __file__,
                 str(path),
                 f'"{location}"',
+                mean_draw,
                 fetch_subnationals,
                 for_lbwsg_pafs,
             ]
@@ -239,7 +245,8 @@ def build_single_location_artifact(
     path: Union[str, Path],
     location: str,
     replace_keys: Tuple = (),
-    fetch_subnationals: bool = True,
+    mean_draw: bool = True,
+    fetch_subnationals: bool = False,
     for_lbwsg_pafs: bool = True,
     log_to_file: bool = False,
 ) -> None:
@@ -282,7 +289,7 @@ def build_single_location_artifact(
                 continue
             logger.info(f"   - Loading and writing {key} data")
             builder.load_and_write_data(
-                artifact, key, location, key in replace_keys, fetch_subnationals
+                artifact, key, location, key in replace_keys, mean_draw, fetch_subnationals
             )
 
     logger.info(f"**Done building -- {location}**")
@@ -291,11 +298,13 @@ def build_single_location_artifact(
 if __name__ == "__main__":
     artifact_path = sys.argv[1]
     artifact_location = sys.argv[2]
-    fetch_subnationals = sys.argv[3]
-    for_lbwsg_pafs = sys.argv[4]
+    mean_draw = sys.argv[3]
+    fetch_subnationals = sys.argv[4]
+    for_lbwsg_pafs = sys.argv[5]
     build_single_location_artifact(
         artifact_path,
         artifact_location,
+        mean_draw,
         fetch_subnationals,
         for_lbwsg_pafs,
         log_to_file=True,

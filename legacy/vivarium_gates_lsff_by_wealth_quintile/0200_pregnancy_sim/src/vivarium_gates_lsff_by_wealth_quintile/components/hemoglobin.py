@@ -74,6 +74,7 @@ class Hemoglobin(Component):
             "age_end",
             "year_start",
             "year_end",
+            "wealth_quintile",
         ]
 
         # load data

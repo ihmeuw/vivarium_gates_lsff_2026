@@ -82,8 +82,9 @@ class VehicleConsumption(Component):
         pop_update.loc[~pop_update.index.isin(any_consumed), "vehicle_consumption_grams"] = 0
         distribution_parameters = self.distribution_parameters(any_consumed)
         pop_update.loc[any_consumed, "vehicle_consumption_grams"] = self.randomness.sample_from_distribution(any_consumed, scipy.stats.norm(
-            distribution_parameters["mean"] / any_consumed_prob.loc[any_consumed],
-            distribution_parameters.stddev / any_consumed_prob.loc[any_consumed],
+            # Scaling up to account for the 0s introduced by ~any_consumed
+            distribution_parameters["mean"] / any_consumed_prob.mean(),
+            distribution_parameters.stddev / any_consumed_prob.mean(),
         )).clip(lower=0)
 
         self.population_view.update(pop_update)

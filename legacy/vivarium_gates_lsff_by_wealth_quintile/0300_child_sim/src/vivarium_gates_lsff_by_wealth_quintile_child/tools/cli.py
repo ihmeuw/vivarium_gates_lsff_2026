@@ -50,6 +50,12 @@ from vivarium_gates_lsff_by_wealth_quintile_child.tools import (
 @click.option("-r", "--replace-keys", multiple=True, help="Specify keys to overwrite")
 @click.option("-v", "verbose", count=True, help="Configure logging verbosity.")
 @click.option(
+    "--mean",
+    "mean_draw",
+    is_flag=True,
+    help="Generate mean-draw artifact.",
+)
+@click.option(
     "--pdb",
     "with_debugger",
     is_flag=True,
@@ -61,6 +67,7 @@ def make_artifacts(
     append: bool,
     replace_keys: Tuple[str, ...],
     verbose: int,
+    mean_draw: bool,
     with_debugger: bool,
     build_national: bool,
     for_lbwsg_pafs: bool,
@@ -80,6 +87,7 @@ def make_artifacts(
         append or replace_keys,
         replace_keys,
         verbose,
+        mean_draw,
         fetch_subnationals,
         for_lbwsg_pafs,
     )

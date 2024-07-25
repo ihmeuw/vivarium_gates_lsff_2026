@@ -1,3 +1,4 @@
+include: "0100_data_prep/Snakefile"
 include: "0200_pregnancy_sim/Snakefile"
 include: "0300_child_sim/Snakefile"
 # TODO: Include results analysis
@@ -10,5 +11,15 @@ locations = [
     # "Ethiopia",
 ]
 
+sims = ["0200_pregnancy_sim", "0300_child_sim"]
+results_of_interest = ["deaths", "ylds", "ylls"]
+
+final_results = []
+
+for location in locations:
+    for sim in sims:
+        for result in results_of_interest:
+            final_results.append(f"{sim}/sim_results/{location.lower()}/{result}.parquet")
+
 rule all:
-    input: [f"0300_child_sim/sim_results/{location.lower()}/deaths.parquet" for location in locations]
+    input: final_results

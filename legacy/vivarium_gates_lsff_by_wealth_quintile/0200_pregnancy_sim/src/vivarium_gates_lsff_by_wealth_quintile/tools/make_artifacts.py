@@ -72,13 +72,13 @@ def check_for_existing(
             )
 
 
-def build_single(location: str, output_dir: str, replace_keys: Tuple) -> None:
+def build_single(location: str, output_dir: str, replace_keys: Tuple, mean_draw: bool) -> None:
     path = Path(output_dir) / f"{sanitize_location(location)}.hdf"
-    build_single_location_artifact(path, location, replace_keys)
+    build_single_location_artifact(path, location, replace_keys, mean_draw)
 
 
 def build_artifacts(
-    location: str, output_dir: str, append: bool, replace_keys: Tuple, verbose: int
+    location: str, output_dir: str, append: bool, replace_keys: Tuple, mean_draw: bool, verbose: int
 ) -> None:
     """Main application function for building artifacts.
     Parameters
@@ -109,15 +109,15 @@ def build_artifacts(
     check_for_existing(output_dir, location, append, replace_keys)
 
     if location in metadata.LOCATIONS:
-        build_single(location, output_dir, replace_keys)
+        build_single(location, output_dir, replace_keys, mean_draw)
     elif location == "all":
         if running_from_cluster():
             # parallel build when on cluster
-            build_all_artifacts(output_dir, verbose)
+            build_all_artifacts(output_dir, verbose, mean_draw)
         else:
             # serial build when not on cluster
             for loc in metadata.LOCATIONS:
-                build_single(loc, output_dir, replace_keys)
+                build_single(loc, output_dir, replace_keys, mean_draw)
     else:
         raise ValueError(
             f'Location must be one of {metadata.LOCATIONS} or the string "all". '
@@ -125,7 +125,7 @@ def build_artifacts(
         )
 
 
-def build_all_artifacts(output_dir: Path, verbose: int) -> None:
+def build_all_artifacts(output_dir: Path, verbose: int, mean_draw: bool) -> None:
     """Builds artifacts for all locations in parallel.
     Parameters
     ----------
@@ -194,7 +194,7 @@ def build_all_artifacts(output_dir: Path, verbose: int) -> None:
 
 
 def build_single_location_artifact(
-    path: Union[str, Path], location: str, replace_keys: Tuple = (), log_to_file: bool = False
+    path: Union[str, Path], location: str, replace_keys: Tuple = (), mean_draw: bool = False, log_to_file: bool = False
 ) -> None:
     """Builds an artifact for a single location.
     Parameters
@@ -230,7 +230,7 @@ def build_single_location_artifact(
         logger.info(f"Loading and writing {key_group.log_name} data")
         for key in key_group:
             logger.info(f"   - Loading and writing {key} data")
-            builder.load_and_write_data(artifact, key, location, key in replace_keys)
+            builder.load_and_write_data(artifact, key, location, mean_draw, key in replace_keys)
 
     logger.info(f"**Done building -- {location}**")
 

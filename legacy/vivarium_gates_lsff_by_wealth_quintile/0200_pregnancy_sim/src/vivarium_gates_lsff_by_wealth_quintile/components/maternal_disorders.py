@@ -1,5 +1,9 @@
+from typing import List
+import pandas as pd
+
 from vivarium.framework.engine import Builder
 from vivarium_public_health.disease import DiseaseModel, DiseaseState, RecoveredState
+from vivarium_public_health.disease.transition import ProportionTransition
 from vivarium_public_health.utilities import to_years
 
 from vivarium_gates_lsff_by_wealth_quintile.components.disease import (
@@ -25,7 +29,15 @@ def MaternalDisorders():
         },
     )
     recovered = RecoveredState(cause, allow_self_transition=True)
-    susceptible.add_transition(with_condition)
+    susceptible.transition_set.append(ParturitionSelectionTransition(
+        susceptible,
+        with_condition,
+        get_data_functions={
+            "proportion": lambda builder, cause: builder.data.load(
+                f"cause.{cause}.incident_probability"
+            )
+        },
+    ))
     with_condition.add_dwell_time_transition(recovered)
 
     return DiseaseModel(
@@ -49,7 +61,15 @@ def MaternalHemorrhage():
         },
     )
     recovered = RecoveredState(cause, allow_self_transition=True)
-    susceptible.add_transition(with_condition)
+    susceptible.transition_set.append(ParturitionSelectionTransition(
+        susceptible,
+        with_condition,
+        get_data_functions={
+            "proportion": lambda builder, cause: builder.data.load(
+                f"cause.{cause}.incident_probability"
+            )
+        },
+    ))
     with_condition.add_dwell_time_transition(recovered)
 
     return DiseaseModel(
@@ -57,6 +77,48 @@ def MaternalHemorrhage():
         states=[susceptible, with_condition, recovered],
         get_data_functions={"cause_specific_mortality_rate": lambda *_: 0.0},
     )
+
+class ParturitionSelectionTransition(ProportionTransition):
+    ##############
+    # Properties #
+    ##############
+
+    @property
+    def columns_required(self) -> List[str]:
+        return ["alive", "pregnancy"]
+
+    #####################
+    # Lifecycle methods #
+    #####################
+
+    def setup(self, builder: Builder) -> None:
+        super().setup(builder)
+        pipeline_name = f"{self.output_state.state_id}.transition_proportion"
+        self.proportion_pipeline = builder.value.register_value_producer(
+            pipeline_name,
+            source=self.compute_transition_proportion,
+            requires_columns=["age", "sex", "wealth_quintile", "alive"],
+        )
+
+    ###################
+    # Pipeline methods#
+    ###################
+
+    def compute_transition_proportion(self, index) -> pd.Series:
+        transition_proportion = pd.Series(0.0, index=index)
+        sub_pop = self.population_view.get(
+            index, query="(alive == 'alive') & (pregnancy == 'parturition')"
+        ).index
+
+        transition_proportion.loc[sub_pop] = self.lookup_tables["proportion"](sub_pop)
+        return transition_proportion
+
+    ####################
+    # Helper methods   #
+    ####################
+
+    def _probability(self, index) -> pd.Series:
+        return self.proportion_pipeline(index)
 
 
 def get_maternal_disorders_disability_weight(builder: Builder, cause: str):
