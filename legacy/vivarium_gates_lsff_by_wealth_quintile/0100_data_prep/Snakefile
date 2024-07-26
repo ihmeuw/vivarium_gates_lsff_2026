@@ -12,24 +12,24 @@ rule data_prep_venv:
         pip install -r data_prep_pip_lock.txt
         """
 
-rule nigeria_dhs:
+rule dhs:
     input:
         [
             "0100_data_prep/.venv/bin/activate",
-            "0100_data_prep/dhs/nigeria.ipynb",
+            "0100_data_prep/dhs/{location}.ipynb",
         ]
-    log: "0100_data_prep/executed/dhs/nigeria.ipynb"
+    log: "0100_data_prep/executed/dhs/{location}.ipynb"
     output: 
         [
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/maternal_disorders_incidence_disparities/nigeria.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/mean_hemoglobin_disparities/nigeria.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/sd_hemoglobin_disparities/nigeria.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/wealth_quintile_probabilities/nigeria.csv",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/maternal_disorders_incidence_disparities/{location}.csv",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/mean_hemoglobin_disparities/{location}.csv",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/sd_hemoglobin_disparities/{location}.csv",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/wealth_quintile_probabilities/{location}.csv",
         ]
     shell:
         """
         cd 0100_data_prep
         source .venv/bin/activate
         cd dhs
-        papermill nigeria.ipynb ../executed/dhs/nigeria.ipynb -k python3
+        papermill {wildcards.location}.ipynb ../executed/dhs/{wildcards.location}.ipynb -k python3
         """
