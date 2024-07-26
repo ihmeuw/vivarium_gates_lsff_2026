@@ -13,6 +13,7 @@ from vivarium.framework.population import SimulantData
 from vivarium.framework.time import get_time_stamp
 from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import RiskEffect
+from vivarium_public_health.utilities import get_lookup_columns
 
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys
 
@@ -80,6 +81,67 @@ class MaternalIronConsumptionFromFortification(Component):
         )
 
         return exposure
+
+
+class WealthQuintile(Component):
+
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def columns_created(self) -> List[str]:
+        return [
+            "wealth_quintile",
+        ]
+
+    #################
+    # Setup methods #
+    #################
+
+    # noinspection PyAttributeOutsideInit
+    def setup(self, builder: Builder) -> None:
+        self.start_time = get_time_stamp(builder.configuration.time.start)
+        self.birth_weight_disparities_multiplier = self.build_lookup_table(
+            builder,
+            builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
+            value_columns=["value"],
+        )
+        
+
+        builder.value.register_value_modifier(
+            "birth_weight.birth_exposure",
+            self.update_birth_weight,
+            requires_columns=[
+                "wealth_quintile",
+            ],
+        )
+
+
+    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+        """
+        Initialize simulants from line list data. Population configuration
+        contains a key "new_births" which is the line list data.
+        """
+        columns = self.columns_created
+        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+
+        if pop_data.creation_time >= self.start_time:
+            new_births = pop_data.user_data["new_births"]
+            new_births.index = pop_data.index
+
+            new_simulants["wealth_quintile"] = new_births["wealth_quintile"].copy()
+
+        self.population_view.update(new_simulants)
+    
+
+    def update_birth_weight(self, index, exposure):
+        mean_exposure = exposure.mean()
+
+        multipliers = self.birth_weight_disparities_multiplier(index)
+        multipliers /= multipliers.mean()
+        scaled = exposure * multipliers
+        scale_down_factor = mean_exposure / scaled.mean()
+        return scaled * scale_down_factor
 
 
 # class AdditiveRiskEffect(RiskEffect):

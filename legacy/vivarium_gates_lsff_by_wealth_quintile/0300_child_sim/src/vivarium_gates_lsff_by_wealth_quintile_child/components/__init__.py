@@ -17,6 +17,7 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.lbwsg import (
 from vivarium_gates_lsff_by_wealth_quintile_child.components.maternal_characteristics import (  # BirthWeightShiftEffect,
     # AdditiveRiskEffect,
     MaternalIronConsumptionFromFortification,
+    WealthQuintile,
 )
 from vivarium_gates_lsff_by_wealth_quintile_child.components.observers import (  # BirthObserver,; MortalityHazardRateObserver,; ChildWastingObserver,
     MortalityObserver,

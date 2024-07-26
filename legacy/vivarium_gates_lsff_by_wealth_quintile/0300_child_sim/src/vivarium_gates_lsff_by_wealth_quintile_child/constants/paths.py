@@ -10,7 +10,7 @@ CLUSTER_BASE_DIR = Path(
 
 ARTIFACT_ROOT = BASE_DIR / "artifacts"
 MODEL_SPEC_DIR = BASE_DIR / "model_specifications"
-RAW_DATA_DIR = BASE_DIR / "data/raw"
+RAW_DATA_DIR = BASE_DIR / "data/raw_data"
 
 UNDERWEIGHT_CONDITIONAL_DISTRIBUTIONS_DIR = CLUSTER_BASE_DIR / "raw_data/underweight_exp/"
 CGF_PAFS = CLUSTER_BASE_DIR / "raw_data/cgf_pafs/"

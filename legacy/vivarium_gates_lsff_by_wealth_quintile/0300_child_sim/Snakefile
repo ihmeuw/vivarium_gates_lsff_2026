@@ -56,6 +56,7 @@ rule lbwsg_pafs:
         mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
         """
 
+
 rule child_artifacts:
     input: 
         [
@@ -63,6 +64,7 @@ rule child_artifacts:
             "0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py",
             "0200_pregnancy_sim/sim_results/{location}/births.parquet",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/birth_weight_disparities/{location}.csv"
         ]
     output: ["0300_child_sim/mean_draw_artifacts/{location}.hdf"]
     shell:
@@ -74,9 +76,7 @@ rule child_artifacts:
         """
 
 import glob
-
-code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
-data_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.csv")
+code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
 
 rule child_simulations:
     input:
@@ -85,7 +85,7 @@ rule child_simulations:
             "0300_child_sim/mean_draw_artifacts/{location}.hdf",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml",
-        ] + code_inputs + data_inputs
+        ] + code_inputs
     output:
         [
             "0300_child_sim/sim_results/{location}/deaths.parquet",

@@ -208,6 +208,7 @@ def get_data(
         data_keys.LBWSG.RELATIVE_RISK: load_lbwsg_rr,  ## Still 2019 age bins, but doesn't have effect past NN
         data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR: load_lbwsg_interpolated_rr,  ## Still 2019 age bins, but doesn't have effect past NN
         data_keys.LBWSG.PAF: load_lbwsg_paf,  ## Still 2019 age bins, but doesn't have effect past NN
+        data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES: load_birth_weight_wealth_disparities,
         data_keys.AFFECTED_UNMODELED_CAUSES.URI_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.MENINGITIS_CSMR: load_standard_data,
@@ -1342,6 +1343,15 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
             df.loc[(sex, age_start, age_end, 2021, 2022), :] = 0
 
     return df.sort_index()
+
+def load_birth_weight_wealth_disparities(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+    disparities = pd.read_csv(
+        paths.RAW_DATA_DIR
+        / "birth_weight_disparities"
+        / (location.lower() + ".csv"),
+    ).set_index(["wealth_quintile"])
+
+    return disparities
 
 
 def load_sids_csmr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:

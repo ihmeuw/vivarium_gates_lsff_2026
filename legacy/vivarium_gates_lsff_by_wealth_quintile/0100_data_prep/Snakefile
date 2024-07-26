@@ -25,6 +25,7 @@ rule dhs:
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/mean_hemoglobin_disparities/{location}.csv",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/sd_hemoglobin_disparities/{location}.csv",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/wealth_quintile_probabilities/{location}.csv",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/birth_weight_disparities/{location}.csv",
         ]
     shell:
         """

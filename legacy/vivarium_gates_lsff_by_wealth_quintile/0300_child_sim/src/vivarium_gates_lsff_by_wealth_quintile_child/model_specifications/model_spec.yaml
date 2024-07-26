@@ -38,6 +38,7 @@ components:
             # - CGFRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
             # - CGFRiskEffect('cause.malaria.excess_mortality_rate')
             - MaternalIronConsumptionFromFortification()
+            - WealthQuintile()
             # - BirthWeightShiftEffect()
             # - SIS_with_birth_prevalence('diarrheal_diseases')
             # - RiskAttributableDisease('cause.moderate_protein_energy_malnutrition', 'risk_factor.child_wasting')
