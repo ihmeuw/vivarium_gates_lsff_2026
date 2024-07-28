@@ -133,4 +133,5 @@ simulation_running/
 
 .snakemake/
 *.rdb
+*.hdf
 .cachedir

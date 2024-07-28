@@ -476,8 +476,11 @@ class __AdditiveRisk(NamedTuple):
 
 # IFA_SUPPLEMENTATION = _get_additive_risk_keys("iron_folic_acid_supplementation")
 
+
 class __IronFortification(NamedTuple):
-    BIRTH_WEIGHT_EFFECT_SIZE: TargetString = TargetString("risk.iron_fortification.effect_size")
+    BIRTH_WEIGHT_EFFECT_SIZE: TargetString = TargetString(
+        "risk.iron_fortification.effect_size"
+    )
 
     @property
     def name(self):
@@ -486,6 +489,7 @@ class __IronFortification(NamedTuple):
     @property
     def log_name(self):
         return self.name.replace("_", " ")
+
 
 IRON_FORTIFICATION = __IronFortification()
 

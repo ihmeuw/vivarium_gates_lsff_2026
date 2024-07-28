@@ -61,6 +61,13 @@ class ResultsStratifier(ResultsStratifier_):
         """Register each desired stratification with calls to _setup_stratification"""
         super().register_stratifications(builder)
 
+        builder.results.register_stratification(
+            "wealth_quintile",
+            data_values.WEALTH_QUINTILES,
+            is_vectorized=True,
+            requires_columns=["wealth_quintile"],
+        )
+
         # builder.results.register_stratification(
         #     "wasting_state",
         #     [category.value for category in data_keys.ChildWastingCategories],

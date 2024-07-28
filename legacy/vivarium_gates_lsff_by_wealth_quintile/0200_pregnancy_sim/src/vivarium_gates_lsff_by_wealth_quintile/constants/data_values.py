@@ -108,17 +108,8 @@ RR_MATERNAL_HEMORRHAGE_ATTRIBUTABLE_TO_HEMOGLOBIN = (
     10.4,
 )  # (median, lower, upper) 95% CI
 
-INTERVENTION_SCENARIO_COVERAGE_AMONG_BASELINE_UNCOVERED = {
-    "baseline": 0,
-    "20_percent": 0.2,
-    "50_percent": 0.5,
-    "80_percent": 0.8,
-    "full": 1,
-}
-
-# TODO: Replace with real values
-IRON_FORTIFICATION_EFFECT_SIZE = (0.3, 0.3)  # (mean, sd) (g/L)/(mcg/day)
-
-IRON_FORTIFICATION_CONCENTRATION = 50.0 # mcg/g
+VEHICLES = {"India": "rice", "Nigeria": "bouillon"}
 
 WEALTH_QUINTILES = ["lowest", "second", "middle", "fourth", "highest"]
+
+IRON_CONSUMPTION_THRESHOLD_MCG = 5_000  # 5,000 mcg = 5mg

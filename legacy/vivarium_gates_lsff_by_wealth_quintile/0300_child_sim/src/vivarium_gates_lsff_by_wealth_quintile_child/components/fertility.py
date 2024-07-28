@@ -56,7 +56,11 @@ class FertilityLineList(Component):
 
         birth_records = builder.data.load(data_keys.POPULATION.FERTILITY_DATA).reset_index()
         # NOTE: "input_draw" becomes "value" when loading
-        birth_records = birth_records[(birth_records.value == draw) & (birth_records.scenario == scenario) & (birth_records.random_seed == seed)]
+        birth_records = birth_records[
+            (birth_records.value == draw)
+            & (birth_records.scenario == scenario)
+            & (birth_records.random_seed == seed)
+        ]
         birth_records["birth_date"] = pd.to_datetime(birth_records["birth_date"])
         return birth_records
 

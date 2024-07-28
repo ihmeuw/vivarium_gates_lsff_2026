@@ -142,6 +142,7 @@ HEMOGLOBIN = _Hemoglobin()
 
 class __VehicleConsumption(NamedTuple):
     ANY_CONSUMED: str = "vehicle_consumption.any_consumed"
+    FORTIFIABILITY: str = "vehicle_consumption.fortifiability"
     MEAN: str = "vehicle_consumption.mean"
     STANDARD_DEVIATION: str = "vehicle_consumption.standard_deviation"
 
@@ -153,11 +154,19 @@ class __VehicleConsumption(NamedTuple):
     def log_name(self):
         return "vehicle consumption"
 
+
 VEHICLE_CONSUMPTION = __VehicleConsumption()
 
 
 class __IronFortification(NamedTuple):
-    BASELINE_COVERAGE: str = "iron_fortification.baseline_coverage"
+    BASELINE_ANY_COVERAGE: str = "iron_fortification.baseline_any_coverage"
+    BASELINE_FULL_COVERAGE: str = "iron_fortification.baseline_full_coverage"
+    BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: str = "iron_fortification.baseline_partial_coverage_mean"
+    BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: str = "iron_fortification.baseline_partial_coverage_sd"
+    BASELINE_CONCENTRATION: str = "iron_fortification.baseline_concentration"
+    INTERVENTION_COVERAGE: str = "iron_fortification.intervention_coverage"
+    INTERVENTION_EFFECTIVE_COVERAGE: str = "iron_fortification.intervention_coverage"
+    INTERVENTION_CONCENTRATION: str = "iron_fortification.intervention_concentration"
     HEMOGLOBIN_EFFECT_SIZE: str = "iron_fortification.hemoglobin_effect_size"
 
     @property

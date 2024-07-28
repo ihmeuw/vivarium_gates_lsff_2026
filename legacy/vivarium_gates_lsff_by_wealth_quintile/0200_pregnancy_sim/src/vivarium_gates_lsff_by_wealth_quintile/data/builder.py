@@ -9,6 +9,7 @@ Some degree of verbosity/boilerplate is fine in the interest of transparency.
    Logging in this module should be done at the ``debug`` level.
 
 """
+
 from pathlib import Path
 
 import pandas as pd
@@ -48,7 +49,9 @@ def open_artifact(output_path: Path, location: str) -> Artifact:
     return artifact
 
 
-def load_and_write_data(artifact: Artifact, key: str, location: str, mean_draw: bool, replace: bool):
+def load_and_write_data(
+    artifact: Artifact, key: str, location: str, mean_draw: bool, replace: bool
+):
     """Loads data and writes it to the artifact if not already present.
 
     Parameters

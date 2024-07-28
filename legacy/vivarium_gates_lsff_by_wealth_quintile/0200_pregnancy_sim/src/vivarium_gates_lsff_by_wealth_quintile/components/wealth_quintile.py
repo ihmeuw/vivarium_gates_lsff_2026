@@ -19,7 +19,6 @@ class WealthQuintile(Component):
     def columns_created(self) -> List[str]:
         return ["wealth_quintile"]
 
-
     @property
     def columns_required(self) -> List[str]:
         return ["tracked"]
@@ -44,7 +43,6 @@ class WealthQuintile(Component):
             requires_columns=get_lookup_columns([quintile_probabilities]),
         )
 
-
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         pop_update = pd.DataFrame(index=pop_data.index)
         quintile_probabilities = self.quintile_probabilities(pop_data.index)
@@ -52,6 +50,6 @@ class WealthQuintile(Component):
             pop_data.index,
             quintile_probabilities.columns,
             quintile_probabilities,
-            additional_key="wealth_quintile"
+            additional_key="wealth_quintile",
         )
         self.population_view.update(pop_update)

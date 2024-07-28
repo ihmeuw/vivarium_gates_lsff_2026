@@ -54,6 +54,12 @@ class ResultsStratifier(ResultsStratifier_):
             requires_columns=["pregnancy_outcome"],
         )
 
+        builder.results.register_stratification(
+            "wealth_quintile",
+            data_values.WEALTH_QUINTILES,
+            requires_columns=["wealth_quintile"],
+        )
+
 
 class PregnancyObserver(DiseaseObserver):
     def __init__(self):

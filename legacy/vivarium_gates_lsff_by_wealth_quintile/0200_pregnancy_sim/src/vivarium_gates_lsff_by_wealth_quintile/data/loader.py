@@ -45,6 +45,23 @@ from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable
 
 memory = Memory("./.cachedir", verbose=0)
 
+CSV_DATA_NAMES = {
+    data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "vehicle_consumption/any",
+    data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY: "vehicle_consumption/fortifiability",
+    data_keys.VEHICLE_CONSUMPTION.MEAN: "vehicle_consumption/amount/mean",
+    data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: "vehicle_consumption/amount/sd",
+    data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE: "baseline_fortification/any_coverage",
+    data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE: "baseline_fortification/full_coverage",
+    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: "baseline_fortification/partial_coverage_amount/mean",
+    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: "baseline_fortification/partial_coverage_amount/sd",
+    data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION: "baseline_fortification/concentration",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "intervention_fortification/any_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE: "intervention_fortification/effective_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "intervention_fortification/concentration",
+    data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: "fortification_hemoglobin_effects.csv",
+}
+
+
 @cache
 def get_data(lookup_key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
@@ -95,18 +112,19 @@ def get_data(lookup_key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         data_keys.HEMOGLOBIN.MEAN: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.STANDARD_DEVIATION: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70: get_hemoglobin_below_70,
-        data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: load_consumed_any_vehicle,
-        data_keys.VEHICLE_CONSUMPTION.MEAN: get_consumption_data,
-        data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: get_consumption_data,
-        data_keys.IRON_FORTIFICATION.BASELINE_COVERAGE: load_baseline_iron_fortification_coverage,
-        data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: load_iron_fortification_hemoglobin_effect_size,
+        **{k: load_csv_data for k in CSV_DATA_NAMES.keys()},
         # data_keys.POPULATION.BACKGROUND_MORBIDITY: load_background_morbidity,
     }
     data = mapping[lookup_key](lookup_key, location, mean_draw)
-    if mean_draw and isinstance(data, pd.DataFrame) and 'draw_0' in data.columns and data['draw_0'].dtype == float:
-        data['mean_draw'] = data.filter(like='draw_').mean(axis=1)
-        data = data.drop(columns=data.filter(like='draw_').columns)
-        data = data.rename(columns={'mean_draw': 'draw_0'})
+    if (
+        mean_draw
+        and isinstance(data, pd.DataFrame)
+        and "draw_0" in data.columns
+        and data["draw_0"].dtype == float
+    ):
+        data["mean_draw"] = data.filter(like="draw_").mean(axis=1)
+        data = data.drop(columns=data.filter(like="draw_").columns)
+        data = data.rename(columns={"mean_draw": "draw_0"})
     return data
 
 
@@ -136,7 +154,9 @@ def load_demographic_dimensions(key: str, location: str, mean_draw: bool) -> pd.
     return interface.get_demographic_dimensions(location)
 
 
-def load_theoretical_minimum_risk_life_expectancy(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def load_theoretical_minimum_risk_life_expectancy(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     return interface.get_theoretical_minimum_risk_life_expectancy()
 
 
@@ -155,14 +175,17 @@ def load_infant_male_percentage(key: str, location: str, mean_draw: bool) -> pd.
         / live_births_overall
     )
 
-def load_wealth_quintile_probabilities(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+
+def load_wealth_quintile_probabilities(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     # These would be uniform, except that we are modeling pregnancies
     df = pd.read_csv(
         paths.CSV_RAW_DATA_ROOT
         / "wealth_quintile_probabilities"
         / (location.lower() + ".csv"),
     )
-    return df.set_index([c for c in df.columns if c != 'value'])
+    return df.set_index([c for c in df.columns if c != "value"])
 
 
 def load_standard_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
@@ -234,8 +257,12 @@ def get_pregnancy_end_incidence(location: str, mean_draw: bool) -> pd.DataFrame:
     asfr = get_data(data_keys.PREGNANCY.ASFR, location, mean_draw)
     sbr = get_data(data_keys.PREGNANCY.SBR, location, mean_draw)
     sbr = sbr.reset_index(level="year_end", drop=True).reindex(asfr.index, level="year_start")
-    incidence_c995 = get_data(data_keys.PREGNANCY.RAW_INCIDENCE_RATE_MISCARRIAGE, location, mean_draw)
-    incidence_c374 = get_data(data_keys.PREGNANCY.RAW_INCIDENCE_RATE_ECTOPIC, location, mean_draw)
+    incidence_c995 = get_data(
+        data_keys.PREGNANCY.RAW_INCIDENCE_RATE_MISCARRIAGE, location, mean_draw
+    )
+    incidence_c374 = get_data(
+        data_keys.PREGNANCY.RAW_INCIDENCE_RATE_ECTOPIC, location, mean_draw
+    )
     pregnancy_end_rate = (
         asfr + asfr.multiply(sbr["value"], axis=0) + incidence_c995 + incidence_c374
     )
@@ -330,23 +357,39 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
     return ylds.fillna(0)
 
 
-def load_pregnant_maternal_disorders_incidence_probability(key: str, location: str, mean_draw: bool):
-    total_incidence = get_data(data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw)
+def load_pregnant_maternal_disorders_incidence_probability(
+    key: str, location: str, mean_draw: bool
+):
+    total_incidence = get_data(
+        data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw
+    )
     pregnancy_end_rate = get_pregnancy_end_incidence(location, mean_draw)
     maternal_disorders_incidence = total_incidence / pregnancy_end_rate
-    
-    disparities = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / "maternal_disorders_incidence_disparities"
-        / (location.lower() + ".csv"),
-    ).set_index(["sex", "wealth_quintile"]).value
 
-    result = _distribute_by_disparities_multiplicative(maternal_disorders_incidence.dropna(how='all'), disparities, location).clip(upper=1)
-    return result.reindex(_demographics_with_wealth(location).droplevel("location").index).fillna(0)
+    disparities = (
+        pd.read_csv(
+            paths.CSV_RAW_DATA_ROOT
+            / "maternal_disorders_incidence_disparities"
+            / (location.lower() + ".csv"),
+        )
+        .set_index(["sex", "wealth_quintile"])
+        .value
+    )
 
-def _distribute_by_disparities_multiplicative(quantity: pd.DataFrame, disparities: pd.DataFrame, location: str):
+    result = _distribute_by_disparities_multiplicative(
+        maternal_disorders_incidence.dropna(how="all"), disparities, location
+    ).clip(upper=1)
+    return result.reindex(
+        _demographics_with_wealth(location).droplevel("location").index
+    ).fillna(0)
+
+
+def _distribute_by_disparities_multiplicative(
+    quantity: pd.DataFrame, disparities: pd.DataFrame, location: str
+):
     wealth_quintile_probabilities = (
-        get_data(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES, location, mean_draw=True).reset_index()
+        get_data(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES, location, mean_draw=True)
+        .reset_index()
         .melt(id_vars=["sex"], var_name="wealth_quintile")
         .set_index(["sex", "wealth_quintile"])
         .value
@@ -354,70 +397,118 @@ def _distribute_by_disparities_multiplicative(quantity: pd.DataFrame, disparitie
     # Normalize disparities
     disparities = disparities.div(disparities.groupby(["sex"]).sum())
 
-    raw = quantity.mul(disparities, axis=0).dropna(how='all')
+    raw = quantity.mul(disparities, axis=0).dropna(how="all")
     # How much we need to scale to recover the original quantities
-    rescale_factor = raw.mul(wealth_quintile_probabilities, axis=0).groupby(["sex", "age_start", "age_end", "year_start", "year_end"]).sum().div(quantity)
+    rescale_factor = (
+        raw.mul(wealth_quintile_probabilities, axis=0)
+        .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
+        .sum()
+        .div(quantity)
+    )
 
     result = raw.div(rescale_factor)
 
     # We have recovered the original quantities
-    assert np.allclose(result.mul(wealth_quintile_probabilities, axis=0).groupby(["sex", "age_start", "age_end", "year_start", "year_end"]).sum().sort_index().values, quantity.sort_index().values)
+    assert np.allclose(
+        result.mul(wealth_quintile_probabilities, axis=0)
+        .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
+        .sum()
+        .sort_index()
+        .values,
+        quantity.sort_index().values,
+    )
 
     return result
 
-def _distribute_by_disparities_additive(quantity: pd.DataFrame, disparities: pd.DataFrame, location: str):
+
+def _distribute_by_disparities_additive(
+    quantity: pd.DataFrame, disparities: pd.DataFrame, location: str
+):
     wealth_quintile_probabilities = (
-        get_data(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES, location, mean_draw=True).reset_index()
+        get_data(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES, location, mean_draw=True)
+        .reset_index()
         .melt(id_vars=["sex"], var_name="wealth_quintile")
         .set_index(["sex", "wealth_quintile"])
         .value
     )
 
-    raw = quantity.add(disparities, axis=0).dropna(how='all')
+    raw = quantity.add(disparities, axis=0).dropna(how="all")
     # How much we need to shift to recover the original quantities
-    rescale_factor = raw.mul(wealth_quintile_probabilities, axis=0).groupby(["sex", "age_start", "age_end", "year_start", "year_end"]).sum().subtract(quantity)
+    rescale_factor = (
+        raw.mul(wealth_quintile_probabilities, axis=0)
+        .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
+        .sum()
+        .subtract(quantity)
+    )
 
     result = raw.subtract(rescale_factor)
 
     # We have recovered the original quantities
-    assert np.allclose(result.mul(wealth_quintile_probabilities, axis=0).groupby(["sex", "age_start", "age_end", "year_start", "year_end"]).sum().sort_index().values, quantity.sort_index().values)
+    assert np.allclose(
+        result.mul(wealth_quintile_probabilities, axis=0)
+        .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
+        .sum()
+        .sort_index()
+        .values,
+        quantity.sort_index().values,
+    )
 
     return result
 
+
 def _demographics_with_wealth(location: str) -> pd.DataFrame:
-    demographic_dimensions = get_data(data_keys.POPULATION.DEMOGRAPHY, location, mean_draw=True).reset_index()
+    demographic_dimensions = get_data(
+        data_keys.POPULATION.DEMOGRAPHY, location, mean_draw=True
+    ).reset_index()
     return (
         demographic_dimensions.assign(key=1)
-            .merge(pd.DataFrame({'wealth_quintile': data_values.WEALTH_QUINTILES, 'key': 1}), on='key')
-            .drop(columns=["key"])
-            .pipe(lambda df: df.set_index(list(df.columns)))
+        .merge(
+            pd.DataFrame({"wealth_quintile": data_values.WEALTH_QUINTILES, "key": 1}),
+            on="key",
+        )
+        .drop(columns=["key"])
+        .pipe(lambda df: df.set_index(list(df.columns)))
     )
 
 
 def load_maternal_disorders_mortality_probability(key: str, location: str, mean_draw: bool):
     total_csmr = get_data(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw)
-    total_incidence = get_data(data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw)
+    total_incidence = get_data(
+        data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw
+    )
     mortality_probability = total_csmr / total_incidence
     return mortality_probability.fillna(0)
 
 
 def load_pregnant_maternal_hemorrhage_incidence(key: str, location: str, mean_draw: bool):
-    mh_incidence = get_data(data_keys.MATERNAL_HEMORRHAGE.RAW_INCIDENCE_RATE, location, mean_draw)
+    mh_incidence = get_data(
+        data_keys.MATERNAL_HEMORRHAGE.RAW_INCIDENCE_RATE, location, mean_draw
+    )
     mh_csmr = get_data(data_keys.MATERNAL_HEMORRHAGE.CSMR, location, mean_draw)
     pregnancy_end_rate = get_pregnancy_end_incidence(location, mean_draw)
     maternal_hemorrhage_incidence = (mh_incidence - mh_csmr) / pregnancy_end_rate
-    
-    disparities = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / "maternal_disorders_incidence_disparities"
-        / (location.lower() + ".csv"),
-    ).set_index(["sex", "wealth_quintile"]).value
 
-    result = _distribute_by_disparities_multiplicative(maternal_hemorrhage_incidence.dropna(how='all'), disparities, location).clip(upper=1)
-    return result.reindex(_demographics_with_wealth(location).droplevel("location").index).fillna(0)
+    disparities = (
+        pd.read_csv(
+            paths.CSV_RAW_DATA_ROOT
+            / "maternal_disorders_incidence_disparities"
+            / (location.lower() + ".csv"),
+        )
+        .set_index(["sex", "wealth_quintile"])
+        .value
+    )
+
+    result = _distribute_by_disparities_multiplicative(
+        maternal_hemorrhage_incidence.dropna(how="all"), disparities, location
+    ).clip(upper=1)
+    return result.reindex(
+        _demographics_with_wealth(location).droplevel("location").index
+    ).fillna(0)
 
 
-def load_hemoglobin_maternal_hemorrhage_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def load_hemoglobin_maternal_hemorrhage_rr(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     if key != data_keys.MATERNAL_HEMORRHAGE.RR_ATTRIBUTABLE_TO_HEMOGLOBIN:
         raise ValueError(f"Unrecognized key {key}")
 
@@ -438,18 +529,24 @@ def load_hemoglobin_maternal_hemorrhage_rr(key: str, location: str, mean_draw: b
     return maternal_hemorrhage_rr
 
 
-def load_hemoglobin_maternal_hemorrhage_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def load_hemoglobin_maternal_hemorrhage_paf(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     if key != data_keys.MATERNAL_HEMORRHAGE.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN:
         raise ValueError(f"Unrecognized key {key}")
 
-    rr = get_data(data_keys.MATERNAL_HEMORRHAGE.RR_ATTRIBUTABLE_TO_HEMOGLOBIN, location, mean_draw)
+    rr = get_data(
+        data_keys.MATERNAL_HEMORRHAGE.RR_ATTRIBUTABLE_TO_HEMOGLOBIN, location, mean_draw
+    )
     proportion = get_data(
         data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70, location, mean_draw
     )
     return (rr * proportion + (1 - proportion) - 1) / (rr * proportion + (1 - proportion))
 
 
-def load_hemoglobin_maternal_disorders_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def load_hemoglobin_maternal_disorders_rr(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     if key != data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN:
         raise ValueError(f"Unrecognized key {key}")
 
@@ -461,7 +558,9 @@ def load_hemoglobin_maternal_disorders_rr(key: str, location: str, mean_draw: bo
     return rr
 
 
-def generate_hemoglobin_maternal_disorders_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def generate_hemoglobin_maternal_disorders_paf(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     # Generate a PAF of hemoglobin on maternal disorders *among pregnant and lactating
     # women and people* (PLW).
     # This used to be done on the research side, see
@@ -482,14 +581,17 @@ def generate_hemoglobin_maternal_disorders_paf(key: str, location: str, mean_dra
     )
 
     hemoglobin_rr = _add_location(
-        get_data(data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN, location, mean_draw).pipe(
-            _among_wra
-        ),
+        get_data(
+            data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN, location, mean_draw
+        ).pipe(_among_wra),
         location,
     )
 
-    import pdb; pdb.set_trace()
-    pafs = pd.DataFrame(columns=["draw_0"] if mean_draw else vi_globals.DRAW_COLUMNS, index=demography.index, dtype=float)
+    pafs = pd.DataFrame(
+        columns=["draw_0"] if mean_draw else vi_globals.DRAW_COLUMNS,
+        index=demography.index,
+        dtype=float,
+    )
 
     for draw in pafs.columns:
         for index in pafs.index:
@@ -509,9 +611,10 @@ def generate_hemoglobin_maternal_disorders_paf(key: str, location: str, mean_dra
                 pafs.loc[index, draw] = 0.0
 
         assert pafs[draw].notnull().all()
-        print(f'{draw} done')
+        print(f"{draw} done")
 
     return pafs
+
 
 @cache
 def _hemoglobin_paf(mean: float, sd: float, rr: float) -> float:
@@ -527,23 +630,23 @@ def _hemoglobin_paf(mean: float, sd: float, rr: float) -> float:
     ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
     def pdf(x):
-        return data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
-            x
-        ) + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(
-            x
+        return (
+            data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT
+            * hemoglobin_distribution_gamma_part.pdf(x)
+            + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT
+            * hemoglobin_distribution_mgumbel_part.pdf(x)
         )
 
     with np.errstate(under="ignore"):
         weighted_burden = integrate.quad(
-            lambda x: (
-                pdf(x) * rr ** (max(x - tmrel, 0) / risk.relative_risk_scalar)
-            ),
+            lambda x: (pdf(x) * rr ** (max(x - tmrel, 0) / risk.relative_risk_scalar)),
             0,
             data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.XMAX,
             epsabs=0.0001,
         )[0]
-    
+
     return (weighted_burden - 1) / weighted_burden
+
 
 def _only_mean(df):
     return df[(df.index.get_level_values("parameter") == "mean_value")].droplevel("parameter")
@@ -557,7 +660,9 @@ def _among_wra(df):
     ]
 
 
-def get_moderate_hemorrhage_probability(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def get_moderate_hemorrhage_probability(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     hemorrhage_dist_params = data_values.PROBABILITY_MODERATE_MATERNAL_HEMORRHAGE
     # Clip a bit higher than zero to avoid underflow error
     dist = sampling.get_truncnorm_from_quantiles(*hemorrhage_dist_params, lower_clip=0.1)
@@ -633,31 +738,41 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
     extra_draw_cols = [
         col for col in existing_draw_cols if col not in vi_globals.DRAW_COLUMNS
     ]
-    hemoglobin_data = reshape_to_vivarium_format(hemoglobin_data.drop(columns=extra_draw_cols, errors="ignore"), location)
+    hemoglobin_data = reshape_to_vivarium_format(
+        hemoglobin_data.drop(columns=extra_draw_cols, errors="ignore"), location
+    )
     if mean_draw:
         hemoglobin_data = hemoglobin_data.mean(axis=1).rename("draw_0").to_frame()
 
-    hemoglobin_data = hemoglobin_data.droplevel(["measure_id", "metric_id", "model_version_id", "modelable_entity_id"])
+    hemoglobin_data = hemoglobin_data.droplevel(
+        ["measure_id", "metric_id", "model_version_id", "modelable_entity_id"]
+    )
     hemoglobin_data = hemoglobin_data[
-        (hemoglobin_data.index.get_level_values('sex') == "Female") &
-        (hemoglobin_data.index.get_level_values('age_start') >= 10) &
-        (hemoglobin_data.index.get_level_values('age_end') <= 55)
+        (hemoglobin_data.index.get_level_values("sex") == "Female")
+        & (hemoglobin_data.index.get_level_values("age_start") >= 10)
+        & (hemoglobin_data.index.get_level_values("age_end") <= 55)
     ]
     adjusted = hemoglobin_data * correction_factors
 
     disparity_path = {
-        data_keys.HEMOGLOBIN.MEAN: "mean_hemoglobin_disparities",
-        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: "sd_hemoglobin_disparities",
+        data_keys.HEMOGLOBIN.MEAN: "hemoglobin/mean_disparities",
+        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: "hemoglobin/sd_disparities",
     }[key]
 
-    disparities = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / disparity_path
-        / (location.lower() + ".csv"),
-    ).set_index(["sex", "wealth_quintile"]).value
+    disparities = (
+        pd.read_csv(
+            paths.CSV_RAW_DATA_ROOT / disparity_path / (location.lower() + ".csv"),
+        )
+        .set_index(["sex", "wealth_quintile"])
+        .value
+    )
 
-    result = _distribute_by_disparities_multiplicative(adjusted.dropna(how='all'), disparities, location)
-    return result.reindex(_demographics_with_wealth(location).droplevel("location").index).fillna(0)
+    result = _distribute_by_disparities_multiplicative(
+        adjusted.dropna(how="all"), disparities, location
+    )
+    return result.reindex(
+        _demographics_with_wealth(location).droplevel("location").index
+    ).fillna(0)
 
 
 def get_hemoglobin_below_70(key: str, location: str, mean_draw: bool):
@@ -673,7 +788,9 @@ def get_hemoglobin_below_70(key: str, location: str, mean_draw: bool):
     )
 
     result = pd.DataFrame(
-        columns=["draw_0"] if mean_draw else vi_globals.DRAW_COLUMNS, index=demography.index, dtype=float
+        columns=["draw_0"] if mean_draw else vi_globals.DRAW_COLUMNS,
+        index=demography.index,
+        dtype=float,
     )
 
     for draw in result.columns:
@@ -709,6 +826,7 @@ def get_hemoglobin_below_70(key: str, location: str, mean_draw: bool):
         assert result[draw].notnull().all()
 
     return result
+
 
 @cache
 def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
@@ -754,31 +872,14 @@ def _add_location(data, location):
         .set_index(["location"] + data.index.names)
     )
 
-#######################
-# Vehicle consumption #
-#######################
 
-
-def load_consumed_any_vehicle(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    df = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / "consumed_any_vehicle"
-        / (location.lower() + ".csv"),
-    )
-    return df.set_index([c for c in df.columns if c != 'value'])
-
-
-def get_consumption_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    name = {
-        data_keys.VEHICLE_CONSUMPTION.MEAN: "mean_vehicle_consumption",
-        data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: "sd_vehicle_consumption",
-    }[key]
-    df = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / name
-        / (location.lower() + ".csv"),
-    )
-    return df.set_index([c for c in df.columns if c != 'value'])
+def load_csv_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+    name = CSV_DATA_NAMES[key]
+    path = paths.CSV_RAW_DATA_ROOT / name
+    if path.is_dir():
+        path = path / (location.lower() + ".csv")
+    df = pd.read_csv(path)
+    return df.set_index([c for c in df.columns if c != "value"])
 
 
 ##########################
@@ -786,29 +887,9 @@ def get_consumption_data(key: str, location: str, mean_draw: bool) -> pd.DataFra
 ##########################
 
 
-def load_baseline_iron_fortification_coverage(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    df = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / "baseline_iron_fortification_coverage"
-        / (location.lower() + ".csv"),
-    )
-    return df.set_index([c for c in df.columns if c != 'value'])
-
-
-def load_iron_fortification_hemoglobin_effect_size(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    loc, scale = data_values.IRON_FORTIFICATION_EFFECT_SIZE
-    dist = stats.norm(loc, scale)
-    rng = np.random.default_rng(get_hash(f"iron_fortification_effect_size_{location}"))
-    draw_count = vi_globals.NUM_DRAWS
-    iron_fortification_effect_size = pd.DataFrame(
-        [dist.rvs(size=draw_count, random_state=rng)],
-        columns=vi_globals.DRAW_COLUMNS,
-        index=["value"],
-    )
-    return iron_fortification_effect_size
-
-
-def load_iron_fortification_stillbirth_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def load_iron_fortification_stillbirth_rr(
+    key: str, location: str, mean_draw: bool
+) -> pd.DataFrame:
     try:
         distribution = data_values.INTERVENTION_STILLBIRTH_RRS[key]
     except KeyError:

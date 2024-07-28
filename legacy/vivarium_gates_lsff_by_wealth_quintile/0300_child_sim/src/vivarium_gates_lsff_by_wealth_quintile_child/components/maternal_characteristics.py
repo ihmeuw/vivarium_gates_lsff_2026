@@ -15,7 +15,7 @@ from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import RiskEffect
 from vivarium_public_health.utilities import get_lookup_columns
 
-from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys, data_values
 
 
 class MaternalIronConsumptionFromFortification(Component):
@@ -37,9 +37,14 @@ class MaternalIronConsumptionFromFortification(Component):
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         self.start_time = get_time_stamp(builder.configuration.time.start)
-        self.birth_weight_effect_size_per_mcg_intake = builder.data.load(data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE).value[
-            0
-        ]
+
+        vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
+
+        self.birth_weight_effect_size_per_mcg_intake = (
+            builder.data.load(data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE)
+            .set_index("vehicle_name")
+            .value.loc[vehicle]
+        )
 
         builder.value.register_value_modifier(
             "birth_weight.birth_exposure",
@@ -49,7 +54,6 @@ class MaternalIronConsumptionFromFortification(Component):
                 "maternal_iron_consumption_from_fortification_mcg",
             ],
         )
-
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         """
@@ -63,21 +67,26 @@ class MaternalIronConsumptionFromFortification(Component):
             new_births = pop_data.user_data["new_births"]
             new_births.index = pop_data.index
 
-            new_simulants["maternal_iron_consumption_from_fortification_mcg"] = new_births["iron_consumption_from_fortification_mcg"].copy()
-            new_simulants["baseline_maternal_iron_consumption_from_fortification_mcg"] = new_births["baseline_iron_consumption_from_fortification_mcg"].copy()
+            new_simulants["maternal_iron_consumption_from_fortification_mcg"] = new_births[
+                "iron_consumption_from_fortification_mcg"
+            ].copy()
+            new_simulants["baseline_maternal_iron_consumption_from_fortification_mcg"] = (
+                new_births["baseline_iron_consumption_from_fortification_mcg"].copy()
+            )
 
         self.population_view.update(new_simulants)
-    
 
     def update_birth_weight(self, index, exposure):
         pop = self.population_view.get(index)
 
         # Delete the baseline effects of fortification
         exposure -= (
-            pop.baseline_maternal_iron_consumption_from_fortification_mcg * self.birth_weight_effect_size_per_mcg_intake
+            pop.baseline_maternal_iron_consumption_from_fortification_mcg
+            * self.birth_weight_effect_size_per_mcg_intake
         )
         exposure += (
-            pop.maternal_iron_consumption_from_fortification_mcg * self.birth_weight_effect_size_per_mcg_intake
+            pop.maternal_iron_consumption_from_fortification_mcg
+            * self.birth_weight_effect_size_per_mcg_intake
         )
 
         return exposure
@@ -106,7 +115,6 @@ class WealthQuintile(Component):
             builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
             value_columns=["value"],
         )
-        
 
         builder.value.register_value_modifier(
             "birth_weight.birth_exposure",
@@ -115,7 +123,6 @@ class WealthQuintile(Component):
                 "wealth_quintile",
             ],
         )
-
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         """
@@ -129,10 +136,9 @@ class WealthQuintile(Component):
             new_births = pop_data.user_data["new_births"]
             new_births.index = pop_data.index
 
-            new_simulants["wealth_quintile"] = new_births["wealth_quintile"].copy()
+            new_simulants["wealth_quintile"] = new_births["wealth_quintile"].astype(str).copy()
 
         self.population_view.update(new_simulants)
-    
 
     def update_birth_weight(self, index, exposure):
         mean_exposure = exposure.mean()
@@ -233,4 +239,3 @@ class WealthQuintile(Component):
 #         risk_specific_shift = self.lookup_tables["risk_specific_shift"](index)
 #         effect = raw_effect - risk_specific_shift
 #         return effect
-

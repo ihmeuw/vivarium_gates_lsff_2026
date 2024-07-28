@@ -8,7 +8,4 @@ branches:
   - intervention:
       scenario:
         - 'baseline'
-        - '20_percent'
-        - '50_percent'
-        - '80_percent'
-        - 'full'
+        - 'intervention'

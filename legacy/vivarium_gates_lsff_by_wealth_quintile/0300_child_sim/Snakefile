@@ -64,7 +64,8 @@ rule child_artifacts:
             "0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py",
             "0200_pregnancy_sim/sim_results/{location}/births.parquet",
-            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/birth_weight_disparities/{location}.csv"
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/birth_weight_disparities/{location}.csv",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/fortification_birthweight_effects.csv"
         ]
     output: ["0300_child_sim/mean_draw_artifacts/{location}.hdf"]
     shell:

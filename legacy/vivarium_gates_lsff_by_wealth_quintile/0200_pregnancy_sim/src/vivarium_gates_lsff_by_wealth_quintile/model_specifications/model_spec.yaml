@@ -34,7 +34,7 @@ configuration:
         order: 0
         extrapolate: True
     intervention:
-        scenario: "baseline"
+        scenario: "intervention" #"baseline"
     randomness:
         map_size: 1_000_000
         key_columns: ['entrance_time', 'age']
@@ -57,3 +57,4 @@ configuration:
     stratification:
         default:
             - 'age_group'
+            - 'wealth_quintile'

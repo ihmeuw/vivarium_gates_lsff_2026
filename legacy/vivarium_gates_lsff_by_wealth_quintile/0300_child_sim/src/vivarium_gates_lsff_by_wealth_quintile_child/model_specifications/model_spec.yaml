@@ -110,3 +110,4 @@ configuration:
         default:
             - 'age_group'
             - 'sex'
+            - 'wealth_quintile'

@@ -285,7 +285,16 @@ def build_single_location_artifact(
             continue
         logger.info(f"Loading and writing {key_group.log_name} data")
         for key in key_group:
-            if key in (data_keys.LBWSG.PAF, data_keys.POPULATION.FERTILITY_DATA, data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES) and for_lbwsg_pafs:
+            if (
+                key
+                in (
+                    data_keys.LBWSG.PAF,
+                    data_keys.POPULATION.FERTILITY_DATA,
+                    data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES,
+                    data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE,
+                )
+                and for_lbwsg_pafs
+            ):
                 continue
             logger.info(f"   - Loading and writing {key} data")
             builder.load_and_write_data(

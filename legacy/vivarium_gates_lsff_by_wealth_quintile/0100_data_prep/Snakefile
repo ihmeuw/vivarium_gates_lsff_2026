@@ -22,8 +22,8 @@ rule dhs:
     output: 
         [
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/maternal_disorders_incidence_disparities/{location}.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/mean_hemoglobin_disparities/{location}.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/sd_hemoglobin_disparities/{location}.csv",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/hemoglobin/mean_disparities/{location}.csv",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/hemoglobin/sd_disparities/{location}.csv",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/wealth_quintile_probabilities/{location}.csv",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/birth_weight_disparities/{location}.csv",
         ]
@@ -33,4 +33,91 @@ rule dhs:
         source .venv/bin/activate
         cd dhs
         papermill {wildcards.location}.ipynb ../executed/dhs/{wildcards.location}.ipynb -k python3
+        """
+
+rule prep_vehicle:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/extraction/prep_vehicle.ipynb",
+            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
+        ]
+    log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
+    output: 
+        [
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/fortification_hemoglobin_effects.csv",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/fortification_birthweight_effects.csv",
+        ]
+    shell:
+        """
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd extraction
+        papermill prep_vehicle.ipynb ../executed/extraction/prep_vehicle.ipynb -k python3
+        """
+
+data_needs = [
+    "vehicle_consumption/any",
+    "vehicle_consumption/fortifiability",
+    "vehicle_consumption/amount/mean",
+    "vehicle_consumption/amount/sd",
+    "baseline_fortification/any_coverage",
+    "baseline_fortification/full_coverage",
+    "baseline_fortification/partial_coverage_amount/mean",
+    "baseline_fortification/partial_coverage_amount/sd",
+    "baseline_fortification/concentration",
+    "intervention_fortification/any_coverage",
+    "intervention_fortification/effective_coverage",
+    "intervention_fortification/concentration",
+]
+
+extracted_output_files = []
+hces_output_files = []
+
+for location in ["nigeria", "india"]:
+    for data_need in data_needs:
+        file_name = f"0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/{data_need}/{location}.csv"
+        if location == "india" and (("vehicle_consumption" in data_need) or (("baseline_fortification" in data_need) and ("concentration" not in data_need))):
+            if data_need != "vehicle_consumption/fortifiability":
+                hces_output_files.append(file_name)
+        else:
+            if location == "nigeria" and "partial_coverage_amount" in data_need:
+                # N/A -- manually create these files
+                continue
+            extracted_output_files.append(file_name)
+
+rule prep_hces:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/hces/01_extract_hces.ipynb",
+        ]
+    log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
+    output: 
+        hces_output_files + ['0100_data_prep/hces/india_fortifiability_disparities.csv']
+    shell:
+        """
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd hces
+        papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3
+        """
+
+rule prep_extracted:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/extraction/prep_extracted.ipynb",
+            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
+            '0100_data_prep/hces/india_fortifiability_disparities.csv',
+        ]
+    log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
+    output: 
+        extracted_output_files
+    shell:
+        """
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd extraction
+        papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3
         """
