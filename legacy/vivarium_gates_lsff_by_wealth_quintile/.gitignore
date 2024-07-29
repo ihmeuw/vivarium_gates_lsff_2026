@@ -134,4 +134,5 @@ simulation_running/
 .snakemake/
 *.rdb
 *.hdf
+*.parquet
 .cachedir
