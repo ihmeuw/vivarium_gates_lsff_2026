@@ -86,6 +86,9 @@ class VehicleConsumption(Component):
         )
         pop_update.loc[~pop_update.index.isin(any_consumed), "vehicle_consumption_grams"] = 0
         distribution_parameters = self.distribution_parameters(any_consumed)
+        # NOTE: By clipping here, we are overshooting our target of how many people don't consume
+        # any at all! It doesn't mess with the mean very much though.
+        # We could improve this by using a non-negative distribution instead of normal.
         pop_update.loc[any_consumed, "vehicle_consumption_grams"] = (
             self.randomness.sample_from_distribution(
                 any_consumed,
@@ -152,7 +155,7 @@ class IronFortification(Component):
             .rename("mean")
         )
         stddev = (
-            builder.data.load(data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION)
+            builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD)
             .set_index(["wealth_quintile"])["value"]
             .rename("stddev")
         )
@@ -246,7 +249,7 @@ class IronFortification(Component):
                 distribution_parameters["mean"],
                 distribution_parameters.stddev,
             ),
-        ).clip(lower=0)
+        ).clip(0, 1)
         assert (baseline_fortification >= 0).all()
 
         pop_update["baseline_iron_fortification"] = baseline_fortification
@@ -282,7 +285,7 @@ class IronFortification(Component):
                 additional_key="newly_covered",
             )
 
-            added_coverage = pd.Series(0, index=pop_data.index)
+            added_coverage = pd.Series(0.0, index=pop_data.index)
             added_coverage.loc[newly_covered] = fortifiable_unfortified_baseline
 
             pop_update.loc[newly_covered, "iron_fortification"] += added_coverage
@@ -313,7 +316,7 @@ class IronFortification(Component):
         )
         exposure += above_threshold * self.hemoglobin_effect_size_above_intake_threshold
 
-        return exposure
+        return exposure.clip(lower=0)
 
     def _calculate_iron_consumption(
         self, vehicle_consumption, baseline_fortification, intervention_fortification
@@ -324,7 +327,6 @@ class IronFortification(Component):
         intervention_concentration_mcg_per_gram = self.intervention_fortification_mcg_per_gram(
             vehicle_consumption.index
         )
-        
 
         return (
             baseline_fortification * vehicle_consumption * baseline_concentration_mcg_per_gram

@@ -79,6 +79,7 @@ rule pregnancy_simulations:
         [
             "0200_pregnancy_sim/sim_results/{location}/births.parquet",
             "0200_pregnancy_sim/sim_results/{location}/deaths.parquet",
+            "0200_pregnancy_sim/sim_results/{location}/pregnancy_outcome_count.parquet",
             "0200_pregnancy_sim/sim_results/{location}/ylds.parquet",
             "0200_pregnancy_sim/sim_results/{location}/ylls.parquet",
         ]

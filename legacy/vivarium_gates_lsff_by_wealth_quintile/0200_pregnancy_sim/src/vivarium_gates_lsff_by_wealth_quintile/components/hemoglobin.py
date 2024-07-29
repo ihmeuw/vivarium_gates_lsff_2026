@@ -235,7 +235,7 @@ class Hemoglobin(Component):
         paf = self.lookup_tables["maternal_disorders_population_attributable_fraction"](index)
         tmrel = TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS
         per_simulant_exposure = (
-            (tmrel - hemoglobin_level + abs(tmrel - hemoglobin_level)) / 2 / RR_SCALAR
+            (tmrel - hemoglobin_level).clip(lower=0) / RR_SCALAR
         )
         per_simulant_rr = rr**per_simulant_exposure
         maternal_disorder_probability *= (1 - paf) * per_simulant_rr

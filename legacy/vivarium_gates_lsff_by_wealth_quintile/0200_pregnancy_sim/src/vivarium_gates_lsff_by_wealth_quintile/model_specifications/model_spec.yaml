@@ -34,7 +34,7 @@ configuration:
         order: 0
         extrapolate: True
     intervention:
-        scenario: "intervention" #"baseline"
+        scenario: "baseline"
     randomness:
         map_size: 1_000_000
         key_columns: ['entrance_time', 'age']
@@ -58,3 +58,4 @@ configuration:
         default:
             - 'age_group'
             - 'wealth_quintile'
+            - 'anemia_status_at_birth'

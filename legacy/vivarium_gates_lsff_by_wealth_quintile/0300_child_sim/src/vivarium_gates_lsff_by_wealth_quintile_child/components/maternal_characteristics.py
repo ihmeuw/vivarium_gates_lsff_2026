@@ -40,7 +40,7 @@ class MaternalIronConsumptionFromFortification(Component):
 
         vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
 
-        self.birth_weight_effect_size_per_mcg_intake = (
+        self.birth_weight_effect_size_per_mg_intake = (
             builder.data.load(data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE)
             .set_index("vehicle_name")
             .value.loc[vehicle]
@@ -82,11 +82,11 @@ class MaternalIronConsumptionFromFortification(Component):
         # Delete the baseline effects of fortification
         exposure -= (
             pop.baseline_maternal_iron_consumption_from_fortification_mcg
-            * self.birth_weight_effect_size_per_mcg_intake
+            * (self.birth_weight_effect_size_per_mg_intake / 1_000) # convert mg to mcg
         )
         exposure += (
             pop.maternal_iron_consumption_from_fortification_mcg
-            * self.birth_weight_effect_size_per_mcg_intake
+            * (self.birth_weight_effect_size_per_mg_intake / 1_000)
         )
 
         return exposure

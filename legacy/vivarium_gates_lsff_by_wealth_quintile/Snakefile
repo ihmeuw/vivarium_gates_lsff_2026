@@ -1,25 +1,11 @@
 include: "0100_data_prep/Snakefile"
 include: "0200_pregnancy_sim/Snakefile"
 include: "0300_child_sim/Snakefile"
-# TODO: Include results analysis
-
-from snakemake.io import directory
-
-locations = [
-    "India",
-    "Nigeria",
-    # "Ethiopia",
-]
-
-sims = ["0200_pregnancy_sim", "0300_child_sim"]
-results_of_interest = ["deaths", "ylds", "ylls"]
-
-final_results = []
-
-for location in locations:
-    for sim in sims:
-        for result in results_of_interest:
-            final_results.append(f"{sim}/sim_results/{location.lower()}/{result}.parquet")
+include: "5000_analyze_results/Snakefile"
 
 rule all:
-    input: final_results
+    input:
+        [
+            "5000_analyze_results/executed/india/dalys_averted.ipynb",
+            "5000_analyze_results/executed/nigeria/dalys_averted.ipynb"
+        ]

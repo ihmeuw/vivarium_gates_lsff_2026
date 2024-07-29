@@ -24,11 +24,11 @@ class ResultsStratifier(ResultsStratifier_):
     def register_stratifications(self, builder: Builder) -> None:
         super().register_stratifications(builder)
 
-        #         builder.results.register_stratification(
-        #             "anemia_status_at_birth",
-        #             data_values.ANEMIA_STATUS_AT_BIRTH_CATEGORIES,
-        #             requires_columns=["anemia_status_at_birth"],
-        #         )
+        builder.results.register_stratification(
+            "anemia_status_at_birth",
+            data_values.ANEMIA_STATUS_AT_BIRTH_CATEGORIES,
+            requires_columns=["anemia_status_at_birth"],
+        )
 
         builder.results.register_stratification(
             "anemia_levels",

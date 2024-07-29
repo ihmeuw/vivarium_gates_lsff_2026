@@ -46,6 +46,10 @@ class WealthQuintile(Component):
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         pop_update = pd.DataFrame(index=pop_data.index)
         quintile_probabilities = self.quintile_probabilities(pop_data.index)
+        # HACK: release-candidate-spring currently has nondeterminism about column order
+        # https://github.com/ihmeuw/vivarium/blob/7491e099b96a958a607f8291581f1ce7b5c6c21c/src/vivarium/component.py#L687
+        columns = sorted(quintile_probabilities.columns)
+        quintile_probabilities = quintile_probabilities[columns]
         pop_update["wealth_quintile"] = self.randomness.choice(
             pop_data.index,
             quintile_probabilities.columns,
