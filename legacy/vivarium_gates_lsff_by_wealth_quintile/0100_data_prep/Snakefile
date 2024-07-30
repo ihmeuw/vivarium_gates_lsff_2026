@@ -94,7 +94,7 @@ rule prep_hces:
         ]
     log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
     output: 
-        hces_output_files + ['0100_data_prep/hces/india_fortifiability_disparities.csv']
+        hces_output_files + ['0100_data_prep/hces/india_fortifiability_disparities.csv', '0100_data_prep/hces/india_proportion_government.csv']
     shell:
         """
         cd 0100_data_prep
@@ -110,6 +110,7 @@ rule prep_extracted:
             "0100_data_prep/extraction/prep_extracted.ipynb",
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
             '0100_data_prep/hces/india_fortifiability_disparities.csv',
+            '0100_data_prep/hces/india_proportion_government.csv',
         ]
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 

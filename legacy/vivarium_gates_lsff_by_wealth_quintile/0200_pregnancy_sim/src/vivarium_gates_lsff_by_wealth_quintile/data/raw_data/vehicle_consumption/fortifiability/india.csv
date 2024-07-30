@@ -1,6 +1,6 @@
-vehicle_name,wealth_quintile,value
-rice,lowest,0.5038677383866697
-rice,second,0.507648986193454
-rice,middle,0.5142643720153793
-rice,fourth,0.516075022060208
-rice,highest,0.523143881344289
+wealth_quintile,value,vehicle_name
+lowest,0.7846714191393611,rice
+second,0.792348604668435,rice
+middle,0.7709697043778279,rice
+fourth,0.7377074964346145,rice
+highest,0.6504877041161465,rice

@@ -173,7 +173,7 @@ class IronFortification(Component):
             value_columns=["value"],
         )
 
-        self.intervention_effective_coverage = self.build_lookup_table(
+        self.effective_coverage = self.build_lookup_table(
             builder,
             drop_vehicle(
                 builder.data.load(
@@ -202,7 +202,7 @@ class IronFortification(Component):
         self.intervention_fortification_mcg_per_gram = self.build_lookup_table(
             builder,
             drop_vehicle(
-                builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION)
+                builder.data.load(data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION)
             ).assign(sex="Female"),
             value_columns=["value"],
         )
@@ -242,58 +242,79 @@ class IronFortification(Component):
             additional_key="baseline_fortification_status",
         )
         partial = pop_data.index[baseline_fortification == -1]
-        distribution_parameters = self.distribution_parameters(partial)
+        distribution_parameters = self.distribution_parameters(pop_data.index)
         baseline_fortification.loc[partial] = self.randomness.sample_from_distribution(
             partial,
             scipy.stats.norm(
-                distribution_parameters["mean"],
-                distribution_parameters.stddev,
+                distribution_parameters.loc[partial]["mean"],
+                distribution_parameters.loc[partial].stddev,
             ),
         ).clip(0, 1)
         assert (baseline_fortification >= 0).all()
 
         pop_update["baseline_iron_fortification"] = baseline_fortification
+        pop_update["iron_fortification"] = pop_update["baseline_iron_fortification"].copy()
+
+        if self.scenario == "intervention":
+            # NOTE: There are multiple ways you could imagine this working with respect to
+            # individual heterogeneity. The choice I have made here is that the intervention
+            # would "max out" fortification for a subset of *simulants*.
+            # I think this makes more sense in the Nigeria case.
+            # In the India case it is less clear.
+            current_coverage = (
+                baseline_full_prob + baseline_any_prob * distribution_parameters["mean"]
+            )
+
+            target_coverage = self.intervention_coverage(pop_data.index) * self.fortifiability(pop_data.index)
+            additional_coverage = target_coverage - current_coverage
+            assert (additional_coverage >= 0).all()
+
+            intervention_covered = self.randomness.filter_for_probability(
+                pop_data.index,
+                # I am not sure I can clearly explain what this division represents.
+                # However, I have checked that it results in coverages that match the target,
+                # both overall and by quintile.
+                probability=additional_coverage / (1 - current_coverage),
+                additional_key="newly_covered",
+            )
+
+            pop_update.loc[intervention_covered, "iron_fortification"] = 1.0  
+        
+        # Not all coverage is effective
+        ineffective = self.randomness.filter_for_probability(
+            pop_data.index,
+            probability=1 - self.effective_coverage(pop_data.index),
+            additional_key="ineffective",
+        )
+        # NOTE: We assume ineffective means totally ineffective
+        pop_update.loc[ineffective, "baseline_iron_fortification"] = 0.0
+        pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
         vehicle_consumption = self.population_view.subview(["vehicle_consumption_grams"]).get(
             pop_data.index
         )["vehicle_consumption_grams"]
 
+        baseline_concentration_mcg_per_gram = self.baseline_fortification_mcg_per_gram(
+            pop_data.index
+        )
+
         pop_update["baseline_iron_consumption_from_fortification_mcg"] = (
             self._calculate_iron_consumption(
-                vehicle_consumption, pop_update.baseline_iron_fortification, 0
+                vehicle_consumption, pop_update.baseline_iron_fortification, baseline_concentration_mcg_per_gram
             )
         )
 
-        pop_update["iron_fortification"] = pop_update["baseline_iron_fortification"].copy()
-        pop_update["iron_consumption_from_fortification_mcg"] = pop_update[
-            "baseline_iron_consumption_from_fortification_mcg"
-        ].copy()
-
         if self.scenario == "intervention":
-            # NOTE: There are multiple ways you could imagine this working with respect to
-            # individual heterogeneity. The choice I have made here is that the intervention
-            # would "max out" fortifiability for a subset of *simulants*.
-            # I think this makes more sense in the Nigeria case.
-            # In the India case it is less clear.
-            fortifiable_unfortified_baseline = (self.fortifiability(
+            intervention_concentration_mcg_per_gram = self.intervention_fortification_mcg_per_gram(
                 pop_data.index
-            ) - baseline_fortification).clip(0, 1)
-
-            newly_covered = self.randomness.filter_for_probability(
-                pop_data.index,
-                probability=self.intervention_coverage(pop_data.index) * self.intervention_effective_coverage(pop_data.index),
-                additional_key="newly_covered",
             )
-
-            added_coverage = pd.Series(0.0, index=pop_data.index)
-            added_coverage.loc[newly_covered] = fortifiable_unfortified_baseline
-
-            pop_update.loc[newly_covered, "iron_fortification"] += added_coverage
-            pop_update.loc[newly_covered, "iron_consumption_from_fortification_mcg"] = self._calculate_iron_consumption(
-                vehicle_consumption.loc[newly_covered],
-                pop_update.loc[newly_covered].baseline_iron_fortification,
-                added_coverage.loc[newly_covered],
+            pop_update["iron_consumption_from_fortification_mcg"] = self._calculate_iron_consumption(
+                vehicle_consumption,
+                pop_update.iron_fortification,
+                intervention_concentration_mcg_per_gram,
             )
+        else:
+            pop_update["iron_consumption_from_fortification_mcg"] = pop_update["baseline_iron_consumption_from_fortification_mcg"].copy()
 
         self.population_view.update(pop_update)
 
@@ -319,17 +340,8 @@ class IronFortification(Component):
         return exposure.clip(lower=0)
 
     def _calculate_iron_consumption(
-        self, vehicle_consumption, baseline_fortification, intervention_fortification
+        self, vehicle_consumption, fortification, concentration_mcg_per_gram
     ):
-        baseline_concentration_mcg_per_gram = self.baseline_fortification_mcg_per_gram(
-            vehicle_consumption.index
-        )
-        intervention_concentration_mcg_per_gram = self.intervention_fortification_mcg_per_gram(
-            vehicle_consumption.index
-        )
-
         return (
-            baseline_fortification * vehicle_consumption * baseline_concentration_mcg_per_gram
-        ) + (
-            intervention_fortification * vehicle_consumption * intervention_concentration_mcg_per_gram
+            fortification * vehicle_consumption * concentration_mcg_per_gram
         )
