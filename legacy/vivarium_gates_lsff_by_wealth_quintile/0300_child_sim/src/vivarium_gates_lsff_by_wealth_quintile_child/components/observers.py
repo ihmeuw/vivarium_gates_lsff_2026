@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Dict
 
 import pandas as pd
@@ -11,6 +12,8 @@ from vivarium_public_health.results.mortality import (
 from vivarium_public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
+from vivarium_public_health.utilities import to_years
+from vivarium.framework.results import Observer
 
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
     data_keys,
@@ -355,3 +358,15 @@ class ChildWastingObserver(DiseaseObserver):
             sub_entity = "wasting_categories"
         results.rename(columns={sub_entity: COLUMNS.SUB_ENTITY}, inplace=True)
         return results
+
+class PersonTimeObserver(Observer):
+    def register_observations(self, builder: Builder) -> None:
+        builder.results.register_adding_observation(
+            name="person_time",
+            pop_filter='alive == "alive" and tracked == True',
+            when="collect_metrics",
+            aggregator=partial(aggregate_person_time, builder.time.step_size()()),
+        )
+
+def aggregate_person_time(step_size, df: pd.DataFrame) -> float:
+    return len(df) * to_years(step_size)
