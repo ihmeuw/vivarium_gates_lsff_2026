@@ -122,3 +122,23 @@ rule prep_extracted:
         cd extraction
         papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3
         """
+
+rule calculate_effective_coverage:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+        ] + hces_output_files + extracted_output_files
+    log: "0100_data_prep/executed/coverage_calculation/{location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
+    output: 
+        [
+            "0100_data_prep/coverage_calculation/effective_baseline_coverage/{location}.csv",
+            "0100_data_prep/coverage_calculation/effective_intervention_coverage/{location}.csv",
+        ]
+    shell:
+        """
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd coverage_calculation
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location {wildcards.location}
+        """
