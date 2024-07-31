@@ -33,7 +33,7 @@ rule pregnancy_simulation_running_venv:
 import glob
 
 data_inputs = [
-    f"0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/{item}/{{location}}.csv"
+    f"0100_data_prep/results/pregnancies/{item}/{{location}}.csv"
     for item in [
         "baseline_fortification/any_coverage",
         "baseline_fortification/full_coverage",
@@ -52,7 +52,7 @@ data_inputs = [
         "hemoglobin/sd_disparities",
         "wealth_quintile_probabilities"
     ]
-] + [f"0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/fortification_hemoglobin_effects.csv"]
+] + [f"0100_data_prep/results/pregnancies/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
     input: ["0200_pregnancy_sim/artifact_building/bin/activate", "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"] + data_inputs

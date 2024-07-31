@@ -12,27 +12,45 @@ rule data_prep_venv:
         pip install -r data_prep_pip_lock.txt
         """
 
-rule dhs:
+rule dhs_common:
     input:
         [
             "0100_data_prep/.venv/bin/activate",
-            "0100_data_prep/dhs/{location}.ipynb",
+            "0100_data_prep/dhs/common.ipynb",
         ]
-    log: "0100_data_prep/executed/dhs/{location}.ipynb"
+    log: "0100_data_prep/executed/dhs/{location}/common.ipynb"
     output: 
         [
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/maternal_disorders_incidence_disparities/{location}.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/hemoglobin/mean_disparities/{location}.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/hemoglobin/sd_disparities/{location}.csv",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/wealth_quintile_probabilities/{location}.csv",
-            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/birth_weight_disparities/{location}.csv",
+            "0100_data_prep/results/hemoglobin/mean_disparities/{location}.csv",
+            "0100_data_prep/results/hemoglobin/sd_disparities/{location}.csv",
+            "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv",
+            "0100_data_prep/results/birth_weight_disparities/{location}.csv",
         ]
     shell:
         """
         cd 0100_data_prep
         source .venv/bin/activate
         cd dhs
-        papermill {wildcards.location}.ipynb ../executed/dhs/{wildcards.location}.ipynb -k python3
+        papermill common.ipynb ../executed/dhs/{wildcards.location}/common.ipynb -k python3 -p location {wildcards.location}
+        """
+
+rule dhs_mm:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/dhs/maternal_mortality_{location}.ipynb",
+        ]
+    log: "0100_data_prep/executed/dhs/{location}/maternal_mortality_{location}.ipynb"
+    output: 
+        [
+            "0100_data_prep/results/maternal_disorders_incidence_disparities/{location}.csv",
+        ]
+    shell:
+        """
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd dhs
+        papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3
         """
 
 rule prep_vehicle:
@@ -45,8 +63,8 @@ rule prep_vehicle:
     log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
     output: 
         [
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/fortification_hemoglobin_effects.csv",
-            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/raw_data/fortification_birthweight_effects.csv",
+            "0100_data_prep/results/iron/fortification_hemoglobin_effects.csv",
+            "0100_data_prep/results/iron/fortification_birthweight_effects.csv",
         ]
     shell:
         """
@@ -61,11 +79,17 @@ data_needs = [
     "vehicle_consumption/fortifiability",
     "vehicle_consumption/amount/mean",
     "vehicle_consumption/amount/sd",
+]
+
+fortificant_specific_data_needs = [
     "baseline_fortification/any_coverage",
     "baseline_fortification/full_coverage",
     "baseline_fortification/partial_coverage_amount/mean",
     "baseline_fortification/partial_coverage_amount/sd",
     "baseline_fortification/concentration",
+]
+
+scenario_specific_data_needs = [
     "intervention_fortification/any_coverage",
     "intervention_fortification/effective_coverage",
     "intervention_fortification/concentration",
@@ -74,17 +98,41 @@ data_needs = [
 extracted_output_files = []
 hces_output_files = []
 
-for location in ["nigeria", "india"]:
+locations = ["nigeria", "india", "ethiopia"]
+fortificants = ["iron", "folate"]
+scenarios = {
+    "india": ["intervention"],
+    "nigeria": ["intervention"],
+    "ethiopia": ["intervention_25_nrv", "intervention_100_nrv"],
+}
+
+for location in locations:
     for data_need in data_needs:
-        file_name = f"0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/raw_data/{data_need}/{location}.csv"
-        if location == "india" and (("vehicle_consumption" in data_need) or (("baseline_fortification" in data_need) and ("concentration" not in data_need))):
+        file_name = f"0100_data_prep/results/{data_need}/{location}.csv"
+        if location == "india" and ("vehicle_consumption" in data_need):
             if data_need != "vehicle_consumption/fortifiability":
                 hces_output_files.append(file_name)
         else:
-            if location == "nigeria" and "partial_coverage_amount" in data_need:
-                # N/A -- manually create these files
-                continue
             extracted_output_files.append(file_name)
+    
+    for fortificant in fortificants:
+        if fortificant == "iron" and location == "ethiopia":
+            continue
+        for data_need in fortificant_specific_data_needs:
+            file_name = f"0100_data_prep/results/{fortificant}/{data_need}/{location}.csv"
+            if location == "india" and (("baseline_fortification" in data_need) and ("concentration" not in data_need)):
+                hces_output_files.append(file_name)
+            else:
+                if location in ("nigeria", "ethiopia") and "partial_coverage_amount" in data_need:
+                    # N/A -- manually create these files
+                    continue
+                extracted_output_files.append(file_name)
+
+        for scenario in scenarios[location]:
+            for data_need in scenario_specific_data_needs:
+                file_name = f"0100_data_prep/results/{fortificant}/{scenario}/{data_need}/{location}.csv"
+                extracted_output_files.append(file_name)
+
 
 rule prep_hces:
     input:
@@ -123,22 +171,77 @@ rule prep_extracted:
         papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3
         """
 
-rule calculate_effective_coverage:
+# for location in locations:
+#     output_files = [
+#         f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/{location}.csv",
+#     ] + [
+#         f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/{location}.csv"
+#         for scenario in scenarios[location]
+#     ]
+
+# NOTE: I tried to define these three in a for loop, but: https://github.com/snakemake/snakemake/issues/2178
+rule calculate_effective_coverage_nigeria:
     input:
         [
             "0100_data_prep/.venv/bin/activate",
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
         ] + hces_output_files + extracted_output_files
-    log: "0100_data_prep/executed/coverage_calculation/{location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
-    output: 
+    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
+    output:
         [
-            "0100_data_prep/coverage_calculation/effective_baseline_coverage/{location}.csv",
-            "0100_data_prep/coverage_calculation/effective_intervention_coverage/{location}.csv",
+            f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/nigeria.csv",
+        ] + [
+            f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/nigeria.csv"
+            for scenario in scenarios["nigeria"]
         ]
     shell:
-        """
+        f"""
         cd 0100_data_prep
         source .venv/bin/activate
         cd coverage_calculation
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location {wildcards.location}
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {{wildcards.fortificant}}
+        """
+
+rule calculate_effective_coverage_india:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+        ] + hces_output_files + extracted_output_files
+    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
+    output:
+        [
+            f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/india.csv",
+        ] + [
+            f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/india.csv"
+            for scenario in scenarios["nigeria"]
+        ]
+    shell:
+        f"""
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd coverage_calculation
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {{wildcards.fortificant}}
+        """
+
+rule calculate_effective_coverage_ethiopia:
+    input:
+        [
+            "0100_data_prep/.venv/bin/activate",
+            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+        ] + hces_output_files + extracted_output_files
+    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
+    output:
+        [
+            f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/ethiopia.csv",
+        ] + [
+            f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/ethiopia.csv"
+            for scenario in scenarios["nigeria"]
+        ]
+    shell:
+        f"""
+        cd 0100_data_prep
+        source .venv/bin/activate
+        cd coverage_calculation
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {{wildcards.fortificant}}
         """

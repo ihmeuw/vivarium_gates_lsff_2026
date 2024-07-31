@@ -1396,7 +1396,7 @@ def load_birth_weight_wealth_disparities(
     key: str, location: str, mean_draw: bool
 ) -> pd.DataFrame:
     disparities = pd.read_csv(
-        paths.RAW_DATA_DIR / "birth_weight_disparities" / (location.lower() + ".csv"),
+        paths.DATA_PREP_RESULTS_ROOT / "birth_weight_disparities" / (location.lower() + ".csv"),
     ).set_index(["wealth_quintile"])
 
     return disparities
@@ -1436,7 +1436,7 @@ def load_neonatal_diarrhea_csmr(key: str, location: str, mean_draw: bool) -> pd.
 
 
 def load_iron_fortification_effect_on_birth_weight(key: str, location: str, mean_draw: bool):
-    path = paths.RAW_DATA_DIR / "fortification_birthweight_effects.csv"
+    path = paths.DATA_PREP_RESULTS_ROOT / "iron" / "fortification_birthweight_effects.csv"
 
     df = pd.read_csv(path)
     return df.set_index([c for c in df.columns if c != "value"])

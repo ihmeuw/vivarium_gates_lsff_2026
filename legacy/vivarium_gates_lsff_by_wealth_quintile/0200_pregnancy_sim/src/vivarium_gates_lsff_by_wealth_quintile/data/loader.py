@@ -46,19 +46,20 @@ from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable
 memory = Memory("./.cachedir", verbose=0)
 
 CSV_DATA_NAMES = {
+    data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: "wealth_quintile_probabilities",
     data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "vehicle_consumption/any",
     data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY: "vehicle_consumption/fortifiability",
     data_keys.VEHICLE_CONSUMPTION.MEAN: "vehicle_consumption/amount/mean",
     data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: "vehicle_consumption/amount/sd",
-    data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE: "baseline_fortification/any_coverage",
-    data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE: "baseline_fortification/full_coverage",
-    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: "baseline_fortification/partial_coverage_amount/mean",
-    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: "baseline_fortification/partial_coverage_amount/sd",
-    data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION: "baseline_fortification/concentration",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "intervention_fortification/any_coverage",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE: "intervention_fortification/effective_coverage",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "intervention_fortification/concentration",
-    data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: "fortification_hemoglobin_effects.csv",
+    data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE: "iron/baseline_fortification/any_coverage",
+    data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE: "iron/baseline_fortification/full_coverage",
+    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: "iron/baseline_fortification/partial_coverage_amount/mean",
+    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: "iron/baseline_fortification/partial_coverage_amount/sd",
+    data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION: "iron/baseline_fortification/concentration",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "iron/intervention/intervention_fortification/any_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE: "iron/intervention/intervention_fortification/effective_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "iron/intervention/intervention_fortification/concentration",
+    data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: "iron/fortification_hemoglobin_effects.csv",
 }
 
 
@@ -86,7 +87,6 @@ def get_data(lookup_key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         data_keys.POPULATION.DEMOGRAPHY: load_demographic_dimensions,
         data_keys.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
         data_keys.POPULATION.INFANT_MALE_PERCENTAGE: load_infant_male_percentage,
-        data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: load_wealth_quintile_probabilities,
         data_keys.PREGNANCY.ASFR: load_asfr,
         data_keys.PREGNANCY.SBR: load_sbr,
         data_keys.PREGNANCY.RAW_INCIDENCE_RATE_MISCARRIAGE: load_raw_incidence_data,
@@ -174,18 +174,6 @@ def load_infant_male_percentage(key: str, location: str, mean_draw: bool) -> pd.
         ).droplevel("sex")
         / live_births_overall
     )
-
-
-def load_wealth_quintile_probabilities(
-    key: str, location: str, mean_draw: bool
-) -> pd.DataFrame:
-    # These would be uniform, except that we are modeling pregnancies
-    df = pd.read_csv(
-        paths.CSV_RAW_DATA_ROOT
-        / "wealth_quintile_probabilities"
-        / (location.lower() + ".csv"),
-    )
-    return df.set_index([c for c in df.columns if c != "value"])
 
 
 def load_standard_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
@@ -368,7 +356,7 @@ def load_pregnant_maternal_disorders_incidence_probability(
 
     disparities = (
         pd.read_csv(
-            paths.CSV_RAW_DATA_ROOT
+            paths.DATA_PREP_RESULTS_ROOT
             / "maternal_disorders_incidence_disparities"
             / (location.lower() + ".csv"),
         )
@@ -490,7 +478,7 @@ def load_pregnant_maternal_hemorrhage_incidence(key: str, location: str, mean_dr
 
     disparities = (
         pd.read_csv(
-            paths.CSV_RAW_DATA_ROOT
+            paths.DATA_PREP_RESULTS_ROOT
             / "maternal_disorders_incidence_disparities"
             / (location.lower() + ".csv"),
         )
@@ -761,7 +749,7 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
 
     disparities = (
         pd.read_csv(
-            paths.CSV_RAW_DATA_ROOT / disparity_path / (location.lower() + ".csv"),
+            paths.DATA_PREP_RESULT_ROOT / disparity_path / (location.lower() + ".csv"),
         )
         .set_index(["sex", "wealth_quintile"])
         .value
@@ -875,7 +863,7 @@ def _add_location(data, location):
 
 def load_csv_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     name = CSV_DATA_NAMES[key]
-    path = paths.CSV_RAW_DATA_ROOT / name
+    path = paths.DATA_PREP_RESULT_ROOT / name
     if path.is_dir():
         path = path / (location.lower() + ".csv")
     df = pd.read_csv(path)
