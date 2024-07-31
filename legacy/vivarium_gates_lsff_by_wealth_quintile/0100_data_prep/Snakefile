@@ -31,6 +31,7 @@ rule dhs_common:
         cd 0100_data_prep
         source .venv/bin/activate
         cd dhs
+        mkdir -p ../executed/dhs/{wildcards.location}/
         papermill common.ipynb ../executed/dhs/{wildcards.location}/common.ipynb -k python3 -p location {wildcards.location}
         """
 
@@ -50,6 +51,7 @@ rule dhs_mm:
         cd 0100_data_prep
         source .venv/bin/activate
         cd dhs
+        mkdir -p ../executed/dhs/{wildcards.location}/
         papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3
         """
 
@@ -71,6 +73,7 @@ rule prep_vehicle:
         cd 0100_data_prep
         source .venv/bin/activate
         cd extraction
+        mkdir -p ../executed/extraction/
         papermill prep_vehicle.ipynb ../executed/extraction/prep_vehicle.ipynb -k python3
         """
 
@@ -148,6 +151,7 @@ rule prep_hces:
         cd 0100_data_prep
         source .venv/bin/activate
         cd hces
+        mkdir -p ../executed/hces/
         papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3
         """
 
@@ -168,6 +172,7 @@ rule prep_extracted:
         cd 0100_data_prep
         source .venv/bin/activate
         cd extraction
+        mkdir -p ../executed/extraction/
         papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3
         """
 
@@ -199,6 +204,7 @@ rule calculate_effective_coverage_nigeria:
         cd 0100_data_prep
         source .venv/bin/activate
         cd coverage_calculation
+        mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/nigeria/
         papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {{wildcards.fortificant}}
         """
 
@@ -221,6 +227,7 @@ rule calculate_effective_coverage_india:
         cd 0100_data_prep
         source .venv/bin/activate
         cd coverage_calculation
+        mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/india/
         papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {{wildcards.fortificant}}
         """
 
@@ -236,12 +243,13 @@ rule calculate_effective_coverage_ethiopia:
             f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/ethiopia.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/ethiopia.csv"
-            for scenario in scenarios["nigeria"]
+            for scenario in scenarios["ethiopia"]
         ]
     shell:
         f"""
         cd 0100_data_prep
         source .venv/bin/activate
         cd coverage_calculation
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {{wildcards.fortificant}}
+        mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/ethiopia/
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {{wildcards.fortificant}}
         """

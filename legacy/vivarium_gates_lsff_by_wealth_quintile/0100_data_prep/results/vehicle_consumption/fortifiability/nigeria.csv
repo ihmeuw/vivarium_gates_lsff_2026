@@ -1,6 +1,11 @@
-vehicle_name,wealth_quintile,value
-bouillon,lowest,0.9657320872274144
-bouillon,second,0.9785932721712538
-bouillon,middle,0.9808467741935484
-bouillon,fourth,0.9888438133874239
-bouillon,highest,0.9837728194726166
+vehicle_name,wealth_quintile,sex,value
+bouillon,lowest,female,0.9657320872274144
+bouillon,second,female,0.9785932721712538
+bouillon,middle,female,0.9808467741935484
+bouillon,fourth,female,0.9888438133874239
+bouillon,highest,female,0.9837728194726166
+bouillon,lowest,male,0.9657320872274144
+bouillon,second,male,0.9785932721712538
+bouillon,middle,male,0.9808467741935484
+bouillon,fourth,male,0.9888438133874239
+bouillon,highest,male,0.9837728194726166

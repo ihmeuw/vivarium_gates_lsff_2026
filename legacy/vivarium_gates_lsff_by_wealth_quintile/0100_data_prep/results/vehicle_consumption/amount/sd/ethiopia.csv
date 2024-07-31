@@ -1,6 +1,6 @@
-vehicle_name,wealth_quintile,value
-salt,lowest,2.2
-salt,second,2.2
-salt,middle,2.2
-salt,fourth,2.2
-salt,highest,2.2
+vehicle_name,wealth_quintile,sex,value,age_start,age_end
+salt,fourth,female,2.2,15,50
+salt,highest,female,2.2,15,50
+salt,lowest,female,2.2,15,50
+salt,middle,female,2.2,15,50
+salt,second,female,2.2,15,50
