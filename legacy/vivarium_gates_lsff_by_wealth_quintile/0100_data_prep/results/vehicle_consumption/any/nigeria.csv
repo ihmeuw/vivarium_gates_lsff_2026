@@ -1,6 +1,6 @@
 vehicle_name,wealth_quintile,sex,value,age_start,age_end
-bouillon,lowest,female,0.963,15,50
-bouillon,second,female,0.981,15,50
-bouillon,middle,female,0.992,15,50
-bouillon,fourth,female,0.986,15,50
-bouillon,highest,female,0.986,15,50
+bouillon,lowest,Female,0.963,15,50
+bouillon,second,Female,0.981,15,50
+bouillon,middle,Female,0.992,15,50
+bouillon,fourth,Female,0.986,15,50
+bouillon,highest,Female,0.986,15,50

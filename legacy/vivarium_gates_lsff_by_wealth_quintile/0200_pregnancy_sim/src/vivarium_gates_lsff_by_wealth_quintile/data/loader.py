@@ -378,17 +378,18 @@ def _distribute_by_disparities_multiplicative(
     wealth_quintile_probabilities = (
         get_data(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES, location, mean_draw=True)
         .reset_index()
-        .melt(id_vars=["sex"], var_name="wealth_quintile")
-        .set_index(["sex", "wealth_quintile"])
+        .melt(id_vars=["sex", "age_start", "age_end"], var_name="wealth_quintile")
+        .set_index(["sex", "age_start", "age_end", "wealth_quintile"])
         .value
     )
     # Normalize disparities
-    disparities = disparities.div(disparities.groupby(["sex"]).sum())
+    disparities = disparities.div(disparities.groupby([c for c in disparities.index.names if c != 'wealth_quintile']).sum())
 
-    raw = quantity.mul(disparities, axis=0).dropna(how="all")
+    raw = quantity.mul(_reindex_series_onto_df_by_age_groups(quantity, disparities), axis=0).dropna(how="all")
+
     # How much we need to scale to recover the original quantities
     rescale_factor = (
-        raw.mul(wealth_quintile_probabilities, axis=0)
+        raw.mul(_reindex_series_onto_df_by_age_groups(raw, wealth_quintile_probabilities), axis=0)
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
         .sum()
         .div(quantity)
@@ -398,7 +399,7 @@ def _distribute_by_disparities_multiplicative(
 
     # We have recovered the original quantities
     assert np.allclose(
-        result.mul(wealth_quintile_probabilities, axis=0)
+        result.mul(_reindex_series_onto_df_by_age_groups(result, wealth_quintile_probabilities), axis=0)
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
         .sum()
         .sort_index()
@@ -407,6 +408,21 @@ def _distribute_by_disparities_multiplicative(
     )
 
     return result
+
+def _reindex_series_onto_df_by_age_groups(df, series):
+    if "age_start" not in series.index.names:
+        return series.align(df)[1]
+    # NOTE: Age groups can be different! Is there a more Vivarium way to do this, with a lookup table maybe?
+    common = list(set(df.index.names) & set(series.index.names))
+    result = (
+        df.reset_index()
+            .merge(series.rename("series_value").reset_index(), on=[c for c in common if c not in ("age_start", "age_end")], suffixes=("", "_series"))
+            # NOTE: Depends on a GBD age group always fitting into a disparity age group
+            .pipe(lambda df: df[(df.age_start >= df.age_start_series) & (df.age_end <= df.age_end_series)])
+            .pipe(lambda df: df.drop(columns=df.filter(like='_series').columns))
+    )
+    result = result.set_index(sorted(list(set(df.index.names) | set(series.index.names))))
+    return result.series_value.rename(series.name)
 
 
 def _distribute_by_disparities_additive(
@@ -747,16 +763,14 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
         data_keys.HEMOGLOBIN.STANDARD_DEVIATION: "hemoglobin/sd_disparities",
     }[key]
 
-    disparities = (
-        pd.read_csv(
-            paths.DATA_PREP_RESULT_ROOT / disparity_path / (location.lower() + ".csv"),
-        )
-        .set_index(["sex", "wealth_quintile"])
-        .value
+    disparities = pd.read_csv(
+        paths.DATA_PREP_RESULTS_ROOT / disparity_path / (location.lower() + ".csv"),
     )
+    disparities = disparities.set_index([c for c in disparities.columns if c != 'value']).value
 
+    # NOTE: Using disparities from non-pregnant 10-15 year olds!
     result = _distribute_by_disparities_multiplicative(
-        adjusted.dropna(how="all"), disparities, location
+        adjusted.dropna(how="all"), disparities[(disparities.index.get_level_values("pregnant") == "pregnant") | (disparities.index.get_level_values("age_end") == 15)].droplevel("pregnant"), location
     )
     return result.reindex(
         _demographics_with_wealth(location).droplevel("location").index
@@ -863,10 +877,15 @@ def _add_location(data, location):
 
 def load_csv_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     name = CSV_DATA_NAMES[key]
-    path = paths.DATA_PREP_RESULT_ROOT / name
+    path = paths.DATA_PREP_RESULTS_ROOT / name
     if path.is_dir():
         path = path / (location.lower() + ".csv")
     df = pd.read_csv(path)
+    if "sex" in df.columns:
+        df = df[df.sex == "Female"]
+    if "pregnant" in df.columns:
+        # NOTE: Using non-pregnant under-15s and over-50s!
+        df = df[(df.pregnant == "pregnant") | (df.age_end == 15) | (df.age_start == 50)].drop(columns=["pregnant"])
     return df.set_index([c for c in df.columns if c != "value"])
 
 

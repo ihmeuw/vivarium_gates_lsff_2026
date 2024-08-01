@@ -24,7 +24,7 @@ class VehicleConsumption(Component):
 
     @property
     def columns_required(self) -> List[str]:
-        return ["tracked", "wealth_quintile"]
+        return ["tracked", "wealth_quintile", "sex", "age"]
 
     @property
     def initialization_requirements(self) -> Dict[str, List[str]]:
@@ -34,9 +34,17 @@ class VehicleConsumption(Component):
     def setup(self, builder: Builder) -> None:
         self.randomness = builder.randomness.get_stream(self.name)
 
-        index_columns = ["wealth_quintile"]
+        vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
+
+        def drop_vehicle(df):
+            if "vehicle_name" not in df.columns:
+                return df
+            assert vehicle in df.vehicle_name.values
+            return df[df.vehicle_name == vehicle].drop(columns=["vehicle_name"])
+
+        index_columns = ["wealth_quintile", "sex", "age_start", "age_end"]
         any_consumed = (
-            builder.data.load(data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED)
+            drop_vehicle(builder.data.load(data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED))
             .set_index(index_columns)["value"]
             .rename("any_consumed")
         )
@@ -52,12 +60,12 @@ class VehicleConsumption(Component):
         )
 
         mean = (
-            builder.data.load(data_keys.VEHICLE_CONSUMPTION.MEAN)
+            drop_vehicle(builder.data.load(data_keys.VEHICLE_CONSUMPTION.MEAN))
             .set_index(index_columns)["value"]
             .rename("mean")
         )
         stddev = (
-            builder.data.load(data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION)
+            drop_vehicle(builder.data.load(data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION))
             .set_index(index_columns)["value"]
             .rename("stddev")
         )
@@ -121,7 +129,7 @@ class IronFortification(Component):
 
     @property
     def columns_required(self) -> List[str]:
-        return ["tracked", "vehicle_consumption_grams", "wealth_quintile"]
+        return ["tracked", "vehicle_consumption_grams", "wealth_quintile", "sex", "age"]
 
     @property
     def initialization_requirements(self) -> Dict[str, List[str]]:
@@ -134,8 +142,10 @@ class IronFortification(Component):
         vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
 
         def drop_vehicle(df):
-            assert (df.vehicle_name == vehicle).all()
-            return df.drop(columns=["vehicle_name"])
+            if "vehicle_name" not in df.columns:
+                return df
+            assert vehicle in df.vehicle_name.values
+            return df[df.vehicle_name == vehicle].drop(columns=["vehicle_name"])
 
         self.baseline_any_coverage = self.build_lookup_table(
             builder,
@@ -149,14 +159,21 @@ class IronFortification(Component):
             value_columns=["value"],
         )
 
-        mean = (
+
+        mean = drop_vehicle(
             builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN)
-            .set_index(["wealth_quintile"])["value"]
+        )
+        mean = (
+            mean
+            .set_index([c for c in mean.columns if c != "value"])["value"]
             .rename("mean")
         )
-        stddev = (
+        stddev = drop_vehicle(
             builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD)
-            .set_index(["wealth_quintile"])["value"]
+        )
+        stddev = (
+            stddev
+            .set_index([c for c in stddev.columns if c != "value"])["value"]
             .rename("stddev")
         )
         self.distribution_parameters = self.build_lookup_table(

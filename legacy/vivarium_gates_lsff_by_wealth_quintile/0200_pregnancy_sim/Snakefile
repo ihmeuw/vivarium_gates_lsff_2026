@@ -33,26 +33,26 @@ rule pregnancy_simulation_running_venv:
 import glob
 
 data_inputs = [
-    f"0100_data_prep/results/pregnancies/{item}/{{location}}.csv"
+    f"0100_data_prep/results/{item}/{{location}}.csv"
     for item in [
-        "baseline_fortification/any_coverage",
-        "baseline_fortification/full_coverage",
-        "baseline_fortification/partial_coverage_amount/mean",
-        "baseline_fortification/partial_coverage_amount/sd",
-        "baseline_fortification/concentration",
+        "iron/baseline_fortification/any_coverage",
+        "iron/baseline_fortification/full_coverage",
+        "iron/baseline_fortification/partial_coverage_amount/mean",
+        "iron/baseline_fortification/partial_coverage_amount/sd",
+        "iron/baseline_fortification/concentration",
         "vehicle_consumption/any",
         "vehicle_consumption/fortifiability",
         "vehicle_consumption/amount/mean",
         "vehicle_consumption/amount/sd",
-        "intervention_fortification/any_coverage",
-        "intervention_fortification/effective_coverage",
-        "intervention_fortification/concentration",
+        "iron/intervention/intervention_fortification/any_coverage",
+        "iron/intervention/intervention_fortification/effective_coverage",
+        "iron/intervention/intervention_fortification/concentration",
         "maternal_disorders_incidence_disparities",
         "hemoglobin/mean_disparities",
         "hemoglobin/sd_disparities",
         "wealth_quintile_probabilities"
     ]
-] + [f"0100_data_prep/results/pregnancies/iron/fortification_hemoglobin_effects.csv"]
+] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
     input: ["0200_pregnancy_sim/artifact_building/bin/activate", "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"] + data_inputs
@@ -91,6 +91,6 @@ rule pregnancy_simulations:
         rm -rf sim_results/{{wildcards.location}}
         source simulation_running/bin/activate
         rm -f dump.rdb
-        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml' if use_psimulate else ''} -i mean_draw_artifacts/{{wildcards.location}}.hdf -o sim_results/ {'-P proj_simscience -q long.q' if use_psimulate else ''} -vvv
+        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml' if use_psimulate else ''} -i mean_draw_artifacts/{{wildcards.location}}.hdf -o sim_results/ {'-P proj_simscience -q long.q' if use_psimulate else '-vvv'}
         mv sim_results/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.location}}
         """
