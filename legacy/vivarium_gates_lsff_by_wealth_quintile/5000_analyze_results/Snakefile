@@ -1,63 +1,54 @@
-rule results_analysis_venv:
-    input: ["5000_analyze_results/pip_lock.txt"]
-    output: [directory("5000_analyze_results/.venv/"), "5000_analyze_results/.venv/bin/activate"]
-    shell:
-        f"""
-        cd 5000_analyze_results
-        rm -rf .venv
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install -r pip_lock.txt
-        """
+debug = config["debug"]
 
 pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls"]
 rescaled_pregnancy_results = [
-    f"5000_analyze_results/0100_rescale_results/pregnancy_results/{{location}}/{result}.parquet"
+    f"5000_analyze_results/0100_rescale_results/pregnancy_results/{{vehicle}}/{{location}}/{result}.parquet"
     for result in pregnancy_results_of_interest
 ]
 
 rule rescale_pregnancy_results:
     input:
-        ["5000_analyze_results/.venv/bin/activate", "5000_analyze_results/0100_rescale_results/pregnancy_results.ipynb"] +
-        [f"0200_pregnancy_sim/sim_results/{{location}}/{result}.parquet" for result in pregnancy_results_of_interest]
+        config["env_input"] + ["5000_analyze_results/0100_rescale_results/pregnancy_results.ipynb"] +
+        [f"0200_pregnancy_sim/sim_results/{{vehicle}}/{{location}}/{result}.parquet" for result in pregnancy_results_of_interest]
     output:
         rescaled_pregnancy_results
-    log: "5000_analyze_results/executed/{location}/0100_rescale_results/pregnancy_results.ipynb"
+    log: "5000_analyze_results/executed/{vehicle}/{location}/0100_rescale_results/pregnancy_results.ipynb"
     shell:
-        """
-        cd 5000_analyze_results
-        source .venv/bin/activate
-        cd 0100_rescale_results
-        papermill pregnancy_results.ipynb ../executed/{wildcards.location}/0100_rescale_results/pregnancy_results.ipynb -p location {wildcards.location} -k python3
+        f"""
+        {config["env_setup"]}
+        cd 5000_analyze_results/0100_rescale_results
+        mkdir -p ../executed/{{wildcards.vehicle}}/{{wildcards.location}}/0100_rescale_results/
+        papermill pregnancy_results.ipynb ../executed/{{wildcards.vehicle}}/{{wildcards.location}}/0100_rescale_results/pregnancy_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
 
 child_results_of_interest = ["deaths", "ylds", "ylls"]
 rescaled_child_results = [
-    f"5000_analyze_results/0100_rescale_results/child_results/{{location}}/{result}.parquet"
+    f"5000_analyze_results/0100_rescale_results/child_results/{{vehicle}}/{{location}}/{result}.parquet"
     for result in child_results_of_interest
 ]
 
 rule rescale_child_results:
     input:
-        ["5000_analyze_results/.venv/bin/activate", "5000_analyze_results/0100_rescale_results/child_results.ipynb"] +
-        [f"0300_child_sim/sim_results/{{location}}/{result}.parquet" for result in child_results_of_interest]
+        config["env_input"] + ["5000_analyze_results/0100_rescale_results/child_results.ipynb"] +
+        [f"0300_child_sim/sim_results/{{vehicle}}/{{location}}/{result}.parquet" for result in child_results_of_interest]
     output:
         rescaled_child_results
-    log: "5000_analyze_results/executed/{location}/0100_rescale_results/child_results.ipynb"
+    log: "5000_analyze_results/executed/{vehicle}/{location}/0100_rescale_results/child_results.ipynb"
     shell:
-        """
-        cd 5000_analyze_results
-        source .venv/bin/activate
-        cd 0100_rescale_results
-        papermill child_results.ipynb ../executed/{wildcards.location}/0100_rescale_results/child_results.ipynb -p location {wildcards.location} -k python3
+        f"""
+        {config["env_setup"]}
+        cd 5000_analyze_results/0100_rescale_results
+        mkdir -p ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/
+        papermill child_results.ipynb ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/child_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
 
 rule dalys_averted:
-    input: ["5000_analyze_results/.venv/bin/activate", "5000_analyze_results/dalys_averted.ipynb"] + rescaled_pregnancy_results + rescaled_child_results
-    output: "5000_analyze_results/executed/{location}/dalys_averted.ipynb"
+    input: config["env_input"] + ["5000_analyze_results/dalys_averted.ipynb"] + rescaled_pregnancy_results + rescaled_child_results
+    output: "5000_analyze_results/executed/{location}/{vehicle}/dalys_averted_{scenario}.ipynb"
     shell:
-        """
+        f"""
+        {config["env_setup"]}
         cd 5000_analyze_results
-        source .venv/bin/activate
-        papermill dalys_averted.ipynb ./executed/{wildcards.location}/dalys_averted.ipynb -p location {wildcards.location} -k python3
+        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
+        papermill dalys_averted.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/dalys_averted_{{wildcards.scenario}}.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
         """

@@ -30,6 +30,18 @@ class __Population(NamedTuple):
 
 POPULATION = __Population()
 
+class __Vehicle(NamedTuple):
+    NAME: str = "vehicle.name"
+
+    @property
+    def name(self):
+        return "vehicle"
+
+    @property
+    def log_name(self):
+        return "vehicle"
+
+VEHICLE = __Vehicle()
 
 class __Pregnancy(NamedTuple):
     ASFR: str = "covariate.age_specific_fertility_rate.estimate"
@@ -182,6 +194,7 @@ IRON_FORTIFICATION = __IronFortification()
 
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
+    VEHICLE,
     PREGNANCY,
     LBWSG,
     MATERNAL_DISORDERS,

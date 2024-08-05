@@ -1,52 +1,24 @@
 from snakemake.io import directory
 
-import os
-
-use_psimulate = not "NO_PSIMULATE" in os.environ
-
-rule pregnancy_artifact_building_venv:
-    input: ["0200_pregnancy_sim/artifact_building_pip_lock.txt"]
-    output: [directory("0200_pregnancy_sim/artifact_building"), "0200_pregnancy_sim/artifact_building/bin/activate"]
-    shell:
-        f"""
-        cd 0200_pregnancy_sim
-        rm -rf artifact_building
-        python -m venv artifact_building
-        source artifact_building/bin/activate
-        pip install -r artifact_building_pip_lock.txt
-        pip install -e .[data]
-        """
-
-rule pregnancy_simulation_running_venv:
-    input: ["0200_pregnancy_sim/simulation_running_pip_lock.txt"]
-    output: [directory("0200_pregnancy_sim/simulation_running"), "0200_pregnancy_sim/simulation_running/bin/activate"]
-    shell:
-        f"""
-        cd 0200_pregnancy_sim
-        rm -rf simulation_running
-        python -m venv simulation_running
-        source simulation_running/bin/activate
-        pip install -r simulation_running_pip_lock.txt
-        pip install -e .[dev]
-        """
-
 import glob
+
+debug = config["debug"]
 
 data_inputs = [
     f"0100_data_prep/results/{item}/{{location}}.csv"
     for item in [
-        "iron/baseline_fortification/any_coverage",
-        "iron/baseline_fortification/full_coverage",
-        "iron/baseline_fortification/partial_coverage_amount/mean",
-        "iron/baseline_fortification/partial_coverage_amount/sd",
-        "iron/baseline_fortification/concentration",
-        "vehicle_consumption/any",
-        "vehicle_consumption/fortifiability",
-        "vehicle_consumption/amount/mean",
-        "vehicle_consumption/amount/sd",
-        "iron/intervention/intervention_fortification/any_coverage",
-        "iron/intervention/intervention_fortification/effective_coverage",
-        "iron/intervention/intervention_fortification/concentration",
+        "iron/{vehicle}/baseline_fortification/any_coverage",
+        "iron/{vehicle}/baseline_fortification/full_coverage",
+        "iron/{vehicle}/baseline_fortification/partial_coverage_amount/mean",
+        "iron/{vehicle}/baseline_fortification/partial_coverage_amount/sd",
+        "iron/{vehicle}/baseline_fortification/concentration",
+        "{vehicle}/vehicle_consumption/any",
+        "{vehicle}/vehicle_consumption/fortifiability",
+        "{vehicle}/vehicle_consumption/amount/mean",
+        "{vehicle}/vehicle_consumption/amount/sd",
+        "iron/{vehicle}/intervention/intervention_fortification/any_coverage",
+        "iron/{vehicle}/intervention/intervention_fortification/effective_coverage",
+        "iron/{vehicle}/intervention/intervention_fortification/concentration",
         "maternal_disorders_incidence_disparities",
         "hemoglobin/mean_disparities",
         "hemoglobin/sd_disparities",
@@ -55,42 +27,44 @@ data_inputs = [
 ] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
-    input: ["0200_pregnancy_sim/artifact_building/bin/activate", "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"] + data_inputs
-    output: ["0200_pregnancy_sim/mean_draw_artifacts/{location}.hdf"]
+    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"] + data_inputs
+    output: ["0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
     shell:
         f"""
+        {config["env_setup"]}
         cd 0200_pregnancy_sim
-        source artifact_building/bin/activate
-        rm -f artifacts/{{wildcards.location}}.hdf
-        make_artifacts -vvv -o ./mean_draw_artifacts -l {{wildcards.location}} -a --mean
+        rm -f artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
+        export PYTHONPATH=./src
+        python src/vivarium_gates_lsff_by_wealth_quintile/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} -a --mean {'--pdb -vvv' if debug else ''}
         """
 
 code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
 
 rule pregnancy_simulations:
     input:
-        [
-            "0200_pregnancy_sim/simulation_running/bin/activate",
-            "0200_pregnancy_sim/mean_draw_artifacts/{location}.hdf",
+        config["simulation_running_env_input"] + [
+            "0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml",
         ] + code_inputs + data_inputs
     output:
         [
-            "0200_pregnancy_sim/sim_results/{location}/births.parquet",
-            "0200_pregnancy_sim/sim_results/{location}/deaths.parquet",
-            "0200_pregnancy_sim/sim_results/{location}/pregnancy_outcome_count.parquet",
-            "0200_pregnancy_sim/sim_results/{location}/ylds.parquet",
-            "0200_pregnancy_sim/sim_results/{location}/ylls.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/births.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/deaths.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/pregnancy_outcome_count.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylds.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylls.parquet",
         ]
     shell:
         f"""
+        {config["simulation_running_env_setup"]}
         cd 0200_pregnancy_sim
         rm -rf sim_results/{{wildcards.location}} || true
         sleep 5
         rm -rf sim_results/{{wildcards.location}}
         source simulation_running/bin/activate
         rm -f dump.rdb
-        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml' if use_psimulate else ''} -i mean_draw_artifacts/{{wildcards.location}}.hdf -o sim_results/ {'-P proj_simscience -q long.q' if use_psimulate else '-vvv'}
-        mv sim_results/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.location}}
+        export PYTHONPATH=./src
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -q long.q' if not debug else '--pdb -vvv'}
+        mv sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         """

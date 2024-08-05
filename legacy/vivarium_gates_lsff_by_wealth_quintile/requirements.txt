@@ -1,0 +1,12 @@
+# NOTE: These are in addition to what is required for artifact building
+papermill
+ploomber-engine # For debugging notebooks
+pandas
+numpy
+jupyter
+openpyxl
+matplotlib
+statsmodels
+scikit-learn
+db_queries
+seaborn

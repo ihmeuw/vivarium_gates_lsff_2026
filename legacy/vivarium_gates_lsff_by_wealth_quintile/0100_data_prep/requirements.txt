@@ -1,8 +1,0 @@
-papermill
-pandas
-numpy
-jupyter
-openpyxl
-matplotlib
-statsmodels
-scikit-learn

@@ -47,24 +47,24 @@ memory = Memory("./.cachedir", verbose=0)
 
 CSV_DATA_NAMES = {
     data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: "wealth_quintile_probabilities",
-    data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "vehicle_consumption/any",
-    data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY: "vehicle_consumption/fortifiability",
-    data_keys.VEHICLE_CONSUMPTION.MEAN: "vehicle_consumption/amount/mean",
-    data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: "vehicle_consumption/amount/sd",
-    data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE: "iron/baseline_fortification/any_coverage",
-    data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE: "iron/baseline_fortification/full_coverage",
-    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: "iron/baseline_fortification/partial_coverage_amount/mean",
-    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: "iron/baseline_fortification/partial_coverage_amount/sd",
-    data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION: "iron/baseline_fortification/concentration",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "iron/intervention/intervention_fortification/any_coverage",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE: "iron/intervention/intervention_fortification/effective_coverage",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "iron/intervention/intervention_fortification/concentration",
+    data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "{vehicle}/vehicle_consumption/any",
+    data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY: "{vehicle}/vehicle_consumption/fortifiability",
+    data_keys.VEHICLE_CONSUMPTION.MEAN: "{vehicle}/vehicle_consumption/amount/mean",
+    data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION: "{vehicle}/vehicle_consumption/amount/sd",
+    data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE: "iron/{vehicle}/baseline_fortification/any_coverage",
+    data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE: "iron/{vehicle}/baseline_fortification/full_coverage",
+    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: "iron/{vehicle}/baseline_fortification/partial_coverage_amount/mean",
+    data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: "iron/{vehicle}/baseline_fortification/partial_coverage_amount/sd",
+    data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION: "iron/{vehicle}/baseline_fortification/concentration",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "iron/{vehicle}/intervention/intervention_fortification/any_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE: "iron/{vehicle}/intervention/intervention_fortification/effective_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "iron/{vehicle}/intervention/intervention_fortification/concentration",
     data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: "iron/fortification_hemoglobin_effects.csv",
 }
 
 
 @cache
-def get_data(lookup_key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def get_data(lookup_key: str, location: str, mean_draw: bool, vehicle: str = None) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
 
     Parameters
@@ -80,6 +80,12 @@ def get_data(lookup_key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         The requested data.
 
     """
+    if lookup_key == data_keys.VEHICLE.NAME:
+        return vehicle
+
+    if lookup_key in CSV_DATA_NAMES.keys():
+        return load_csv_data(lookup_key, location, mean_draw, vehicle)
+
     mapping = {
         data_keys.POPULATION.LOCATION: load_population_location,
         data_keys.POPULATION.STRUCTURE: load_population_structure,
@@ -875,8 +881,10 @@ def _add_location(data, location):
     )
 
 
-def load_csv_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+def load_csv_data(key: str, location: str, mean_draw: bool, vehicle: str) -> pd.DataFrame:
     name = CSV_DATA_NAMES[key]
+    if '{vehicle}' in name:
+        name = name.replace('{vehicle}', vehicle)
     path = paths.DATA_PREP_RESULTS_ROOT / name
     if path.is_dir():
         path = path / (location.lower() + ".csv")

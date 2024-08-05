@@ -114,6 +114,7 @@ def get_data(
     lookup_key: str,
     location: Union[str, List[int]],
     mean_draw: bool,
+    fertility_data_path: str = None,
     fetch_subnationals: bool = False,
 ) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
@@ -131,6 +132,9 @@ def get_data(
         The requested data.
 
     """
+    if lookup_key == data_keys.POPULATION.FERTILITY_DATA:
+        return load_fertility_data(fertility_data_path)
+
     mapping = {
         data_keys.POPULATION.LOCATION: load_population_location,
         data_keys.POPULATION.STRUCTURE: load_population_structure,
@@ -139,7 +143,6 @@ def get_data(
         data_keys.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
         data_keys.POPULATION.ACMR: load_standard_data,
         data_keys.POPULATION.CRUDE_BIRTH_RATE: load_standard_data,
-        data_keys.POPULATION.FERTILITY_DATA: load_fertility_data,
         data_keys.DIARRHEA.DURATION: load_duration,
         data_keys.DIARRHEA.PREVALENCE: load_prevalence_from_incidence_and_duration,
         data_keys.DIARRHEA.INCIDENCE_RATE: load_standard_data,
@@ -309,10 +312,8 @@ def load_theoretical_minimum_risk_life_expectancy(
     return interface.get_theoretical_minimum_risk_life_expectancy()
 
 
-def load_fertility_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    df = pd.read_parquet(
-        f"../0200_pregnancy_sim/sim_results/{location.lower()}/births.parquet"
-    )
+def load_fertility_data(fertility_data_path: str) -> pd.DataFrame:
+    df = pd.read_parquet(fertility_data_path)
     if "input_draw" not in df.columns:
         df = df.assign(input_draw=0)
     if "random_seed" not in df.columns:
@@ -1347,19 +1348,9 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f"Unrecognized key {key}")
 
-    location_mapper = {
-        "Sub-Saharan Africa": "sub-saharan_africa",
-        "South Asia": "south_asia",
-        "LMICs": "lmics",
-        "Ethiopia": "ethiopia",
-        "Nigeria": "nigeria",
-        "India": "india",
-        "Pakistan": "pakistan",
-    }
-
     import pathlib
 
-    output_dir = pathlib.Path("./lbwsg_pafs") / location_mapper[location]
+    output_dir = pathlib.Path("./lbwsg_pafs") / location.lower().replace(' ', '_')
 
     df = pd.read_parquet(
         output_dir

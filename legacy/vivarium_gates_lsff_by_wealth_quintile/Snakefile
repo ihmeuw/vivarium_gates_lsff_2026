@@ -1,11 +1,113 @@
+
+configfile: "0050_config/config.yaml"
+
+# Use the Snakemake config as a way to pass "globals" through all Snakefiles
+
+config = {
+    "env_input": [".venv/bin/activate"],
+    "env_setup": """
+source .venv/bin/activate
+""",
+    "simulation_running_env_input": [".simulation_running_venv/bin/activate"],
+    "simulation_running_env_setup": """
+source .simulation_running_venv/bin/activate
+""",
+    "debug": "false",
+    **config,
+}
+
+import pandas as pd
+
+location_fortificant_vehicles = pd.read_csv("0050_config/location_fortificant_vehicles.csv")
+
+# Expand "all" fortificants
+location_fortificant_vehicles = pd.concat([
+    location_fortificant_vehicles[location_fortificant_vehicles.fortificant != "all"],
+    *[location_fortificant_vehicles[location_fortificant_vehicles.fortificant == "all"].assign(fortificant=fortificant) for fortificant in config["all_fortificants"]]
+])
+
+assert location_fortificant_vehicles["fortificant"].isin(config["all_fortificants"]).all()
+
+location_fortificant_vehicle_scenarios = location_fortificant_vehicles[~location_fortificant_vehicles.location.isin(config["custom_intervention_scenarios"])].assign(scenario="intervention")
+
+for location, custom_intervention_scenarios in config["custom_intervention_scenarios"].items():
+    location_fortificant_vehicle_scenarios = pd.concat([
+        location_fortificant_vehicle_scenarios,
+        *[location_fortificant_vehicles[location_fortificant_vehicles.location == location].assign(scenario=scenario) for scenario in custom_intervention_scenarios]
+    ])
+
+config["location_fortificant_vehicle_scenarios"] = location_fortificant_vehicle_scenarios
+
+rule all:
+    input:
+        [
+            f"5000_analyze_results/executed/{location}/{vehicle}/dalys_averted_{scenario}.ipynb" for _, (location, vehicle, scenario) in location_fortificant_vehicle_scenarios[["location", "vehicle", "scenario"]].drop_duplicates().iterrows()
+        ]
+
+config["debug"] = str(config.get("debug", "false")).lower() in ("t", "true", "y", "yes")
+
 include: "0100_data_prep/Snakefile"
 include: "0200_pregnancy_sim/Snakefile"
 include: "0300_child_sim/Snakefile"
 include: "5000_analyze_results/Snakefile"
 
-rule all:
-    input:
-        [
-            "5000_analyze_results/executed/india/dalys_averted.ipynb",
-            "5000_analyze_results/executed/nigeria/dalys_averted.ipynb"
-        ]
+update_packages = config.get("update_packages", "n").lower() in ("t", "true", "y", "yes")
+
+if update_packages:
+    rule general_venv_from_scratch:
+        input: ["requirements.txt"]
+        output: [directory(".venv/"), ".venv/bin/activate"]
+        shell:
+            """
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            cd 0200_pregnancy_sim
+            pip install .[data]
+            pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
+            pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
+            cd ..
+            pip freeze -l  | grep -v 'file:///' | grep -v '\\-e' > pip_lock.txt
+            touch .venv .venv/bin/activate # Should be newer than the lockfile
+            """
+
+    # Vivarium currently requires a different version of Pandas than GBD
+    # uses, which is why we need this.
+    rule simulation_running_venv_from_scratch:
+        input: ["0200_pregnancy_sim/setup.py"]
+        output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
+        shell:
+            f"""
+            python -m venv .simulation_running_venv
+            source .simulation_running_venv/bin/activate
+            cd 0200_pregnancy_sim
+            pip install .[dev] # NOT editable! We use PYTHONPATH for that
+            pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
+            pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
+            # Assumed compatible with child sim
+            cd ..
+            pip freeze -l  | grep -v 'file:///' | grep -v '\\-e' > simulation_running_pip_lock.txt
+            touch .simulation_running_venv .simulation_running_venv/bin/activate # Should be newer than the lockfile
+            """
+else:
+    rule general_venv:
+        input: ["pip_lock.txt"]
+        output: [directory(".venv/"), ".venv/bin/activate"]
+        shell:
+            """
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r pip_lock.txt
+            """
+    
+    # Vivarium currently requires a different version of Pandas than GBD
+    # uses, which is why we need this.
+    rule simulation_running_venv:
+        input: ["simulation_running_pip_lock.txt"]
+        output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
+        shell:
+            """
+            python -m venv .simulation_running_venv
+            source .simulation_running_venv/bin/activate
+            pip install -r simulation_running_pip_lock.txt
+            """

@@ -1,21 +1,14 @@
 from snakemake.io import directory
 
-rule data_prep_venv:
-    input: ["0100_data_prep/data_prep_pip_lock.txt"]
-    output: [directory("0100_data_prep/.venv/"), "0100_data_prep/.venv/bin/activate"]
-    shell:
-        f"""
-        cd 0100_data_prep
-        rm -rf .venv
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install -r data_prep_pip_lock.txt
-        """
+debug = config["debug"]
+common_setup = f"""
+{config["env_setup"]}
+cd 0100_data_prep
+"""
 
 rule dhs_common:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/dhs/common.ipynb",
         ]
     log: "0100_data_prep/executed/dhs/{location}/common.ipynb"
@@ -27,18 +20,16 @@ rule dhs_common:
             "0100_data_prep/results/birth_weight_disparities/{location}.csv",
         ]
     shell:
-        """
-        cd 0100_data_prep
-        source .venv/bin/activate
+        f"""
+        {common_setup}
         cd dhs
-        mkdir -p ../executed/dhs/{wildcards.location}/
-        papermill common.ipynb ../executed/dhs/{wildcards.location}/common.ipynb -k python3 -p location {wildcards.location}
+        mkdir -p ../executed/dhs/{{wildcards.location}}/
+        papermill common.ipynb ../executed/dhs/{{wildcards.location}}/common.ipynb -k python3 -p location {{wildcards.location}} {'--engine debug' if debug else ''}
         """
 
 rule dhs_mm:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/dhs/maternal_mortality_{location}.ipynb",
         ]
     log: "0100_data_prep/executed/dhs/{location}/maternal_mortality_{location}.ipynb"
@@ -47,18 +38,16 @@ rule dhs_mm:
             "0100_data_prep/results/maternal_disorders_incidence_disparities/{location}.csv",
         ]
     shell:
-        """
-        cd 0100_data_prep
-        source .venv/bin/activate
+        f"""
+        {common_setup}
         cd dhs
-        mkdir -p ../executed/dhs/{wildcards.location}/
-        papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3
+        mkdir -p ../executed/dhs/{{wildcards.location}}/
+        papermill maternal_mortality_{{wildcards.location}}.ipynb ../executed/dhs/{{wildcards.location}}/maternal_mortality_{{wildcards.location}}.ipynb -k python3 {'--engine debug' if debug else ''}
         """
 
 rule prep_vehicle:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/extraction/prep_vehicle.ipynb",
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
         ]
@@ -69,22 +58,21 @@ rule prep_vehicle:
             "0100_data_prep/results/iron/fortification_birthweight_effects.csv",
         ]
     shell:
-        """
-        cd 0100_data_prep
-        source .venv/bin/activate
+        f"""
+        {common_setup}
         cd extraction
         mkdir -p ../executed/extraction/
-        papermill prep_vehicle.ipynb ../executed/extraction/prep_vehicle.ipynb -k python3
+        papermill prep_vehicle.ipynb ../executed/extraction/prep_vehicle.ipynb -k python3 {'--engine debug' if debug else ''}
         """
 
-data_needs = [
+vehicle_specific_data_needs = [
     "vehicle_consumption/any",
     "vehicle_consumption/fortifiability",
     "vehicle_consumption/amount/mean",
     "vehicle_consumption/amount/sd",
 ]
 
-fortificant_specific_data_needs = [
+location_vehicle_fortificant_specific_data_needs = [
     "baseline_fortification/any_coverage",
     "baseline_fortification/full_coverage",
     "baseline_fortification/partial_coverage_amount/mean",
@@ -92,7 +80,7 @@ fortificant_specific_data_needs = [
     "baseline_fortification/concentration",
 ]
 
-scenario_specific_data_needs = [
+location_vehicle_fortificant_scenario_specific_data_needs = [
     "intervention_fortification/any_coverage",
     "intervention_fortification/effective_coverage",
     "intervention_fortification/concentration",
@@ -101,79 +89,67 @@ scenario_specific_data_needs = [
 extracted_output_files = []
 hces_output_files = []
 
-locations = ["nigeria", "india", "ethiopia"]
-fortificants = ["iron", "folate"]
-scenarios = {
-    "india": ["intervention"],
-    "nigeria": ["intervention"],
-    "ethiopia": ["intervention_25_nrv", "intervention_100_nrv"],
-}
+location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
 
-for location in locations:
-    for data_need in data_needs:
-        file_name = f"0100_data_prep/results/{data_need}/{location}.csv"
+for _, (location, vehicle) in location_fortificant_vehicle_scenarios[["location", "vehicle"]].drop_duplicates().iterrows():
+    for data_need in vehicle_specific_data_needs:
+        file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
         if location == "india" and ("vehicle_consumption" in data_need):
             if data_need != "vehicle_consumption/fortifiability":
                 hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
-    
-    for fortificant in fortificants:
-        if fortificant == "iron" and location == "ethiopia":
-            continue
-        for data_need in fortificant_specific_data_needs:
-            file_name = f"0100_data_prep/results/{fortificant}/{data_need}/{location}.csv"
-            if location == "india" and (("baseline_fortification" in data_need) and ("concentration" not in data_need)):
-                hces_output_files.append(file_name)
-            else:
-                if location in ("nigeria", "ethiopia") and "partial_coverage_amount" in data_need:
-                    # N/A -- manually create these files
-                    continue
-                extracted_output_files.append(file_name)
 
-        for scenario in scenarios[location]:
-            for data_need in scenario_specific_data_needs:
-                file_name = f"0100_data_prep/results/{fortificant}/{scenario}/{data_need}/{location}.csv"
-                extracted_output_files.append(file_name)
+for _, (location, vehicle, fortificant) in location_fortificant_vehicle_scenarios[["location", "vehicle", "fortificant"]].drop_duplicates().iterrows():
+    for data_need in location_vehicle_fortificant_specific_data_needs:
+        file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
+        if location == "india" and (("baseline_fortification" in data_need) and ("concentration" not in data_need)):
+            hces_output_files.append(file_name)
+        else:
+            if location in ("nigeria", "ethiopia") and "partial_coverage_amount" in data_need:
+                # N/A -- manually create these files
+                continue
+            extracted_output_files.append(file_name)
+
+for _, (location, vehicle, fortificant, scenario) in location_fortificant_vehicle_scenarios[["location", "vehicle", "fortificant", "scenario"]].drop_duplicates().iterrows():
+    for data_need in location_vehicle_fortificant_scenario_specific_data_needs:
+        file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{scenario}/{data_need}/{location}.csv"
+        extracted_output_files.append(file_name)
 
 
 rule prep_hces:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/hces/01_extract_hces.ipynb",
         ]
     log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
     output: 
-        hces_output_files + ['0100_data_prep/hces/india_fortifiability_disparities.csv', '0100_data_prep/hces/india_proportion_government.csv']
+        hces_output_files + ['0100_data_prep/hces/india_rice_fortifiability_disparities.csv', '0100_data_prep/hces/india_proportion_government_rice.csv']
     shell:
-        """
-        cd 0100_data_prep
-        source .venv/bin/activate
+        f"""
+        {common_setup}
         cd hces
         mkdir -p ../executed/hces/
-        papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3
+        papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3 {'--engine debug' if debug else ''}
         """
 
 rule prep_extracted:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/extraction/prep_extracted.ipynb",
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
-            '0100_data_prep/hces/india_fortifiability_disparities.csv',
-            '0100_data_prep/hces/india_proportion_government.csv',
+            '0100_data_prep/hces/india_rice_fortifiability_disparities.csv',
+            '0100_data_prep/hces/india_proportion_government_rice.csv',
         ]
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 
         extracted_output_files
     shell:
-        """
-        cd 0100_data_prep
-        source .venv/bin/activate
+        f"""
+        {common_setup}
         cd extraction
         mkdir -p ../executed/extraction/
-        papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3
+        papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3 {'--engine debug' if debug else ''}
         """
 
 # for location in locations:
@@ -187,8 +163,7 @@ rule prep_extracted:
 # NOTE: I tried to define these three in a for loop, but: https://github.com/snakemake/snakemake/issues/2178
 rule calculate_effective_coverage_nigeria:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
         ] + hces_output_files + extracted_output_files
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
@@ -197,21 +172,19 @@ rule calculate_effective_coverage_nigeria:
             f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/nigeria.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/nigeria.csv"
-            for scenario in scenarios["nigeria"]
+            for scenario in config["custom_intervention_scenarios"].get("nigeria", ["intervention"])
         ]
     shell:
         f"""
-        cd 0100_data_prep
-        source .venv/bin/activate
+        {common_setup}
         cd coverage_calculation
         mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/nigeria/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {{wildcards.fortificant}}
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {{wildcards.fortificant}} {'--engine debug' if debug else ''}
         """
 
 rule calculate_effective_coverage_india:
     input:
-        [
-            "0100_data_prep/.venv/bin/activate",
+        config["env_input"] + [
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
         ] + hces_output_files + extracted_output_files
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
@@ -220,20 +193,19 @@ rule calculate_effective_coverage_india:
             f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/india.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/india.csv"
-            for scenario in scenarios["nigeria"]
+            for scenario in config["custom_intervention_scenarios"].get("india", ["intervention"])
         ]
     shell:
         f"""
-        cd 0100_data_prep
-        source .venv/bin/activate
+        {common_setup}
         cd coverage_calculation
         mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/india/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {{wildcards.fortificant}}
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {{wildcards.fortificant}} {'--engine debug' if debug else ''}
         """
 
 rule calculate_effective_coverage_ethiopia:
     input:
-        [
+        config["env_input"] + [
             "0100_data_prep/.venv/bin/activate",
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
         ] + hces_output_files + extracted_output_files
@@ -243,13 +215,12 @@ rule calculate_effective_coverage_ethiopia:
             f"0100_data_prep/results/{{fortificant}}/effective_baseline_coverage/ethiopia.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{scenario}/effective_intervention_coverage/ethiopia.csv"
-            for scenario in scenarios["ethiopia"]
+            for scenario in config["custom_intervention_scenarios"].get("ethiopia", ["intervention"])
         ]
     shell:
         f"""
-        cd 0100_data_prep
-        source .venv/bin/activate
+        {common_setup}
         cd coverage_calculation
         mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/ethiopia/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {{wildcards.fortificant}}
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {{wildcards.fortificant}} {'--engine debug' if debug else ''}
         """

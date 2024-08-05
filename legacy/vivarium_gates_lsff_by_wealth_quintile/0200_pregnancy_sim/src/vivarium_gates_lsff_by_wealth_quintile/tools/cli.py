@@ -43,6 +43,11 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
     help="Generate a mean draw artifact.",
 )
 @click.option(
+    "--vehicle",
+    "vehicle",
+    type=click.Choice(["rice", "bouillon"]), # TODO
+)
+@click.option(
     "--pdb",
     "with_debugger",
     is_flag=True,
@@ -55,9 +60,13 @@ def make_artifacts(
     replace_keys: Tuple[str, ...],
     verbose: int,
     mean_draw: bool,
+    vehicle: str,
     with_debugger: bool,
 ) -> None:
     location = location.title()  # HACK
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
-    main(location, output_dir, append or replace_keys, replace_keys, mean_draw, verbose)
+    main(location, output_dir, append or replace_keys, replace_keys, mean_draw, vehicle, verbose)
+
+if __name__ == '__main__':
+    make_artifacts()

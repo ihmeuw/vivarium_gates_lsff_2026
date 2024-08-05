@@ -34,7 +34,7 @@ class VehicleConsumption(Component):
     def setup(self, builder: Builder) -> None:
         self.randomness = builder.randomness.get_stream(self.name)
 
-        vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
+        vehicle = builder.data.load(data_keys.VEHICLE.NAME)
 
         def drop_vehicle(df):
             if "vehicle_name" not in df.columns:
@@ -139,7 +139,7 @@ class IronFortification(Component):
     def setup(self, builder: Builder) -> None:
         self.randomness = builder.randomness.get_stream(self.name)
 
-        vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
+        vehicle = builder.data.load(data_keys.VEHICLE.NAME)
 
         def drop_vehicle(df):
             if "vehicle_name" not in df.columns:

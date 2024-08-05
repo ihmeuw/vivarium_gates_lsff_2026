@@ -1,0 +1,11 @@
+vehicle_name,wealth_quintile,sex,value
+bouillon,lowest,Female,0.9657320872274144
+bouillon,second,Female,0.9785932721712538
+bouillon,middle,Female,0.9808467741935484
+bouillon,fourth,Female,0.9888438133874239
+bouillon,highest,Female,0.9837728194726166
+bouillon,lowest,Male,0.9657320872274144
+bouillon,second,Male,0.9785932721712538
+bouillon,middle,Male,0.9808467741935484
+bouillon,fourth,Male,0.9888438133874239
+bouillon,highest,Male,0.9837728194726166

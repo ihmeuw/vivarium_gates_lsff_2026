@@ -1,79 +1,53 @@
 from snakemake.io import directory
 
-import os
-
-use_psimulate = not "NO_PSIMULATE" in os.environ
-
-rule child_artifact_building_venv:
-    input: ["0300_child_sim/artifact_building_pip_lock.txt"]
-    output: [directory("0300_child_sim/artifact_building/"), "0300_child_sim/artifact_building/bin/activate"]
-    shell:
-        f"""
-        cd 0300_child_sim
-        rm -rf artifact_building
-        python -m venv artifact_building
-        source artifact_building/bin/activate
-        pip install -r artifact_building_pip_lock.txt
-        pip install -e .[data]
-        """
-
-rule child_simulation_running_venv:
-    input: ["0300_child_sim/simulation_running_pip_lock.txt"]
-    output: [directory("0300_child_sim/simulation_running/"), "0300_child_sim/simulation_running/bin/activate"]
-    shell:
-        f"""
-        cd 0300_child_sim
-        rm -rf simulation_running
-        python -m venv simulation_running
-        source simulation_running/bin/activate
-        pip install -r simulation_running_pip_lock.txt
-        pip install -e .[dev]
-        """
+debug = config["debug"]
 
 rule artifact_for_lbwsg_pafs:
-    input: ["0300_child_sim/artifact_building/bin/activate", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
+    input: config["env_input"] + ["0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
     output: ["0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf"]
     shell:
         f"""
+        {config["env_setup"]}
         cd 0300_child_sim
-        source artifact_building/bin/activate
         rm -f lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf
-        make_artifacts -vvv -o ./lbwsg_paf_mean_draw_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a --mean
+        export PYTHONPATH=./src
+        python src/vivarium_gates_lsff_by_wealth_quintile_child/tools/cli.py -o ./lbwsg_paf_mean_draw_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a --mean {'--pdb -vvv' if debug else ''}
         """
 
 rule lbwsg_pafs:
-    input: ["0300_child_sim/simulation_running/bin/activate", "0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml"]
+    input: config["simulation_running_env_input"] + ["0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml", "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml"]
     output: ["0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"]
     shell:
         f"""
+        {config["simulation_running_env_setup"]}
         cd 0300_child_sim
         rm -rf lbwsg_pafs/{{wildcards.location}} || true
         sleep 5
         rm -rf lbwsg_pafs/{{wildcards.location}}
-        source simulation_running/bin/activate
         rm -f dump.rdb
-        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml' if use_psimulate else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -q long.q' if use_psimulate else '-vvv'} 
+        export PYTHONPATH=./src
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml' if not debug else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -q long.q' if not debug else '-vvv --pdb'} 
         mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
         """
 
 
 rule child_artifacts:
     input: 
-        [
-            "0300_child_sim/artifact_building/bin/activate",
+        config["env_input"] + [
             "0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py",
-            "0200_pregnancy_sim/sim_results/{location}/births.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/births.parquet",
             "0100_data_prep/results/birth_weight_disparities/{location}.csv",
             "0100_data_prep/results/iron/fortification_birthweight_effects.csv"
         ]
-    output: ["0300_child_sim/mean_draw_artifacts/{location}.hdf"]
+    output: ["0300_child_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
     shell:
         f"""
+        {config["env_setup"]}
         cd 0300_child_sim
-        source artifact_building/bin/activate
-        rm -f mean_draw_artifacts/{{wildcards.location}}.hdf
-        make_artifacts -vvv -o ./mean_draw_artifacts -l {{wildcards.location}} --national -a --mean
+        rm -f mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
+        export PYTHONPATH=./src
+        python src/vivarium_gates_lsff_by_wealth_quintile_child/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --fertility-data-path ../0200_pregnancy_sim/sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/births.parquet --national -a --mean {'--pdb -vvv' if debug else ''}
         """
 
 import glob
@@ -81,27 +55,28 @@ code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_by_wealth_quinti
 
 rule child_simulations:
     input:
-        [
+        config["simulation_running_env_input"] + [
             "0300_child_sim/simulation_running/bin/activate",
-            "0300_child_sim/mean_draw_artifacts/{location}.hdf",
+            "0300_child_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml",
         ] + code_inputs
     output:
         [
-            "0300_child_sim/sim_results/{location}/deaths.parquet",
-            "0300_child_sim/sim_results/{location}/ylds.parquet",
-            "0300_child_sim/sim_results/{location}/ylls.parquet",
+            "0300_child_sim/sim_results/{vehicle}/{location}/deaths.parquet",
+            "0300_child_sim/sim_results/{vehicle}/{location}/ylds.parquet",
+            "0300_child_sim/sim_results/{vehicle}/{location}/ylls.parquet",
         ]
     shell:
         f"""
+        {config["simulation_running_env_setup"]}
         cd 0300_child_sim
         # NFS sometimes doesn't delete right away
         rm -rf sim_results/{{wildcards.location}} || true
         sleep 5
         rm -rf sim_results/{{wildcards.location}}
-        source simulation_running/bin/activate
         rm -f dump.rdb
-        {'p' if use_psimulate else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml' if use_psimulate else ''} -i mean_draw_artifacts/{{wildcards.location}}.hdf -o sim_results/ {'-P proj_simscience -m 5 -q long.q' if use_psimulate else '-vvv'} 
-        mv sim_results/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.location}}
+        export PYTHONPATH=./src
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -m 5 -q long.q' if not debug else '--pdb -vvv'} 
+        mv sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         """

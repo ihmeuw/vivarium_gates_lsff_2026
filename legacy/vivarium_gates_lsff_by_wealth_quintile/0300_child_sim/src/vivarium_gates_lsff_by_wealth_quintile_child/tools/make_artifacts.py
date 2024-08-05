@@ -78,12 +78,13 @@ def build_single(
     output_dir: str,
     replace_keys: Tuple,
     mean_draw: bool,
+    fertility_data_path: str,
     fetch_subnationals: bool,
     for_lbwsg_pafs: bool,
 ) -> None:
     path = Path(output_dir) / f"{sanitize_location(location)}.hdf"
     build_single_location_artifact(
-        path, location, replace_keys, mean_draw, fetch_subnationals, for_lbwsg_pafs
+        path, location, replace_keys, mean_draw, fertility_data_path, fetch_subnationals, for_lbwsg_pafs
     )
 
 
@@ -94,6 +95,7 @@ def build_artifacts(
     replace_keys: Tuple,
     verbose: int,
     mean_draw: bool,
+    fertility_data_path: str,
     fetch_subnationals: bool,
     for_lbwsg_pafs: bool,
 ) -> None:
@@ -133,6 +135,7 @@ def build_artifacts(
             output_dir,
             replace_keys,
             mean_draw,
+            fertility_data_path,
             fetch_subnationals,
             for_lbwsg_pafs,
         )
@@ -150,6 +153,7 @@ def build_artifacts(
                     output_dir,
                     replace_keys,
                     mean_draw,
+                    fertility_data_path,
                     fetch_subnationals,
                     for_lbwsg_pafs,
                 )
@@ -246,6 +250,7 @@ def build_single_location_artifact(
     location: str,
     replace_keys: Tuple = (),
     mean_draw: bool = True,
+    fertility_data_path: str = None,
     fetch_subnationals: bool = False,
     for_lbwsg_pafs: bool = True,
     log_to_file: bool = False,
@@ -298,7 +303,7 @@ def build_single_location_artifact(
                 continue
             logger.info(f"   - Loading and writing {key} data")
             builder.load_and_write_data(
-                artifact, key, location, key in replace_keys, mean_draw, fetch_subnationals
+                artifact, key, location, key in replace_keys, mean_draw, fertility_data_path, fetch_subnationals
             )
 
     logger.info(f"**Done building -- {location}**")

@@ -127,9 +127,9 @@ dmypy.json
 .idea/
 .vscode/launch.json
 
-artifact_building/
-simulation_running/
+.conda_env/
 .venv/
+.simulation_running_venv/
 
 .snakemake/
 *.rdb

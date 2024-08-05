@@ -56,6 +56,12 @@ from vivarium_gates_lsff_by_wealth_quintile_child.tools import (
     help="Generate mean-draw artifact.",
 )
 @click.option(
+    "--fertility-data-path",
+    "fertility_data_path",
+    type=click.Path(),
+    help="Location of fertility data.",
+)
+@click.option(
     "--pdb",
     "with_debugger",
     is_flag=True,
@@ -68,6 +74,7 @@ def make_artifacts(
     replace_keys: Tuple[str, ...],
     verbose: int,
     mean_draw: bool,
+    fertility_data_path: str,
     with_debugger: bool,
     build_national: bool,
     for_lbwsg_pafs: bool,
@@ -88,6 +95,10 @@ def make_artifacts(
         replace_keys,
         verbose,
         mean_draw,
+        fertility_data_path,
         fetch_subnationals,
         for_lbwsg_pafs,
     )
+
+if __name__ == '__main__':
+    make_artifacts()
