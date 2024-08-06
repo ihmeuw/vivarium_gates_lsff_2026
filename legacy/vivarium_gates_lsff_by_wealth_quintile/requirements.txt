@@ -10,3 +10,4 @@ statsmodels
 scikit-learn
 db_queries
 seaborn
+xlsxwriter

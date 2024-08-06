@@ -3,6 +3,7 @@ from snakemake.io import directory
 import glob
 
 debug = config["debug"]
+full_scale = config["full_scale"]
 
 data_inputs = [
     f"0100_data_prep/results/{item}/{{location}}.csv"
@@ -17,12 +18,13 @@ data_inputs = [
         "{vehicle}/vehicle_consumption/amount/mean",
         "{vehicle}/vehicle_consumption/amount/sd",
         "iron/{vehicle}/intervention/intervention_fortification/any_coverage",
-        "iron/{vehicle}/intervention/intervention_fortification/effective_coverage",
+        "iron/{vehicle}/intervention/intervention_fortification/effectiveness",
         "iron/{vehicle}/intervention/intervention_fortification/concentration",
         "maternal_disorders_incidence_disparities",
         "hemoglobin/mean_disparities",
         "hemoglobin/sd_disparities",
-        "wealth_quintile_probabilities"
+        "wealth_quintile_probabilities",
+        "pregnancy/incidence",
     ]
 ] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
@@ -46,14 +48,17 @@ rule pregnancy_simulations:
             "0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios_small.yaml",
         ] + code_inputs + data_inputs
     output:
         [
+            directory("0200_pregnancy_sim/sim_results/{vehicle}/{location}/"),
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/births.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/deaths.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/pregnancy_outcome_count.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylds.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylls.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/person_time_anemia.parquet",
         ]
     shell:
         f"""
@@ -65,6 +70,6 @@ rule pregnancy_simulations:
         source simulation_running/bin/activate
         rm -f dump.rdb
         export PYTHONPATH=./src
-        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -q long.q' if not debug else '--pdb -vvv'}
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -q all.q' if not debug else '--pdb -vvv'}
         mv sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         """

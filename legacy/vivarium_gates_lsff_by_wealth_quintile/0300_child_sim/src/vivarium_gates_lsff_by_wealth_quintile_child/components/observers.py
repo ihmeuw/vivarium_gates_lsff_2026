@@ -164,15 +164,6 @@ class ResultsStratifier(ResultsStratifier_):
     #     }
     #     return pop.squeeze(axis=1).map(mapper)
 
-    def map_wasting_treatment(self, pop: pd.DataFrame) -> pd.Series:
-        # Both SAM and MAM treatments
-        mapper = {
-            "cat3": "covered",
-            "cat2": "covered",
-            "cat1": "uncovered",
-        }
-        return pop.squeeze(axis=1).map(mapper)
-
     def map_age_groups(self, pop: pd.DataFrame) -> pd.Series:
         """Map age with age group name strings
 
@@ -197,97 +188,69 @@ class ResultsStratifier(ResultsStratifier_):
         return age_group
 
 
-# class BirthObserver(Component):
-#     CONFIGURATION_DEFAULTS = {
-#         "stratification": {
-#             "birth": {
-#                 "exclude": [],
-#                 "include": [],
-#             }
-#         }
-#     }
+class BirthObserver(Observer):
+    def __init__(self):
+        super().__init__()
+        self.birth_weight_column_name = "birth_weight_exposure"
+        self.gestational_age_column_name = "gestational_age_exposure"
+        self.low_birth_weight_limit = 2500  # grams
+    
+    # noinspection PyAttributeOutsideInit
+    def setup(self, builder: Builder) -> None:
+        super().setup(builder)
+        self.clock = builder.time.clock()
 
-#     def __init__(self):
-#         super().__init__()
-#         self.birth_weight_column_name = "birth_weight_exposure"
-#         self.gestational_age_column_name = "gestational_age_exposure"
-#         self.low_birth_weight_limit = 2500  # grams
+    def register_observations(self, builder: Builder) -> None:
+        builder.results.register_adding_observation(
+            name="live_births",
+            pop_filter='alive == "alive" and tracked == True',
+            when="time_step_prepare",
+            aggregator=self.count_live_births,
+            requires_columns=["entrance_time"],
+        )
+        builder.results.register_adding_observation(
+            name="birth_weight_sum",
+            pop_filter='alive == "alive" and tracked == True',
+            when="time_step_prepare",
+            aggregator=self.sum_birth_weights,
+            requires_columns=["entrance_time", self.birth_weight_column_name],
+        )
+        builder.results.register_adding_observation(
+            name="gestational_age_sum",
+            pop_filter='alive == "alive" and tracked == True',
+            when="time_step_prepare",
+            aggregator=self.sum_gestational_ages,
+            requires_columns=["entrance_time", self.gestational_age_column_name],
+        )
+        builder.results.register_adding_observation(
+            name="low_weight_births",
+            pop_filter="alive=='alive' and tracked == True",
+            when="time_step_prepare",
+            aggregator=self.count_low_weight_births,
+            requires_columns=["entrance_time", self.birth_weight_column_name],
+        )
 
-#     @property
-#     def columns_required(self) -> Optional[List[str]]:
-#         return [
-#             "entrance_time",
-#             self.birth_weight_column_name,
-#             self.gestational_age_column_name,
-#         ]
+    ########################
+    # Event-driven methods #
+    ########################
+    def count_live_births(self, x: pd.DataFrame) -> float:
+        born_this_step = x["entrance_time"] == self.clock()
+        return sum(born_this_step)
 
-#     #################
-#     # Setup methods #
-#     #################
+    def sum_birth_weights(self, x: pd.DataFrame) -> float:
+        born_this_step = x["entrance_time"] == self.clock()
+        return x.loc[born_this_step, self.birth_weight_column_name].sum()
 
-#     # noinspection PyAttributeOutsideInit
-#     def setup(self, builder: Builder) -> None:
-#         self.clock = builder.time.clock()
-#         self.config = builder.configuration.stratification.birth
+    def sum_gestational_ages(self, x: pd.DataFrame) -> float:
+        born_this_step = x["entrance_time"] == self.clock()
+        return x.loc[born_this_step, self.gestational_age_column_name].sum()
 
-#         builder.results.register_observation(
-#             name=f"live_births",
-#             pop_filter="alive=='alive'",
-#             aggregator=self.count_live_births,
-#             requires_columns=["entrance_time"],
-#             additional_stratifications=self.config.include,
-#             excluded_stratifications=self.config.exclude,
-#             when="collect_metrics",
-#         )
-#         builder.results.register_observation(
-#             name=f"birth_weight_sum",
-#             pop_filter="alive=='alive'",
-#             aggregator=self.sum_birth_weights,
-#             requires_columns=["entrance_time", self.birth_weight_column_name],
-#             additional_stratifications=self.config.include,
-#             excluded_stratifications=self.config.exclude,
-#             when="collect_metrics",
-#         )
-#         builder.results.register_observation(
-#             name=f"gestational_age_sum",
-#             pop_filter="alive=='alive'",
-#             aggregator=self.sum_gestational_ages,
-#             requires_columns=["entrance_time", self.gestational_age_column_name],
-#             additional_stratifications=self.config.include,
-#             excluded_stratifications=self.config.exclude,
-#             when="collect_metrics",
-#         )
-#         builder.results.register_observation(
-#             name=f"low_weight_births",
-#             pop_filter="alive=='alive'",
-#             aggregator=self.count_low_weight_births,
-#             requires_columns=["entrance_time", self.birth_weight_column_name],
-#             additional_stratifications=self.config.include,
-#             excluded_stratifications=self.config.exclude,
-#             when="collect_metrics",
-#         )
-
-#     ########################
-#     # Event-driven methods #
-#     ########################
-#     def count_live_births(self, x: pd.DataFrame) -> float:
-#         born_this_step = x["entrance_time"] == self.clock()
-#         return sum(born_this_step)
-
-#     def sum_birth_weights(self, x: pd.DataFrame) -> float:
-#         born_this_step = x["entrance_time"] == self.clock()
-#         return x.loc[born_this_step, self.birth_weight_column_name].sum()
-
-#     def sum_gestational_ages(self, x: pd.DataFrame) -> float:
-#         born_this_step = x["entrance_time"] == self.clock()
-#         return x.loc[born_this_step, self.gestational_age_column_name].sum()
-
-#     def count_low_weight_births(self, x: pd.DataFrame) -> float:
-#         born_this_step = x["entrance_time"] == self.clock()
-#         has_low_birth_weight = (
-#             x.loc[born_this_step, self.birth_weight_column_name] < self.low_birth_weight_limit
-#         )
-#         return sum(has_low_birth_weight)
+    def count_low_weight_births(self, x: pd.DataFrame) -> float:
+        born_this_step = x["entrance_time"] == self.clock()
+        has_low_birth_weight = (
+            x.loc[born_this_step, self.birth_weight_column_name] < self.low_birth_weight_limit
+        )
+        return sum(has_low_birth_weight)
 
 
 class MortalityObserver(MortalityObserver_):
@@ -364,7 +327,7 @@ class PersonTimeObserver(Observer):
         builder.results.register_adding_observation(
             name="person_time",
             pop_filter='alive == "alive" and tracked == True',
-            when="collect_metrics",
+            when="time_step_prepare",
             aggregator=partial(aggregate_person_time, builder.time.step_size()()),
         )
 

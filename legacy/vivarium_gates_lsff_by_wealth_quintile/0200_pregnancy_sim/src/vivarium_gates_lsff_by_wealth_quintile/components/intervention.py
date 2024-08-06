@@ -190,12 +190,17 @@ class IronFortification(Component):
             value_columns=["value"],
         )
 
-        self.effective_coverage = self.build_lookup_table(
+        self.scenario = builder.configuration.intervention.scenario
+
+        if self.scenario == "intervention":
+            effectiveness_key = data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVENESS
+        else:
+            effectiveness_key = data_keys.IRON_FORTIFICATION.BASELINE_EFFECTIVENESS
+
+        self.effectiveness = self.build_lookup_table(
             builder,
             drop_vehicle(
-                builder.data.load(
-                    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE
-                )
+                builder.data.load(effectiveness_key)
             ).assign(sex="Female"),
             value_columns=["value"],
         )
@@ -206,7 +211,6 @@ class IronFortification(Component):
             .value.loc[vehicle]
         )
 
-        self.scenario = builder.configuration.intervention.scenario
 
         self.baseline_fortification_mcg_per_gram = self.build_lookup_table(
             builder,
@@ -300,7 +304,7 @@ class IronFortification(Component):
         # Not all coverage is effective
         ineffective = self.randomness.filter_for_probability(
             pop_data.index,
-            probability=1 - self.effective_coverage(pop_data.index),
+            probability=1 - self.effectiveness(pop_data.index),
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective

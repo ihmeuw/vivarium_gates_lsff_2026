@@ -5,7 +5,7 @@ argon2-cffi-bindings==21.2.0
 arrow==1.3.0
 asttokens==2.4.1
 async-lru==2.0.4
-attrs==23.2.0
+attrs==24.2.0
 Babel==2.15.0
 backoff==2.2.1
 beautifulsoup4==4.12.3
@@ -13,7 +13,7 @@ bleach==6.1.0
 blosc2==2.7.1
 cached-property==1.5.2
 certifi==2024.7.4
-cffi==1.16.0
+cffi==1.17.0
 cftime==1.6.4
 charset-normalizer==3.3.2
 click==8.1.7
@@ -23,13 +23,13 @@ comm==0.2.2
 contourpy==1.2.1
 core_maths==1.1.7
 cycler==0.12.1
-Cython==3.0.10
+Cython==3.0.11
 dataframe_io==2.2.6
 db_queries==28.6.0
 db_tools==1.6.11
 db_tools_core==1.12.13
 debuglater==1.4.4
-debugpy==1.8.3
+debugpy==1.8.5
 decorator==5.1.1
 defusedxml==0.7.1
 Deprecated==1.2.14
@@ -43,7 +43,7 @@ fastjsonschema==2.20.0
 filelock==3.15.4
 fonttools==4.53.1
 fqdn==1.5.1
-gbd==4.20.6
+gbd==4.20.7
 gbd_mapping==4.0.0
 get_draws==4.18.11
 googleapis-common-protos==1.63.2
@@ -74,6 +74,7 @@ jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
 jupyter==1.0.0
 jupyter-console==6.6.3
+jupyter-events==0.10.0
 jupyter-lsp==2.2.5
 jupyter_client==8.6.2
 jupyter_core==5.7.2
@@ -87,7 +88,7 @@ kiwisolver==1.4.5
 layered_config_tree==2.0.2
 loguru==0.7.2
 MarkupSafe==2.1.5
-matplotlib==3.9.1
+matplotlib==3.9.0
 matplotlib-inline==0.1.7
 memory-profiler==0.61.0
 mistune==3.0.2
@@ -106,6 +107,8 @@ numexpr==2.10.1
 numpy==1.26.4
 openpyxl==3.1.5
 opentelemetry-api==1.26.0
+opentelemetry-exporter-otlp-proto-common==1.26.0
+opentelemetry-exporter-otlp-proto-grpc==1.26.0
 opentelemetry-proto==1.26.0
 opentelemetry-sdk==1.26.0
 opentelemetry-semantic-conventions==0.47b0
@@ -122,6 +125,8 @@ pexpect==4.9.0
 pillow==10.4.0
 platformdirs==4.2.2
 ploomber-core==0.2.25
+ploomber-engine==0.0.32
+ploomber-extension==0.1.1
 posthog==3.5.0
 prometheus_client==0.20.0
 prompt_toolkit==3.0.47
@@ -142,8 +147,8 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-json-logger==2.0.7
 pytz==2024.1
-PyYAML==6.0.1
-pyzmq==26.0.3
+PyYAML==6.0.2
+pyzmq==26.1.0
 qtconsole==5.5.2
 QtPy==2.4.1
 redis==5.0.8
@@ -154,7 +159,7 @@ rfc3986-validator==0.1.1
 risk_distributions==2.0.16
 rotisserie_client==3.0.8
 rotisserie_schema==3.1.3
-rpds-py==0.19.1
+rpds-py==0.20.0
 rq==1.16.2
 scikit-learn==1.5.1
 scipy==1.14.0
@@ -175,7 +180,7 @@ test_support==0.2.12
 threadpoolctl==3.5.0
 tinycss2==1.3.0
 tornado==6.4.1
-tqdm==4.66.4
+tqdm==4.66.5
 traitlets==5.14.3
 transforms==2.0.22
 types-python-dateutil==2.9.0.20240316
@@ -187,11 +192,12 @@ vivarium @ git+https://github.com/ihmeuw/vivarium.git@10f992cf7613ab9d678c9eacee
 vivarium_cluster_tools @ git+https://github.com/ihmeuw/vivarium_cluster_tools.git@20881824d21ead35614ea6d8d2f93a7eddffd2cf
 vivarium_gbd_access==4.0.6
 vivarium_inputs==5.0.5
-vivarium_public_health @ git+https://github.com/ihmeuw/vivarium_public_health.git@7390886e3aff461837a100ab637b3a8317724250
+vivarium_public_health @ git+https://github.com/ihmeuw/vivarium_public_health.git@bc5878e69d157fbbeaecf82071a27a96cec968c9
 wcwidth==0.2.13
 webcolors==24.6.0
 webencodings==0.5.1
 websocket-client==1.8.0
 widgetsnbextension==4.0.11
 wrapt==1.16.0
+XlsxWriter==3.2.0
 zipp==3.19.2

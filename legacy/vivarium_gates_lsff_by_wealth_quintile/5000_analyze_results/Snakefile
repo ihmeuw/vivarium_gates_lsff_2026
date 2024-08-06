@@ -1,6 +1,6 @@
 debug = config["debug"]
 
-pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls"]
+pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls", "person_time_anemia"]
 rescaled_pregnancy_results = [
     f"5000_analyze_results/0100_rescale_results/pregnancy_results/{{vehicle}}/{{location}}/{result}.parquet"
     for result in pregnancy_results_of_interest
@@ -21,7 +21,7 @@ rule rescale_pregnancy_results:
         papermill pregnancy_results.ipynb ../executed/{{wildcards.vehicle}}/{{wildcards.location}}/0100_rescale_results/pregnancy_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
 
-child_results_of_interest = ["deaths", "ylds", "ylls"]
+child_results_of_interest = ["deaths", "ylds", "ylls", "person_time"]
 rescaled_child_results = [
     f"5000_analyze_results/0100_rescale_results/child_results/{{vehicle}}/{{location}}/{result}.parquet"
     for result in child_results_of_interest
@@ -51,4 +51,22 @@ rule dalys_averted:
         cd 5000_analyze_results
         mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
         papermill dalys_averted.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/dalys_averted_{{wildcards.scenario}}.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
+        """
+
+rule anemia_averted:
+    input:
+        config["env_input"] +
+        ["5000_analyze_results/anemia_averted.ipynb"] +
+        rescaled_pregnancy_results + [
+            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/anemia_cases.parquet",
+            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/anemia_prevalence.parquet",
+            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/ylds.parquet",
+        ]
+    output: "5000_analyze_results/executed/{location}/{vehicle}/anemia_averted_{scenario}.ipynb"
+    shell:
+        f"""
+        {config["env_setup"]}
+        cd 5000_analyze_results
+        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
+        papermill anemia_averted.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/anemia_averted_{{wildcards.scenario}}.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
         """

@@ -25,7 +25,7 @@ pyarrow==17.0.0
 pytest==8.3.2
 python-dateutil==2.9.0.post0
 pytz==2024.1
-PyYAML==6.0.1
+PyYAML==6.0.2
 redis==5.0.8
 requests==2.32.3
 risk_distributions==2.0.16
@@ -38,4 +38,4 @@ tzdata==2024.1
 urllib3==2.2.2
 vivarium @ git+https://github.com/ihmeuw/vivarium.git@10f992cf7613ab9d678c9eaceeebb82bfac800fc
 vivarium_cluster_tools @ git+https://github.com/ihmeuw/vivarium_cluster_tools.git@20881824d21ead35614ea6d8d2f93a7eddffd2cf
-vivarium_public_health @ git+https://github.com/ihmeuw/vivarium_public_health.git@7390886e3aff461837a100ab637b3a8317724250
+vivarium_public_health @ git+https://github.com/ihmeuw/vivarium_public_health.git@bc5878e69d157fbbeaecf82071a27a96cec968c9

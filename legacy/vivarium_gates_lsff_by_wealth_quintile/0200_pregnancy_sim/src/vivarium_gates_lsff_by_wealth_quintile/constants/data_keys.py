@@ -175,9 +175,10 @@ class __IronFortification(NamedTuple):
     BASELINE_FULL_COVERAGE: str = "iron_fortification.baseline_full_coverage"
     BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: str = "iron_fortification.baseline_partial_coverage_mean"
     BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: str = "iron_fortification.baseline_partial_coverage_sd"
+    BASELINE_EFFECTIVENESS: str = "iron_fortification.baseline_effectiveness"
     BASELINE_CONCENTRATION: str = "iron_fortification.baseline_concentration"
     INTERVENTION_COVERAGE: str = "iron_fortification.intervention_coverage"
-    INTERVENTION_EFFECTIVE_COVERAGE: str = "iron_fortification.intervention_coverage"
+    INTERVENTION_EFFECTIVENESS: str = "iron_fortification.intervention_effectiveness"
     INTERVENTION_CONCENTRATION: str = "iron_fortification.intervention_concentration"
     HEMOGLOBIN_EFFECT_SIZE: str = "iron_fortification.hemoglobin_effect_size"
 

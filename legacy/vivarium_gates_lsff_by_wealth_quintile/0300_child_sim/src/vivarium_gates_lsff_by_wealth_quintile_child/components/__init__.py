@@ -23,6 +23,7 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.observers import ( 
     MortalityObserver,
     ResultsStratifier,
     PersonTimeObserver,
+    BirthObserver,
 )
 from vivarium_gates_lsff_by_wealth_quintile_child.components.population import (
     EvenlyDistributedPopulation,

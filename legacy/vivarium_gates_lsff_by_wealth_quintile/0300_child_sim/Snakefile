@@ -1,6 +1,7 @@
 from snakemake.io import directory
 
 debug = config["debug"]
+full_scale = config["full_scale"]
 
 rule artifact_for_lbwsg_pafs:
     input: config["env_input"] + ["0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/data/loader.py"]
@@ -26,7 +27,7 @@ rule lbwsg_pafs:
         rm -rf lbwsg_pafs/{{wildcards.location}}
         rm -f dump.rdb
         export PYTHONPATH=./src
-        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml' if not debug else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -q long.q' if not debug else '-vvv --pdb'} 
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/data/lbwsg_paf_branches.yaml' if not debug else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -q all.q' if not debug else '-vvv --pdb'} 
         mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
         """
 
@@ -51,7 +52,7 @@ rule child_artifacts:
         """
 
 import glob
-code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
+code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintsile_child/**/*.py")
 
 rule child_simulations:
     input:
@@ -60,9 +61,12 @@ rule child_simulations:
             "0300_child_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios_small.yaml",
         ] + code_inputs
     output:
         [
+            directory("0300_child_sim/sim_results/{vehicle}/{location}/"),
+            "0300_child_sim/sim_results/{vehicle}/{location}/person_time.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/deaths.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/ylds.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/ylls.parquet",
@@ -77,6 +81,6 @@ rule child_simulations:
         rm -rf sim_results/{{wildcards.location}}
         rm -f dump.rdb
         export PYTHONPATH=./src
-        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -m 5 -q long.q' if not debug else '--pdb -vvv'} 
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -m 5 -q all.q' if not debug else '--pdb -vvv'} 
         mv sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         """

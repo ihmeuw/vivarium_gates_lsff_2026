@@ -55,9 +55,10 @@ CSV_DATA_NAMES = {
     data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE: "iron/{vehicle}/baseline_fortification/full_coverage",
     data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: "iron/{vehicle}/baseline_fortification/partial_coverage_amount/mean",
     data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: "iron/{vehicle}/baseline_fortification/partial_coverage_amount/sd",
+    data_keys.IRON_FORTIFICATION.BASELINE_EFFECTIVENESS: "iron/{vehicle}/baseline_fortification/effectiveness",
     data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION: "iron/{vehicle}/baseline_fortification/concentration",
     data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "iron/{vehicle}/intervention/intervention_fortification/any_coverage",
-    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVE_COVERAGE: "iron/{vehicle}/intervention/intervention_fortification/effective_coverage",
+    data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVENESS: "iron/{vehicle}/intervention/intervention_fortification/effectiveness",
     data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "iron/{vehicle}/intervention/intervention_fortification/concentration",
     data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: "iron/fortification_hemoglobin_effects.csv",
 }
@@ -248,19 +249,14 @@ def load_categorical_paf(key: str, location: str, mean_draw: bool) -> pd.DataFra
 
 
 def get_pregnancy_end_incidence(location: str, mean_draw: bool) -> pd.DataFrame:
-    asfr = get_data(data_keys.PREGNANCY.ASFR, location, mean_draw)
-    sbr = get_data(data_keys.PREGNANCY.SBR, location, mean_draw)
-    sbr = sbr.reset_index(level="year_end", drop=True).reindex(asfr.index, level="year_start")
-    incidence_c995 = get_data(
-        data_keys.PREGNANCY.RAW_INCIDENCE_RATE_MISCARRIAGE, location, mean_draw
+    path = paths.DATA_PREP_RESULTS_ROOT / "pregnancy/incidence" / (location.lower() + ".csv")
+    df = pd.read_csv(path)
+    return (
+        df.set_index([c for c in df.columns if c != 'value'])
+            .rename(columns={"value": "draw_0"})
+            .assign(year_start=2021, year_end=2022)
+            .set_index(["year_start", "year_end"], append=True)
     )
-    incidence_c374 = get_data(
-        data_keys.PREGNANCY.RAW_INCIDENCE_RATE_ECTOPIC, location, mean_draw
-    )
-    pregnancy_end_rate = (
-        asfr + asfr.multiply(sbr["value"], axis=0) + incidence_c995 + incidence_c374
-    )
-    return pregnancy_end_rate.reorder_levels(asfr.index.names)
 
 
 def load_asfr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:

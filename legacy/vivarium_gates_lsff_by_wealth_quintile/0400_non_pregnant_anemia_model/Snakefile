@@ -1,0 +1,28 @@
+debug = config["debug"]
+
+rule non_pregnant_anemia:
+    input:
+        config["env_input"] + [
+            "0400_non_pregnant_anemia_model/non_pregnant_anemia.ipynb",
+            "0100_data_prep/results/iron/fortification_hemoglobin_effects.csv",
+            "0100_data_prep/results/iron/{vehicle}/baseline_fortification/effective_coverage/{location}.csv",
+            "0100_data_prep/results/iron/{vehicle}/{intervention_scenario}/intervention_fortification/effective_coverage/{location}.csv",
+            "0100_data_prep/results/population/stratified/{location}.csv",
+            "0100_data_prep/results/hemoglobin/mean_disparities/{location}.csv",
+            "0100_data_prep/results/hemoglobin/sd_disparities/{location}.csv",
+            "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv",
+        ]
+    output:
+        [
+            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{intervention_scenario}/ylds.parquet",
+            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{intervention_scenario}/anemia_prevalence.parquet",
+            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{intervention_scenario}/anemia_cases.parquet",
+        ]
+    log: "0400_non_pregnant_anemia_model/executed/{vehicle}/{location}/{intervention_scenario}/non_pregnant_anemia.ipynb"
+    shell:
+        f"""
+        {config["env_setup"]}
+        cd 0400_non_pregnant_anemia_model
+        mkdir -p ../executed/{{wildcards.vehicle}}/{{wildcards.location}}/{{wildcards.intervention_scenario}}
+        papermill non_pregnant_anemia.ipynb ./executed/{{wildcards.vehicle}}/{{wildcards.location}}/{{wildcards.intervention_scenario}}/non_pregnant_anemia.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p intervention_scenario {{wildcards.intervention_scenario}} -k python3 {'--engine debug' if debug else ''}
+        """
