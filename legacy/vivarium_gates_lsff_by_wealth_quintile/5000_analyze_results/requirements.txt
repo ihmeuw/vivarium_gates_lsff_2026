@@ -1,8 +1,0 @@
-vivarium_inputs[data]
-db_queries
-jupyter
-papermill
-pandas
-numpy
-matplotlib
-seaborn

@@ -4,7 +4,7 @@ debug = config["debug"]
 
 pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls", "person_time_anemia"]
 rescaled_pregnancy_results = [
-    f"5000_analyze_results/0100_rescale_results/pregnancy_results/{{vehicle}}/{{location}}/{result}.parquet"
+    f"5000_analyze_results/results/rescaled_pregnancy_results/{{vehicle}}/{{location}}/{result}.parquet"
     for result in pregnancy_results_of_interest
 ]
 
@@ -25,7 +25,7 @@ rule rescale_pregnancy_results:
 
 child_results_of_interest = ["deaths", "ylds", "ylls", "person_time"]
 rescaled_child_results = [
-    f"5000_analyze_results/0100_rescale_results/child_results/{{vehicle}}/{{location}}/{result}.parquet"
+    f"5000_analyze_results/results/rescaled_child_results/{{vehicle}}/{{location}}/{result}.parquet"
     for result in child_results_of_interest
 ]
 
@@ -54,8 +54,13 @@ def dalys_by_scenario_inputs(wildcards):
         ]
     if "iron" in fortificants:
         result += rescaled_pregnancy_results + rescaled_child_results + [
-            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/ylds.parquet",
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/{scenario}/ylds.parquet",
         ]
+    else:
+        # Uses the india/rice results as a template to reset to 0
+        result += [r.replace('{vehicle}', 'rice').replace('{location}', 'india').replace('{scenario}', 'intervention') for r in rescaled_pregnancy_results + rescaled_child_results + [
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/{scenario}/ylds.parquet",
+        ]]
     return result
 
 rule dalys_by_scenario:
@@ -76,7 +81,10 @@ for (location, vehicle, scenario) in config_utils.get_configured_combos(["locati
     dalys_by_scenario_resolved.append(f"5000_analyze_results/results/{location}/{vehicle}/{scenario}/dalys_by_scenario.csv")
 
 rule results_spreadsheet:
-    input: config["env_input"] + ["5000_analyze_results/results_spreadsheet.ipynb"] + dalys_by_scenario_resolved
+    input:
+        config["env_input"] +
+        ["5000_analyze_results/results_spreadsheet.ipynb"] +
+        dalys_by_scenario_resolved
     output: "5000_analyze_results/results_spreadsheet.xlsx"
     log: "5000_analyze_results/executed/results_spreadsheet.ipynb"
     shell:

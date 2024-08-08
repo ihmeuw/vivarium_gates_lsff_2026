@@ -1,6 +1,6 @@
-wealth_quintile,value,vehicle_name
-lowest,0,salt
-second,0,salt
-middle,0,salt
-fourth,0,salt
-highest,0,salt
+wealth_quintile,vehicle_name,value
+lowest,salt,0
+second,salt,0
+middle,salt,0
+fourth,salt,0
+highest,salt,0

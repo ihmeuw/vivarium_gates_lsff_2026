@@ -14,9 +14,9 @@ rule non_pregnant_anemia:
         ]
     output:
         [
-            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{intervention_scenario}/ylds.parquet",
-            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{intervention_scenario}/anemia_prevalence.parquet",
-            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{intervention_scenario}/anemia_cases.parquet",
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/{intervention_scenario}/ylds.parquet",
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/{intervention_scenario}/anemia_prevalence.parquet",
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/{intervention_scenario}/anemia_cases.parquet",
         ]
     log: "0400_non_pregnant_anemia_model/executed/{vehicle}/{location}/{intervention_scenario}/non_pregnant_anemia.ipynb"
     shell:

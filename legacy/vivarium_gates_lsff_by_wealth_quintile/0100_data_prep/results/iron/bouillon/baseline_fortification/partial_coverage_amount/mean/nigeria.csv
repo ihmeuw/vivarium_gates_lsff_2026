@@ -1,6 +1,6 @@
-wealth_quintile,value,vehicle_name
-lowest,0,bouillon
-second,0,bouillon
-middle,0,bouillon
-fourth,0,bouillon
-highest,0,bouillon
+wealth_quintile,vehicle_name,value
+lowest,bouillon,0
+second,bouillon,0
+middle,bouillon,0
+fourth,bouillon,0
+highest,bouillon,0

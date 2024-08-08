@@ -96,9 +96,8 @@ location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_sc
 for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"]):
     for data_need in vehicle_specific_data_needs:
         file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
-        if location == "india" and ("vehicle_consumption" in data_need):
-            if data_need != "vehicle_consumption/fortifiability":
-                hces_output_files.append(file_name)
+        if location == "india" and ("vehicle_consumption" in data_need) and data_need != "vehicle_consumption/fortifiability":
+            hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
 
@@ -108,9 +107,6 @@ for (location, vehicle, fortificant) in config_utils.get_configured_combos(["loc
         if location == "india" and (("baseline_fortification" in data_need) and ("concentration" not in data_need) and ("effectiveness" not in data_need)):
             hces_output_files.append(file_name)
         else:
-            if location in ("nigeria", "ethiopia") and "partial_coverage_amount" in data_need:
-                # N/A -- manually create these files
-                continue
             extracted_output_files.append(file_name)
 
 for (location, vehicle, fortificant, scenario) in config_utils.get_configured_combos(["location", "vehicle", "fortificant", "scenario"]):
@@ -230,7 +226,7 @@ rule calculate_effective_coverage_ethiopia:
         """
 
 rule population_with_pregnancy_status:
-    input: config["env_input"] + ["0100_data_prep/population/population_with_pregnancy_status.ipynb"]
+    input: config["env_input"] + ["0100_data_prep/population/population_with_pregnancy_status.ipynb", "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv"]
     log: f"0100_data_prep/executed/population/{{location}}/population_with_pregnancy_status.ipynb"
     output:
         [
