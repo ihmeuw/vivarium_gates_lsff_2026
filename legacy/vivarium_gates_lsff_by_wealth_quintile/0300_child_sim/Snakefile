@@ -60,8 +60,7 @@ rule child_simulations:
             "0300_child_sim/simulation_running/bin/activate",
             "0300_child_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
             "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml",
-            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios.yaml",
-            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios_small.yaml",
+            "0300_child_sim/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios" + ('_small' if not full_scale else '') + ".yaml",
         ] + code_inputs
     output:
         [

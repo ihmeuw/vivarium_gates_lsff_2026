@@ -47,8 +47,7 @@ rule pregnancy_simulations:
         config["simulation_running_env_input"] + [
             "0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
             "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios.yaml",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios_small.yaml",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios" + ('_small' if not full_scale else '') + ".yaml",
         ] + code_inputs + data_inputs
     output:
         [

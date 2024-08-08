@@ -1,2 +1,11 @@
-vehicle_name,value
-salt,0.8
+vehicle_name,wealth_quintile,sex,value
+salt,fourth,Female,0.6400000000000001
+salt,highest,Female,0.6400000000000001
+salt,lowest,Female,0.6400000000000001
+salt,middle,Female,0.6400000000000001
+salt,second,Female,0.6400000000000001
+salt,fourth,Male,0.6400000000000001
+salt,highest,Male,0.6400000000000001
+salt,lowest,Male,0.6400000000000001
+salt,middle,Male,0.6400000000000001
+salt,second,Male,0.6400000000000001

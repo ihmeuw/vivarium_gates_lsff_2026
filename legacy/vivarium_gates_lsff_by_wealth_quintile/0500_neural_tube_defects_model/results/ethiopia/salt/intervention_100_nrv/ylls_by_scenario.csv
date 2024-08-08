@@ -1,0 +1,11 @@
+wealth_quintile,entity,scenario,value
+lowest,ntd,baseline,219467.17153633587
+second,ntd,baseline,208763.47961641624
+middle,ntd,baseline,190011.2751675649
+fourth,ntd,baseline,66976.9001376674
+highest,ntd,baseline,26419.034940328667
+fourth,ntd,intervention_100_nrv,29547.56826122744
+highest,ntd,intervention_100_nrv,13865.807420053701
+lowest,ntd,intervention_100_nrv,46201.34468440526
+middle,ntd,intervention_100_nrv,37970.63221759909
+second,ntd,intervention_100_nrv,47763.484658306144

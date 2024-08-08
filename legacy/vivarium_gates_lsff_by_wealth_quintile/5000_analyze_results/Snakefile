@@ -1,3 +1,5 @@
+from lsff_utils import config_utils
+
 debug = config["debug"]
 
 pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls", "person_time_anemia"]
@@ -42,31 +44,63 @@ rule rescale_child_results:
         papermill child_results.ipynb ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/child_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
 
-rule dalys_averted:
-    input: config["env_input"] + ["5000_analyze_results/dalys_averted.ipynb"] + rescaled_pregnancy_results + rescaled_child_results
-    output: "5000_analyze_results/executed/{location}/{vehicle}/dalys_averted_{scenario}.ipynb"
-    shell:
-        f"""
-        {config["env_setup"]}
-        cd 5000_analyze_results
-        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
-        papermill dalys_averted.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/dalys_averted_{{wildcards.scenario}}.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
-        """
-
-rule anemia_averted:
-    input:
-        config["env_input"] +
-        ["5000_analyze_results/anemia_averted.ipynb"] +
-        rescaled_pregnancy_results + [
-            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/anemia_cases.parquet",
-            "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/anemia_prevalence.parquet",
+def dalys_by_scenario_inputs(wildcards):
+    fortificants = config_utils.get_location_fortificant_vehicle_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    result = config["env_input"] + ["5000_analyze_results/dalys_by_scenario.ipynb"]
+    if "folate" in fortificants:
+        result += [
+            "0500_neural_tube_defects_model/results/{location}/{vehicle}/{scenario}/ntd_cases_by_scenario.csv",
+            "0500_neural_tube_defects_model/results/{location}/{vehicle}/{scenario}/ylls_by_scenario.csv",
+        ]
+    if "iron" in fortificants:
+        result += rescaled_pregnancy_results + rescaled_child_results + [
             "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/ylds.parquet",
         ]
-    output: "5000_analyze_results/executed/{location}/{vehicle}/anemia_averted_{scenario}.ipynb"
+    return result
+
+rule dalys_by_scenario:
+    input: dalys_by_scenario_inputs
+    output: "5000_analyze_results/results/{location}/{vehicle}/{scenario}/dalys_by_scenario.csv"
+    log: "5000_analyze_results/executed/{location}/{vehicle}/{scenario}/dalys_by_scenario.ipynb"
     shell:
         f"""
         {config["env_setup"]}
         cd 5000_analyze_results
-        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
-        papermill anemia_averted.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/anemia_averted_{{wildcards.scenario}}.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
+        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/{{wildcards.scenario}}
+        papermill dalys_by_scenario.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/{{wildcards.scenario}}/dalys_by_scenario.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
         """
+
+dalys_by_scenario_resolved = []
+
+for (location, vehicle, scenario) in config_utils.get_configured_combos(["location", "vehicle", "scenario"]):
+    dalys_by_scenario_resolved.append(f"5000_analyze_results/results/{location}/{vehicle}/{scenario}/dalys_by_scenario.csv")
+
+rule results_spreadsheet:
+    input: config["env_input"] + ["5000_analyze_results/results_spreadsheet.ipynb"] + dalys_by_scenario_resolved
+    output: "5000_analyze_results/results_spreadsheet.xlsx"
+    log: "5000_analyze_results/executed/results_spreadsheet.ipynb"
+    shell:
+        f"""
+        {config["env_setup"]}
+        cd 5000_analyze_results
+        mkdir -p ./executed/
+        papermill results_spreadsheet.ipynb ./executed/results_spreadsheet.ipynb -k python3 {'--engine debug' if debug else ''}
+        """
+
+# rule anemia_averted:
+#     input:
+#         config["env_input"] +
+#         ["5000_analyze_results/anemia_averted.ipynb"] +
+#         rescaled_pregnancy_results + [
+#             "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/anemia_cases.parquet",
+#             "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/anemia_prevalence.parquet",
+#             "0400_non_pregnant_anemia_model/{vehicle}/{location}/{scenario}/ylds.parquet",
+#         ]
+#     output: "5000_analyze_results/executed/{location}/{vehicle}/anemia_averted_{scenario}.ipynb"
+#     shell:
+#         f"""
+#         {config["env_setup"]}
+#         cd 5000_analyze_results
+#         mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
+#         papermill anemia_averted.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/anemia_averted_{{wildcards.scenario}}.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -p scenario {{wildcards.scenario}} -k python3 {'--engine debug' if debug else ''}
+#         """

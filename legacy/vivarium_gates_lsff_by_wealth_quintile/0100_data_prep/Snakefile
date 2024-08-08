@@ -1,3 +1,4 @@
+from lsff_utils import config_utils
 from snakemake.io import directory
 
 debug = config["debug"]
@@ -92,7 +93,7 @@ hces_output_files = []
 
 location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
 
-for _, (location, vehicle) in location_fortificant_vehicle_scenarios[["location", "vehicle"]].drop_duplicates().iterrows():
+for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"]):
     for data_need in vehicle_specific_data_needs:
         file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
         if location == "india" and ("vehicle_consumption" in data_need):
@@ -101,7 +102,7 @@ for _, (location, vehicle) in location_fortificant_vehicle_scenarios[["location"
         else:
             extracted_output_files.append(file_name)
 
-for _, (location, vehicle, fortificant) in location_fortificant_vehicle_scenarios[["location", "vehicle", "fortificant"]].drop_duplicates().iterrows():
+for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"]):
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
         if location == "india" and (("baseline_fortification" in data_need) and ("concentration" not in data_need) and ("effectiveness" not in data_need)):
@@ -112,7 +113,7 @@ for _, (location, vehicle, fortificant) in location_fortificant_vehicle_scenario
                 continue
             extracted_output_files.append(file_name)
 
-for _, (location, vehicle, fortificant, scenario) in location_fortificant_vehicle_scenarios[["location", "vehicle", "fortificant", "scenario"]].drop_duplicates().iterrows():
+for (location, vehicle, fortificant, scenario) in config_utils.get_configured_combos(["location", "vehicle", "fortificant", "scenario"]):
     for data_need in location_vehicle_fortificant_scenario_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{scenario}/{data_need}/{location}.csv"
         extracted_output_files.append(file_name)
@@ -166,6 +167,7 @@ rule calculate_effective_coverage_nigeria:
     input:
         config["env_input"] + [
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+            "0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv",
         ] + hces_output_files + extracted_output_files
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
     output:
@@ -187,6 +189,7 @@ rule calculate_effective_coverage_india:
     input:
         config["env_input"] + [
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+            "0100_data_prep/results/wealth_quintile_probabilities/india.csv",
         ] + hces_output_files + extracted_output_files
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
     output:
@@ -208,6 +211,7 @@ rule calculate_effective_coverage_ethiopia:
     input:
         config["env_input"] + [
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+            "0100_data_prep/results/wealth_quintile_probabilities/ethiopia.csv",
         ] + hces_output_files + extracted_output_files
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
     output:
