@@ -49,9 +49,9 @@ intervention_100_nrv,maternal_hemorrhage,highest,0.0
 intervention_100_nrv,maternal_hemorrhage,lowest,0.0
 intervention_100_nrv,maternal_hemorrhage,middle,0.0
 intervention_100_nrv,maternal_hemorrhage,second,0.0
-intervention_100_nrv,ntd,fourth,29547.56826122744
-intervention_100_nrv,ntd,highest,13865.8074200537
-intervention_100_nrv,ntd,lowest,46201.34468440526
+intervention_100_nrv,ntd,fourth,29547.56826122749
+intervention_100_nrv,ntd,highest,13865.807420053725
+intervention_100_nrv,ntd,lowest,46201.344684405245
 intervention_100_nrv,ntd,middle,37970.63221759909
 intervention_100_nrv,ntd,second,47763.484658306144
 intervention_100_nrv,pregnancy,fourth,0.0
