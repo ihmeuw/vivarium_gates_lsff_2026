@@ -14,13 +14,13 @@ rule rescale_pregnancy_results:
         [f"0200_pregnancy_sim/sim_results/{{vehicle}}/{{location}}/{result}.parquet" for result in pregnancy_results_of_interest]
     output:
         rescaled_pregnancy_results
-    log: "5000_analyze_results/executed/{vehicle}/{location}/0100_rescale_results/pregnancy_results.ipynb"
+    log: "5000_analyze_results/executed/{location}/{vehicle}/0100_rescale_results/pregnancy_results.ipynb"
     shell:
         f"""
         {config["env_setup"]}
         cd 5000_analyze_results/0100_rescale_results
-        mkdir -p ../executed/{{wildcards.vehicle}}/{{wildcards.location}}/0100_rescale_results/
-        papermill pregnancy_results.ipynb ../executed/{{wildcards.vehicle}}/{{wildcards.location}}/0100_rescale_results/pregnancy_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
+        mkdir -p ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/
+        papermill pregnancy_results.ipynb ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/pregnancy_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
 
 child_results_of_interest = ["deaths", "ylds", "ylls", "person_time"]
@@ -35,7 +35,7 @@ rule rescale_child_results:
         [f"0300_child_sim/sim_results/{{vehicle}}/{{location}}/{result}.parquet" for result in child_results_of_interest]
     output:
         rescaled_child_results
-    log: "5000_analyze_results/executed/{vehicle}/{location}/0100_rescale_results/child_results.ipynb"
+    log: "5000_analyze_results/executed/{location}/{vehicle}/0100_rescale_results/child_results.ipynb"
     shell:
         f"""
         {config["env_setup"]}

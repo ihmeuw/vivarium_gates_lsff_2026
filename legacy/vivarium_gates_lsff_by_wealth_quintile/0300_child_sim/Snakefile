@@ -68,6 +68,8 @@ rule child_simulations:
             "0300_child_sim/sim_results/{vehicle}/{location}/deaths.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/ylds.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/ylls.parquet",
+            "0300_child_sim/sim_results/{vehicle}/{location}/birth_weight_sum.parquet",
+            "0300_child_sim/sim_results/{vehicle}/{location}/live_births.parquet",
         ]
     shell:
         f"""

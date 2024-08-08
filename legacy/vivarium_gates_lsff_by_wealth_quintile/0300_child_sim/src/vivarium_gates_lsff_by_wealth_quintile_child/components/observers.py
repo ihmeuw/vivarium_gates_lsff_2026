@@ -204,28 +204,28 @@ class BirthObserver(Observer):
         builder.results.register_adding_observation(
             name="live_births",
             pop_filter='alive == "alive" and tracked == True',
-            when="time_step_prepare",
+            when="collect_metrics",
             aggregator=self.count_live_births,
             requires_columns=["entrance_time"],
         )
         builder.results.register_adding_observation(
             name="birth_weight_sum",
             pop_filter='alive == "alive" and tracked == True',
-            when="time_step_prepare",
+            when="collect_metrics",
             aggregator=self.sum_birth_weights,
             requires_columns=["entrance_time", self.birth_weight_column_name],
         )
         builder.results.register_adding_observation(
             name="gestational_age_sum",
             pop_filter='alive == "alive" and tracked == True',
-            when="time_step_prepare",
+            when="collect_metrics",
             aggregator=self.sum_gestational_ages,
             requires_columns=["entrance_time", self.gestational_age_column_name],
         )
         builder.results.register_adding_observation(
             name="low_weight_births",
             pop_filter="alive=='alive' and tracked == True",
-            when="time_step_prepare",
+            when="collect_metrics",
             aggregator=self.count_low_weight_births,
             requires_columns=["entrance_time", self.birth_weight_column_name],
         )
