@@ -16,7 +16,6 @@ for an example.
 import gbd_mapping
 import numpy as np
 import pandas as pd
-import risk_distributions
 import vivarium_inputs.validation.sim as validation
 from joblib import Memory
 from scipy import integrate, stats
@@ -40,6 +39,7 @@ from vivarium_gates_lsff_by_wealth_quintile.constants import (
 from vivarium_gates_lsff_by_wealth_quintile.data import extra_gbd, sampling
 from vivarium_gates_lsff_by_wealth_quintile.data.utilities import get_entity
 from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable_draws
+from lsff_utils import hemoglobin_distribution
 
 ##Note: need to remove all instances where we limit the size of the data manually. This will be done when RT updates in the input files.
 
@@ -630,24 +630,13 @@ def _hemoglobin_paf(mean: float, sd: float, rr: float) -> float:
     risk = gbd_mapping.risk_factors.iron_deficiency
     tmrel = 120  # TODO: Get this at the draw level from GBD!
 
-    (
-        hemoglobin_distribution_gamma_part,
-        hemoglobin_distribution_mgumbel_part,
-    ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
-
-    def pdf(x):
-        return (
-            data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT
-            * hemoglobin_distribution_gamma_part.pdf(x)
-            + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT
-            * hemoglobin_distribution_mgumbel_part.pdf(x)
-        )
+    pdf = hemoglobin_distribution.hemoglobin_pdf_from_mean_sd(mean, sd)
 
     with np.errstate(under="ignore"):
         weighted_burden = integrate.quad(
             lambda x: (pdf(x) * rr ** (max(x - tmrel, 0) / risk.relative_risk_scalar)),
             0,
-            data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.XMAX,
+            hemoglobin_distribution.XMAX,
             epsabs=0.0001,
         )[0]
 
@@ -798,70 +787,18 @@ def get_hemoglobin_below_70(key: str, location: str, mean_draw: bool):
     )
 
     for draw in result.columns:
-        for index in demography.index:
-            if index in hemoglobin_mean_plw.index and index in hemoglobin_std_plw.index:
-                mean = hemoglobin_mean_plw.loc[index][draw]
-                sd = hemoglobin_std_plw.loc[index][draw]
+        result[draw] = np.nan
+        full_data_index = demography.index.intersection(hemoglobin_mean_plw.index).intersection(hemoglobin_std_plw.index)
+        cdf = hemoglobin_distribution.hemoglobin_cdf_from_mean_sd(hemoglobin_mean_plw.loc[full_data_index, draw].values, hemoglobin_std_plw.loc[full_data_index, draw].values)
+        with np.errstate(under="ignore"):
+            result.loc[full_data_index, draw] = cdf([70] * len(full_data_index)).values
 
-                (
-                    hemoglobin_distribution_gamma_part,
-                    hemoglobin_distribution_mgumbel_part,
-                ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
-
-                def cdf(x):
-                    gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
-                    # NOTE: There is a bug in this CDF function -- it is reversed!
-                    # https://github.com/ihmeuw/risk_distributions/issues/62
-                    mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x)
-                    return (
-                        data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT
-                        * gamma_cdf
-                        + data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.MIRROR_GUMBEL_DISTRIBUTION_WEIGHT
-                        * mgumbel_cdf
-                    )
-
-                with np.errstate(under="ignore"):
-                    under_70 = cdf(70)
-
-                result.loc[index, draw] = under_70
-            else:
-                result.loc[index, draw] = 0.0
+        non_full_data_index = demography.index.difference(full_data_index)
+        result.loc[non_full_data_index, draw] = 0.0
 
         assert result[draw].notnull().all()
 
     return result
-
-
-@cache
-def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
-    # NOTE: This is an unusual ensemble distribution. We should add functionality to the
-    # EnsembleDistribution class to make this easier.
-    x_min = 0
-    x_max = data_values.HEMOGLOBIN_DISTRIBUTION_PARAMETERS.XMAX
-    gamma_params = risk_distributions.risk_distributions.Gamma.get_parameters(
-        mean=mean, sd=sd
-    )
-    # NOTE: We have to override these, otherwise Gamma is overly conservative in what values
-    # are computable
-    # https://github.com/ihmeuw/risk_distributions/issues/61
-    gamma_params["x_min"] = x_min
-    gamma_params["x_max"] = x_max
-    hemoglobin_distribution_gamma_part = risk_distributions.risk_distributions.Gamma(
-        gamma_params
-    )
-
-    # NOTE: Forced to duplicate https://github.com/ihmeuw/risk_distributions/blob/a9ed9d7e8372590018355012a7a7ffefa87b0819/src/risk_distributions/risk_distributions.py#L428-L434
-    # because it doesn't permit the custom x_min and x_max, and these are used in calculating the others
-    mgumbel_params = {
-        "loc": [x_max - mean - (np.euler_gamma * np.sqrt(6) / np.pi * sd)],
-        "scale": [np.sqrt(6) / np.pi * sd],
-        "x_min": [x_min],
-        "x_max": [x_max],
-    }
-    hemoglobin_distribution_mgumbel_part = (
-        risk_distributions.risk_distributions.MirroredGumbel(mgumbel_params)
-    )
-    return hemoglobin_distribution_gamma_part, hemoglobin_distribution_mgumbel_part
 
 
 def _reformat_hemoglobin_data(data, location):

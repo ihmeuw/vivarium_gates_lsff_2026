@@ -18,13 +18,13 @@ from vivarium_gates_lsff_by_wealth_quintile.constants import (
 from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import (
     ANEMIA_DISABILITY_WEIGHTS,
     ANEMIA_THRESHOLD_DATA,
-    HEMOGLOBIN_DISTRIBUTION_PARAMETERS,
     HEMOGLOBIN_SCALE_FACTOR_MODERATE_HEMORRHAGE,
     HEMOGLOBIN_SCALE_FACTOR_SEVERE_HEMORRHAGE,
     RR_SCALAR,
     SEVERE_ANEMIA_AMONG_PREGNANT_WOMEN_THRESHOLD,
     TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS,
 )
+from lsff_utils import hemoglobin_distribution
 
 
 class Hemoglobin(Component):
@@ -172,59 +172,20 @@ class Hemoglobin(Component):
         self.population_view.update(pop_update)
 
     def hemoglobin_source(self, idx: pd.Index) -> pd.Series:
+        if len(idx) == 0:
+            return pd.Series(index=idx, dtype=float)
         pop = self.population_view.get(idx)
         distribution_parameters = self.distribution_parameters(pop.index)
-        return self.sample_from_hemoglobin_distribution(
+        sampler = hemoglobin_distribution.hemoglobin_sampler_from_mean_sd(
+            distribution_parameters["mean"],
+            distribution_parameters["stddev"],
+        )
+        result = pd.Series(sampler(
             pop["hemoglobin_distribution_propensity"],
             pop["hemoglobin_percentile"],
-            distribution_parameters,
-        )
-
-    @staticmethod
-    def _gamma_ppf(propensity, mean, sd):
-        """Returns the quantile for the given quantile rank (`propensity`) of a Gamma
-        distribution with the specified mean and standard deviation.
-        """
-        shape = (mean / sd) ** 2
-        scale = sd**2 / mean
-        return scipy.stats.gamma(a=shape, scale=scale).ppf(propensity)
-
-    @staticmethod
-    def _mirrored_gumbel_ppf_2017(propensity, mean, sd):
-        """Returns the quantile for the given quantile rank (`propensity`) of a mirrored Gumbel
-        distribution with the specified mean and standard deviation.
-        """
-        x_max = HEMOGLOBIN_DISTRIBUTION_PARAMETERS.XMAX
-        alpha = x_max - mean - (sd * np.euler_gamma * np.sqrt(6) / np.pi)
-        scale = sd * np.sqrt(6) / np.pi
-        return x_max - scipy.stats.gumbel_r(alpha, scale=scale).ppf(1 - propensity)
-
-    def sample_from_hemoglobin_distribution(
-        self, propensity_distribution, propensity, exposure_parameters
-    ):
-        """
-        Returns a sample from an ensemble distribution with the specified mean and
-        standard deviation (stored in `exposure_parameters`) that is 40% Gamma and
-        60% mirrored Gumbel. The sampled value is a function of the two propensities
-        `prop_dist` (used to choose whether to sample from the Gamma distribution or
-        the mirrored Gumbel distribution) and `propensity` (used as the quantile rank
-        for the selected distribution).
-        """
-
-        exposure_data = exposure_parameters
-        mean = exposure_data["mean"]
-        sd = exposure_data["stddev"]
-
-        gamma = (
-            propensity_distribution
-            < HEMOGLOBIN_DISTRIBUTION_PARAMETERS.GAMMA_DISTRIBUTION_WEIGHT
-        )
-        gumbel = ~gamma
-
-        ret_val = pd.Series(index=propensity_distribution.index, name="value", dtype=float)
-        ret_val.loc[gamma] = self._gamma_ppf(propensity, mean, sd)[gamma]
-        ret_val.loc[gumbel] = self._mirrored_gumbel_ppf_2017(propensity, mean, sd)[gumbel]
-        return ret_val
+        ), index=idx)
+        assert result.notnull().all()
+        return result
 
     def adjust_maternal_disorder_proportion(
         self, index: pd.Index, maternal_disorder_probability: pd.DataFrame
@@ -239,7 +200,7 @@ class Hemoglobin(Component):
         )
         per_simulant_rr = rr**per_simulant_exposure
         maternal_disorder_probability *= (1 - paf) * per_simulant_rr
-        return maternal_disorder_probability.map(lambda value: 1 if value > 1 else value)
+        return maternal_disorder_probability.clip(upper=1)
 
     def adjust_maternal_hemorrhage_proportion(self, index, maternal_hemorrhage_probability):
         paf = self.lookup_tables["hemorrhage_population_attributable_fraction"](index)
@@ -250,7 +211,7 @@ class Hemoglobin(Component):
         maternal_hemorrhage_probability.loc[
             hemoglobin <= SEVERE_ANEMIA_AMONG_PREGNANT_WOMEN_THRESHOLD
         ] *= rr
-        return maternal_hemorrhage_probability.map(lambda value: 1 if value > 1 else value)
+        return maternal_hemorrhage_probability.clip(upper=1)
 
     def adjust_hemoglobin_exposure(
         self, index: pd.Index, hemoglobin_exposure: pd.DataFrame

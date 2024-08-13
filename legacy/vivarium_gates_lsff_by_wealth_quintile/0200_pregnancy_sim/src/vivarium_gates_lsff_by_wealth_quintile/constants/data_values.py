@@ -24,15 +24,6 @@ draw_count = 500
 MATERNAL_HEMORRHAGE_HEMOGLOBIN_POSTPARTUM_SHIFT = 6.8  # g/L
 PROBABILITY_MODERATE_MATERNAL_HEMORRHAGE = (0.85, 0.81, 0.89)
 
-
-class _HemoglobinDistributionParameters(NamedTuple):
-    XMAX: int = 220
-    EULERS_CONSTANT: float = np.euler_gamma
-    GAMMA_DISTRIBUTION_WEIGHT: float = 0.4
-    MIRROR_GUMBEL_DISTRIBUTION_WEIGHT: float = 0.6
-
-
-HEMOGLOBIN_DISTRIBUTION_PARAMETERS = _HemoglobinDistributionParameters()
 ANEMIA_STATUS_AT_BIRTH_CATEGORIES = (
     "invalid",  ## Check on anemia_status that hasn't been properly assigned
     "not_anemic",

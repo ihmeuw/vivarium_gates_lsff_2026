@@ -11,3 +11,5 @@ scikit-learn
 db_queries
 seaborn
 xlsxwriter
+black[jupyter]
+isort

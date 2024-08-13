@@ -1,0 +1,11 @@
+scenario,wealth_quintile,value
+baseline,fourth,143816.08020748984
+baseline,highest,139178.35285826214
+baseline,lowest,204967.38480391228
+baseline,middle,152827.85141117315
+baseline,second,174488.67496701435
+intervention,fourth,143629.95068176833
+intervention,highest,138922.42476039505
+intervention,lowest,204781.25527819077
+intervention,middle,152711.52045759722
+intervention,second,174294.79004438777

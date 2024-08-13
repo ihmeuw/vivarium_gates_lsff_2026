@@ -50,7 +50,7 @@ if update_packages:
             pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
             pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
             cd ..
-            pip freeze -l | grep -v '-e ' | grep -v 'file:///' > pip_lock.txt
+            pip freeze -l | grep -v '\-e ' | grep -v 'file:///' > pip_lock.txt
             touch .venv .venv/bin/activate # Should be newer than the lockfile
             """
 
@@ -70,7 +70,7 @@ if update_packages:
             # Assumed compatible with child sim
             cd ..
             pip install -e .
-            pip freeze -l  | grep -v '-e ' | grep -v 'file:///' > simulation_running_pip_lock.txt
+            pip freeze -l  | grep -v '\-e ' | grep -v 'file:///' > simulation_running_pip_lock.txt
             touch .simulation_running_venv .simulation_running_venv/bin/activate # Should be newer than the lockfile
             """
 else:

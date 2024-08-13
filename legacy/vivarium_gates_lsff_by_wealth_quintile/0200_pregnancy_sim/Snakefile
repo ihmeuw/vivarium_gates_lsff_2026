@@ -63,11 +63,12 @@ rule pregnancy_simulations:
         f"""
         {config["simulation_running_env_setup"]}
         cd 0200_pregnancy_sim
-        rm -rf sim_results/{{wildcards.location}} || true
+        rm -rf sim_results/{{wildcards.vehicle}} || true
         sleep 5
-        rm -rf sim_results/{{wildcards.location}}
+        rm -rf sim_results/{{wildcards.vehicle}}
         rm -f dump.rdb
         export PYTHONPATH=./src
-        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -q all.q' if not debug else '--pdb -vvv'}
+        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -m 5 -q all.q' if not debug else '--pdb -vvv'}
+        {'# ' if debug else ''}psimulate restart sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/* -P proj_simscience -m 5 -q all.q
         mv sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         """

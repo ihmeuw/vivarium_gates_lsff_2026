@@ -135,4 +135,5 @@ dmypy.json
 *.rdb
 *.hdf
 *.parquet
+*.tmp
 .cachedir
