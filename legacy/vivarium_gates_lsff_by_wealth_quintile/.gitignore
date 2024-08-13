@@ -137,3 +137,4 @@ dmypy.json
 *.parquet
 *.tmp
 .cachedir
+model_spec_int.yaml
