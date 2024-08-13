@@ -79,9 +79,7 @@ HEMOGLOBIN_SCALE_FACTOR_MODERATE_HEMORRHAGE = 0.9
 HEMOGLOBIN_SCALE_FACTOR_SEVERE_HEMORRHAGE = 0.833
 
 TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS = 120.0
-RR_SCALAR = (
-    10.0  # Conversion factor between hemoglobin units (g/L) and relative risk units (g/dL)
-)
+RR_SCALAR = 10.0  # Conversion factor between hemoglobin units (g/L) and relative risk units (g/dL)
 
 PREGNANCY_CORRECTION_FACTORS = {
     data_keys.HEMOGLOBIN.MEAN: pd.read_csv(

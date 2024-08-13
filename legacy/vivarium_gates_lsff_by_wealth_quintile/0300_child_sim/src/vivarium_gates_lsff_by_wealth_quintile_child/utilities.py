@@ -7,9 +7,8 @@ import pandas as pd
 from loguru import logger
 from scipy import stats
 from vivarium.framework.randomness import get_hash
-from vivarium_public_health.risks.data_transformations import pivot_categorical
-
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import metadata
+from vivarium_public_health.risks.data_transformations import pivot_categorical
 
 SeededDistribution = Tuple[str, stats.rv_continuous]
 
@@ -113,7 +112,10 @@ def get_truncnorm_from_sd(mean, sd, lower_clip: float = 0.0, upper_clip: float =
 
 
 def get_lognorm_from_quantiles(
-    median: float, lower: float, upper: float, quantiles: Tuple[float, float] = (0.025, 0.975)
+    median: float,
+    lower: float,
+    upper: float,
+    quantiles: Tuple[float, float] = (0.025, 0.975),
 ) -> stats.lognorm:
     """Returns a frozen lognormal distribution with the specified median, such that
     (lower, upper) are approximately equal to the quantiles with ranks
@@ -172,7 +174,10 @@ def get_truncnorm_from_quantiles(
 
 
 def get_norm_from_quantiles(
-    mean: float, lower: float, upper: float, quantiles: Tuple[float, float] = (0.025, 0.975)
+    mean: float,
+    lower: float,
+    upper: float,
+    quantiles: Tuple[float, float] = (0.025, 0.975),
 ) -> stats.norm:
     stdnorm_quantiles = stats.norm.ppf(quantiles)
     sd = (upper - lower) / (stdnorm_quantiles[1] - stdnorm_quantiles[0])
@@ -180,7 +185,10 @@ def get_norm_from_quantiles(
 
 
 def get_lognorm_from_quantiles(
-    median: float, lower: float, upper: float, quantiles: Tuple[float, float] = (0.025, 0.975)
+    median: float,
+    lower: float,
+    upper: float,
+    quantiles: Tuple[float, float] = (0.025, 0.975),
 ) -> stats.lognorm:
     """Returns a frozen lognormal distribution with the specified median, such that
     (lower, upper) are approximately equal to the quantiles with ranks

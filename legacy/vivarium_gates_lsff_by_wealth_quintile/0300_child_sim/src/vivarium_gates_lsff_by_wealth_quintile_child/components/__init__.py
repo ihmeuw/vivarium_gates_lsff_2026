@@ -1,5 +1,5 @@
-from vivarium_gates_lsff_by_wealth_quintile_child.components.causes import (  # RiskAttributableDisease,
-    SIS_with_birth_prevalence,
+from vivarium_gates_lsff_by_wealth_quintile_child.components.causes import (
+    SIS_with_birth_prevalence,  # RiskAttributableDisease,
 )
 
 # from vivarium_gates_lsff_by_wealth_quintile_child.components.distribution import (

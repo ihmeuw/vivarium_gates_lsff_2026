@@ -41,8 +41,12 @@ class __DiarrhealDiseases(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
     DURATION: TargetString = TargetString("cause.diarrheal_diseases.duration")
     PREVALENCE: TargetString = TargetString("cause.diarrheal_diseases.prevalence")
-    INCIDENCE_RATE: TargetString = TargetString("cause.diarrheal_diseases.incidence_rate")
-    REMISSION_RATE: TargetString = TargetString("cause.diarrheal_diseases.remission_rate")
+    INCIDENCE_RATE: TargetString = TargetString(
+        "cause.diarrheal_diseases.incidence_rate"
+    )
+    REMISSION_RATE: TargetString = TargetString(
+        "cause.diarrheal_diseases.remission_rate"
+    )
     DISABILITY_WEIGHT: TargetString = TargetString(
         "cause.diarrheal_diseases.disability_weight"
     )
@@ -51,7 +55,9 @@ class __DiarrhealDiseases(NamedTuple):
         "cause.diarrheal_diseases.cause_specific_mortality_rate"
     )
     RESTRICTIONS: TargetString = TargetString("cause.diarrheal_diseases.restrictions")
-    BIRTH_PREVALENCE: TargetString = TargetString("cause.diarrheal_diseases.birth_prevalence")
+    BIRTH_PREVALENCE: TargetString = TargetString(
+        "cause.diarrheal_diseases.birth_prevalence"
+    )
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
@@ -341,7 +347,9 @@ class __LowBirthWeightShortGestation(NamedTuple):
     DISTRIBUTION: TargetString = (
         "risk_factor.low_birth_weight_and_short_gestation.distribution"
     )
-    CATEGORIES: TargetString = "risk_factor.low_birth_weight_and_short_gestation.categories"
+    CATEGORIES: TargetString = (
+        "risk_factor.low_birth_weight_and_short_gestation.categories"
+    )
     RELATIVE_RISK: TargetString = (
         "risk_factor.low_birth_weight_and_short_gestation.relative_risk"
     )
@@ -357,7 +365,9 @@ class __LowBirthWeightShortGestation(NamedTuple):
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
     BIRTH_WEIGHT_EXPOSURE = TargetString("risk_factor.birth_weight.birth_exposure")
-    GESTATIONAL_AGE_EXPOSURE = TargetString("risk_factor.gestational_age.birth_exposure")
+    GESTATIONAL_AGE_EXPOSURE = TargetString(
+        "risk_factor.gestational_age.birth_exposure"
+    )
 
     @property
     def name(self):
@@ -409,8 +419,12 @@ class __AffectedUnmodeledCauses(NamedTuple):
     DIARRHEAL_DISEASES_CSMR: TargetString = TargetString(
         "cause.diarrheal_diseases.cause_specific_mortality_rate"
     )
-    MEASLES_CSMR: TargetString = TargetString("cause.measles.cause_specific_mortality_rate")
-    MALARIA_CSMR: TargetString = TargetString("cause.malaria.cause_specific_mortality_rate")
+    MEASLES_CSMR: TargetString = TargetString(
+        "cause.measles.cause_specific_mortality_rate"
+    )
+    MALARIA_CSMR: TargetString = TargetString(
+        "cause.malaria.cause_specific_mortality_rate"
+    )
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 

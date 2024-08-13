@@ -23,5 +23,5 @@ jobs:
       - name: Lint
         run: |
           pip install black isort
-          isort . --check -v
+          isort . --check -v --gitignore --profile black
           black . --check -v

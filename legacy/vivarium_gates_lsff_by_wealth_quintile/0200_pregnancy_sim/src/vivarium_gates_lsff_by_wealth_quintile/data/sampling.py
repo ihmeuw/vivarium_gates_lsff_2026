@@ -8,7 +8,10 @@ from vivarium_inputs import globals as vi_globals
 
 
 def get_norm_from_quantiles(
-    mean: float, lower: float, upper: float, quantiles: Tuple[float, float] = (0.025, 0.975)
+    mean: float,
+    lower: float,
+    upper: float,
+    quantiles: Tuple[float, float] = (0.025, 0.975),
 ) -> stats.norm:
     stdnorm_quantiles = stats.norm.ppf(quantiles)
     sd = (upper - lower) / (stdnorm_quantiles[1] - stdnorm_quantiles[0])
@@ -35,7 +38,10 @@ def get_truncnorm_from_quantiles(
 
 
 def get_lognorm_from_quantiles(
-    mean: float, lower: float, upper: float, quantiles: Tuple[float, float] = (0.025, 0.975)
+    mean: float,
+    lower: float,
+    upper: float,
+    quantiles: Tuple[float, float] = (0.025, 0.975),
 ) -> stats.lognorm:
     """Returns a frozen lognormal distribution with the specified mean, such that
     (lower, upper) are approximately equal to the quantiles with ranks
@@ -93,7 +99,9 @@ def generate_vectorized_lognormal_draws(
     lognorm_samples = pd.DataFrame(lognorm_samples, index=df[sample_mask].index)
 
     use_means = (
-        np.tile(mean[~sample_mask], draw_count).reshape((draw_count, ~sample_mask.sum())).T
+        np.tile(mean[~sample_mask], draw_count)
+        .reshape((draw_count, ~sample_mask.sum()))
+        .T
     )
     use_means = pd.DataFrame(use_means, index=df[~sample_mask].index)
     draws = pd.concat([lognorm_samples, use_means])

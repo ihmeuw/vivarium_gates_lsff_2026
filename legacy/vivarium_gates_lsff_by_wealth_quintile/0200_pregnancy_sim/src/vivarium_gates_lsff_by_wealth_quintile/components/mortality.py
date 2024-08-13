@@ -98,6 +98,8 @@ class MaternalMortality(Mortality):
 
         pop.loc[deaths, "alive"] = "dead"
         pop.loc[deaths, "exit_time"] = event.time
-        pop.loc[deaths, "years_of_life_lost"] = self.lookup_tables["life_expectancy"](deaths)
+        pop.loc[deaths, "years_of_life_lost"] = self.lookup_tables["life_expectancy"](
+            deaths
+        )
         pop.loc[deaths, "cause_of_death"] = "maternal_disorders"
         self.population_view.update(pop)

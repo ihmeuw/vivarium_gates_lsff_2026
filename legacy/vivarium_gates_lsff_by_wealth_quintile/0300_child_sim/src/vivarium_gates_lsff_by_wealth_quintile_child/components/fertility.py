@@ -16,9 +16,8 @@ import pandas as pd
 from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
-from vivarium_public_health import utilities
-
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys
+from vivarium_public_health import utilities
 
 PREGNANCY_DURATION = pd.Timedelta(days=9 * utilities.DAYS_PER_MONTH)
 
@@ -54,7 +53,9 @@ class FertilityLineList(Component):
         draw = builder.configuration.input_data.input_draw_number
         seed = builder.configuration.randomness.random_seed
 
-        birth_records = builder.data.load(data_keys.POPULATION.FERTILITY_DATA).reset_index()
+        birth_records = builder.data.load(
+            data_keys.POPULATION.FERTILITY_DATA
+        ).reset_index()
         # NOTE: "input_draw" becomes "value" when loading
         birth_records = birth_records[
             (birth_records.value == draw)

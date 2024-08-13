@@ -20,7 +20,9 @@ from vivarium_gates_lsff_by_wealth_quintile.constants.metadata import (
 
 class NotPregnantState(SusceptibleState):
     def __init__(self, state_id, *args, **kwargs):
-        super(SusceptibleState, self).__init__(state_id, *args, name_prefix="not_", **kwargs)
+        super(SusceptibleState, self).__init__(
+            state_id, *args, name_prefix="not_", **kwargs
+        )
 
 
 class PregnantState(DiseaseState):
@@ -99,7 +101,9 @@ class PregnantState(DiseaseState):
         pop_update = pd.concat([pop_events, pregnancy_outcomes_and_durations], axis=1)
         self.population_view.update(pop_update)
 
-    def sample_pregnancy_outcomes_and_durations(self, pop_data: SimulantData) -> pd.DataFrame:
+    def sample_pregnancy_outcomes_and_durations(
+        self, pop_data: SimulantData
+    ) -> pd.DataFrame:
         # Order the columns so that partial_term isn't in the middle!
         outcome_probabilities = self.birth_outcome_probabilities(pop_data.index)[
             ["partial_term", "stillbirth", "live_birth"]
@@ -127,7 +131,12 @@ class PregnantState(DiseaseState):
             ].index
             pregnancy_outcomes.loc[
                 term_pop,
-                ["sex_of_child", "birth_weight", "gestational_age", "pregnancy_duration"],
+                [
+                    "sex_of_child",
+                    "birth_weight",
+                    "gestational_age",
+                    "pregnancy_duration",
+                ],
             ] = sampling_function(term_pop)
 
         return pregnancy_outcomes

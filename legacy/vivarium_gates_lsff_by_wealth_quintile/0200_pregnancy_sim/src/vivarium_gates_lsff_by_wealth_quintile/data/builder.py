@@ -50,7 +50,12 @@ def open_artifact(output_path: Path, location: str) -> Artifact:
 
 
 def load_and_write_data(
-    artifact: Artifact, key: str, location: str, mean_draw: bool, vehicle: str, replace: bool
+    artifact: Artifact,
+    key: str,
+    location: str,
+    mean_draw: bool,
+    vehicle: str,
+    replace: bool,
 ):
     """Loads data and writes it to the artifact if not already present.
 

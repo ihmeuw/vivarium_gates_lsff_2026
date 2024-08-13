@@ -12,13 +12,12 @@ from vivarium.framework.lookup import LookupTable
 from vivarium.framework.population import SimulantData
 from vivarium.framework.time import get_time_stamp
 from vivarium.framework.values import Pipeline
-from vivarium_public_health.risks import RiskEffect
-from vivarium_public_health.utilities import get_lookup_columns
-
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
     data_keys,
     data_values,
 )
+from vivarium_public_health.risks import RiskEffect
+from vivarium_public_health.utilities import get_lookup_columns
 
 
 class MaternalIronConsumptionFromFortification(Component):
@@ -70,12 +69,12 @@ class MaternalIronConsumptionFromFortification(Component):
             new_births = pop_data.user_data["new_births"]
             new_births.index = pop_data.index
 
-            new_simulants["maternal_iron_consumption_from_fortification_mcg"] = new_births[
-                "iron_consumption_from_fortification_mcg"
-            ].copy()
-            new_simulants["baseline_maternal_iron_consumption_from_fortification_mcg"] = (
-                new_births["baseline_iron_consumption_from_fortification_mcg"].copy()
+            new_simulants["maternal_iron_consumption_from_fortification_mcg"] = (
+                new_births["iron_consumption_from_fortification_mcg"].copy()
             )
+            new_simulants[
+                "baseline_maternal_iron_consumption_from_fortification_mcg"
+            ] = new_births["baseline_iron_consumption_from_fortification_mcg"].copy()
 
         self.population_view.update(new_simulants)
 

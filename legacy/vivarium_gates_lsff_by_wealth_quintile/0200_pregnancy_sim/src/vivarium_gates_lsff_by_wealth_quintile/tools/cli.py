@@ -17,7 +17,9 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
     "--location",
     default="all",
     show_default=True,
-    type=click.Choice(metadata.LOCATIONS + [l.lower() for l in metadata.LOCATIONS] + ["all"]),
+    type=click.Choice(
+        metadata.LOCATIONS + [l.lower() for l in metadata.LOCATIONS] + ["all"]
+    ),
     help=(
         "Location for which to make an artifact. Note: prefer building archives on the cluster.\n"
         'If you specify location "all" you must be on a cluster node.'
@@ -32,7 +34,10 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
     help="Specify an output directory. Directory must exist.",
 )
 @click.option(
-    "-a", "--append", is_flag=True, help="Append to the artifact instead of overwriting."
+    "-a",
+    "--append",
+    is_flag=True,
+    help="Append to the artifact instead of overwriting.",
 )
 @click.option("-r", "--replace-keys", multiple=True, help="Specify keys to overwrite")
 @click.option("-v", "verbose", count=True, help="Configure logging verbosity.")

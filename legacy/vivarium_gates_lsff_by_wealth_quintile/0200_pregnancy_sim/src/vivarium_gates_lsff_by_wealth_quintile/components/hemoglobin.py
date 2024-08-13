@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import scipy.stats
-from lsff_utils import hemoglobin_distribution
 from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
@@ -11,6 +10,7 @@ from vivarium.framework.population import SimulantData
 from vivarium.framework.randomness import RESIDUAL_CHOICE
 from vivarium_public_health.utilities import get_lookup_columns
 
+from lsff_utils import hemoglobin_distribution
 from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
     data_values,
@@ -125,7 +125,9 @@ class Hemoglobin(Component):
             requires_values=["hemoglobin.exposure"],
             requires_columns=get_lookup_columns(
                 [
-                    self.lookup_tables["maternal_disorders_population_attributable_fraction"],
+                    self.lookup_tables[
+                        "maternal_disorders_population_attributable_fraction"
+                    ],
                     self.lookup_tables["maternal_disorders_relative_risk"],
                 ]
             ),
@@ -196,14 +198,18 @@ class Hemoglobin(Component):
         hemoglobin_level = self.hemoglobin(index)
         rr = self.lookup_tables["maternal_disorders_relative_risk"](index)
         ## annoyingly formatted
-        paf = self.lookup_tables["maternal_disorders_population_attributable_fraction"](index)
+        paf = self.lookup_tables["maternal_disorders_population_attributable_fraction"](
+            index
+        )
         tmrel = TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS
         per_simulant_exposure = (tmrel - hemoglobin_level).clip(lower=0) / RR_SCALAR
         per_simulant_rr = rr**per_simulant_exposure
         maternal_disorder_probability *= (1 - paf) * per_simulant_rr
         return maternal_disorder_probability.clip(upper=1)
 
-    def adjust_maternal_hemorrhage_proportion(self, index, maternal_hemorrhage_probability):
+    def adjust_maternal_hemorrhage_proportion(
+        self, index, maternal_hemorrhage_probability
+    ):
         paf = self.lookup_tables["hemorrhage_population_attributable_fraction"](index)
         rr = self.lookup_tables["hemorrhage_relative_risk"](index)
         hemoglobin = self.hemoglobin(index)
@@ -251,7 +257,9 @@ class Anemia(Component):
             "anemia_levels",
             source=self.anemia_source,
             requires_values=["hemoglobin.exposure"],
-            requires_columns=get_lookup_columns([self.lookup_tables["anemia_thresholds"]]),
+            requires_columns=get_lookup_columns(
+                [self.lookup_tables["anemia_thresholds"]]
+            ),
         )
 
         self.disability_weight = builder.value.register_value_producer(
@@ -303,7 +311,9 @@ class Anemia(Component):
         return disability_weight
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        pop_update = pd.DataFrame({"anemia_status_at_birth": "invalid"}, index=pop_data.index)
+        pop_update = pd.DataFrame(
+            {"anemia_status_at_birth": "invalid"}, index=pop_data.index
+        )
         self.population_view.update(pop_update)
 
     def on_time_step(self, event: Event):

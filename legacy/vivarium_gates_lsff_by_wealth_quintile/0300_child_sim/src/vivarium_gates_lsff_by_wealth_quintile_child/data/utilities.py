@@ -14,18 +14,6 @@ from gbd_mapping import (
     risk_factors,
 )
 from vivarium.framework.artifact import EntityKey
-from vivarium_gbd_access import constants as gbd_constants
-from vivarium_gbd_access import gbd
-from vivarium_gbd_access.utilities import get_draws, query
-from vivarium_inputs import globals as vi_globals
-from vivarium_inputs import utilities as vi_utils
-from vivarium_inputs import utility_data
-from vivarium_inputs.mapping_extension import (
-    AlternativeRiskFactor,
-    alternative_risk_factors,
-)
-from vivarium_inputs.validation.raw import check_metadata
-
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
     data_keys,
     data_values,
@@ -42,6 +30,17 @@ from vivarium_gates_lsff_by_wealth_quintile_child.constants.metadata import (  #
 from vivarium_gates_lsff_by_wealth_quintile_child.utilities import (
     get_random_variable_draws,
 )
+from vivarium_gbd_access import constants as gbd_constants
+from vivarium_gbd_access import gbd
+from vivarium_gbd_access.utilities import get_draws, query
+from vivarium_inputs import globals as vi_globals
+from vivarium_inputs import utilities as vi_utils
+from vivarium_inputs import utility_data
+from vivarium_inputs.mapping_extension import (
+    AlternativeRiskFactor,
+    alternative_risk_factors,
+)
+from vivarium_inputs.validation.raw import check_metadata
 
 
 def get_data(
@@ -59,7 +58,9 @@ def get_data(
     # from interface.get_measure
     # from vivarium_inputs.core.get_data
     location_id = (
-        utility_data.get_location_id(location) if isinstance(location, str) else location
+        utility_data.get_location_id(location)
+        if isinstance(location, str)
+        else location
     )
 
     # from vivarium_inputs.core.get_{measure}
@@ -129,14 +130,20 @@ def process_exposure(
             lower=vi_globals.MINIMUM_EXPOSURE_VALUE
         )
 
-    if entity.distribution in ["dichotomous", "ordered_polytomous", "unordered_polytomous"]:
+    if entity.distribution in [
+        "dichotomous",
+        "ordered_polytomous",
+        "unordered_polytomous",
+    ]:
         tmrel_cat = utility_data.get_tmrel_category(entity)
         exposed = data[data.parameter != tmrel_cat]
         unexposed = data[data.parameter == tmrel_cat]
         #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
         data = pd.concat(
             [
-                normalize_age_and_years(exposed, fill_value=0, gbd_release_id=gbd_release_id),
+                normalize_age_and_years(
+                    exposed, fill_value=0, gbd_release_id=gbd_release_id
+                ),
                 normalize_age_and_years(
                     unexposed, fill_value=1, gbd_release_id=gbd_release_id
                 ),
@@ -145,9 +152,13 @@ def process_exposure(
         )
 
         # normalize so all categories sum to 1
-        cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ["parameter"]))
+        cols = list(
+            set(data.columns).difference(vi_globals.DRAW_COLUMNS + ["parameter"])
+        )
         data = data.set_index(cols + ["parameter"])
-        sums = data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum().reindex(index=data.index)
+        sums = (
+            data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum().reindex(index=data.index)
+        )
         data = data.divide(sums).reset_index()
     else:
         data = vi_utils.normalize(data, fill_value=0)
@@ -193,7 +204,9 @@ def process_gbd_2021_relative_risk(
     morbidity = data.morbidity == 1
     mortality = data.mortality == 1
     data.loc[morbidity & ~mortality, "affected_measure"] = "incidence_rate"
-    data.loc[~morbidity & mortality, "affected_measure"] = "cause_specific_mortality_rate"
+    data.loc[~morbidity & mortality, "affected_measure"] = (
+        "cause_specific_mortality_rate"
+    )
     data = filter_relative_risk_to_cause_restrictions(data)
 
     data = data.filter(
@@ -212,7 +225,11 @@ def process_gbd_2021_relative_risk(
         .reset_index(drop=True)
     )
 
-    if entity.distribution in ["dichotomous", "ordered_polytomous", "unordered_polytomous"]:
+    if entity.distribution in [
+        "dichotomous",
+        "ordered_polytomous",
+        "unordered_polytomous",
+    ]:
         tmrel_cat = utility_data.get_tmrel_category(entity)
         tmrel_mask = data.parameter == tmrel_cat
         data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS] = data.loc[
@@ -275,7 +292,11 @@ def process_relative_risk(
         .reset_index(drop=True)
     )
 
-    if entity.distribution in ["dichotomous", "ordered_polytomous", "unordered_polytomous"]:
+    if entity.distribution in [
+        "dichotomous",
+        "ordered_polytomous",
+        "unordered_polytomous",
+    ]:
         tmrel_cat = utility_data.get_tmrel_category(entity)
         tmrel_mask = data.parameter == tmrel_cat
         data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS] = data.loc[
@@ -341,9 +362,13 @@ def _normalize_age(
     cols_to_fill: List[str],
     age_group_ids: List[int] = None,
 ) -> pd.DataFrame:
-    data_ages = set(data.age_group_id.unique()) if "age_group_id" in data.columns else set()
+    data_ages = (
+        set(data.age_group_id.unique()) if "age_group_id" in data.columns else set()
+    )
     gbd_ages = (
-        set(utility_data.get_age_group_ids()) if not age_group_ids else set(age_group_ids)
+        set(utility_data.get_age_group_ids())
+        if not age_group_ids
+        else set(age_group_ids)
     )
 
     if not data_ages:
@@ -398,8 +423,12 @@ def validate_and_reshape_gbd_data(
 
     # validate_for_simulation(data, entity, key.measure, location, years=validation_years,
     #                         age_bins=get_gbd_age_bins(age_group_ids))
-    data = vi_utils.split_interval(data, interval_column="age", split_column_prefix="age")
-    data = vi_utils.split_interval(data, interval_column="year", split_column_prefix="year")
+    data = vi_utils.split_interval(
+        data, interval_column="age", split_column_prefix="age"
+    )
+    data = vi_utils.split_interval(
+        data, interval_column="year", split_column_prefix="year"
+    )
     data = vi_utils.sort_hierarchical_data(data).droplevel("location")
     return data
 
@@ -420,7 +449,9 @@ def _scrub_age(data: pd.DataFrame, age_group_ids: List[int] = None) -> pd.DataFr
         age_bins = get_gbd_age_bins(age_group_ids).set_index("age_group_id")
         id_levels = data.index.levels[data.index.names.index("age_group_id")]
         interval_levels = [
-            pd.Interval(age_bins.age_start[age_id], age_bins.age_end[age_id], closed="left")
+            pd.Interval(
+                age_bins.age_start[age_id], age_bins.age_end[age_id], closed="left"
+            )
             for age_id in id_levels
         ]
         data.index = data.index.rename("age", "age_group_id").set_levels(
@@ -446,8 +477,15 @@ def get_gbd_age_bins(age_group_ids: List[int] = None) -> pd.DataFrame:
 
     # from utility_data.get_age_bins()
     age_bins = raw_age_bins[
-        ["age_group_id", "age_group_name", "age_group_years_start", "age_group_years_end"]
-    ].rename(columns={"age_group_years_start": "age_start", "age_group_years_end": "age_end"})
+        [
+            "age_group_id",
+            "age_group_name",
+            "age_group_years_start",
+            "age_group_years_end",
+        ]
+    ].rename(
+        columns={"age_group_years_start": "age_start", "age_group_years_end": "age_end"}
+    )
 
     # set age start for birth prevalence age bin to -1 to avoid validation issues
     age_bins.loc[age_bins["age_end"] == 0.0, "age_start"] = -1.0
@@ -476,7 +514,9 @@ def filter_relative_risk_to_cause_restrictions(data: pd.DataFrame) -> pd.DataFra
     return data
 
 
-def get_intervals_from_categories(lbwsg_type: str, categories: Dict[str, str]) -> pd.Series:
+def get_intervals_from_categories(
+    lbwsg_type: str, categories: Dict[str, str]
+) -> pd.Series:
     if lbwsg_type == "low_birth_weight":
         category_endpoints = pd.Series(
             {
@@ -508,7 +548,10 @@ def parse_low_birth_weight_description(description: str) -> pd.Interval:
     endpoints = pd.Interval(
         *[
             float(val)
-            for val in description.split(", [")[1].split(")")[0].split("]")[0].split(", ")
+            for val in description.split(", [")[1]
+            .split(")")[0]
+            .split("]")[0]
+            .split(", ")
         ]
     )
     return endpoints
@@ -520,7 +563,10 @@ def parse_short_gestation_description(description: str) -> pd.Interval:
     endpoints = pd.Interval(
         *[
             float(val)
-            for val in description.split("- [")[1].split(")")[0].split("+")[0].split(", ")
+            for val in description.split("- [")[1]
+            .split(")")[0]
+            .split("+")[0]
+            .split(", ")
         ]
     )
     return endpoints
@@ -685,14 +731,17 @@ def get_treatment_efficacy(
     ]
 
     tmrel_efficacy = efficacy[
-        efficacy.index.get_level_values("parameter") == data_keys.MAM_TREATMENT.TMREL_CATEGORY
+        efficacy.index.get_level_values("parameter")
+        == data_keys.MAM_TREATMENT.TMREL_CATEGORY
     ].droplevel("parameter")
     return efficacy, tmrel_efficacy
 
 
 def get_wasting_treatment_parameter_data(parameter: str, location: str) -> pd.Series:
     """Get coverage or efficacy values for SAM or MAM treatment for all draws."""
-    draws = pd.read_csv(paths.WASTING_TREATMENT_PARAMETERS_DIR / f"{location.lower()}.csv")
+    draws = pd.read_csv(
+        paths.WASTING_TREATMENT_PARAMETERS_DIR / f"{location.lower()}.csv"
+    )
     draws = draws.query("parameter==@parameter").drop("parameter", axis=1)
     draws = draws.T.squeeze()  # transpose and convert to series
     return draws

@@ -133,9 +133,9 @@ class MaternalInterventionObserver(PublicHealthObserver):
 
     def register_observations(self, builder: Builder) -> None:
         # 2 weeks between administration and effect
-        intervention_date = get_time_stamp(builder.configuration.time.start) + pd.Timedelta(
-            days=data_values.DURATIONS.INTERVENTION_DELAY_DAYS - 2 * 7
-        )
+        intervention_date = get_time_stamp(
+            builder.configuration.time.start
+        ) + pd.Timedelta(days=data_values.DURATIONS.INTERVENTION_DELAY_DAYS - 2 * 7)
         self.register_adding_observation(
             builder=builder,
             name="intervention_count",
