@@ -14,16 +14,15 @@ from vivarium_gates_lsff_by_wealth_quintile_child.components.lbwsg import (
     LBWSGPAFCalculationRiskEffect,
     LBWSGPAFObserver,
 )
-from vivarium_gates_lsff_by_wealth_quintile_child.components.maternal_characteristics import (  # BirthWeightShiftEffect,
-    # AdditiveRiskEffect,
+from vivarium_gates_lsff_by_wealth_quintile_child.components.maternal_characteristics import (  # BirthWeightShiftEffect,; AdditiveRiskEffect,
     MaternalIronConsumptionFromFortification,
     WealthQuintile,
 )
 from vivarium_gates_lsff_by_wealth_quintile_child.components.observers import (  # BirthObserver,; MortalityHazardRateObserver,; ChildWastingObserver,
-    MortalityObserver,
-    ResultsStratifier,
-    PersonTimeObserver,
     BirthObserver,
+    MortalityObserver,
+    PersonTimeObserver,
+    ResultsStratifier,
 )
 from vivarium_gates_lsff_by_wealth_quintile_child.components.population import (
     EvenlyDistributedPopulation,

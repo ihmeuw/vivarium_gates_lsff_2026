@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 import pandas as pd
 from vivarium.framework.engine import Builder
+from vivarium.framework.results import Observer
 from vivarium_public_health.disease import DiseaseState
 from vivarium_public_health.results import COLUMNS
 from vivarium_public_health.results.disease import DiseaseObserver
@@ -13,7 +14,6 @@ from vivarium_public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
 from vivarium_public_health.utilities import to_years
-from vivarium.framework.results import Observer
 
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
     data_keys,

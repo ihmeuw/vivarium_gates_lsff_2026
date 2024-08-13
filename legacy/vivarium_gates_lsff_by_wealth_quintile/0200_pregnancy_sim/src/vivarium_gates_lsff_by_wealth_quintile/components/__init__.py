@@ -1,8 +1,5 @@
 from .hemoglobin import Anemia, Hemoglobin
-from .intervention import (
-    VehicleConsumption,
-    IronFortification,
-)
+from .intervention import IronFortification, VehicleConsumption
 from .maternal_disorders import MaternalDisorders, MaternalHemorrhage
 from .morbidity import BackgroundMorbidity
 from .mortality import MaternalMortality

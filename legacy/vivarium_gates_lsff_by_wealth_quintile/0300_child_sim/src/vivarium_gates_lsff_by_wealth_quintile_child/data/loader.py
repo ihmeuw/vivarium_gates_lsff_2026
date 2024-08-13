@@ -19,8 +19,8 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from gbd_mapping import Cause, RiskFactor, sequelae
-from scipy.interpolate import RectBivariateSpline, griddata
 from scipy import stats
+from scipy.interpolate import RectBivariateSpline, griddata
 from vivarium.framework.artifact import EntityKey
 from vivarium.framework.randomness import get_hash
 from vivarium_gbd_access import constants as gbd_constants

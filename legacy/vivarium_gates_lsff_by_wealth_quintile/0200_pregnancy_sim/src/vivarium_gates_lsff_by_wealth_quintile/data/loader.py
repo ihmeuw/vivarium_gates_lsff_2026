@@ -13,13 +13,15 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 
+from functools import cache
+
 import gbd_mapping
 import numpy as np
 import pandas as pd
 import vivarium_inputs.validation.sim as validation
 from joblib import Memory
+from lsff_utils import hemoglobin_distribution
 from scipy import integrate, stats
-from functools import cache
 from vivarium.framework.artifact import EntityKey
 from vivarium.framework.randomness import get_hash
 from vivarium_gbd_access import gbd
@@ -39,7 +41,6 @@ from vivarium_gates_lsff_by_wealth_quintile.constants import (
 from vivarium_gates_lsff_by_wealth_quintile.data import extra_gbd, sampling
 from vivarium_gates_lsff_by_wealth_quintile.data.utilities import get_entity
 from vivarium_gates_lsff_by_wealth_quintile.utilities import get_random_variable_draws
-from lsff_utils import hemoglobin_distribution
 
 ##Note: need to remove all instances where we limit the size of the data manually. This will be done when RT updates in the input files.
 

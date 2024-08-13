@@ -15,7 +15,10 @@ from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import RiskEffect
 from vivarium_public_health.utilities import get_lookup_columns
 
-from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys, data_values
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
+    data_keys,
+    data_values,
+)
 
 
 class MaternalIronConsumptionFromFortification(Component):

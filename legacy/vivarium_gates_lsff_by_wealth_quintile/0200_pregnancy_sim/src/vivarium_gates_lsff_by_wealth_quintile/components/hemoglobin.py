@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import scipy.stats
+from lsff_utils import hemoglobin_distribution
 from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
@@ -24,7 +25,6 @@ from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import (
     SEVERE_ANEMIA_AMONG_PREGNANT_WOMEN_THRESHOLD,
     TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS,
 )
-from lsff_utils import hemoglobin_distribution
 
 
 class Hemoglobin(Component):
