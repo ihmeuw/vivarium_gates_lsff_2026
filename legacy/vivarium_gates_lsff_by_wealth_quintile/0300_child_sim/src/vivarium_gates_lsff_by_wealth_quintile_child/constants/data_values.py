@@ -178,4 +178,3 @@ PIPELINES = __Pipelines()
 VEHICLES = {"India": "rice", "Nigeria": "bouillon"}
 
 WEALTH_QUINTILES = ["lowest", "second", "middle", "fourth", "highest"]
-

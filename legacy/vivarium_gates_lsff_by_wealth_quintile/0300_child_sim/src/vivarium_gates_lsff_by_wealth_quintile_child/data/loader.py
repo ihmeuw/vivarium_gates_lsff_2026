@@ -1350,7 +1350,7 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
 
     import pathlib
 
-    output_dir = pathlib.Path("./lbwsg_pafs") / location.lower().replace(' ', '_')
+    output_dir = pathlib.Path("./lbwsg_pafs") / location.lower().replace(" ", "_")
 
     df = pd.read_parquet(
         output_dir
@@ -1387,7 +1387,9 @@ def load_birth_weight_wealth_disparities(
     key: str, location: str, mean_draw: bool
 ) -> pd.DataFrame:
     disparities = pd.read_csv(
-        paths.DATA_PREP_RESULTS_ROOT / "birth_weight_disparities" / (location.lower() + ".csv"),
+        paths.DATA_PREP_RESULTS_ROOT
+        / "birth_weight_disparities"
+        / (location.lower() + ".csv"),
     ).set_index(["wealth_quintile"])
 
     return disparities

@@ -194,7 +194,7 @@ class BirthObserver(Observer):
         self.birth_weight_column_name = "birth_weight_exposure"
         self.gestational_age_column_name = "gestational_age_exposure"
         self.low_birth_weight_limit = 2500  # grams
-    
+
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         super().setup(builder)
@@ -322,6 +322,7 @@ class ChildWastingObserver(DiseaseObserver):
         results.rename(columns={sub_entity: COLUMNS.SUB_ENTITY}, inplace=True)
         return results
 
+
 class PersonTimeObserver(Observer):
     def register_observations(self, builder: Builder) -> None:
         builder.results.register_adding_observation(
@@ -330,6 +331,7 @@ class PersonTimeObserver(Observer):
             when="time_step_prepare",
             aggregator=partial(aggregate_person_time, builder.time.step_size()()),
         )
+
 
 def aggregate_person_time(step_size, df: pd.DataFrame) -> float:
     return len(df) * to_years(step_size)

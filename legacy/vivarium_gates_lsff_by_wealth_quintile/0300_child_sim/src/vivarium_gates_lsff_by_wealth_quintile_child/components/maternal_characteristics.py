@@ -80,13 +80,11 @@ class MaternalIronConsumptionFromFortification(Component):
         pop = self.population_view.get(index)
 
         # Delete the baseline effects of fortification
-        exposure -= (
-            pop.baseline_maternal_iron_consumption_from_fortification_mcg
-            * (self.birth_weight_effect_size_per_mg_intake / 1_000) # convert mg to mcg
-        )
-        exposure += (
-            pop.maternal_iron_consumption_from_fortification_mcg
-            * (self.birth_weight_effect_size_per_mg_intake / 1_000)
+        exposure -= pop.baseline_maternal_iron_consumption_from_fortification_mcg * (
+            self.birth_weight_effect_size_per_mg_intake / 1_000
+        )  # convert mg to mcg
+        exposure += pop.maternal_iron_consumption_from_fortification_mcg * (
+            self.birth_weight_effect_size_per_mg_intake / 1_000
         )
 
         return exposure
@@ -136,7 +134,9 @@ class WealthQuintile(Component):
             new_births = pop_data.user_data["new_births"]
             new_births.index = pop_data.index
 
-            new_simulants["wealth_quintile"] = new_births["wealth_quintile"].astype(str).copy()
+            new_simulants["wealth_quintile"] = (
+                new_births["wealth_quintile"].astype(str).copy()
+            )
 
         self.population_view.update(new_simulants)
 

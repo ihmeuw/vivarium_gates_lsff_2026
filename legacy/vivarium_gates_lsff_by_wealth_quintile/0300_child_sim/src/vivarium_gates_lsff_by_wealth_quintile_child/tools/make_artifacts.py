@@ -84,7 +84,13 @@ def build_single(
 ) -> None:
     path = Path(output_dir) / f"{sanitize_location(location)}.hdf"
     build_single_location_artifact(
-        path, location, replace_keys, mean_draw, fertility_data_path, fetch_subnationals, for_lbwsg_pafs
+        path,
+        location,
+        replace_keys,
+        mean_draw,
+        fertility_data_path,
+        fetch_subnationals,
+        for_lbwsg_pafs,
     )
 
 
@@ -303,7 +309,13 @@ def build_single_location_artifact(
                 continue
             logger.info(f"   - Loading and writing {key} data")
             builder.load_and_write_data(
-                artifact, key, location, key in replace_keys, mean_draw, fertility_data_path, fetch_subnationals
+                artifact,
+                key,
+                location,
+                key in replace_keys,
+                mean_draw,
+                fertility_data_path,
+                fetch_subnationals,
             )
 
     logger.info(f"**Done building -- {location}**")

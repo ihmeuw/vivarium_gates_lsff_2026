@@ -100,5 +100,6 @@ def make_artifacts(
         for_lbwsg_pafs,
     )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     make_artifacts()

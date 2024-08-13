@@ -149,33 +149,36 @@ class IronFortification(Component):
 
         self.baseline_any_coverage = self.build_lookup_table(
             builder,
-            drop_vehicle(builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE)),
+            drop_vehicle(
+                builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE)
+            ),
             value_columns=["value"],
         )
 
         self.baseline_full_coverage = self.build_lookup_table(
             builder,
-            drop_vehicle(builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE)),
+            drop_vehicle(
+                builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE)
+            ),
             value_columns=["value"],
         )
 
-
         mean = drop_vehicle(
-            builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN)
+            builder.data.load(
+                data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN
+            )
         )
-        mean = (
-            mean
-            .set_index([c for c in mean.columns if c != "value"])["value"]
-            .rename("mean")
+        mean = mean.set_index([c for c in mean.columns if c != "value"])["value"].rename(
+            "mean"
         )
         stddev = drop_vehicle(
-            builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD)
+            builder.data.load(
+                data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD
+            )
         )
-        stddev = (
-            stddev
-            .set_index([c for c in stddev.columns if c != "value"])["value"]
-            .rename("stddev")
-        )
+        stddev = stddev.set_index([c for c in stddev.columns if c != "value"])[
+            "value"
+        ].rename("stddev")
         self.distribution_parameters = self.build_lookup_table(
             builder,
             pd.concat([mean, stddev], axis=1).reset_index(),
@@ -199,9 +202,7 @@ class IronFortification(Component):
 
         self.effectiveness = self.build_lookup_table(
             builder,
-            drop_vehicle(
-                builder.data.load(effectiveness_key)
-            ).assign(sex="Female"),
+            drop_vehicle(builder.data.load(effectiveness_key)).assign(sex="Female"),
             value_columns=["value"],
         )
 
@@ -210,7 +211,6 @@ class IronFortification(Component):
             .set_index("vehicle_name")
             .value.loc[vehicle]
         )
-
 
         self.baseline_fortification_mcg_per_gram = self.build_lookup_table(
             builder,
@@ -252,14 +252,17 @@ class IronFortification(Component):
             pop_data.index,
             choices=[
                 1.0,
-                -1.0, # Sentinel for partial
+                -1.0,  # Sentinel for partial
                 0.0,
             ],
-            p=pd.concat([
-                baseline_full_prob,
-                baseline_any_prob,
-                pd.Series(RESIDUAL_CHOICE, index=pop_data.index),
-            ], axis=1),
+            p=pd.concat(
+                [
+                    baseline_full_prob,
+                    baseline_any_prob,
+                    pd.Series(RESIDUAL_CHOICE, index=pop_data.index),
+                ],
+                axis=1,
+            ),
             additional_key="baseline_fortification_status",
         )
         partial = pop_data.index[baseline_fortification == -1]
@@ -286,7 +289,9 @@ class IronFortification(Component):
                 baseline_full_prob + baseline_any_prob * distribution_parameters["mean"]
             )
 
-            target_coverage = self.intervention_coverage(pop_data.index) * self.fortifiability(pop_data.index)
+            target_coverage = self.intervention_coverage(
+                pop_data.index
+            ) * self.fortifiability(pop_data.index)
             additional_coverage = target_coverage - current_coverage
             assert (additional_coverage >= 0).all()
 
@@ -299,8 +304,8 @@ class IronFortification(Component):
                 additional_key="newly_covered",
             )
 
-            pop_update.loc[intervention_covered, "iron_fortification"] = 1.0  
-        
+            pop_update.loc[intervention_covered, "iron_fortification"] = 1.0
+
         # Not all coverage is effective
         ineffective = self.randomness.filter_for_probability(
             pop_data.index,
@@ -321,21 +326,27 @@ class IronFortification(Component):
 
         pop_update["baseline_iron_consumption_from_fortification_mcg"] = (
             self._calculate_iron_consumption(
-                vehicle_consumption, pop_update.baseline_iron_fortification, baseline_concentration_mcg_per_gram
+                vehicle_consumption,
+                pop_update.baseline_iron_fortification,
+                baseline_concentration_mcg_per_gram,
             )
         )
 
         if self.scenario == "intervention":
-            intervention_concentration_mcg_per_gram = self.intervention_fortification_mcg_per_gram(
-                pop_data.index
+            intervention_concentration_mcg_per_gram = (
+                self.intervention_fortification_mcg_per_gram(pop_data.index)
             )
-            pop_update["iron_consumption_from_fortification_mcg"] = self._calculate_iron_consumption(
-                vehicle_consumption,
-                pop_update.iron_fortification,
-                intervention_concentration_mcg_per_gram,
+            pop_update["iron_consumption_from_fortification_mcg"] = (
+                self._calculate_iron_consumption(
+                    vehicle_consumption,
+                    pop_update.iron_fortification,
+                    intervention_concentration_mcg_per_gram,
+                )
             )
         else:
-            pop_update["iron_consumption_from_fortification_mcg"] = pop_update["baseline_iron_consumption_from_fortification_mcg"].copy()
+            pop_update["iron_consumption_from_fortification_mcg"] = pop_update[
+                "baseline_iron_consumption_from_fortification_mcg"
+            ].copy()
 
         self.population_view.update(pop_update)
 
@@ -363,6 +374,4 @@ class IronFortification(Component):
     def _calculate_iron_consumption(
         self, vehicle_consumption, fortification, concentration_mcg_per_gram
     ):
-        return (
-            fortification * vehicle_consumption * concentration_mcg_per_gram
-        )
+        return fortification * vehicle_consumption * concentration_mcg_per_gram

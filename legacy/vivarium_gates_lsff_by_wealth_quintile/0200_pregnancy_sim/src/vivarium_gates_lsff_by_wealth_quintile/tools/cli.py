@@ -45,7 +45,7 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
 @click.option(
     "--vehicle",
     "vehicle",
-    type=click.Choice(["rice", "bouillon"]), # TODO
+    type=click.Choice(["rice", "bouillon"]),  # TODO
 )
 @click.option(
     "--pdb",
@@ -66,7 +66,16 @@ def make_artifacts(
     location = location.title()  # HACK
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
-    main(location, output_dir, append or replace_keys, replace_keys, mean_draw, vehicle, verbose)
+    main(
+        location,
+        output_dir,
+        append or replace_keys,
+        replace_keys,
+        mean_draw,
+        vehicle,
+        verbose,
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     make_artifacts()

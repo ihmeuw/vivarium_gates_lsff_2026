@@ -65,7 +65,9 @@ CSV_DATA_NAMES = {
 
 
 @cache
-def get_data(lookup_key: str, location: str, mean_draw: bool, vehicle: str = None) -> pd.DataFrame:
+def get_data(
+    lookup_key: str, location: str, mean_draw: bool, vehicle: str = None
+) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
 
     Parameters
@@ -252,10 +254,10 @@ def get_pregnancy_end_incidence(location: str, mean_draw: bool) -> pd.DataFrame:
     path = paths.DATA_PREP_RESULTS_ROOT / "pregnancy/incidence" / (location.lower() + ".csv")
     df = pd.read_csv(path)
     return (
-        df.set_index([c for c in df.columns if c != 'value'])
-            .rename(columns={"value": "draw_0"})
-            .assign(year_start=2021, year_end=2022)
-            .set_index(["year_start", "year_end"], append=True)
+        df.set_index([c for c in df.columns if c != "value"])
+        .rename(columns={"value": "draw_0"})
+        .assign(year_start=2021, year_end=2022)
+        .set_index(["year_start", "year_end"], append=True)
     )
 
 
@@ -385,13 +387,21 @@ def _distribute_by_disparities_multiplicative(
         .value
     )
     # Normalize disparities
-    disparities = disparities.div(disparities.groupby([c for c in disparities.index.names if c != 'wealth_quintile']).sum())
+    disparities = disparities.div(
+        disparities.groupby(
+            [c for c in disparities.index.names if c != "wealth_quintile"]
+        ).sum()
+    )
 
-    raw = quantity.mul(_reindex_series_onto_df_by_age_groups(quantity, disparities), axis=0).dropna(how="all")
+    raw = quantity.mul(
+        _reindex_series_onto_df_by_age_groups(quantity, disparities), axis=0
+    ).dropna(how="all")
 
     # How much we need to scale to recover the original quantities
     rescale_factor = (
-        raw.mul(_reindex_series_onto_df_by_age_groups(raw, wealth_quintile_probabilities), axis=0)
+        raw.mul(
+            _reindex_series_onto_df_by_age_groups(raw, wealth_quintile_probabilities), axis=0
+        )
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
         .sum()
         .div(quantity)
@@ -401,7 +411,10 @@ def _distribute_by_disparities_multiplicative(
 
     # We have recovered the original quantities
     assert np.allclose(
-        result.mul(_reindex_series_onto_df_by_age_groups(result, wealth_quintile_probabilities), axis=0)
+        result.mul(
+            _reindex_series_onto_df_by_age_groups(result, wealth_quintile_probabilities),
+            axis=0,
+        )
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
         .sum()
         .sort_index()
@@ -411,6 +424,7 @@ def _distribute_by_disparities_multiplicative(
 
     return result
 
+
 def _reindex_series_onto_df_by_age_groups(df, series):
     if "age_start" not in series.index.names:
         return series.align(df)[1]
@@ -418,10 +432,18 @@ def _reindex_series_onto_df_by_age_groups(df, series):
     common = list(set(df.index.names) & set(series.index.names))
     result = (
         df.reset_index()
-            .merge(series.rename("series_value").reset_index(), on=[c for c in common if c not in ("age_start", "age_end")], suffixes=("", "_series"))
-            # NOTE: Depends on a GBD age group always fitting into a disparity age group
-            .pipe(lambda df: df[(df.age_start >= df.age_start_series) & (df.age_end <= df.age_end_series)])
-            .pipe(lambda df: df.drop(columns=df.filter(like='_series').columns))
+        .merge(
+            series.rename("series_value").reset_index(),
+            on=[c for c in common if c not in ("age_start", "age_end")],
+            suffixes=("", "_series"),
+        )
+        # NOTE: Depends on a GBD age group always fitting into a disparity age group
+        .pipe(
+            lambda df: df[
+                (df.age_start >= df.age_start_series) & (df.age_end <= df.age_end_series)
+            ]
+        )
+        .pipe(lambda df: df.drop(columns=df.filter(like="_series").columns))
     )
     result = result.set_index(sorted(list(set(df.index.names) | set(series.index.names))))
     return result.series_value.rename(series.name)
@@ -757,11 +779,18 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
     disparities = pd.read_csv(
         paths.DATA_PREP_RESULTS_ROOT / disparity_path / (location.lower() + ".csv"),
     )
-    disparities = disparities.set_index([c for c in disparities.columns if c != 'value']).value
+    disparities = disparities.set_index(
+        [c for c in disparities.columns if c != "value"]
+    ).value
 
     # NOTE: Using disparities from non-pregnant 10-15 year olds!
     result = _distribute_by_disparities_multiplicative(
-        adjusted.dropna(how="all"), disparities[(disparities.index.get_level_values("pregnant") == "pregnant") | (disparities.index.get_level_values("age_end") == 15)].droplevel("pregnant"), location
+        adjusted.dropna(how="all"),
+        disparities[
+            (disparities.index.get_level_values("pregnant") == "pregnant")
+            | (disparities.index.get_level_values("age_end") == 15)
+        ].droplevel("pregnant"),
+        location,
     )
     return result.reindex(
         _demographics_with_wealth(location).droplevel("location").index
@@ -788,8 +817,13 @@ def get_hemoglobin_below_70(key: str, location: str, mean_draw: bool):
 
     for draw in result.columns:
         result[draw] = np.nan
-        full_data_index = demography.index.intersection(hemoglobin_mean_plw.index).intersection(hemoglobin_std_plw.index)
-        cdf = hemoglobin_distribution.hemoglobin_cdf_from_mean_sd(hemoglobin_mean_plw.loc[full_data_index, draw].values, hemoglobin_std_plw.loc[full_data_index, draw].values)
+        full_data_index = demography.index.intersection(
+            hemoglobin_mean_plw.index
+        ).intersection(hemoglobin_std_plw.index)
+        cdf = hemoglobin_distribution.hemoglobin_cdf_from_mean_sd(
+            hemoglobin_mean_plw.loc[full_data_index, draw].values,
+            hemoglobin_std_plw.loc[full_data_index, draw].values,
+        )
         with np.errstate(under="ignore"):
             result.loc[full_data_index, draw] = cdf([70] * len(full_data_index)).values
 
@@ -816,8 +850,8 @@ def _add_location(data, location):
 
 def load_csv_data(key: str, location: str, mean_draw: bool, vehicle: str) -> pd.DataFrame:
     name = CSV_DATA_NAMES[key]
-    if '{vehicle}' in name:
-        name = name.replace('{vehicle}', vehicle)
+    if "{vehicle}" in name:
+        name = name.replace("{vehicle}", vehicle)
     path = paths.DATA_PREP_RESULTS_ROOT / name
     if path.is_dir():
         path = path / (location.lower() + ".csv")
@@ -826,7 +860,9 @@ def load_csv_data(key: str, location: str, mean_draw: bool, vehicle: str) -> pd.
         df = df[df.sex == "Female"]
     if "pregnant" in df.columns:
         # NOTE: Using non-pregnant under-15s and over-50s!
-        df = df[(df.pregnant == "pregnant") | (df.age_end == 15) | (df.age_start == 50)].drop(columns=["pregnant"])
+        df = df[(df.pregnant == "pregnant") | (df.age_end == 15) | (df.age_start == 50)].drop(
+            columns=["pregnant"]
+        )
     return df.set_index([c for c in df.columns if c != "value"])
 
 

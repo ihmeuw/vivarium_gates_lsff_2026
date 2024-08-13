@@ -134,7 +134,9 @@ def build_artifacts(
         )
 
 
-def build_all_artifacts(output_dir: Path, verbose: int, mean_draw: bool, vehicle: str) -> None:
+def build_all_artifacts(
+    output_dir: Path, verbose: int, mean_draw: bool, vehicle: str
+) -> None:
     """Builds artifacts for all locations in parallel.
     Parameters
     ----------

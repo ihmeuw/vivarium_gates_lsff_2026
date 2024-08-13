@@ -180,10 +180,13 @@ class Hemoglobin(Component):
             distribution_parameters["mean"],
             distribution_parameters["stddev"],
         )
-        result = pd.Series(sampler(
-            pop["hemoglobin_distribution_propensity"],
-            pop["hemoglobin_percentile"],
-        ), index=idx)
+        result = pd.Series(
+            sampler(
+                pop["hemoglobin_distribution_propensity"],
+                pop["hemoglobin_percentile"],
+            ),
+            index=idx,
+        )
         assert result.notnull().all()
         return result
 
@@ -195,9 +198,7 @@ class Hemoglobin(Component):
         ## annoyingly formatted
         paf = self.lookup_tables["maternal_disorders_population_attributable_fraction"](index)
         tmrel = TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS
-        per_simulant_exposure = (
-            (tmrel - hemoglobin_level).clip(lower=0) / RR_SCALAR
-        )
+        per_simulant_exposure = (tmrel - hemoglobin_level).clip(lower=0) / RR_SCALAR
         per_simulant_rr = rr**per_simulant_exposure
         maternal_disorder_probability *= (1 - paf) * per_simulant_rr
         return maternal_disorder_probability.clip(upper=1)

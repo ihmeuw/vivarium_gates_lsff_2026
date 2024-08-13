@@ -30,6 +30,7 @@ class __Population(NamedTuple):
 
 POPULATION = __Population()
 
+
 class __Vehicle(NamedTuple):
     NAME: str = "vehicle.name"
 
@@ -41,7 +42,9 @@ class __Vehicle(NamedTuple):
     def log_name(self):
         return "vehicle"
 
+
 VEHICLE = __Vehicle()
+
 
 class __Pregnancy(NamedTuple):
     ASFR: str = "covariate.age_specific_fertility_rate.estimate"
@@ -173,8 +176,12 @@ VEHICLE_CONSUMPTION = __VehicleConsumption()
 class __IronFortification(NamedTuple):
     BASELINE_ANY_COVERAGE: str = "iron_fortification.baseline_any_coverage"
     BASELINE_FULL_COVERAGE: str = "iron_fortification.baseline_full_coverage"
-    BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: str = "iron_fortification.baseline_partial_coverage_mean"
-    BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: str = "iron_fortification.baseline_partial_coverage_sd"
+    BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN: str = (
+        "iron_fortification.baseline_partial_coverage_mean"
+    )
+    BASELINE_PARTIAL_COVERAGE_AMOUNT_SD: str = (
+        "iron_fortification.baseline_partial_coverage_sd"
+    )
     BASELINE_EFFECTIVENESS: str = "iron_fortification.baseline_effectiveness"
     BASELINE_CONCENTRATION: str = "iron_fortification.baseline_concentration"
     INTERVENTION_COVERAGE: str = "iron_fortification.intervention_coverage"
