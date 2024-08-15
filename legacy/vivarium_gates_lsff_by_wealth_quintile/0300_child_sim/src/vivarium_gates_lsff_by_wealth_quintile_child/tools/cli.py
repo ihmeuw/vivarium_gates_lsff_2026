@@ -26,6 +26,12 @@ from vivarium_gates_lsff_by_wealth_quintile_child.tools import (
     ),
 )
 @click.option(
+    "--vehicle",
+    "vehicle",
+    default="rice",
+    type=str,
+)
+@click.option(
     "--national",
     "build_national",
     is_flag=True,
@@ -73,6 +79,7 @@ from vivarium_gates_lsff_by_wealth_quintile_child.tools import (
 )
 def make_artifacts(
     location: str,
+    vehicle: str,
     output_dir: str,
     append: bool,
     replace_keys: Tuple[str, ...],
@@ -94,6 +101,7 @@ def make_artifacts(
     )
     main(
         location,
+        vehicle,
         output_dir,
         append or replace_keys,
         replace_keys,

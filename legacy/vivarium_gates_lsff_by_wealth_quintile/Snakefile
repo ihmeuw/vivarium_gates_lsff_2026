@@ -2,7 +2,7 @@ from lsff_utils import config_utils
 
 configfile: "0050_config/config.yaml"
 
-config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_fortificant_vehicle_scenarios()
+config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_fortificant_vehicle_intervention_scenarios()
 
 # Use the Snakemake config as a way to pass "globals" through all Snakefiles
 

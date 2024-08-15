@@ -40,7 +40,7 @@ class MaternalIronConsumptionFromFortification(Component):
     def setup(self, builder: Builder) -> None:
         self.start_time = get_time_stamp(builder.configuration.time.start)
 
-        vehicle = data_values.VEHICLES[builder.data.load(data_keys.POPULATION.LOCATION)]
+        vehicle = builder.data.load(data_keys.IRON_FORTIFICATION.VEHICLE)
 
         self.birth_weight_effect_size_per_mg_intake = (
             builder.data.load(data_keys.IRON_FORTIFICATION.BIRTH_WEIGHT_EFFECT_SIZE)
@@ -137,7 +137,7 @@ class WealthQuintile(Component):
             new_births.index = pop_data.index
 
             new_simulants["wealth_quintile"] = (
-                new_births["wealth_quintile"].astype(str).copy()
+                new_births["wealth_quintile"].astype(int).copy()
             )
 
         self.population_view.update(new_simulants)

@@ -114,6 +114,7 @@ def get_data(
     location: Union[str, List[int]],
     mean_draw: bool,
     fertility_data_path: str = None,
+    vehicle: str = None,
     fetch_subnationals: bool = False,
 ) -> pd.DataFrame:
     """Retrieves data from an appropriate source.
@@ -133,6 +134,8 @@ def get_data(
     """
     if lookup_key == data_keys.POPULATION.FERTILITY_DATA:
         return load_fertility_data(fertility_data_path)
+    elif lookup_key == data_keys.IRON_FORTIFICATION.VEHICLE:
+        return vehicle
 
     mapping = {
         data_keys.POPULATION.LOCATION: load_population_location,

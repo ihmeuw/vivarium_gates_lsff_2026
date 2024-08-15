@@ -282,22 +282,32 @@ class IronFortification(Component):
             additional_key="baseline_fortification_status",
         )
         partial = pop_data.index[baseline_fortification == -1]
+        # NOTE: We need these even for the non-partial, for calculating additional
+        # coverage
         distribution_parameters = self.distribution_parameters(pop_data.index)
-        baseline_fortification.loc[partial] = self.randomness.sample_from_distribution(
-            partial,
-            scipy.stats.norm(
-                distribution_parameters.loc[partial]["mean"],
-                distribution_parameters.loc[partial].stddev,
-            ),
-        ).clip(0, 1)
+        if len(partial) > 0:
+            baseline_fortification.loc[partial] = self.randomness.sample_from_distribution(
+                partial,
+                scipy.stats.norm(
+                    distribution_parameters.loc[partial]["mean"],
+                    distribution_parameters.loc[partial].stddev,
+                ),
+            ).clip(0, 1)
+
         assert (baseline_fortification >= 0).all()
 
         pop_update["baseline_iron_fortification"] = baseline_fortification
-        pop_update["iron_fortification"] = pop_update[
-            "baseline_iron_fortification"
-        ].copy()
+        if self.scenario == "zero":
+            pop_update["iron_fortification"] = 0
+        elif self.scenario == "baseline":
+            pop_update["iron_fortification"] = pop_update[
+                "baseline_iron_fortification"
+            ].copy()
+        elif self.scenario == "intervention":
+            pop_update["iron_fortification"] = pop_update[
+                "baseline_iron_fortification"
+            ].copy()
 
-        if self.scenario == "intervention":
             # NOTE: There are multiple ways you could imagine this working with respect to
             # individual heterogeneity. The choice I have made here is that the intervention
             # would "max out" fortification for a subset of *simulants*.
@@ -323,6 +333,8 @@ class IronFortification(Component):
             )
 
             pop_update.loc[intervention_covered, "iron_fortification"] = 1.0
+        else:
+            raise ValueError("Unknown scenario")
 
         # Not all coverage is effective
         ineffective = self.randomness.filter_for_probability(
@@ -350,21 +362,22 @@ class IronFortification(Component):
             )
         )
 
-        if self.scenario == "intervention":
-            intervention_concentration_mcg_per_gram = (
+        if self.scenario == "zero":
+            concentration_mcg_per_gram = 0
+        elif self.scenario == "baseline":
+            concentration_mcg_per_gram = baseline_concentration_mcg_per_gram
+        elif self.scenario == "intervention":
+            concentration_mcg_per_gram = (
                 self.intervention_fortification_mcg_per_gram(pop_data.index)
             )
-            pop_update["iron_consumption_from_fortification_mcg"] = (
-                self._calculate_iron_consumption(
-                    vehicle_consumption,
-                    pop_update.iron_fortification,
-                    intervention_concentration_mcg_per_gram,
-                )
+
+        pop_update["iron_consumption_from_fortification_mcg"] = (
+            self._calculate_iron_consumption(
+                vehicle_consumption,
+                pop_update.iron_fortification,
+                concentration_mcg_per_gram,
             )
-        else:
-            pop_update["iron_consumption_from_fortification_mcg"] = pop_update[
-                "baseline_iron_consumption_from_fortification_mcg"
-            ].copy()
+        )
 
         self.population_view.update(pop_update)
 

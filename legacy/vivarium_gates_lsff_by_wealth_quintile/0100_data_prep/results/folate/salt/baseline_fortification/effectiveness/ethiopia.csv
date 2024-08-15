@@ -1,6 +1,6 @@
 vehicle_name,wealth_quintile,value
-salt,fourth,0.8
-salt,highest,0.8
-salt,lowest,0.8
-salt,middle,0.8
-salt,second,0.8
+salt,1,0.8
+salt,2,0.8
+salt,3,0.8
+salt,4,0.8
+salt,5,0.8

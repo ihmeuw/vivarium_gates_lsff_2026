@@ -82,7 +82,7 @@ location_vehicle_fortificant_specific_data_needs = [
     "baseline_fortification/concentration",
 ]
 
-location_vehicle_fortificant_scenario_specific_data_needs = [
+location_vehicle_fortificant_intervention_scenario_specific_data_needs = [
     "intervention_fortification/any_coverage",
     "intervention_fortification/effectiveness",
     "intervention_fortification/concentration",
@@ -109,9 +109,9 @@ for (location, vehicle, fortificant) in config_utils.get_configured_combos(["loc
         else:
             extracted_output_files.append(file_name)
 
-for (location, vehicle, fortificant, scenario) in config_utils.get_configured_combos(["location", "vehicle", "fortificant", "scenario"]):
-    for data_need in location_vehicle_fortificant_scenario_specific_data_needs:
-        file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{scenario}/{data_need}/{location}.csv"
+for (location, vehicle, fortificant, intervention_scenario) in config_utils.get_configured_combos(["location", "vehicle", "fortificant", "intervention_scenario"]):
+    for data_need in location_vehicle_fortificant_intervention_scenario_specific_data_needs:
+        file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{intervention_scenario}/{data_need}/{location}.csv"
         extracted_output_files.append(file_name)
 
 
@@ -170,8 +170,8 @@ rule calculate_effective_coverage_nigeria:
         [
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/nigeria.csv",
         ] + [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{scenario}/intervention_fortification/effective_coverage/nigeria.csv"
-            for scenario in config["custom_intervention_scenarios"].get("nigeria", ["intervention"])
+            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/nigeria.csv"
+            for intervention_scenario in config["custom_intervention_scenarios"].get("nigeria", ["intervention"])
         ]
     shell:
         f"""
@@ -192,8 +192,8 @@ rule calculate_effective_coverage_india:
         [
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/india.csv",
         ] + [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{scenario}/intervention_fortification/effective_coverage/india.csv"
-            for scenario in config["custom_intervention_scenarios"].get("india", ["intervention"])
+            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/india.csv"
+            for intervention_scenario in config["custom_intervention_scenarios"].get("india", ["intervention"])
         ]
     shell:
         f"""
@@ -214,8 +214,8 @@ rule calculate_effective_coverage_ethiopia:
         [
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/ethiopia.csv",
         ] + [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{scenario}/intervention_fortification/effective_coverage/ethiopia.csv"
-            for scenario in config["custom_intervention_scenarios"].get("ethiopia", ["intervention"])
+            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/ethiopia.csv"
+            for intervention_scenario in config["custom_intervention_scenarios"].get("ethiopia", ["intervention"])
         ]
     shell:
         f"""

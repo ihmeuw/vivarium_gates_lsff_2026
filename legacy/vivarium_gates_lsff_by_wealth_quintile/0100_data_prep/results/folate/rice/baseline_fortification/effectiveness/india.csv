@@ -1,6 +1,6 @@
 vehicle_name,wealth_quintile,value
-rice,fourth,0.8
-rice,highest,0.8
-rice,lowest,0.8
-rice,middle,0.8
-rice,second,0.8
+rice,1,0.8
+rice,2,0.8
+rice,3,0.8
+rice,4,0.8
+rice,5,0.8

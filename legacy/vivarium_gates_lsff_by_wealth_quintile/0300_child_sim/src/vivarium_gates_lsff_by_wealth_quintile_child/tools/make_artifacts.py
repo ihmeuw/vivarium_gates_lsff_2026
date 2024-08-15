@@ -74,6 +74,7 @@ def check_for_existing(
 
 def build_single(
     location: str,
+    vehicle: str,
     output_dir: str,
     replace_keys: Tuple,
     mean_draw: bool,
@@ -85,6 +86,7 @@ def build_single(
     build_single_location_artifact(
         path,
         location,
+        vehicle,
         replace_keys,
         mean_draw,
         fertility_data_path,
@@ -95,6 +97,7 @@ def build_single(
 
 def build_artifacts(
     location: str,
+    vehicle: str,
     output_dir: str,
     append: bool,
     replace_keys: Tuple,
@@ -137,6 +140,7 @@ def build_artifacts(
     if location in metadata.LOCATIONS:
         build_single(
             location,
+            vehicle,
             output_dir,
             replace_keys,
             mean_draw,
@@ -155,6 +159,7 @@ def build_artifacts(
             for loc in metadata.LOCATIONS:
                 build_single(
                     loc,
+                    vehicle,
                     output_dir,
                     replace_keys,
                     mean_draw,
@@ -253,6 +258,7 @@ def build_all_artifacts(
 def build_single_location_artifact(
     path: Union[str, Path],
     location: str,
+    vehicle: str,
     replace_keys: Tuple = (),
     mean_draw: bool = True,
     fertility_data_path: str = None,
@@ -311,6 +317,7 @@ def build_single_location_artifact(
                 artifact,
                 key,
                 location,
+                vehicle,
                 key in replace_keys,
                 mean_draw,
                 fertility_data_path,

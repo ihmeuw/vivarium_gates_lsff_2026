@@ -8,6 +8,7 @@ branches:
   - intervention:
       child_scenario: 
         - 'baseline'
-      maternal_scenario: 
+      maternal_scenario:
+        - 'zero'
         - 'baseline'
         - 'intervention'

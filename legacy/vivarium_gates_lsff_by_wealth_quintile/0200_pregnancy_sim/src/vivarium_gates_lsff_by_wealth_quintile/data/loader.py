@@ -30,7 +30,7 @@ from vivarium_inputs import interface
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 
-from lsff_utils import hemoglobin_distribution
+from lsff_utils import hemoglobin_distribution, data_processing
 from vivarium_gates_lsff_by_wealth_quintile.constants import (
     data_keys,
     data_values,
@@ -402,6 +402,7 @@ def _distribute_by_disparities_multiplicative(
         )
         .reset_index()
         .melt(id_vars=["sex", "age_start", "age_end"], var_name="wealth_quintile")
+        .assign(wealth_quintile=lambda df: df.wealth_quintile.astype(int))
         .set_index(["sex", "age_start", "age_end", "wealth_quintile"])
         .value
     )
@@ -518,7 +519,7 @@ def _demographics_with_wealth(location: str) -> pd.DataFrame:
     return (
         demographic_dimensions.assign(key=1)
         .merge(
-            pd.DataFrame({"wealth_quintile": data_values.WEALTH_QUINTILES, "key": 1}),
+            pd.DataFrame({"wealth_quintile": data_processing.WEALTH_QUINTILES, "key": 1}),
             on="key",
         )
         .drop(columns=["key"])

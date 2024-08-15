@@ -50,7 +50,7 @@ configuration:
             day: 31
         step_size: 7 # Days
     population:
-        population_size: 20_000
+        population_size: 50_000
         initialization_age_min: 10
         initialization_age_max: 54
         include_sex: "Female"

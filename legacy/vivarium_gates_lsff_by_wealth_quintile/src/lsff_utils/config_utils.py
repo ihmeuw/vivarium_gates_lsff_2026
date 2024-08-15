@@ -3,12 +3,18 @@ import pathlib
 import pandas as pd
 import yaml
 
-
-def get_location_fortificant_vehicle_scenarios():
+def get_config():
     config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
 
     with open(config_dir / "config.yaml") as stream:
         config = yaml.safe_load(stream)
+    
+    return config
+
+def get_location_fortificant_vehicle_intervention_scenarios():
+    config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
+
+    config = get_config()
 
     location_fortificant_vehicles = pd.read_csv(
         str(config_dir / "location_fortificant_vehicles.csv")
@@ -35,37 +41,37 @@ def get_location_fortificant_vehicle_scenarios():
         .all()
     )
 
-    location_fortificant_vehicle_scenarios = location_fortificant_vehicles[
+    location_fortificant_vehicle_intervention_scenarios = location_fortificant_vehicles[
         ~location_fortificant_vehicles.location.isin(
             config["custom_intervention_scenarios"]
         )
-    ].assign(scenario="intervention")
+    ].assign(intervention_scenario="intervention")
 
     for location, custom_intervention_scenarios in config[
         "custom_intervention_scenarios"
     ].items():
-        location_fortificant_vehicle_scenarios = pd.concat(
+        location_fortificant_vehicle_intervention_scenarios = pd.concat(
             [
-                location_fortificant_vehicle_scenarios,
+                location_fortificant_vehicle_intervention_scenarios,
                 *[
                     location_fortificant_vehicles[
                         location_fortificant_vehicles.location == location
-                    ].assign(scenario=scenario)
+                    ].assign(intervention_scenario=scenario)
                     for scenario in custom_intervention_scenarios
                 ],
             ]
         )
 
-    return location_fortificant_vehicle_scenarios
+    return location_fortificant_vehicle_intervention_scenarios
 
 
 def get_configured_combos(variables):
-    location_fortificant_vehicle_scenarios = (
-        get_location_fortificant_vehicle_scenarios()
+    location_fortificant_vehicle_intervention_scenarios = (
+        get_location_fortificant_vehicle_intervention_scenarios()
     )
     return [
         combo_tuple
-        for _, combo_tuple in location_fortificant_vehicle_scenarios[variables]
+        for _, combo_tuple in location_fortificant_vehicle_intervention_scenarios[variables]
         .drop_duplicates()
         .iterrows()
     ]

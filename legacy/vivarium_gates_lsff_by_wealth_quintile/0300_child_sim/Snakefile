@@ -48,7 +48,7 @@ rule child_artifacts:
         cd 0300_child_sim
         rm -f mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
         export PYTHONPATH=./src
-        python src/vivarium_gates_lsff_by_wealth_quintile_child/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --fertility-data-path ../0200_pregnancy_sim/sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/births.parquet --national -a --mean {'--pdb -vvv' if debug else ''}
+        python src/vivarium_gates_lsff_by_wealth_quintile_child/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} --fertility-data-path ../0200_pregnancy_sim/sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/births.parquet --national -a --mean {'--pdb -vvv' if debug else ''}
         """
 
 import glob
@@ -79,9 +79,11 @@ rule child_simulations:
         rm -rf sim_results/{{wildcards.vehicle}} || true
         sleep 5
         rm -rf sim_results/{{wildcards.vehicle}}
+        mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
+        cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
+        export PYTHONPATH=../../../src
+        {'p' if not debug else ''}simulate run ../../../src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug else '--pdb -vvv'}
         rm -f dump.rdb
-        export PYTHONPATH=./src
-        {'p' if not debug else ''}simulate run src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml {'src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o sim_results/{{wildcards.vehicle}} {'-P proj_simscience -m 10 -q all.q' if not debug else '--pdb -vvv'}
-        {'# ' if debug else ''}psimulate restart sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/* -P proj_simscience -m 5 -q all.q
-        mv sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/*/results/*.parquet sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
+        {'# ' if debug else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
+        mv ./*/results/*.parquet .
         """

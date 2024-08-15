@@ -1,13 +1,14 @@
 input_draw_count: 1
-random_seed_count: 10
+random_seed_count: 1
 
 input_draws: [0]
-random_seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+random_seeds: [0]
 
 branches:
   - intervention:
       child_scenario: 
         - 'baseline'
-      maternal_scenario: 
+      maternal_scenario:
+        - 'zero'
         - 'baseline'
         - 'intervention'

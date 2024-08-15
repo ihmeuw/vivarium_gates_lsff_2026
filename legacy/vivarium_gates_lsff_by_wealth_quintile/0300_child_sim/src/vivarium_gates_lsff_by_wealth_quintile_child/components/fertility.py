@@ -18,6 +18,7 @@ from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys
 from vivarium_public_health import utilities
+import vivarium
 
 PREGNANCY_DURATION = pd.Timedelta(days=9 * utilities.DAYS_PER_MONTH)
 
@@ -53,15 +54,21 @@ class FertilityLineList(Component):
         draw = builder.configuration.input_data.input_draw_number
         seed = builder.configuration.randomness.random_seed
 
-        birth_records = builder.data.load(
-            data_keys.POPULATION.FERTILITY_DATA
+        # HACK: cannot filter by more than one thing in the config!
+        # If we don't do this, the entire fertility line-list gets
+        # loaded into memory
+        artifact_copy = vivarium.Artifact(
+            builder.data._manager.artifact._path,
+            builder.data._manager.artifact._filter_terms + [
+                # NOTE: "input_draw" becomes "value" when loading
+                f"input_draw == {draw}",
+                f"scenario == '{scenario}'",
+                f"random_seed == {seed}"
+            ],
+        )
+        birth_records = artifact_copy.load(
+            data_keys.POPULATION.FERTILITY_DATA,
         ).reset_index()
-        # NOTE: "input_draw" becomes "value" when loading
-        birth_records = birth_records[
-            (birth_records.value == draw)
-            & (birth_records.scenario == scenario)
-            & (birth_records.random_seed == seed)
-        ]
         birth_records["birth_date"] = pd.to_datetime(birth_records["birth_date"])
         return birth_records
 

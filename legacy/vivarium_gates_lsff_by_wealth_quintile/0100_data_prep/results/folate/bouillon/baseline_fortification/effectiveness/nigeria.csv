@@ -1,6 +1,6 @@
 vehicle_name,wealth_quintile,value
-bouillon,fourth,0.8
-bouillon,highest,0.8
-bouillon,lowest,0.8
-bouillon,middle,0.8
-bouillon,second,0.8
+bouillon,1,0.8
+bouillon,2,0.8
+bouillon,3,0.8
+bouillon,4,0.8
+bouillon,5,0.8

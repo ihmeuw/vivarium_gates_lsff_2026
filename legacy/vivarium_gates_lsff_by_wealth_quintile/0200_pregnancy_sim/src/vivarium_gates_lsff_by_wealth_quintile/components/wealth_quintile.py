@@ -6,6 +6,7 @@ from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.population import SimulantData
 from vivarium_public_health.utilities import get_lookup_columns
+from lsff_utils import data_processing
 
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values
 
@@ -28,10 +29,19 @@ class WealthQuintile(Component):
     def setup(self, builder: Builder):
         self.randomness = builder.randomness.get_stream(self.name)
 
+        quintile_probabilities = builder.data.load(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES)
+        # TODO: Quintile probabilities dtypes
+        quintile_probabilities = quintile_probabilities.rename(columns={
+            '1': 1,
+            '2': 2,
+            '3': 3,
+            '4': 4,
+            '5': 5,
+        })
         quintile_probabilities = self.build_lookup_table(
             builder,
-            builder.data.load(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES),
-            value_columns=data_values.WEALTH_QUINTILES,
+            quintile_probabilities,
+            value_columns=data_processing.WEALTH_QUINTILES,
         )
 
         self.quintile_probabilities = builder.value.register_value_producer(
