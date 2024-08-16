@@ -56,10 +56,9 @@ def dalys_by_scenario_inputs(wildcards):
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
         ]
     else:
-        # Uses the india/rice results as a template to reset to 0
-        result += [r.replace('{vehicle}', 'rice').replace('{location}', 'india') for r in rescaled_pregnancy_results + rescaled_child_results + [
+        result += [
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
-        ]]
+        ]
     return result
 
 rule dalys_by_scenario:
@@ -88,8 +87,10 @@ def cases_by_scenario_inputs(wildcards):
     if "iron" in fortificants:
         result += iron_paths
     else:
-        # Uses the india/rice results as a template to reset to 0
-        result += [r.replace('{vehicle}', 'rice').replace('{location}', 'india') for r in iron_paths]
+        result += [
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
+            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
+        ]
     return result
 
 cases_by_scenario_outputs = [
