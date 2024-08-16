@@ -18,10 +18,15 @@ EXTRACTION_MAPPING = {
     "All (assumed same)": "All (assumed same)",
     "Total": "Total",
 }
-assert set(EXTRACTION_MAPPING.values()) == set(WEALTH_QUINTILES) | {"All (assumed same)", "Total"}
+assert set(EXTRACTION_MAPPING.values()) == set(WEALTH_QUINTILES) | {
+    "All (assumed same)",
+    "Total",
+}
+
 
 def recode_dhs_wealth_quintile(series):
     return series.map(DHS_MAPPING)
+
 
 def recode_extraction_wealth_quintile(series):
     return series.map(EXTRACTION_MAPPING)

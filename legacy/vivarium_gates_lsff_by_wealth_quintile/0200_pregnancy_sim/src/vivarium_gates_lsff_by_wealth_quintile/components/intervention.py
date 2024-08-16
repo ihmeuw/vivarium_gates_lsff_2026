@@ -286,13 +286,15 @@ class IronFortification(Component):
         # coverage
         distribution_parameters = self.distribution_parameters(pop_data.index)
         if len(partial) > 0:
-            baseline_fortification.loc[partial] = self.randomness.sample_from_distribution(
-                partial,
-                scipy.stats.norm(
-                    distribution_parameters.loc[partial]["mean"],
-                    distribution_parameters.loc[partial].stddev,
-                ),
-            ).clip(0, 1)
+            baseline_fortification.loc[partial] = (
+                self.randomness.sample_from_distribution(
+                    partial,
+                    scipy.stats.norm(
+                        distribution_parameters.loc[partial]["mean"],
+                        distribution_parameters.loc[partial].stddev,
+                    ),
+                ).clip(0, 1)
+            )
 
         assert (baseline_fortification >= 0).all()
 
@@ -321,7 +323,9 @@ class IronFortification(Component):
                 pop_data.index
             ) * self.fortifiability(pop_data.index)
             additional_coverage = target_coverage - current_coverage
-            assert ((additional_coverage >= 0) | np.isclose(additional_coverage, 0)).all()
+            assert (
+                (additional_coverage >= 0) | np.isclose(additional_coverage, 0)
+            ).all()
             additional_coverage = additional_coverage.clip(lower=0)
 
             intervention_covered = self.randomness.filter_for_probability(
@@ -368,8 +372,8 @@ class IronFortification(Component):
         elif self.scenario == "baseline":
             concentration_mcg_per_gram = baseline_concentration_mcg_per_gram
         elif self.scenario == "intervention":
-            concentration_mcg_per_gram = (
-                self.intervention_fortification_mcg_per_gram(pop_data.index)
+            concentration_mcg_per_gram = self.intervention_fortification_mcg_per_gram(
+                pop_data.index
             )
 
         pop_update["iron_consumption_from_fortification_mcg"] = (

@@ -16,8 +16,8 @@ from vivarium_public_health.results import (
 )
 from vivarium_public_health.results import ResultsStratifier as ResultsStratifier_
 from vivarium_public_health.utilities import to_years
-from lsff_utils import data_processing
 
+from lsff_utils import data_processing
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_values, models
 
 

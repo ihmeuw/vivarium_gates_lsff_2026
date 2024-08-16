@@ -81,7 +81,12 @@ def load_and_write_data(
     else:
         logger.debug(f"Loading data for {key} for location {location}.")
         data = loader.get_data(
-            key, location, mean_draw, fertility_data_path=fertility_data_path, fetch_subnationals=fetch_subnationals, vehicle=vehicle,
+            key,
+            location,
+            mean_draw,
+            fertility_data_path=fertility_data_path,
+            fetch_subnationals=fetch_subnationals,
+            vehicle=vehicle,
         )
         if isinstance(data, pd.DataFrame) and ("location" in data.index.names):
             data = rename_subnational_level(data)

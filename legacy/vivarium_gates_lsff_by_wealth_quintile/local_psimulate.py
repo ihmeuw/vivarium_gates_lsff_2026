@@ -1,9 +1,9 @@
 import argparse
-from time import time
-from layered_config_tree import LayeredConfigTree
-import pandas as pd
-
 from multiprocessing import Pool
+from time import time
+
+import pandas as pd
+from layered_config_tree import LayeredConfigTree
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("local_psimulate")
@@ -13,13 +13,12 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output-directory", type=str)
     args = parser.parse_args()
 
-    from vivarium.framework.engine import SimulationContext
-
     from pathlib import Path
 
     from vivarium.framework.configuration import build_model_specification
+    from vivarium.framework.engine import SimulationContext
+    from vivarium_cluster_tools.psimulate import COMMANDS, model_specification
     from vivarium_cluster_tools.psimulate.branches import Keyspace
-    from vivarium_cluster_tools.psimulate import model_specification, COMMANDS
 
     keyspace = Keyspace.from_branch_configuration(Path(args.branches))
 
@@ -32,8 +31,11 @@ if __name__ == "__main__":
         keyspace=keyspace,
     )
 
-    base_output_dir = Path(f"{args.output_directory}/{Path(args.input_artifact).stem}/local_psimulate")
+    base_output_dir = Path(
+        f"{args.output_directory}/{Path(args.input_artifact).stem}/local_psimulate"
+    )
     import shutil
+
     shutil.rmtree(base_output_dir, ignore_errors=True)
     base_output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -57,14 +59,13 @@ if __name__ == "__main__":
             source="branch_config",
         )
         branch_config.update(configuration.to_dict())
-        sim = SimulationContext(
-            model_spec, configuration=configuration
-        )
+        sim = SimulationContext(model_spec, configuration=configuration)
         sim.run_simulation()
 
         results = sim.get_results()  # Dict[measure, results dataframe]
 
         from vivarium.framework.utilities import collapse_nested_dict
+
         # https://github.com/ihmeuw/vivarium_cluster_tools/blob/37e611e3d76f622083e5785fa37b5aee95b28fa3/src/vivarium_cluster_tools/psimulate/worker/vivarium_work_horse.py#L213-L224
         for key, val in collapse_nested_dict(branch_config):
             # Exclude the run_configuration values from branch_configuration
@@ -77,12 +78,12 @@ if __name__ == "__main__":
                     # insert the new columns second from the right and use the
                     # last part of the key as the column name
                     df.insert(df.shape[1] - 1, col_name, val)
-        
+
         return results
 
     with Pool(5) as p:
         all_results = p.map(run, list(keyspace))
-    
+
     all_results_keys = set()
     for results_dict in all_results:
         all_results_keys = all_results_keys | set(results_dict.keys())
@@ -90,9 +91,5 @@ if __name__ == "__main__":
     results_dir = base_output_dir / "results"
     results_dir.mkdir(exist_ok=True, parents=True)
     for key in all_results_keys:
-        df = pd.concat([
-            result_dict[key]
-            for result_dict in
-            all_results
-        ])
+        df = pd.concat([result_dict[key] for result_dict in all_results])
         df.to_parquet(results_dir / f"{key}.parquet")

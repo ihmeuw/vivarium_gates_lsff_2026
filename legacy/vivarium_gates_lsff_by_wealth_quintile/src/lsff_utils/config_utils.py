@@ -3,13 +3,15 @@ import pathlib
 import pandas as pd
 import yaml
 
+
 def get_config():
     config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
 
     with open(config_dir / "config.yaml") as stream:
         config = yaml.safe_load(stream)
-    
+
     return config
+
 
 def get_location_fortificant_vehicle_intervention_scenarios():
     config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
@@ -71,7 +73,9 @@ def get_configured_combos(variables):
     )
     return [
         combo_tuple
-        for _, combo_tuple in location_fortificant_vehicle_intervention_scenarios[variables]
+        for _, combo_tuple in location_fortificant_vehicle_intervention_scenarios[
+            variables
+        ]
         .drop_duplicates()
         .iterrows()
     ]

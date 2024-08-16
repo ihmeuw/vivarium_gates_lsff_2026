@@ -495,9 +495,7 @@ class __IronFortification(NamedTuple):
     BIRTH_WEIGHT_EFFECT_SIZE: TargetString = TargetString(
         "risk.iron_fortification.effect_size"
     )
-    VEHICLE: TargetString = TargetString(
-        "risk.iron_fortification.vehicle"
-    )
+    VEHICLE: TargetString = TargetString("risk.iron_fortification.vehicle")
 
     @property
     def name(self):
