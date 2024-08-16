@@ -18,6 +18,7 @@ from vivarium_public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
 from vivarium_public_health.utilities import to_years
+from lsff_utils import data_processing
 
 # from vivarium_gates_lsff_by_wealth_quintile_child.constants.metadata import (
 #     SUBNATIONAL_LOCATION_DICT,
@@ -70,7 +71,7 @@ class ResultsStratifier(ResultsStratifier_):
 
         builder.results.register_stratification(
             "wealth_quintile",
-            data_values.WEALTH_QUINTILES,
+            data_processing.WEALTH_QUINTILES,
             is_vectorized=True,
             requires_columns=["wealth_quintile"],
         )

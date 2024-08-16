@@ -1,3 +1,5 @@
+import pandas as pd
+
 def aggregate_by_scenario(df):
     return (
         df.groupby(["scenario", "input_draw", "wealth_quintile"])

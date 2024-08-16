@@ -16,11 +16,13 @@ source .venv/bin/activate
 source .simulation_running_venv/bin/activate
 """,
     "debug": "false",
+    "local": "false",
     "full_scale": "false",
     **config,
 }
 
 config["debug"] = str(config.get("debug", "false")).lower() in ("t", "true", "y", "yes")
+config["local"] = str(config.get("local", "false")).lower() in ("t", "true", "y", "yes")
 config["full_scale"] = str(config.get("full_scale", "false")).lower() in ("t", "true", "y", "yes")
 
 rule all:

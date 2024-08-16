@@ -1,8 +1,8 @@
 input_draw_count: 1
-random_seed_count: 1
+random_seed_count: 10
 
 input_draws: [0]
-random_seeds: [0]
+random_seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 branches:
   - intervention:

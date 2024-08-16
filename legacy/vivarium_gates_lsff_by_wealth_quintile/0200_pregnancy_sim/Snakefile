@@ -3,6 +3,7 @@ from snakemake.io import directory
 import glob
 
 debug = config["debug"]
+local = config["local"]
 full_scale = config["full_scale"]
 
 data_inputs = [
@@ -55,6 +56,7 @@ rule pregnancy_simulations:
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/births.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/deaths.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/pregnancy_outcome_count.parquet",
+            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/transition_count_maternal_disorders.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylds.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylls.parquet",
             "0200_pregnancy_sim/sim_results/{vehicle}/{location}/person_time_anemia.parquet",
@@ -69,8 +71,8 @@ rule pregnancy_simulations:
         mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         export PYTHONPATH=../../../src
-        {'p' if not debug else ''}simulate run ../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug else '--pdb -vvv'}
+        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q long.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -rf *.rdb
-        {'# ' if debug else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
+        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q long.q
         mv ./*/results/*.parquet .
         """

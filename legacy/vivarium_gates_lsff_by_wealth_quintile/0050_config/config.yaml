@@ -1,5 +1,5 @@
 all_fortificants: ["folate", "iron"]
-# Scenarios besides the default "baseline" (never overridden) and "intervention"
+# Scenarios besides the default "intervention"
 custom_intervention_scenarios:
   ethiopia:
     - intervention_25_nrv

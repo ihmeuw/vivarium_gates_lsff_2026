@@ -321,7 +321,8 @@ class IronFortification(Component):
                 pop_data.index
             ) * self.fortifiability(pop_data.index)
             additional_coverage = target_coverage - current_coverage
-            assert (additional_coverage >= 0).all()
+            assert ((additional_coverage >= 0) | np.isclose(additional_coverage, 0)).all()
+            additional_coverage = additional_coverage.clip(lower=0)
 
             intervention_covered = self.randomness.filter_for_probability(
                 pop_data.index,
