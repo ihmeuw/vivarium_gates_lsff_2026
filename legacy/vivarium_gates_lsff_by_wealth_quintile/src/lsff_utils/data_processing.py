@@ -31,6 +31,7 @@ def recode_dhs_wealth_quintile(series):
 def recode_extraction_wealth_quintile(series):
     return series.map(EXTRACTION_MAPPING)
 
+
 def reindex_series_onto_df_by_age_groups(df, series):
     if "age_start" not in series.index.names:
         return series.align(df)[1]

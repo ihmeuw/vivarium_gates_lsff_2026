@@ -414,13 +414,16 @@ def _distribute_by_disparities_multiplicative(
     )
 
     raw = quantity.mul(
-        data_processing.reindex_series_onto_df_by_age_groups(quantity, disparities), axis=0
+        data_processing.reindex_series_onto_df_by_age_groups(quantity, disparities),
+        axis=0,
     ).dropna(how="all")
 
     # How much we need to scale to recover the original quantities
     rescale_factor = (
         raw.mul(
-            data_processing.reindex_series_onto_df_by_age_groups(raw, wealth_quintile_probabilities),
+            data_processing.reindex_series_onto_df_by_age_groups(
+                raw, wealth_quintile_probabilities
+            ),
             axis=0,
         )
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
