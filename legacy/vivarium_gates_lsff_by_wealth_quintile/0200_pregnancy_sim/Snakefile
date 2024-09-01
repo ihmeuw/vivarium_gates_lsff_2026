@@ -65,9 +65,9 @@ rule pregnancy_simulations:
         f"""
         {config["simulation_running_env_setup"]}
         cd 0200_pregnancy_sim
-        rm -rf sim_results/{{wildcards.vehicle}} || true
+        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}} || true
         sleep 5
-        rm -rf sim_results/{{wildcards.vehicle}}
+        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         export PYTHONPATH=../../../src

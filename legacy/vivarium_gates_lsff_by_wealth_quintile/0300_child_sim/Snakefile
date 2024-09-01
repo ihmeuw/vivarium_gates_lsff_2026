@@ -76,9 +76,9 @@ rule child_simulations:
         {config["simulation_running_env_setup"]}
         cd 0300_child_sim
         # NFS sometimes doesn't delete right away
-        rm -rf sim_results/{{wildcards.vehicle}} || true
+        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}} || true
         sleep 5
-        rm -rf sim_results/{{wildcards.vehicle}}
+        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         export PYTHONPATH=../../../src

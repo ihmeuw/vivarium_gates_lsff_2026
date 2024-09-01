@@ -1,0 +1,6 @@
+vehicle_name,wealth_quintile,sex,value,age_start,age_end
+rice,1,Female,0.336,15,50
+rice,2,Female,0.448,15,50
+rice,3,Female,0.546,15,50
+rice,4,Female,0.633,15,50
+rice,5,Female,0.676,15,50
