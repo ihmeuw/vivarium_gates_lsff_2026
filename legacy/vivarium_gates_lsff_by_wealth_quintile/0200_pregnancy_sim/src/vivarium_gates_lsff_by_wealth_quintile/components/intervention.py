@@ -401,22 +401,22 @@ class IronFortification(Component):
     def update_hemoglobin_exposure(self, index, exposure):
         pop = self.population_view.get(index)
 
-        baseline_above_threshold = (
+        baseline_benefit = (
             pop.baseline_iron_consumption_from_fortification_mcg
-            > data_values.IRON_CONSUMPTION_THRESHOLD_MCG
+            > 0
         )
 
         # Delete the baseline effects of fortification
         exposure -= (
-            baseline_above_threshold
+            baseline_benefit
             * self.hemoglobin_effect_size_above_intake_threshold
         )
 
-        above_threshold = (
+        benefit = (
             pop.iron_consumption_from_fortification_mcg
-            > data_values.IRON_CONSUMPTION_THRESHOLD_MCG
+            > 0
         )
-        exposure += above_threshold * self.hemoglobin_effect_size_above_intake_threshold
+        exposure += benefit * self.hemoglobin_effect_size_above_intake_threshold
 
         return exposure.clip(lower=0)
 
