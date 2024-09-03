@@ -217,6 +217,14 @@ class IronFortification(Component):
 
         self.scenario = builder.configuration.intervention.scenario
 
+        self.baseline_effectiveness = self.build_lookup_table(
+            builder,
+            drop_vehicle(
+                builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_EFFECTIVENESS)
+            ).assign(sex="Female"),
+            value_columns=["value"],
+        )
+
         if self.scenario == "intervention":
             effectiveness_key = data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVENESS
         else:
@@ -354,13 +362,19 @@ class IronFortification(Component):
             raise ValueError("Unknown scenario")
 
         # Not all coverage is effective
+        ineffective_baseline = self.randomness.filter_for_probability(
+            pop_data.index,
+            probability=1 - self.baseline_effectiveness(pop_data.index),
+            # NOTE: Same key as next
+            additional_key="ineffective",
+        )
         ineffective = self.randomness.filter_for_probability(
             pop_data.index,
             probability=1 - self.effectiveness(pop_data.index),
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective
-        pop_update.loc[ineffective, "baseline_iron_fortification"] = 0.0
+        pop_update.loc[ineffective_baseline, "baseline_iron_fortification"] = 0.0
         pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
         vehicle_consumption = self.population_view.subview(
