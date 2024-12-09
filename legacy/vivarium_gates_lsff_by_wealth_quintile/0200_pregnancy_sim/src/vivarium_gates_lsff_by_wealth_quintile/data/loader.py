@@ -414,13 +414,16 @@ def _distribute_by_disparities_multiplicative(
     )
 
     raw = quantity.mul(
-        _reindex_series_onto_df_by_age_groups(quantity, disparities), axis=0
+        data_processing.reindex_series_onto_df_by_age_groups(quantity, disparities),
+        axis=0,
     ).dropna(how="all")
 
     # How much we need to scale to recover the original quantities
     rescale_factor = (
         raw.mul(
-            _reindex_series_onto_df_by_age_groups(raw, wealth_quintile_probabilities),
+            data_processing.reindex_series_onto_df_by_age_groups(
+                raw, wealth_quintile_probabilities
+            ),
             axis=0,
         )
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
@@ -433,7 +436,7 @@ def _distribute_by_disparities_multiplicative(
     # We have recovered the original quantities
     assert np.allclose(
         result.mul(
-            _reindex_series_onto_df_by_age_groups(
+            data_processing.reindex_series_onto_df_by_age_groups(
                 result, wealth_quintile_probabilities
             ),
             axis=0,
@@ -446,33 +449,6 @@ def _distribute_by_disparities_multiplicative(
     )
 
     return result
-
-
-def _reindex_series_onto_df_by_age_groups(df, series):
-    if "age_start" not in series.index.names:
-        return series.align(df)[1]
-    # NOTE: Age groups can be different! Is there a more Vivarium way to do this, with a lookup table maybe?
-    common = list(set(df.index.names) & set(series.index.names))
-    result = (
-        df.reset_index()
-        .merge(
-            series.rename("series_value").reset_index(),
-            on=[c for c in common if c not in ("age_start", "age_end")],
-            suffixes=("", "_series"),
-        )
-        # NOTE: Depends on a GBD age group always fitting into a disparity age group
-        .pipe(
-            lambda df: df[
-                (df.age_start >= df.age_start_series)
-                & (df.age_end <= df.age_end_series)
-            ]
-        )
-        .pipe(lambda df: df.drop(columns=df.filter(like="_series").columns))
-    )
-    result = result.set_index(
-        sorted(list(set(df.index.names) | set(series.index.names)))
-    )
-    return result.series_value.rename(series.name)
 
 
 def _distribute_by_disparities_additive(

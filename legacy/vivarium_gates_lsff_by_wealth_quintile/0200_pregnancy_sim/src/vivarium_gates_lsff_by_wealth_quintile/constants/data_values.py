@@ -96,5 +96,3 @@ RR_MATERNAL_HEMORRHAGE_ATTRIBUTABLE_TO_HEMOGLOBIN = (
     1.2,
     10.4,
 )  # (median, lower, upper) 95% CI
-
-IRON_CONSUMPTION_THRESHOLD_MCG = 5_000  # 5,000 mcg = 5mg

@@ -100,7 +100,20 @@ class VehicleConsumption(Component):
         pop_update.loc[
             ~pop_update.index.isin(any_consumed), "vehicle_consumption_grams"
         ] = 0
+        # Consider the original distribution, described by mean and stddev, to be
+        # not normal but a mixture of a normal distribution and a point mass at 0.
+        # This is a mixture of Gaussians (M), for the degenerate case where one has mean = 0, variance = 0.
         distribution_parameters = self.distribution_parameters(any_consumed)
+        # Mean of the mixture is just p_A * mean(A), so mean(A) = mean(M) / p_A
+        nonzero_component_mean = (
+            distribution_parameters["mean"] / any_consumed_prob.loc[any_consumed]
+        )
+        # Here is a formula for the variance of a Gaussian mixture: https://stats.stackexchange.com/a/16609 (see first comment)
+        # Setting mean and variance of B to zero, we solve for A, and get:
+        # var(A) = (var(M) / p_A) - mean(A)^2 * (1 - p_A)
+        nonzero_component_variance = (
+            (distribution_parameters.stddev**2) / any_consumed_prob.loc[any_consumed]
+        ) - (nonzero_component_mean**2) * (1 - any_consumed_prob.loc[any_consumed])
         # NOTE: By clipping here, we are overshooting our target of how many people don't consume
         # any at all! It doesn't mess with the mean very much though.
         # We could improve this by using a non-negative distribution instead of normal.
@@ -108,9 +121,8 @@ class VehicleConsumption(Component):
             self.randomness.sample_from_distribution(
                 any_consumed,
                 scipy.stats.norm(
-                    # Scaling up to account for the 0s introduced by ~any_consumed
-                    distribution_parameters["mean"] / any_consumed_prob.mean(),
-                    distribution_parameters.stddev / any_consumed_prob.mean(),
+                    nonzero_component_mean,
+                    np.sqrt(nonzero_component_variance),
                 ),
             ).clip(lower=0)
         )
@@ -204,6 +216,14 @@ class IronFortification(Component):
         )
 
         self.scenario = builder.configuration.intervention.scenario
+
+        self.baseline_effectiveness = self.build_lookup_table(
+            builder,
+            drop_vehicle(
+                builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_EFFECTIVENESS)
+            ).assign(sex="Female"),
+            value_columns=["value"],
+        )
 
         if self.scenario == "intervention":
             effectiveness_key = data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVENESS
@@ -342,13 +362,19 @@ class IronFortification(Component):
             raise ValueError("Unknown scenario")
 
         # Not all coverage is effective
+        ineffective_baseline = self.randomness.filter_for_probability(
+            pop_data.index,
+            probability=1 - self.baseline_effectiveness(pop_data.index),
+            # NOTE: Same key as next
+            additional_key="ineffective",
+        )
         ineffective = self.randomness.filter_for_probability(
             pop_data.index,
             probability=1 - self.effectiveness(pop_data.index),
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective
-        pop_update.loc[ineffective, "baseline_iron_fortification"] = 0.0
+        pop_update.loc[ineffective_baseline, "baseline_iron_fortification"] = 0.0
         pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
         vehicle_consumption = self.population_view.subview(
@@ -389,22 +415,15 @@ class IronFortification(Component):
     def update_hemoglobin_exposure(self, index, exposure):
         pop = self.population_view.get(index)
 
-        baseline_above_threshold = (
-            pop.baseline_iron_consumption_from_fortification_mcg
-            > data_values.IRON_CONSUMPTION_THRESHOLD_MCG
-        )
+        baseline_benefit = pop.baseline_iron_consumption_from_fortification_mcg > 0
 
         # Delete the baseline effects of fortification
         exposure -= (
-            baseline_above_threshold
-            * self.hemoglobin_effect_size_above_intake_threshold
+            baseline_benefit * self.hemoglobin_effect_size_above_intake_threshold
         )
 
-        above_threshold = (
-            pop.iron_consumption_from_fortification_mcg
-            > data_values.IRON_CONSUMPTION_THRESHOLD_MCG
-        )
-        exposure += above_threshold * self.hemoglobin_effect_size_above_intake_threshold
+        benefit = pop.iron_consumption_from_fortification_mcg > 0
+        exposure += benefit * self.hemoglobin_effect_size_above_intake_threshold
 
         return exposure.clip(lower=0)
 

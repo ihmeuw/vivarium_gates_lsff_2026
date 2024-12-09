@@ -2,5 +2,6 @@ location,vehicle,baseline,intervention,custom_name
 india,rice,zero,baseline,80% PDS vs none
 india,rice,zero,intervention,80% PDS with increased folate vs none
 nigeria,bouillon,baseline,intervention,
+nigeria,rice,baseline,intervention,
 ethiopia,salt,baseline,intervention_25_nrv,25% NRV per average intake
 ethiopia,salt,baseline,intervention_100_nrv,100% NRV per average intake
