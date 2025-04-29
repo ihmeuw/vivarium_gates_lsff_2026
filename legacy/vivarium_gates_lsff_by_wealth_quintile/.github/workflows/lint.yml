@@ -22,6 +22,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Lint
         run: |
-          pip install black isort
+          pip install black==24.8.0 isort==5.13.2
           isort . --check -v --gitignore --profile black
           black . --check -v
