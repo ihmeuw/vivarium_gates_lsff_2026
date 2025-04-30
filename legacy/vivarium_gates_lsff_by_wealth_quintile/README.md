@@ -34,3 +34,14 @@ Also, if you are running somewhere (like your IHME home directory) where you can
 in another terminal while you run this.
 This may be fixed by more recent Vivarium versions, because the Vivarium version here outputs
 many duplicate logs from a `psimulate`.
+
+## Development
+
+This repository enforces code linting. Here are the steps to fix your code if it does not pass:
+
+- Ensure that Snakemake is completely up to date and you have committed all changes.
+- `conda activate ./.conda_env` (if you haven't already)
+- `source .venv/bin/activate`
+- `isort . --gitignore --profile black` (takes some time)
+- `black .`
+- `snakemake --config <your config from your previous snakemake run> --touch` to tell Snakemake that linting changes don't require reruns 

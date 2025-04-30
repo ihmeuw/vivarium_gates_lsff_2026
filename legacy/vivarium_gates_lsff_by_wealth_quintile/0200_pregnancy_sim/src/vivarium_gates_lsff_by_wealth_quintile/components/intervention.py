@@ -165,7 +165,6 @@ class IronFortification(Component):
         self.vehicle = vehicle
         self.location = builder.data.load(data_keys.POPULATION.LOCATION)
 
-
         def drop_vehicle(df):
             if "vehicle_name" not in df.columns:
                 return df
@@ -387,7 +386,9 @@ class IronFortification(Component):
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective
-        pop_update.loc[ineffective_baseline_2021, "baseline_2021_iron_fortification"] = 0.0
+        pop_update.loc[
+            ineffective_baseline_2021, "baseline_2021_iron_fortification"
+        ] = 0.0
         pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
         vehicle_consumption = self.population_view.subview(
@@ -428,7 +429,9 @@ class IronFortification(Component):
     def update_hemoglobin_exposure(self, index, exposure):
         pop = self.population_view.get(index)
 
-        baseline_2021_benefit = pop["baseline_2021_iron_consumption_from_fortification_mcg"] > 0
+        baseline_2021_benefit = (
+            pop["baseline_2021_iron_consumption_from_fortification_mcg"] > 0
+        )
 
         # Delete the baseline effects of fortification that were baked into the GBD 2021
         # hemoglobin distribution

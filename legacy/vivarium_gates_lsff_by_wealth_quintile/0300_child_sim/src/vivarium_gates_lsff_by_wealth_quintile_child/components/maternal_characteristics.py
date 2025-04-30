@@ -74,7 +74,9 @@ class MaternalIronConsumptionFromFortification(Component):
             )
             new_simulants[
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
-            ] = new_births["baseline_2021_iron_consumption_from_fortification_mcg"].copy()
+            ] = new_births[
+                "baseline_2021_iron_consumption_from_fortification_mcg"
+            ].copy()
 
         self.population_view.update(new_simulants)
 
@@ -82,8 +84,9 @@ class MaternalIronConsumptionFromFortification(Component):
         pop = self.population_view.get(index)
 
         # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
-        exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
-            self.birth_weight_effect_size_per_mg_intake / 1_000
+        exposure -= (
+            pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg
+            * (self.birth_weight_effect_size_per_mg_intake / 1_000)
         )  # convert mg to mcg
         exposure += pop.maternal_iron_consumption_from_fortification_mcg * (
             self.birth_weight_effect_size_per_mg_intake / 1_000
