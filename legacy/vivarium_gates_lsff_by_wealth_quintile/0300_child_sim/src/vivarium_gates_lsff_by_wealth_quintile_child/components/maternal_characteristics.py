@@ -28,7 +28,7 @@ class MaternalIronConsumptionFromFortification(Component):
     @property
     def columns_created(self) -> List[str]:
         return [
-            "baseline_maternal_iron_consumption_from_fortification_mcg",
+            "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
             "maternal_iron_consumption_from_fortification_mcg",
         ]
 
@@ -52,7 +52,7 @@ class MaternalIronConsumptionFromFortification(Component):
             "birth_weight.birth_exposure",
             self.update_birth_weight,
             requires_columns=[
-                "baseline_maternal_iron_consumption_from_fortification_mcg",
+                "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
                 "maternal_iron_consumption_from_fortification_mcg",
             ],
         )
@@ -73,16 +73,16 @@ class MaternalIronConsumptionFromFortification(Component):
                 new_births["iron_consumption_from_fortification_mcg"].copy()
             )
             new_simulants[
-                "baseline_maternal_iron_consumption_from_fortification_mcg"
-            ] = new_births["baseline_iron_consumption_from_fortification_mcg"].copy()
+                "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
+            ] = new_births["baseline_2021_iron_consumption_from_fortification_mcg"].copy()
 
         self.population_view.update(new_simulants)
 
     def update_birth_weight(self, index, exposure):
         pop = self.population_view.get(index)
 
-        # Delete the baseline effects of fortification
-        exposure -= pop.baseline_maternal_iron_consumption_from_fortification_mcg * (
+        # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
+        exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
             self.birth_weight_effect_size_per_mg_intake / 1_000
         )  # convert mg to mcg
         exposure += pop.maternal_iron_consumption_from_fortification_mcg * (

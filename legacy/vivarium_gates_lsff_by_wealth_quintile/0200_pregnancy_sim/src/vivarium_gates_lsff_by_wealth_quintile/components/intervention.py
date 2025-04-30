@@ -140,9 +140,9 @@ class IronFortification(Component):
     @property
     def columns_created(self) -> List[str]:
         return [
-            "baseline_iron_fortification",
+            "baseline_2021_iron_fortification",
             "iron_fortification",
-            "baseline_iron_consumption_from_fortification_mcg",
+            "baseline_2021_iron_consumption_from_fortification_mcg",
             "iron_consumption_from_fortification_mcg",
         ]
 
@@ -162,6 +162,9 @@ class IronFortification(Component):
         self.randomness = builder.randomness.get_stream(self.name)
 
         vehicle = builder.data.load(data_keys.VEHICLE.NAME)
+        self.vehicle = vehicle
+        self.location = builder.data.load(data_keys.POPULATION.LOCATION)
+
 
         def drop_vehicle(df):
             if "vehicle_name" not in df.columns:
@@ -318,17 +321,27 @@ class IronFortification(Component):
 
         assert (baseline_fortification >= 0).all()
 
-        pop_update["baseline_iron_fortification"] = baseline_fortification
+        if self.location == "India" and self.vehicle == "rice":
+            # Confusingly, our baseline scenario (our best guess about the present)
+            # is *not* a good guess about 2021 (the year of our GBD hemoglobin estimate),
+            # because this program has rolled out almost entirely since then:
+            # In the phase-I of the roll out, the fortified rice was introduced in the social welfare schemes such as Integrated Child Development Scheme (ICDS)
+            # and Pradhan Mantri Poshan Shakti Nirman (PM POSHAN, earlier known as the National Program of Mid-Day Meal in Schools)
+            # throughout India during 2021–22 [18].
+            # Phase-II has covered aspirational and high burden districts for anemia (total 291 districts) under Public Distribution System (PDS) and other welfare schemes,
+            # in addition to Phase-I districts, by March 2023 [18].
+            # All the remaining districts in India will be covered in Phase III by March 2024 [19].
+            # ~ https://pmc.ncbi.nlm.nih.gov/articles/PMC11305529/
+            pop_update["baseline_2021_iron_fortification"] = 0
+        else:
+            pop_update["baseline_2021_iron_fortification"] = baseline_fortification
+
         if self.scenario == "zero":
             pop_update["iron_fortification"] = 0
         elif self.scenario == "baseline":
-            pop_update["iron_fortification"] = pop_update[
-                "baseline_iron_fortification"
-            ].copy()
+            pop_update["iron_fortification"] = baseline_fortification
         elif self.scenario == "intervention":
-            pop_update["iron_fortification"] = pop_update[
-                "baseline_iron_fortification"
-            ].copy()
+            pop_update["iron_fortification"] = baseline_fortification
 
             # NOTE: There are multiple ways you could imagine this working with respect to
             # individual heterogeneity. The choice I have made here is that the intervention
@@ -362,7 +375,7 @@ class IronFortification(Component):
             raise ValueError("Unknown scenario")
 
         # Not all coverage is effective
-        ineffective_baseline = self.randomness.filter_for_probability(
+        ineffective_baseline_2021 = self.randomness.filter_for_probability(
             pop_data.index,
             probability=1 - self.baseline_effectiveness(pop_data.index),
             # NOTE: Same key as next
@@ -374,7 +387,7 @@ class IronFortification(Component):
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective
-        pop_update.loc[ineffective_baseline, "baseline_iron_fortification"] = 0.0
+        pop_update.loc[ineffective_baseline_2021, "baseline_2021_iron_fortification"] = 0.0
         pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
         vehicle_consumption = self.population_view.subview(
@@ -385,10 +398,10 @@ class IronFortification(Component):
             pop_data.index
         )
 
-        pop_update["baseline_iron_consumption_from_fortification_mcg"] = (
+        pop_update["baseline_2021_iron_consumption_from_fortification_mcg"] = (
             self._calculate_iron_consumption(
                 vehicle_consumption,
-                pop_update.baseline_iron_fortification,
+                pop_update.baseline_2021_iron_fortification,
                 baseline_concentration_mcg_per_gram,
             )
         )
@@ -415,11 +428,12 @@ class IronFortification(Component):
     def update_hemoglobin_exposure(self, index, exposure):
         pop = self.population_view.get(index)
 
-        baseline_benefit = pop.baseline_iron_consumption_from_fortification_mcg > 0
+        baseline_2021_benefit = pop["baseline_2021_iron_consumption_from_fortification_mcg"] > 0
 
-        # Delete the baseline effects of fortification
+        # Delete the baseline effects of fortification that were baked into the GBD 2021
+        # hemoglobin distribution
         exposure -= (
-            baseline_benefit * self.hemoglobin_effect_size_above_intake_threshold
+            baseline_2021_benefit * self.hemoglobin_effect_size_above_intake_threshold
         )
 
         benefit = pop.iron_consumption_from_fortification_mcg > 0
