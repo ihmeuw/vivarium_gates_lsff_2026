@@ -1,6 +1,7 @@
 from snakemake.io import directory
 
 debug = config["debug"]
+local = config["local"]
 full_scale = config["full_scale"]
 
 rule artifact_for_lbwsg_pafs:
