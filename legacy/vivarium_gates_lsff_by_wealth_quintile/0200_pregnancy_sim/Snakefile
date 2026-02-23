@@ -71,8 +71,8 @@ rule pregnancy_simulations:
         mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         export PYTHONPATH=../../../src
-        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q long.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
+        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -rf *.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q long.q
+        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
         mv ./*/results/*.parquet .
         """
