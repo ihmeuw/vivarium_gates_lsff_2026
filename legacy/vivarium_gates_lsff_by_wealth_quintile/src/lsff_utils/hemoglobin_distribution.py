@@ -18,9 +18,9 @@ def hemoglobin_pdf_from_mean_sd(mean, sd):
 
     def pdf(x):
         return GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
-            x
+            x.copy()
         ) + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(
-            x
+            x.copy()
         )
 
     return pdf
@@ -33,10 +33,10 @@ def hemoglobin_cdf_from_mean_sd(mean, sd):
     ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
     def cdf(x):
-        gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
+        gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x.copy())
         # NOTE: There is a bug in this CDF function -- it is reversed!
         # https://github.com/ihmeuw/risk_distributions/issues/62
-        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x)
+        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x.copy())
         return (
             GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf
             + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * mgumbel_cdf
@@ -57,12 +57,12 @@ def hemoglobin_sampler_from_mean_sd(mean, sd):
             propensity, 0.001, 0.999
         )  # HACK: risk_distributions is way too conservative!
         result[distribution_propensity < GAMMA_DISTRIBUTION_WEIGHT] = (
-            hemoglobin_distribution_gamma_part.ppf(propensity)[
+            hemoglobin_distribution_gamma_part.ppf(propensity.copy())[
                 distribution_propensity < GAMMA_DISTRIBUTION_WEIGHT
             ]
         )
         result[distribution_propensity >= GAMMA_DISTRIBUTION_WEIGHT] = (
-            hemoglobin_distribution_mgumbel_part.ppf(propensity)[
+            hemoglobin_distribution_mgumbel_part.ppf(propensity.copy())[
                 distribution_propensity >= GAMMA_DISTRIBUTION_WEIGHT
             ]
         )
