@@ -248,7 +248,7 @@ class BirthObserver(Observer):
         "birth_weight": "birth_weight",
         "gestational_age": "gestational_age",
         "pregnancy_outcome": "pregnancy_outcome",
-        "baseline_iron_consumption_from_fortification_mcg": "baseline_iron_consumption_from_fortification_mcg",
+        "baseline_2021_iron_consumption_from_fortification_mcg": "baseline_2021_iron_consumption_from_fortification_mcg",
         "iron_consumption_from_fortification_mcg": "iron_consumption_from_fortification_mcg",
         "wealth_quintile": "wealth_quintile",
     }
