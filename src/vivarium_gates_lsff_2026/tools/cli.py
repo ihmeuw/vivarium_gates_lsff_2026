@@ -4,10 +4,7 @@ from vivarium.engine.framework.utilities import handle_exceptions
 from vivarium.engine.interface.cli_tools import verbose_option
 
 from vivarium_gates_lsff_2026.constants import metadata, paths
-from vivarium_gates_lsff_2026.tools import (
-    build_artifacts,
-    configure_logging_to_terminal,
-)
+from vivarium_gates_lsff_2026.tools import build_artifacts, configure_logging_to_terminal
 
 
 @click.command()

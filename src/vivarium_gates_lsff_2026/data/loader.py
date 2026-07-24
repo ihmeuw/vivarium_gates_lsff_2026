@@ -105,7 +105,9 @@ def load_metadata(key: str, location: str, years: int | str | list[int] | None =
     return entity_metadata
 
 
-def load_categorical_paf(key: str, location: str, years: int | str | list[int] | None = None) -> pd.DataFrame:
+def load_categorical_paf(
+    key: str, location: str, years: int | str | list[int] | None = None
+) -> pd.DataFrame:
     try:
         risk = {
             # todo add keys as needed

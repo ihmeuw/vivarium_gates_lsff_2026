@@ -52,11 +52,11 @@ def delete_if_exists(*paths: Path | list[Path], confirm=False):
                 abort=True,
             )
         for p in existing_paths:
-            logger.info(f'Deleting artifact at {str(p)}.')
+            logger.info(f"Deleting artifact at {str(p)}.")
             p.unlink()
 
 
-def read_data_by_draw(artifact_path: str, key : str, draw: int) -> pd.DataFrame:
+def read_data_by_draw(artifact_path: str, key: str, draw: int) -> pd.DataFrame:
     """Reads data from the artifact on a per-draw basis. This
     is necessary for Low Birthweight Short Gestation (LBWSG) data.
 
@@ -71,12 +71,12 @@ def read_data_by_draw(artifact_path: str, key : str, draw: int) -> pd.DataFrame:
 
     """
     key = key.replace(".", "/")
-    with pd.HDFStore(artifact_path, mode='r') as store:
-        index = store.get(f'{key}/index')
-        draw = store.get(f'{key}/draw_{draw}')
+    with pd.HDFStore(artifact_path, mode="r") as store:
+        index = store.get(f"{key}/index")
+        draw = store.get(f"{key}/draw_{draw}")
     draw = draw.rename("value")
     data = pd.concat([index, draw], axis=1)
-    data = data.drop(columns='location')
+    data = data.drop(columns="location")
     data = pivot_categorical(data)
     data[
         project_globals.LBWSG_MISSING_CATEGORY.CAT
@@ -85,20 +85,20 @@ def read_data_by_draw(artifact_path: str, key : str, draw: int) -> pd.DataFrame:
 
 
 def get_norm(
-        mean: float,
-        sd: float = None,
-        ninety_five_pct_confidence_interval: tuple[float, float] = None
+    mean: float,
+    sd: float = None,
+    ninety_five_pct_confidence_interval: tuple[float, float] = None,
 ) -> stats.norm:
     sd = _get_standard_deviation(mean, sd, ninety_five_pct_confidence_interval)
     return stats.norm(loc=mean, scale=sd)
 
 
 def get_truncnorm(
-        mean: float,
-        sd: float = None,
-        ninety_five_pct_confidence_interval: tuple[float, float] = None,
-        lower_clip: float = 0.0,
-        upper_clip: float = 1.0
+    mean: float,
+    sd: float = None,
+    ninety_five_pct_confidence_interval: tuple[float, float] = None,
+    lower_clip: float = 0.0,
+    upper_clip: float = 1.0,
 ) -> stats.norm:
     sd = _get_standard_deviation(mean, sd, ninety_five_pct_confidence_interval)
     a = (lower_clip - mean) / sd if sd else mean - 1e-03
@@ -107,7 +107,7 @@ def get_truncnorm(
 
 
 def _get_standard_deviation(
-        mean: float, sd: float, ninety_five_pct_confidence_interval: tuple[float, float]
+    mean: float, sd: float, ninety_five_pct_confidence_interval: tuple[float, float]
 ) -> float:
     if sd is None and ninety_five_pct_confidence_interval is None:
         raise ValueError(
@@ -132,8 +132,8 @@ def _get_standard_deviation(
 
 
 def get_lognorm_from_quantiles(
-        median: float, lower: float, upper: float, quantiles: tuple[float, float] = (0.025, 0.975)
-    ) -> stats.lognorm:
+    median: float, lower: float, upper: float, quantiles: tuple[float, float] = (0.025, 0.975)
+) -> stats.lognorm:
     """Returns a frozen lognormal distribution with the specified median, such that
     (lower, upper) are approximately equal to the quantiles with ranks
     (quantile_ranks[0], quantile_ranks[1]).
@@ -164,8 +164,8 @@ def get_lognorm_from_quantiles(
 
 
 def get_random_variable_draws(
-        columns: pd.Index, seed: str, distribution: stats.rv_continuous
-    ) -> pd.Series:
+    columns: pd.Index, seed: str, distribution: stats.rv_continuous
+) -> pd.Series:
     return pd.Series(
         [get_random_variable(x, seed, distribution) for x in range(0, columns.size)],
         index=columns,

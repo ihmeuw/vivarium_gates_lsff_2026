@@ -36,8 +36,12 @@ class __SomeDisease(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
     SOME_DISEASE_PREVALENCE: TargetString = TargetString("cause.some_disease.prevalence")
-    SOME_DISEASE_INCIDENCE_RATE: TargetString = TargetString("cause.some_disease.incidence_rate")
-    SOME_DISEASE_REMISSION_RATE: TargetString = TargetString("cause.some_disease.remission_rate")
+    SOME_DISEASE_INCIDENCE_RATE: TargetString = TargetString(
+        "cause.some_disease.incidence_rate"
+    )
+    SOME_DISEASE_REMISSION_RATE: TargetString = TargetString(
+        "cause.some_disease.remission_rate"
+    )
     DISABILITY_WEIGHT: TargetString = TargetString("cause.some_disease.disability_weight")
     EMR: TargetString = TargetString("cause.some_disease.excess_mortality_rate")
     CSMR: TargetString = TargetString("cause.some_disease.cause_specific_mortality_rate")

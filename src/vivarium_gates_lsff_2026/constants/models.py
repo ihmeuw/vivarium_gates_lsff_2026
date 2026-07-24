@@ -1,6 +1,5 @@
 from vivarium_gates_lsff_2026.constants import data_keys
 
-
 ###########################
 # Disease Model variables #
 ###########################
