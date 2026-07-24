@@ -1,5 +1,5 @@
 #!/bin/bash
-# TEST COMMENT
+# TEST COMMENT - commit 2
 # This script must be sourced, not executed, because it activates an environment
 # in the current shell. Detect non-sourced invocation and fail with a clear message.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
