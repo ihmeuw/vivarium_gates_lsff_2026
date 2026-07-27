@@ -65,7 +65,7 @@ help:
 	@echo "particularly if you need non-python packages installed via conda."
 	@echo
 	@echo "USAGE:"
-	@echo "  make build-env [type=<environment type>] [name=<environment name>] [path=<environment path>] [py=<python version>] [include_timestamp=<yes|no>] [lfs=<yes|no>] [force=<yes|no>]"
+	@echo "  make build-env [type=<environment type>] [name=<environment name>] [path=<environment path>] [p=<package profile>] [py=<python version>] [include_timestamp=<yes|no>] [lfs=<yes|no>] [force=<yes|no>]"
 	@echo
 	@echo "ARGUMENTS:"
 	@echo "  type [optional]"
@@ -74,6 +74,10 @@ help:
 	@echo "      Name of the conda environment to create (defaults to <PACKAGE_NAME>_<TYPE>)"
 	@echo "  path [optional]"
 	@echo "      Absolute path where the environment should be created (overrides name for location)"
+	@echo "  p [optional]"
+	@echo "      Package profile to install. One of 'root' (default), 'maternal', or 'child'"
+	@echo "  profile [optional]"
+	@echo "      Alias for p"
 	@echo "  include_timestamp [optional]"
 	@echo "      Whether to append a timestamp to the environment name. Either 'yes' or 'no' (default)"
 	@echo "  lfs [optional]"
@@ -118,7 +122,7 @@ endif
 
 build-env: # Create a new environment with installed packages
 #	Validate arguments - exit if unsupported arguments are passed
-	$(call validate_make_args,build-env,type name path lfs py include_timestamp force)
+	$(call validate_make_args,build-env,type name path p profile lfs py include_timestamp force)
 	
 #   Handle arguments and set defaults
 #   type
@@ -132,6 +136,12 @@ build-env: # Create a new environment with installed packages
 	@$(if $(filter yes,$(include_timestamp)),$(eval override name := $(name)_$(shell date +%Y%m%d_%H%M%S)),)
 #	path (optional - if set, use -p for conda create instead of -n)
 	@$(eval path ?=)
+#	package profile
+	@$(eval p ?=)
+	@$(eval profile ?=)
+	@$(if $(and $(strip $(p)),$(strip $(profile)),$(filter-out $(p),$(profile))),$(error Error: 'p' and 'profile' must match when both are set))
+	@$(eval package_profile := $(if $(strip $(p)),$(p),$(if $(strip $(profile)),$(profile),root)))
+	@$(call validate_arg,$(package_profile),root maternal child,package profile)
 #	lfs
 	@$(eval lfs ?= no)
 	@$(call validate_arg,$(lfs),yes no,lfs)
@@ -167,6 +177,11 @@ build-env: # Create a new environment with installed packages
 	elif [ "$(type)" = "artifact" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data; \
 	fi
+	@if [ "$(package_profile)" = "maternal" ]; then \
+		conda run $(CONDA_RUN_FLAG) pip install -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
+	elif [ "$(package_profile)" = "child" ]; then \
+		conda run $(CONDA_RUN_FLAG) pip install -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)]; \
+	fi
 	@if [ "$(lfs)" = "yes" ]; then \
 		conda run $(CONDA_RUN_FLAG) conda install -c conda-forge git-lfs --yes; \
 		conda run $(CONDA_RUN_FLAG) git lfs install; \
@@ -176,6 +191,7 @@ build-env: # Create a new environment with installed packages
 	@echo "Finished building environment"
 	@$(if $(path),echo "  path: $(path)",echo "  name: $(name)")
 	@echo "  type: $(type)"
+	@echo "  package profile: $(package_profile)"
 	@echo "  git-lfs installed: $(lfs)"
 	@echo "  python version: $(py)"
 	@echo "  forced rebuild: $(force)"
@@ -285,17 +301,13 @@ ENV_NAME_CHILD_SIM ?= $(PACKAGE_NAME)_simulation_child
 ENV_NAME_CHILD_ARTIFACT ?= $(PACKAGE_NAME)_artifact_child
 
 build-env-maternal-sim: # Build maternal simulation env and install maternal dev extras
-	$(MAKE) build-env type=simulation name=$(ENV_NAME_MATERNAL_SIM)
-	conda run -n $(ENV_NAME_MATERNAL_SIM) pip install -e ./0200_pregnancy_sim[dev]
+	$(MAKE) build-env type=simulation p=maternal name=$(if $(name),$(name),$(ENV_NAME_MATERNAL_SIM))
 
 build-env-maternal-artifact: # Build maternal artifact env and install maternal data extras
-	$(MAKE) build-env type=artifact name=$(ENV_NAME_MATERNAL_ARTIFACT)
-	conda run -n $(ENV_NAME_MATERNAL_ARTIFACT) pip install -e ./0200_pregnancy_sim[data]
+	$(MAKE) build-env type=artifact p=maternal name=$(if $(name),$(name),$(ENV_NAME_MATERNAL_ARTIFACT))
 
 build-env-child-sim: # Build child simulation env and install child dev extras
-	$(MAKE) build-env type=simulation name=$(ENV_NAME_CHILD_SIM)
-	conda run -n $(ENV_NAME_CHILD_SIM) pip install -e ./0300_child_sim[dev]
+	$(MAKE) build-env type=simulation p=child name=$(if $(name),$(name),$(ENV_NAME_CHILD_SIM))
 
 build-env-child-artifact: # Build child artifact env and install child data extras
-	$(MAKE) build-env type=artifact name=$(ENV_NAME_CHILD_ARTIFACT)
-	conda run -n $(ENV_NAME_CHILD_ARTIFACT) pip install -e ./0300_child_sim[data]
+	$(MAKE) build-env type=artifact p=child name=$(if $(name),$(name),$(ENV_NAME_CHILD_ARTIFACT))
