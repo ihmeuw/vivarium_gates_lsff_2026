@@ -2,7 +2,7 @@ from typing import Tuple
 
 import click
 from loguru import logger
-from vivarium.framework.utilities import handle_exceptions
+from vivarium.engine.framework.utilities import handle_exceptions
 from vivarium_gates_lsff_by_wealth_quintile.constants import metadata, paths
 from vivarium_gates_lsff_by_wealth_quintile.tools import (
     build_artifacts,

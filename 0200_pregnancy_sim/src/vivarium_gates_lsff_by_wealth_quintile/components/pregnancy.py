@@ -1,18 +1,18 @@
 from typing import Dict, List
 
 import pandas as pd
-from vivarium import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.event import Event
-from vivarium.framework.lookup import LookupTableData
-from vivarium.framework.population import SimulantData
-from vivarium.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium.engine import Component
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.event import Event
+from vivarium.engine.framework.lookup import LookupTableData
+from vivarium.engine.framework.population import SimulantData
+from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium.public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
+from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_by_wealth_quintile.components.children import NewChildren
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, models
 from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import DURATIONS
 from vivarium_gates_lsff_by_wealth_quintile.constants.metadata import ARTIFACT_INDEX_COLUMNS
-from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
-from vivarium_public_health.utilities import get_lookup_columns
 
 
 class NotPregnantState(SusceptibleState):
@@ -48,8 +48,7 @@ class PregnantState(DiseaseState):
     @property
     def initialization_requirements(self) -> Dict[str, List[str]]:
         return {
-            "requires_columns": [self.model],
-            "requires_values": ["birth_outcome_probabilities"],
+            "requires_attributes": [self.model, "birth_outcome_probabilities"],
             "requires_streams": [],
         }
 
@@ -68,7 +67,7 @@ class PregnantState(DiseaseState):
         self.birth_outcome_probabilities = builder.value.register_value_producer(
             "birth_outcome_probabilities",
             source=self.lookup_tables["birth_outcome_probabilities"],
-            requires_columns=get_lookup_columns(
+            requires_attributes=get_lookup_columns(
                 [self.lookup_tables["birth_outcome_probabilities"]]
             ),
         )
@@ -156,7 +155,7 @@ class PregnantState(DiseaseState):
         return builder.value.register_value_producer(
             f"{self.state_id}.dwell_time",
             source=lambda index: self.population_view.get(index)["pregnancy_duration"],
-            requires_columns=["age", "sex", "pregnancy_outcome"],
+            requires_attributes=["age", "sex", "pregnancy_outcome"],
         )
 
     def get_initial_event_times(self, pop_data: SimulantData) -> pd.DataFrame:

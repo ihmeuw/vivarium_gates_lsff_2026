@@ -4,12 +4,12 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 import scipy.stats
-from vivarium import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.population import SimulantData
-from vivarium.framework.randomness import RESIDUAL_CHOICE
+from vivarium.engine import Component
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.population import SimulantData
+from vivarium.engine.framework.randomness import RESIDUAL_CHOICE
+from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values, models
-from vivarium_public_health.utilities import get_lookup_columns
 
 
 class VehicleConsumption(Component):
@@ -25,7 +25,7 @@ class VehicleConsumption(Component):
     def initialization_requirements(self) -> Dict[str, List[str]]:
         return {
             "requires_streams": [self.name],
-            "requires_columns": self.columns_required,
+            "requires_attributes": self.columns_required,
         }
 
     # noinspection PyAttributeOutsideInit
@@ -54,7 +54,7 @@ class VehicleConsumption(Component):
         self.any_consumed = builder.value.register_value_producer(
             "vehicle_consumption.any_consumed",
             source=any_consumed,
-            requires_columns=get_lookup_columns([any_consumed]),
+            requires_attributes=get_lookup_columns([any_consumed]),
         )
 
         mean = (
@@ -76,7 +76,7 @@ class VehicleConsumption(Component):
         self.distribution_parameters = builder.value.register_value_producer(
             "vehicle_consumption.exposure_parameters",
             source=distribution_parameters,
-            requires_columns=get_lookup_columns([distribution_parameters]),
+            requires_attributes=get_lookup_columns([distribution_parameters]),
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -147,7 +147,7 @@ class IronFortification(Component):
     def initialization_requirements(self) -> Dict[str, List[str]]:
         return {
             "requires_streams": [self.name],
-            "requires_columns": self.columns_required,
+            "requires_attributes": self.columns_required,
         }
 
     # noinspection PyAttributeOutsideInit
@@ -262,7 +262,7 @@ class IronFortification(Component):
         builder.value.register_value_modifier(
             "hemoglobin.exposure",
             self.update_hemoglobin_exposure,
-            requires_columns=["vehicle_consumption_grams"],
+            requires_attributes=["vehicle_consumption_grams"],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:

@@ -2,10 +2,10 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-from vivarium import Component
-from vivarium.framework.engine import Builder
+from vivarium.engine import Component
+from vivarium.engine.framework.engine import Builder
+from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values, models
-from vivarium_public_health.utilities import get_lookup_columns
 
 
 class NewChildren(Component):
@@ -35,7 +35,7 @@ class NewChildren(Component):
         self.male_sex_percentage = builder.value.register_value_producer(
             "new_children.male_sex_percentage",
             source=male_sex_percentage,
-            requires_columns=get_lookup_columns([male_sex_percentage]),
+            requires_attributes=get_lookup_columns([male_sex_percentage]),
         )
 
     def empty(self, index: pd.Index) -> pd.DataFrame:

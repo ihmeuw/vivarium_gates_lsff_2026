@@ -2,11 +2,11 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from vivarium import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.population import SimulantData
+from vivarium.engine import Component
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.population import SimulantData
+from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values
-from vivarium_public_health.utilities import get_lookup_columns
 
 from lsff_utils import data_processing
 
@@ -50,7 +50,7 @@ class WealthQuintile(Component):
         self.quintile_probabilities = builder.value.register_value_producer(
             "wealth_quintile.quintile_probabilities",
             source=quintile_probabilities,
-            requires_columns=get_lookup_columns([quintile_probabilities]),
+            requires_attributes=get_lookup_columns([quintile_probabilities]),
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:

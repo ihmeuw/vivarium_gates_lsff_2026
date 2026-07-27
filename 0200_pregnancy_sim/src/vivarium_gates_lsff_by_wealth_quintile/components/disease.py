@@ -1,13 +1,13 @@
 from typing import Callable, Dict, List
 
 import pandas as pd
-from vivarium.framework.engine import Builder
-from vivarium.framework.state_machine import State, Transition
-from vivarium.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.state_machine import State, Transition
+from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium.public_health.disease import DiseaseState, SusceptibleState
+from vivarium.public_health.disease.transition import ProportionTransition
+from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_by_wealth_quintile.constants import models
-from vivarium_public_health.disease import DiseaseState, SusceptibleState
-from vivarium_public_health.disease.transition import ProportionTransition
-from vivarium_public_health.utilities import get_lookup_columns
 
 
 class ParturitionSelectionState(SusceptibleState):
@@ -51,7 +51,7 @@ class ParturitionSelectionTransition(ProportionTransition):
         self.proportion_pipeline = builder.value.register_value_producer(
             pipeline_name,
             source=self.compute_transition_proportion,
-            requires_columns=["age", "sex", "alive"],
+            requires_attributes=["age", "sex", "alive"],
         )
 
     ###################
@@ -93,7 +93,7 @@ class ParturitionExclusionState(DiseaseState):
         return builder.value.register_value_producer(
             f"{self.state_id}.disability_weight",
             source=self.compute_disability_weight,
-            requires_columns=lookup_columns + ["alive", self.model, "pregnancy"],
+            requires_attributes=lookup_columns + ["alive", self.model, "pregnancy"],
         )
 
     ##################################
