@@ -176,7 +176,8 @@ build-env: # Create a new environment with installed packages
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data; \
+		conda run $(CONDA_RUN_FLAG) pip install "setuptools<81"; \
+		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation"; \
 	fi
 	@if [ "$(package_profile)" = "maternal" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip install -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
