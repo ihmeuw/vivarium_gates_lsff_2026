@@ -32,11 +32,17 @@ if __name__ == "__main__":
     ]
 
     # use "pip install -e .[dev]" to install required components + extra components
-    data_requirements = ["vivarium-inputs[data]>=8.0.2"]
-    cluster_requirements = ["vivarium-cluster-tools>=4.2.14"]
-
-    test_requirements = ["pytest"]
-    lint_requirements = ["black", "isort"]
+    data_requirements = ["vivarium-inputs>=8.0.2"]
+    cluster_requirements = ["vivarium-cluster-tools>=4.2.14", "drmaa"]
+    test_requirements = [
+        "vivarium-dependencies[pytest]",
+        "vivarium-testing-utils",
+        "papermill",
+        "jupyterlab",
+    ]
+    validation_requirements = ["vivarium-testing-utils[validation]"]
+    lint_requirements = ["vivarium-dependencies[lint]"]
+    interactive_requirements = ["vivarium-dependencies[interactive]", "nbdime"]
 
     setup(
         name=about["__title__"],
@@ -54,8 +60,16 @@ if __name__ == "__main__":
         extras_require={
             "test": test_requirements,
             "cluster": cluster_requirements,
-            "data": data_requirements + cluster_requirements,
-            "dev": test_requirements + cluster_requirements + lint_requirements,
+            "data": data_requirements
+            + cluster_requirements
+            + lint_requirements
+            + test_requirements
+            + validation_requirements,
+            "interactive": interactive_requirements,
+            "dev": test_requirements
+            + cluster_requirements
+            + lint_requirements
+            + interactive_requirements,
         },
         zip_safe=False,
         entry_points="""

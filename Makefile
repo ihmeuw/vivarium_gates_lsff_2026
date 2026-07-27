@@ -274,3 +274,28 @@ build-shared-env: # Create a lightweight venv overlay on top of a shared conda e
 	@echo "  1. Activate it: 'source $(venv_path)/bin/activate'"
 	@echo "  2. Run 'make help' again to see all newly available targets"
 	@echo
+
+#####################################
+# Simulation package env shortcuts  #
+#####################################
+
+ENV_NAME_MATERNAL_SIM ?= $(PACKAGE_NAME)_simulation_maternal
+ENV_NAME_MATERNAL_ARTIFACT ?= $(PACKAGE_NAME)_artifact_maternal
+ENV_NAME_CHILD_SIM ?= $(PACKAGE_NAME)_simulation_child
+ENV_NAME_CHILD_ARTIFACT ?= $(PACKAGE_NAME)_artifact_child
+
+build-env-maternal-sim: # Build maternal simulation env and install maternal dev extras
+	$(MAKE) build-env type=simulation name=$(ENV_NAME_MATERNAL_SIM)
+	conda run -n $(ENV_NAME_MATERNAL_SIM) pip install -e ./0200_pregnancy_sim[dev]
+
+build-env-maternal-artifact: # Build maternal artifact env and install maternal data extras
+	$(MAKE) build-env type=artifact name=$(ENV_NAME_MATERNAL_ARTIFACT)
+	conda run -n $(ENV_NAME_MATERNAL_ARTIFACT) pip install -e ./0200_pregnancy_sim[data]
+
+build-env-child-sim: # Build child simulation env and install child dev extras
+	$(MAKE) build-env type=simulation name=$(ENV_NAME_CHILD_SIM)
+	conda run -n $(ENV_NAME_CHILD_SIM) pip install -e ./0300_child_sim[dev]
+
+build-env-child-artifact: # Build child artifact env and install child data extras
+	$(MAKE) build-env type=artifact name=$(ENV_NAME_CHILD_ARTIFACT)
+	conda run -n $(ENV_NAME_CHILD_ARTIFACT) pip install -e ./0300_child_sim[data]
