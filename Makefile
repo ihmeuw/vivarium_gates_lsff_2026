@@ -176,13 +176,12 @@ build-env: # Create a new environment with installed packages
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-		conda run $(CONDA_RUN_FLAG) pip install "setuptools<81"; \
-		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation"; \
+		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools<81"; \
 	fi
 	@if [ "$(package_profile)" = "maternal" ]; then \
-		conda run $(CONDA_RUN_FLAG) pip install -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
+		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
 	elif [ "$(package_profile)" = "child" ]; then \
-		conda run $(CONDA_RUN_FLAG) pip install -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)]; \
+		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)]; \
 	fi
 	@if [ "$(lfs)" = "yes" ]; then \
 		conda run $(CONDA_RUN_FLAG) conda install -c conda-forge git-lfs --yes; \
