@@ -125,10 +125,16 @@ dmypy.json
 
 # Pycharm project settings
 .idea/
+.vscode/launch.json
 
-# Version file
-src/*/_version.py
+.conda_env/
+.venv/
+.simulation_running_venv/
 
-# Copilot instructions
-.github/copilot_instructions.md
-.github/prompts/
+.snakemake/
+*.rdb
+*.hdf
+*.parquet
+*.tmp
+.cachedir
+model_spec_int.yaml
