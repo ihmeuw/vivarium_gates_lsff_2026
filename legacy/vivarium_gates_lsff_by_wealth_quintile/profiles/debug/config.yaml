@@ -1,0 +1,4 @@
+rerun-incomplete: true
+jobs: 1
+config:
+  debug: true

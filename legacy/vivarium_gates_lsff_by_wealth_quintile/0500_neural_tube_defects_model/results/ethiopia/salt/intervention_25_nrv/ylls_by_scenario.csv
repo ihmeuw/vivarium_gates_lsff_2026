@@ -1,0 +1,11 @@
+wealth_quintile,entity,scenario,value
+1,ntd,baseline,158016.36350616178
+2,ntd,baseline,150309.70532381968
+3,ntd,baseline,136808.11812064672
+4,ntd,baseline,120558.42024780132
+5,ntd,baseline,95108.52578518318
+1,ntd,intervention_25_nrv,92003.65074214581
+2,ntd,intervention_25_nrv,90849.53121665593
+3,ntd,intervention_25_nrv,77774.62130996001
+4,ntd,intervention_25_nrv,94573.78050084107
+5,ntd,intervention_25_nrv,79149.08159773263

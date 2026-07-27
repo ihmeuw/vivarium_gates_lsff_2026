@@ -1,0 +1,101 @@
+from lsff_utils import config_utils
+
+configfile: "0050_config/config.yaml"
+
+config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_fortificant_vehicle_intervention_scenarios()
+
+# Use the Snakemake config as a way to pass "globals" through all Snakefiles
+
+config = {
+    "env_input": [".venv/bin/activate"],
+    "env_setup": """
+source .venv/bin/activate
+""",
+    "simulation_running_env_input": [".simulation_running_venv/bin/activate"],
+    "simulation_running_env_setup": """
+source .simulation_running_venv/bin/activate
+""",
+    "debug": "false",
+    "local": "false",
+    "full_scale": "false",
+    **config,
+}
+
+config["debug"] = str(config.get("debug", "false")).lower() in ("t", "true", "y", "yes")
+config["local"] = str(config.get("local", "false")).lower() in ("t", "true", "y", "yes")
+config["full_scale"] = str(config.get("full_scale", "false")).lower() in ("t", "true", "y", "yes")
+
+rule all:
+    input: ["5000_analyze_results/results_spreadsheet.xlsx", "5000_analyze_results/executed/results_plots.ipynb"]
+
+include: "0100_data_prep/Snakefile"
+include: "0200_pregnancy_sim/Snakefile"
+include: "0300_child_sim/Snakefile"
+include: "0400_non_pregnant_anemia_model/Snakefile"
+include: "0500_neural_tube_defects_model/Snakefile"
+include: "5000_analyze_results/Snakefile"
+
+update_packages = config.get("update_packages", "n").lower() in ("t", "true", "y", "yes")
+
+if update_packages:
+    rule general_venv_from_scratch:
+        input: ["requirements.txt"]
+        output: [directory(".venv/"), ".venv/bin/activate"]
+        shell:
+            """
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            pip install -e .
+            cd 0200_pregnancy_sim
+            pip install .[data]
+            pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
+            pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
+            cd ..
+            pip freeze -l | grep -v '\-e ' | grep -v 'file:///' > pip_lock.txt
+            touch .venv .venv/bin/activate # Should be newer than the lockfile
+            """
+
+    # Vivarium currently requires a different version of Pandas than GBD
+    # uses, which is why we need this.
+    rule simulation_running_venv_from_scratch:
+        input: ["0200_pregnancy_sim/setup.py"]
+        output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
+        shell:
+            f"""
+            python -m venv .simulation_running_venv
+            source .simulation_running_venv/bin/activate
+            cd 0200_pregnancy_sim
+            pip install .[dev] # NOT editable! We use PYTHONPATH for that
+            pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
+            pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
+            # Assumed compatible with child sim
+            cd ..
+            pip install -e .
+            pip freeze -l  | grep -v '\-e ' | grep -v 'file:///' > simulation_running_pip_lock.txt
+            touch .simulation_running_venv .simulation_running_venv/bin/activate # Should be newer than the lockfile
+            """
+else:
+    rule general_venv:
+        input: ["pip_lock.txt"]
+        output: [directory(".venv/"), ".venv/bin/activate"]
+        shell:
+            """
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r pip_lock.txt
+            pip install -e .
+            """
+    
+    # Vivarium currently requires a different version of Pandas than GBD
+    # uses, which is why we need this.
+    rule simulation_running_venv:
+        input: ["simulation_running_pip_lock.txt"]
+        output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
+        shell:
+            """
+            python -m venv .simulation_running_venv
+            source .simulation_running_venv/bin/activate
+            pip install -r simulation_running_pip_lock.txt
+            pip install -e .
+            """

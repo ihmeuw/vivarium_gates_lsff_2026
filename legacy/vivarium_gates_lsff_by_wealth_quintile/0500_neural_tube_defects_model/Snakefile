@@ -1,0 +1,34 @@
+debug = config["debug"]
+
+def neural_tube_defects_model_inputs(wildcards):
+    return (
+        config["env_input"] + [
+            "0500_neural_tube_defects_model/model.ipynb",
+            "0100_data_prep/results/folate/{vehicle}/baseline_fortification/effective_coverage/{location}.csv",
+            "0100_data_prep/results/folate/{vehicle}/baseline_fortification/concentration/{location}.csv",
+            "0100_data_prep/results/population/stratified/{location}.csv",
+        ] + [
+            f"0100_data_prep/results/folate/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/{{location}}.csv"
+            for intervention_scenario in config["custom_intervention_scenarios"].get(wildcards.location, ["intervention"])
+        ] + [
+            f"0100_data_prep/results/folate/{{vehicle}}/{intervention_scenario}/intervention_fortification/concentration/{{location}}.csv"
+            for intervention_scenario in config["custom_intervention_scenarios"].get(wildcards.location, ["intervention"])
+
+        ]
+    )
+
+rule neural_tube_defects_model:
+    input: neural_tube_defects_model_inputs
+    output:
+        [
+            "0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv",
+            "0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv",
+        ]
+    log: "0500_neural_tube_defects_model/executed/{location}/{vehicle}/model.ipynb"
+    shell:
+        f"""
+        {config["env_setup"]}
+        cd 0500_neural_tube_defects_model
+        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
+        papermill model.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/model.ipynb -k python3 -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} {'--engine debug' if debug else ''}
+        """
