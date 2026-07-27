@@ -149,7 +149,8 @@ build-env: # Create a new environment with installed packages
 	@$(eval force ?= no)
 	@$(call validate_arg,$(force),yes no,force)
 #	python version
-	@$(eval py ?= $(shell cat python_versions.json | tr -d '[]" ' | tr ',' '\n' | sort -t. -k1,1n -k2,2n | tail -1))
+	@$(eval LATEST_SUPPORTED_PY := $(shell cat python_versions.json | tr -d '[]" ' | tr ',' '\n' | sort -t. -k1,1n -k2,2n | tail -1))
+	@$(eval py ?= $(if $(filter artifact,$(type)),3.11,$(LATEST_SUPPORTED_PY)))
 #	Determine conda create flag: -p for path, -n for name
 	@$(eval CONDA_CREATE_FLAG := $(if $(path),-p $(path),-n $(name)))
 #	Determine conda run flag: -p for path, -n for name
