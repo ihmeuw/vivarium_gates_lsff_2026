@@ -47,13 +47,10 @@ def reindex_series_onto_df_by_age_groups(df, series):
         # NOTE: Depends on a GBD age group always fitting into a disparity age group
         .pipe(
             lambda df: df[
-                (df.age_start >= df.age_start_series)
-                & (df.age_end <= df.age_end_series)
+                (df.age_start >= df.age_start_series) & (df.age_end <= df.age_end_series)
             ]
         )
         .pipe(lambda df: df.drop(columns=df.filter(like="_series").columns))
     )
-    result = result.set_index(
-        sorted(list(set(df.index.names) | set(series.index.names)))
-    )
+    result = result.set_index(sorted(list(set(df.index.names) | set(series.index.names))))
     return result.series_value.rename(series.name)

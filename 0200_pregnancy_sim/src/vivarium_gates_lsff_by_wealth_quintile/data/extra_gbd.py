@@ -1,12 +1,11 @@
 from gbd_mapping import sequelae
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
+from vivarium_gates_lsff_by_wealth_quintile.data import utilities
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_gbd_access import utilities as vi_utils
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
-
-from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
-from vivarium_gates_lsff_by_wealth_quintile.data import utilities
 
 
 @gbd.memory.cache

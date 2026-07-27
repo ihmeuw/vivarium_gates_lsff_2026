@@ -12,16 +12,12 @@ from vivarium.framework.lookup import LookupTable
 from vivarium.framework.population import SimulantData
 from vivarium.framework.time import get_time_stamp
 from vivarium.framework.values import Pipeline
-from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
-    data_keys,
-    data_values,
-)
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys, data_values
 from vivarium_public_health.risks import RiskEffect
 from vivarium_public_health.utilities import get_lookup_columns
 
 
 class MaternalIronConsumptionFromFortification(Component):
-
     def __init__(self):
         super().__init__()
 
@@ -69,14 +65,12 @@ class MaternalIronConsumptionFromFortification(Component):
             new_births = pop_data.user_data["new_births"]
             new_births.index = pop_data.index
 
-            new_simulants["maternal_iron_consumption_from_fortification_mcg"] = (
-                new_births["iron_consumption_from_fortification_mcg"].copy()
-            )
+            new_simulants["maternal_iron_consumption_from_fortification_mcg"] = new_births[
+                "iron_consumption_from_fortification_mcg"
+            ].copy()
             new_simulants[
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
-            ] = new_births[
-                "baseline_2021_iron_consumption_from_fortification_mcg"
-            ].copy()
+            ] = new_births["baseline_2021_iron_consumption_from_fortification_mcg"].copy()
 
         self.population_view.update(new_simulants)
 
@@ -84,9 +78,8 @@ class MaternalIronConsumptionFromFortification(Component):
         pop = self.population_view.get(index)
 
         # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
-        exposure -= (
-            pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg
-            * (self.birth_weight_effect_size_per_mg_intake / 1_000)
+        exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
+            self.birth_weight_effect_size_per_mg_intake / 1_000
         )  # convert mg to mcg
         exposure += pop.maternal_iron_consumption_from_fortification_mcg * (
             self.birth_weight_effect_size_per_mg_intake / 1_000
@@ -96,7 +89,6 @@ class MaternalIronConsumptionFromFortification(Component):
 
 
 class WealthQuintile(Component):
-
     def __init__(self):
         super().__init__()
 

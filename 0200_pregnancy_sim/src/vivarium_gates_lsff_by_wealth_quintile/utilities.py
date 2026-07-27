@@ -7,9 +7,8 @@ import pandas as pd
 from loguru import logger
 from scipy import stats
 from vivarium.framework.randomness import get_hash
-from vivarium_public_health.risks.data_transformations import pivot_categorical
-
 from vivarium_gates_lsff_by_wealth_quintile.constants import metadata
+from vivarium_public_health.risks.data_transformations import pivot_categorical
 
 SeededDistribution = Tuple[str, stats.rv_continuous]
 
@@ -81,9 +80,9 @@ def read_data_by_draw(artifact_path: str, key: str, draw: int) -> pd.DataFrame:
     data = pd.concat([index, draw], axis=1)
     data = data.drop(columns="location")
     data = pivot_categorical(data)
-    data[project_globals.LBWSG_MISSING_CATEGORY.CAT] = (
-        project_globals.LBWSG_MISSING_CATEGORY.EXPOSURE
-    )
+    data[
+        project_globals.LBWSG_MISSING_CATEGORY.CAT
+    ] = project_globals.LBWSG_MISSING_CATEGORY.EXPOSURE
     return data
 
 
@@ -172,9 +171,7 @@ def get_lognorm_from_quantiles(
 def get_random_variable_draws(
     number: int, seeded_distribution: SeededDistribution
 ) -> np.array:
-    return np.array(
-        [get_random_variable(x, seeded_distribution) for x in range(number)]
-    )
+    return np.array([get_random_variable(x, seeded_distribution) for x in range(number)])
 
 
 def get_random_variable(draw: int, seeded_distribution: SeededDistribution) -> float:

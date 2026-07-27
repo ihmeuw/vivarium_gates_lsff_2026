@@ -279,9 +279,7 @@ def load_population_structure(
         )
         population_structure = pd.concat([world_bank_1, world_bank_2])
     else:
-        population_structure = filter_population(
-            interface.get_population_structure(location)
-        )
+        population_structure = filter_population(interface.get_population_structure(location))
     return population_structure
 
 
@@ -293,9 +291,7 @@ def filter_population(unfiltered: pd.DataFrame) -> pd.DataFrame:
     return filtered_pop
 
 
-def load_age_bins(
-    key: str, location: Union[str, List[int]], mean_draw: bool
-) -> pd.DataFrame:
+def load_age_bins(key: str, location: Union[str, List[int]], mean_draw: bool) -> pd.DataFrame:
     all_age_bins = interface.get_age_bins().reset_index()
     return (
         all_age_bins[all_age_bins.age_start < 5]
@@ -366,9 +362,7 @@ def load_standard_data(
         data = data.query("year_start == 2019")
 
     elif key in neonatal_deleted_keys:
-        data = interface.get_measure(
-            entity, key.measure, location, metadata.GBD_EXTRACT_YEAR
-        )
+        data = interface.get_measure(entity, key.measure, location, metadata.GBD_EXTRACT_YEAR)
         data.loc[data.reset_index()["age_start"] < metadata.NEONATAL_END_AGE, :] = 0
 
     elif key in both_2019_and_neonatal_deleted:
@@ -377,9 +371,7 @@ def load_standard_data(
         data.loc[data.reset_index()["age_start"] < metadata.NEONATAL_END_AGE, :] = 0
 
     else:
-        data = interface.get_measure(
-            entity, key.measure, location, metadata.GBD_EXTRACT_YEAR
-        )
+        data = interface.get_measure(entity, key.measure, location, metadata.GBD_EXTRACT_YEAR)
 
     if key not in no_age:
         data = data.query("age_start < 5")
@@ -458,12 +450,8 @@ def load_wasting_transition_rates(
         if isinstance(location, list)
         else utility_data.get_location_id(location)
     )
-    demography = get_data(
-        data_keys.POPULATION.DEMOGRAPHY, national_location_id, mean_draw
-    )
-    rates = pd.read_csv(
-        paths.WASTING_TRANSITIONS_DATA_DIR / f"{national_location_id}.csv"
-    )
+    demography = get_data(data_keys.POPULATION.DEMOGRAPHY, national_location_id, mean_draw)
+    rates = pd.read_csv(paths.WASTING_TRANSITIONS_DATA_DIR / f"{national_location_id}.csv")
     rates = rates.rename({"parameter": "transition"}, axis=1)
 
     # explicitly add the youngest ages data with values of 0
@@ -493,9 +481,7 @@ def load_wasting_transition_rates(
     rates = rates.replace({"transition": {"inc_rate_mam": "inc_rate_better_mam"}})
     rates = pd.concat([rates, worse_mam_incidence_rates])
     # update incidence transition values
-    rates = rates.set_index(
-        metadata.ARTIFACT_INDEX_COLUMNS + ["transition"]
-    ).sort_index()
+    rates = rates.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ["transition"]).sort_index()
     worse_mam_idx = rates.query("transition == 'inc_rate_worse_mam'").index
     better_mam_idx = rates.query("transition == 'inc_rate_better_mam'").index
     rates.loc[worse_mam_idx] = (
@@ -514,9 +500,7 @@ def load_wasting_transition_rates(
     rates = rates.replace({"transition": {"ux_rem_rate_sam": "sam_to_better_mam"}})
     rates = pd.concat([rates, worse_mam_remission_rates])
     # update incidence transition values
-    rates = rates.set_index(
-        metadata.ARTIFACT_INDEX_COLUMNS + ["transition"]
-    ).sort_index()
+    rates = rates.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ["transition"]).sort_index()
     worse_mam_idx = rates.query("transition == 'sam_to_worse_mam'").index
     better_mam_idx = rates.query("transition == 'sam_to_better_mam'").index
     rates.loc[worse_mam_idx] = (
@@ -529,9 +513,7 @@ def load_wasting_transition_rates(
     return rates
 
 
-def expand_data(
-    data: pd.DataFrame, column_name: str, column_values: List
-) -> pd.DataFrame:
+def expand_data(data: pd.DataFrame, column_name: str, column_values: List) -> pd.DataFrame:
     """Equivalent to: For each column value, create a copy of data with a new column with this value. Concat these copies.
     Note: This transformation will reset the index of your data."""
     data = data.reset_index()
@@ -628,12 +610,8 @@ def load_wasting_birth_prevalence(
         / (prev_cat3.droplevel("parameter") + prev_cat4)
     )
 
-    low_birth_weight_cat1_probability = (
-        adequate_birth_weight_cat1_probability * relative_risk
-    )
-    low_birth_weight_cat2_probability = (
-        adequate_birth_weight_cat2_probability * relative_risk
-    )
+    low_birth_weight_cat1_probability = adequate_birth_weight_cat1_probability * relative_risk
+    low_birth_weight_cat2_probability = adequate_birth_weight_cat2_probability * relative_risk
     low_birth_weight_cat3_probability = prev_cat3 + (
         (
             prev_cat1.droplevel("parameter")
@@ -708,12 +686,8 @@ def _load_em_from_meid(location, meid, measure):
     data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS)
     data = vi_utils.reshape(data)
     data = vi_utils.scrub_gbd_conventions(data, location)
-    data = vi_utils.split_interval(
-        data, interval_column="age", split_column_prefix="age"
-    )
-    data = vi_utils.split_interval(
-        data, interval_column="year", split_column_prefix="year"
-    )
+    data = vi_utils.split_interval(data, interval_column="age", split_column_prefix="age")
+    data = vi_utils.split_interval(data, interval_column="year", split_column_prefix="year")
     return vi_utils.sort_hierarchical_data(data)
 
 
@@ -840,9 +814,7 @@ def load_emr_from_csmr_and_prevalence(
     data = data.replace([np.inf, -np.inf], 0)
 
     if key == data_keys.DIARRHEA.EMR:
-        data.loc[
-            data.index.get_level_values("age_start") < metadata.NEONATAL_END_AGE, :
-        ] = 0
+        data.loc[data.index.get_level_values("age_start") < metadata.NEONATAL_END_AGE, :] = 0
     return data
 
 
@@ -906,12 +878,8 @@ def load_underweight_exposure(
     df = pd.concat([early_neonatal, df])
 
     # add age start and age end data instead of age group name
-    age_bins = get_data(
-        data_keys.POPULATION.AGE_BINS, location, mean_draw
-    ).reset_index()
-    age_bins["age_group_name"] = (
-        age_bins["age_group_name"].str.lower().str.replace(" ", "_")
-    )
+    age_bins = get_data(data_keys.POPULATION.AGE_BINS, location, mean_draw).reset_index()
+    age_bins["age_group_name"] = age_bins["age_group_name"].str.lower().str.replace(" ", "_")
     age_start_map = dict(zip(age_bins["age_group_name"], age_bins["age_start"]))
     age_end_map = dict(zip(age_bins["age_group_name"], age_bins["age_end"]))
     df["age_start"] = df["age_group_name"].map(age_start_map)
@@ -1029,9 +997,7 @@ def load_gbd_2021_rr(
 
     if key == data_keys.STUNTING.RELATIVE_RISK:
         # Remove neonatal relative risks
-        neonatal_age_ends = (
-            data.index.get_level_values("age_end").unique().sort_values()[:2]
-        )
+        neonatal_age_ends = data.index.get_level_values("age_end").unique().sort_values()[:2]
         data.loc[data.index.get_level_values("age_end").isin(neonatal_age_ends)] = 1.0
     if key == data_keys.WASTING.RELATIVE_RISK:
         # add wasting cat2.5 data by duplicating wasting cat2 data
@@ -1045,9 +1011,7 @@ def load_gbd_2021_rr(
     return data
 
 
-def load_cgf_paf(
-    key: str, location: Union[str, List[int]], mean_draw: bool
-) -> pd.DataFrame:
+def load_cgf_paf(key: str, location: Union[str, List[int]], mean_draw: bool) -> pd.DataFrame:
     national_location_id = (
         get_national_location_id(location[0])
         if isinstance(location, list)
@@ -1058,12 +1022,8 @@ def load_cgf_paf(
     )  # .query("location_id==@location_id")
 
     # add age start and age end data instead of age group name
-    age_bins = get_data(
-        data_keys.POPULATION.AGE_BINS, location, mean_draw
-    ).reset_index()
-    age_bins["age_group_name"] = (
-        age_bins["age_group_name"].str.lower().str.replace(" ", "_")
-    )
+    age_bins = get_data(data_keys.POPULATION.AGE_BINS, location, mean_draw).reset_index()
+    age_bins["age_group_name"] = age_bins["age_group_name"].str.lower().str.replace(" ", "_")
     age_start_map = dict(zip(age_bins["age_group_name"], age_bins["age_start"]))
     age_end_map = dict(zip(age_bins["age_group_name"], age_bins["age_end"]))
     data["age_start"] = data["age_group_name"].map(age_start_map)
@@ -1112,22 +1072,16 @@ def load_pem_disability_weight(
         prevalence_disability_weight += [sequela_prevalence * sequela_disability_weight]
         state_prevalence += [sequela_prevalence]
 
-    disability_weight = (
-        sum(prevalence_disability_weight) / sum(state_prevalence)
-    ).fillna(0)
+    disability_weight = (sum(prevalence_disability_weight) / sum(state_prevalence)).fillna(0)
     return disability_weight
 
 
-def load_pem_emr(
-    key: str, location: Union[str, List[int]], mean_draw: bool
-) -> pd.DataFrame:
+def load_pem_emr(key: str, location: Union[str, List[int]], mean_draw: bool) -> pd.DataFrame:
     emr = load_standard_data(data_keys.PEM.EMR, location, mean_draw)
     return emr
 
 
-def load_pem_csmr(
-    key: str, location: Union[str, List[int]], mean_draw: bool
-) -> pd.DataFrame:
+def load_pem_csmr(key: str, location: Union[str, List[int]], mean_draw: bool) -> pd.DataFrame:
     csmr = load_standard_data(data_keys.PEM.CSMR, location, mean_draw)
     return csmr
 
@@ -1143,9 +1097,7 @@ def load_pem_restrictions(key: str, location: str, mean_draw: bool) -> pd.DataFr
 
 
 # noinspection PyUnusedLocal
-def load_wasting_treatment_distribution(
-    key: str, location: str, mean_draw: bool
-) -> str:
+def load_wasting_treatment_distribution(key: str, location: str, mean_draw: bool) -> str:
     if key in [
         data_keys.SAM_TREATMENT.DISTRIBUTION,
         data_keys.MAM_TREATMENT.DISTRIBUTION,
@@ -1163,9 +1115,7 @@ def load_wasting_treatment_categories(key: str, location: str, mean_draw: bool) 
         raise ValueError(f"Unrecognized key {key}")
 
 
-def load_wasting_treatment_exposure(
-    key: str, location: str, mean_draw: bool
-) -> pd.DataFrame:
+def load_wasting_treatment_exposure(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key == data_keys.SAM_TREATMENT.EXPOSURE:
         parameter = "c_sam"
     elif key == data_keys.MAM_TREATMENT.EXPOSURE:
@@ -1173,9 +1123,7 @@ def load_wasting_treatment_exposure(
     else:
         raise ValueError(f"Unrecognized key {key}")
 
-    treatment_coverage = utilities.get_wasting_treatment_parameter_data(
-        parameter, location
-    )
+    treatment_coverage = utilities.get_wasting_treatment_parameter_data(parameter, location)
 
     idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location, mean_draw).index
     cat3 = pd.DataFrame(
@@ -1184,10 +1132,7 @@ def load_wasting_treatment_exposure(
     )
     cat2 = (
         pd.DataFrame(
-            {
-                f"draw_{i}": 1.0
-                for i in range(0, 1 if mean_draw else metadata.DRAW_COUNT)
-            },
+            {f"draw_{i}": 1.0 for i in range(0, 1 if mean_draw else metadata.DRAW_COUNT)},
             index=idx,
         )
         * treatment_coverage
@@ -1198,22 +1143,14 @@ def load_wasting_treatment_exposure(
     cat2["parameter"] = "cat2"
     cat3["parameter"] = "cat3"
 
-    exposure = (
-        pd.concat([cat1, cat2, cat3]).set_index("parameter", append=True).sort_index()
-    )
+    exposure = pd.concat([cat1, cat2, cat3]).set_index("parameter", append=True).sort_index()
 
     # infants under 6 months of age should not receive treatment
-    under_6_months_unexposed_idx = exposure.query(
-        "age_start < .5 & parameter=='cat1'"
-    ).index
-    under_6_months_exposed_idx = exposure.query(
-        "age_start < .5 & parameter!='cat1'"
-    ).index
+    under_6_months_unexposed_idx = exposure.query("age_start < .5 & parameter=='cat1'").index
+    under_6_months_exposed_idx = exposure.query("age_start < .5 & parameter!='cat1'").index
     exposure.loc[under_6_months_unexposed_idx] = 1
     exposure.loc[under_6_months_exposed_idx] = 0
-    exposure = exposure[
-        pd.Index(["draw_0"]) if mean_draw else metadata.ARTIFACT_COLUMNS
-    ]
+    exposure = exposure[pd.Index(["draw_0"]) if mean_draw else metadata.ARTIFACT_COLUMNS]
 
     return exposure
 
@@ -1223,9 +1160,7 @@ def load_sam_treatment_rr(key: str, location: str, mean_draw: bool) -> pd.DataFr
     if key != data_keys.SAM_TREATMENT.RELATIVE_RISK:
         raise ValueError(f"Unrecognized key {key}")
 
-    demography = get_data(
-        data_keys.POPULATION.DEMOGRAPHY, location, mean_draw
-    ).reset_index()
+    demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location, mean_draw).reset_index()
     sam_tx_efficacy, sam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(
         demography, data_keys.WASTING.CAT1, location
     )
@@ -1234,9 +1169,9 @@ def load_sam_treatment_rr(key: str, location: str, mean_draw: bool) -> pd.DataFr
     #       = (sam_tx_efficacy / sam_tx_duration) / (sam_tx_efficacy_tmrel / sam_tx_duration)
     #       = sam_tx_efficacy / sam_tx_efficacy_tmrel
     rr_sam_treated_remission = sam_tx_efficacy / sam_tx_efficacy_tmrel
-    rr_sam_treated_remission["affected_entity"] = (
-        "severe_acute_malnutrition_to_mild_child_wasting"
-    )
+    rr_sam_treated_remission[
+        "affected_entity"
+    ] = "severe_acute_malnutrition_to_mild_child_wasting"
 
     # rr_r2 = r2 / r2_tmrel
     #       = (1 - sam_tx_efficacy) * (r2_ux) / (1 - sam_tx_efficacy_tmrel) * (r2_ux)
@@ -1245,12 +1180,12 @@ def load_sam_treatment_rr(key: str, location: str, mean_draw: bool) -> pd.DataFr
 
     better_mam_rows = rr_sam_untreated_remission.copy()
     worse_mam_rows = rr_sam_untreated_remission.copy()
-    better_mam_rows["affected_entity"] = (
-        "severe_acute_malnutrition_to_better_moderate_acute_malnutrition"
-    )
-    worse_mam_rows["affected_entity"] = (
-        "severe_acute_malnutrition_to_worse_moderate_acute_malnutrition"
-    )
+    better_mam_rows[
+        "affected_entity"
+    ] = "severe_acute_malnutrition_to_better_moderate_acute_malnutrition"
+    worse_mam_rows[
+        "affected_entity"
+    ] = "severe_acute_malnutrition_to_worse_moderate_acute_malnutrition"
     rr_sam_untreated_remission = pd.concat([better_mam_rows, worse_mam_rows])
 
     rr = pd.concat([rr_sam_treated_remission, rr_sam_untreated_remission])
@@ -1273,9 +1208,7 @@ def load_mam_treatment_rr(key: str, location: str, mean_draw: bool) -> pd.DataFr
     if key != data_keys.MAM_TREATMENT.RELATIVE_RISK:
         raise ValueError(f"Unrecognized key {key}")
 
-    demography = get_data(
-        data_keys.POPULATION.DEMOGRAPHY, location, mean_draw
-    ).reset_index()
+    demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location, mean_draw).reset_index()
     mam_tx_efficacy, mam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(
         demography, data_keys.WASTING.CAT2, location
     )
@@ -1283,14 +1216,12 @@ def load_mam_treatment_rr(key: str, location: str, mean_draw: bool) -> pd.DataFr
 
     mam_ux_duration = data_values.WASTING.MAM_UX_RECOVERY_TIME_OVER_6MO
     mam_tx_duration = pd.Series(index=index)
-    mam_tx_duration[index.get_level_values("age_start") < 0.5] = (
-        data_values.WASTING.MAM_TX_RECOVERY_TIME_UNDER_6MO
-    )
-    mam_tx_duration[0.5 <= index.get_level_values("age_start")] = (
-        get_random_variable_draws(
-            mam_tx_duration[0.5 <= index.get_level_values("age_start")].index,
-            *data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO,
-        )
+    mam_tx_duration[
+        index.get_level_values("age_start") < 0.5
+    ] = data_values.WASTING.MAM_TX_RECOVERY_TIME_UNDER_6MO
+    mam_tx_duration[0.5 <= index.get_level_values("age_start")] = get_random_variable_draws(
+        mam_tx_duration[0.5 <= index.get_level_values("age_start")].index,
+        *data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO,
     )
     mam_tx_duration = pd.DataFrame(
         {f"draw_{i}": 1 for i in range(0, 1 if mean_draw else metadata.DRAW_COUNT)},
@@ -1302,21 +1233,19 @@ def load_mam_treatment_rr(key: str, location: str, mean_draw: bool) -> pd.DataFr
     #           / (mam_tx_efficacy_tmrel / mam_tx_duration) + (1 - mam_tx_efficacy_tmrel / mam_ux_duration)
     #       = (mam_tx_efficacy * mam_ux_duration + (1 - mam_tx_efficacy) * mam_tx_duration)
     #           / (mam_tx_efficacy_tmrel * mam_ux_duration + (1 - mam_tx_efficacy_tmrel) * mam_tx_duration)
-    rr = (
-        mam_tx_efficacy * mam_ux_duration + (1 - mam_tx_efficacy) * mam_tx_duration
-    ) / (
+    rr = (mam_tx_efficacy * mam_ux_duration + (1 - mam_tx_efficacy) * mam_tx_duration) / (
         mam_tx_efficacy_tmrel * mam_ux_duration
         + (1 - mam_tx_efficacy_tmrel) * mam_tx_duration
     )
 
     better_mam_rows = rr.copy()
     worse_mam_rows = rr.copy()
-    better_mam_rows["affected_entity"] = (
-        "better_moderate_acute_malnutrition_to_mild_child_wasting"
-    )
-    worse_mam_rows["affected_entity"] = (
-        "worse_moderate_acute_malnutrition_to_mild_child_wasting"
-    )
+    better_mam_rows[
+        "affected_entity"
+    ] = "better_moderate_acute_malnutrition_to_mild_child_wasting"
+    worse_mam_rows[
+        "affected_entity"
+    ] = "worse_moderate_acute_malnutrition_to_mild_child_wasting"
     rr = pd.concat([better_mam_rows, worse_mam_rows])
 
     rr["affected_measure"] = "transition_rate"
@@ -1349,9 +1278,7 @@ def load_lbwsg_exposure(key: str, location: str, mean_draw: bool) -> pd.DataFram
     data = data.clip(lower=vi_globals.MINIMUM_EXPOSURE_VALUE)
 
     # normalize so all categories sum to 1
-    total_exposure = data.groupby(["location_id", "age_group_id", "sex_id"]).transform(
-        "sum"
-    )
+    total_exposure = data.groupby(["location_id", "age_group_id", "sex_id"]).transform("sum")
     data = (data / total_exposure).reset_index()
     data = reshape_to_vivarium_format(data, location)
     return data
@@ -1362,16 +1289,12 @@ def load_lbwsg_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         raise ValueError(f"Unrecognized key {key}")
 
     data = load_standard_data(key, location, mean_draw)
-    data = data.query("year_start == 2021").droplevel(
-        ["affected_entity", "affected_measure"]
-    )
+    data = data.query("year_start == 2021").droplevel(["affected_entity", "affected_measure"])
     data = data[~data.index.duplicated()]
     return data
 
 
-def load_lbwsg_interpolated_rr(
-    key: str, location: str, mean_draw: bool
-) -> pd.DataFrame:
+def load_lbwsg_interpolated_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key != data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR:
         raise ValueError(f"Unrecognized key {key}")
 
@@ -1488,9 +1411,7 @@ def load_sids_csmr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         entity.restrictions.yll_only = False
         entity.restrictions.yld_age_group_id_start = metadata.AGE_GROUP.LATE_NEONATAL_ID
         entity.restrictions.yld_age_group_id_end = metadata.AGE_GROUP.LATE_NEONATAL_ID
-        data = interface.get_measure(
-            entity, key.measure, location, metadata.GBD_EXTRACT_YEAR
-        )
+        data = interface.get_measure(entity, key.measure, location, metadata.GBD_EXTRACT_YEAR)
         return data
     else:
         raise ValueError(f"Unrecognized key {key}")
@@ -1501,31 +1422,21 @@ def load_neonatal_lri_csmr(key: str, location: str, mean_draw: bool) -> pd.DataF
         raise ValueError(f"Unrecognized key {key}")
 
     data = load_standard_data(data_keys.LRI.CSMR, location, mean_draw)
-    data.loc[
-        data.index.get_level_values("age_start") >= metadata.NEONATAL_END_AGE, :
-    ] = 0
+    data.loc[data.index.get_level_values("age_start") >= metadata.NEONATAL_END_AGE, :] = 0
     return data
 
 
-def load_neonatal_diarrhea_csmr(
-    key: str, location: str, mean_draw: bool
-) -> pd.DataFrame:
+def load_neonatal_diarrhea_csmr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key != data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_DIARRHEAL_DISEASES_CSMR:
         raise ValueError(f"Unrecognized key {key}")
 
     data = load_standard_data(data_keys.DIARRHEA.CSMR, location, mean_draw)
-    data.loc[
-        data.index.get_level_values("age_start") >= metadata.NEONATAL_END_AGE, :
-    ] = 0
+    data.loc[data.index.get_level_values("age_start") >= metadata.NEONATAL_END_AGE, :] = 0
     return data
 
 
-def load_iron_fortification_effect_on_birth_weight(
-    key: str, location: str, mean_draw: bool
-):
-    path = (
-        paths.DATA_PREP_RESULTS_ROOT / "iron" / "fortification_birthweight_effects.csv"
-    )
+def load_iron_fortification_effect_on_birth_weight(key: str, location: str, mean_draw: bool):
+    path = paths.DATA_PREP_RESULTS_ROOT / "iron" / "fortification_birthweight_effects.csv"
 
     df = pd.read_csv(path)
     return df.set_index([c for c in df.columns if c != "value"])
@@ -1569,9 +1480,7 @@ def load_dichotomous_treatment_exposure(
         }[key]
     except KeyError:
         raise ValueError(f"Unrecognized key {key}")
-    return load_dichotomous_exposure(
-        location, distribution_data, is_risk=False, **kwargs
-    )
+    return load_dichotomous_exposure(location, distribution_data, is_risk=False, **kwargs)
 
 
 def load_ifa_excess_shift(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
@@ -1580,9 +1489,7 @@ def load_ifa_excess_shift(key: str, location: str, mean_draw: bool) -> pd.DataFr
     return pd.concat([birth_weight_shift, gestational_age_shift])
 
 
-def load_treatment_excess_shift(
-    key: str, location: str, mean_draw: bool
-) -> pd.DataFrame:
+def load_treatment_excess_shift(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     try:
         distribution_data = {
             # data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: data_values.MATERNAL_CHARACTERISTICS.IFA_BIRTH_WEIGHT_SHIFT,
@@ -1617,9 +1524,7 @@ def load_dichotomous_exposure(
     exposure = (
         pd.concat([exposed, unexposed]).set_index("parameter", append=True).sort_index()
     )
-    exposure = exposure[
-        pd.Index(["draw_0"]) if mean_draw else metadata.ARTIFACT_COLUMNS
-    ]
+    exposure = exposure[pd.Index(["draw_0"]) if mean_draw else metadata.ARTIFACT_COLUMNS]
     return exposure
 
 
@@ -1633,9 +1538,7 @@ def load_dichotomous_excess_shift(
         pd.Index(["draw_0"]) if mean_draw else metadata.ARTIFACT_COLUMNS,
         *distribution_data,
     )
-    excess_shift = reshape_shift_data(
-        shift, index, data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE
-    )
+    excess_shift = reshape_shift_data(shift, index, data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE)
 
     return excess_shift
 
@@ -1724,9 +1627,7 @@ def load_risk_specific_shift(key: str, location: str, mean_draw: bool) -> pd.Dat
 
     risk_specific_shift = (
         (exposure * excess_shift)
-        .groupby(
-            metadata.ARTIFACT_INDEX_COLUMNS + ["affected_entity", "affected_measure"]
-        )
+        .groupby(metadata.ARTIFACT_INDEX_COLUMNS + ["affected_entity", "affected_measure"])
         .sum()
     )
     return risk_specific_shift
@@ -1755,8 +1656,8 @@ def fetch_subnational_ids(location: str) -> List[int]:
 
 def get_national_location_id(location_id: int) -> int:
     location_metadata = gbd.get_location_path_to_global()
-    path_to_parent = location_metadata.loc[
-        location_metadata.location_id == location_id
-    ]["path_to_top_parent"].to_list()
+    path_to_parent = location_metadata.loc[location_metadata.location_id == location_id][
+        "path_to_top_parent"
+    ].to_list()
     national_location_id = int([loc_id.split(",")[3] for loc_id in path_to_parent][0])
     return national_location_id

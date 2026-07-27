@@ -149,9 +149,7 @@ def read_data(path: Path, single_run: bool) -> (pd.DataFrame, List[str]):
         keyspace = {
             results.INPUT_DRAW_COLUMN: [0],
             results.RANDOM_SEED_COLUMN: [0],
-            results.OUTPUT_SCENARIO_COLUMN: [
-                scenarios.INTERVENTION_SCENARIOS.BASELINE.name
-            ],
+            results.OUTPUT_SCENARIO_COLUMN: [scenarios.INTERVENTION_SCENARIOS.BASELINE.name],
         }
     else:
         data[results.INPUT_DRAW_COLUMN] = data[results.INPUT_DRAW_COLUMN].astype(int)
@@ -174,9 +172,7 @@ def filter_out_incomplete(
                 data[SCENARIO_COLUMN] == scenario, results.RANDOM_SEED_COLUMN
             ].unique()
             random_seeds = random_seeds.intersection(seeds_in_data)
-        draw_data = draw_data.loc[
-            draw_data[results.RANDOM_SEED_COLUMN].isin(random_seeds)
-        ]
+        draw_data = draw_data.loc[draw_data[results.RANDOM_SEED_COLUMN].isin(random_seeds)]
         output.append(draw_data)
     return pd.concat(output, ignore_index=True).reset_index(drop=True)
 
@@ -185,9 +181,7 @@ def aggregate_over_seed(data: pd.DataFrame, location: str) -> pd.DataFrame:
     non_count_columns = []
     for non_count_template in results.NON_COUNT_TEMPLATES:
         non_count_columns += results.RESULT_COLUMNS(location, non_count_template)
-    count_columns = [
-        c for c in data.columns if c not in non_count_columns + GROUPBY_COLUMNS
-    ]
+    count_columns = [c for c in data.columns if c not in non_count_columns + GROUPBY_COLUMNS]
 
     # non_count_data = data[non_count_columns + GROUPBY_COLUMNS].groupby(GROUPBY_COLUMNS).mean()
     count_data = data[count_columns + GROUPBY_COLUMNS].groupby(GROUPBY_COLUMNS).sum()
@@ -307,9 +301,7 @@ def get_transition_count_measure_data(
     # Oops, edge case.
     data = data.drop(
         columns=[
-            c
-            for c in data.columns
-            if "event_count" in c and str(results.YEARS[-1] + 1) in c
+            c for c in data.columns if "event_count" in c and str(results.YEARS[-1] + 1) in c
         ]
     )
     data = get_measure_data(data, measure, disaggregate_seeds, location)

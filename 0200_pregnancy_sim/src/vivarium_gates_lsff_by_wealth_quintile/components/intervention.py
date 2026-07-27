@@ -8,13 +8,8 @@ from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.population import SimulantData
 from vivarium.framework.randomness import RESIDUAL_CHOICE
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values, models
 from vivarium_public_health.utilities import get_lookup_columns
-
-from vivarium_gates_lsff_by_wealth_quintile.constants import (
-    data_keys,
-    data_values,
-    models,
-)
 
 
 class VehicleConsumption(Component):
@@ -68,9 +63,7 @@ class VehicleConsumption(Component):
             .rename("mean")
         )
         stddev = (
-            drop_vehicle(
-                builder.data.load(data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION)
-            )
+            drop_vehicle(builder.data.load(data_keys.VEHICLE_CONSUMPTION.STANDARD_DEVIATION))
             .set_index(index_columns)["value"]
             .rename("stddev")
         )
@@ -97,9 +90,7 @@ class VehicleConsumption(Component):
             probability=any_consumed_prob,
             additional_key="any_vehicle_consumed",
         )
-        pop_update.loc[
-            ~pop_update.index.isin(any_consumed), "vehicle_consumption_grams"
-        ] = 0
+        pop_update.loc[~pop_update.index.isin(any_consumed), "vehicle_consumption_grams"] = 0
         # Consider the original distribution, described by mean and stddev, to be
         # not normal but a mixture of a normal distribution and a point mass at 0.
         # This is a mixture of Gaussians (M), for the degenerate case where one has mean = 0, variance = 0.
@@ -117,14 +108,16 @@ class VehicleConsumption(Component):
         # NOTE: By clipping here, we are overshooting our target of how many people don't consume
         # any at all! It doesn't mess with the mean very much though.
         # We could improve this by using a non-negative distribution instead of normal.
-        pop_update.loc[any_consumed, "vehicle_consumption_grams"] = (
-            self.randomness.sample_from_distribution(
-                any_consumed,
-                scipy.stats.norm(
-                    nonzero_component_mean,
-                    np.sqrt(nonzero_component_variance),
-                ),
-            ).clip(lower=0)
+        pop_update.loc[
+            any_consumed, "vehicle_consumption_grams"
+        ] = self.randomness.sample_from_distribution(
+            any_consumed,
+            scipy.stats.norm(
+                nonzero_component_mean,
+                np.sqrt(nonzero_component_variance),
+            ),
+        ).clip(
+            lower=0
         )
 
         self.population_view.update(pop_update)
@@ -192,9 +185,9 @@ class IronFortification(Component):
                 data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_MEAN
             )
         )
-        mean = mean.set_index([c for c in mean.columns if c != "value"])[
-            "value"
-        ].rename("mean")
+        mean = mean.set_index([c for c in mean.columns if c != "value"])["value"].rename(
+            "mean"
+        )
         stddev = drop_vehicle(
             builder.data.load(
                 data_keys.IRON_FORTIFICATION.BASELINE_PARTIAL_COVERAGE_AMOUNT_SD
@@ -255,18 +248,14 @@ class IronFortification(Component):
         self.intervention_fortification_mcg_per_gram = self.build_lookup_table(
             builder,
             drop_vehicle(
-                builder.data.load(
-                    data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION
-                )
+                builder.data.load(data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION)
             ).assign(sex="Female"),
             value_columns=["value"],
         )
 
         self.fortifiability = self.build_lookup_table(
             builder,
-            drop_vehicle(
-                builder.data.load(data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY)
-            ),
+            drop_vehicle(builder.data.load(data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY)),
             value_columns=["value"],
         )
 
@@ -282,9 +271,7 @@ class IronFortification(Component):
         )
 
         baseline_full_prob = self.baseline_full_coverage(pop_data.index)
-        baseline_any_prob = (
-            self.baseline_any_coverage(pop_data.index) - baseline_full_prob
-        )
+        baseline_any_prob = self.baseline_any_coverage(pop_data.index) - baseline_full_prob
 
         baseline_fortification = self.randomness.choice(
             pop_data.index,
@@ -308,15 +295,13 @@ class IronFortification(Component):
         # coverage
         distribution_parameters = self.distribution_parameters(pop_data.index)
         if len(partial) > 0:
-            baseline_fortification.loc[partial] = (
-                self.randomness.sample_from_distribution(
-                    partial,
-                    scipy.stats.norm(
-                        distribution_parameters.loc[partial]["mean"],
-                        distribution_parameters.loc[partial].stddev,
-                    ),
-                ).clip(0, 1)
-            )
+            baseline_fortification.loc[partial] = self.randomness.sample_from_distribution(
+                partial,
+                scipy.stats.norm(
+                    distribution_parameters.loc[partial]["mean"],
+                    distribution_parameters.loc[partial].stddev,
+                ),
+            ).clip(0, 1)
 
         assert (baseline_fortification >= 0).all()
 
@@ -355,9 +340,7 @@ class IronFortification(Component):
                 pop_data.index
             ) * self.fortifiability(pop_data.index)
             additional_coverage = target_coverage - current_coverage
-            assert (
-                (additional_coverage >= 0) | np.isclose(additional_coverage, 0)
-            ).all()
+            assert ((additional_coverage >= 0) | np.isclose(additional_coverage, 0)).all()
             additional_coverage = additional_coverage.clip(lower=0)
 
             intervention_covered = self.randomness.filter_for_probability(
@@ -386,25 +369,23 @@ class IronFortification(Component):
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective
-        pop_update.loc[
-            ineffective_baseline_2021, "baseline_2021_iron_fortification"
-        ] = 0.0
+        pop_update.loc[ineffective_baseline_2021, "baseline_2021_iron_fortification"] = 0.0
         pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
-        vehicle_consumption = self.population_view.subview(
-            ["vehicle_consumption_grams"]
-        ).get(pop_data.index)["vehicle_consumption_grams"]
+        vehicle_consumption = self.population_view.subview(["vehicle_consumption_grams"]).get(
+            pop_data.index
+        )["vehicle_consumption_grams"]
 
         baseline_concentration_mcg_per_gram = self.baseline_fortification_mcg_per_gram(
             pop_data.index
         )
 
-        pop_update["baseline_2021_iron_consumption_from_fortification_mcg"] = (
-            self._calculate_iron_consumption(
-                vehicle_consumption,
-                pop_update.baseline_2021_iron_fortification,
-                baseline_concentration_mcg_per_gram,
-            )
+        pop_update[
+            "baseline_2021_iron_consumption_from_fortification_mcg"
+        ] = self._calculate_iron_consumption(
+            vehicle_consumption,
+            pop_update.baseline_2021_iron_fortification,
+            baseline_concentration_mcg_per_gram,
         )
 
         if self.scenario == "zero":
@@ -416,12 +397,12 @@ class IronFortification(Component):
                 pop_data.index
             )
 
-        pop_update["iron_consumption_from_fortification_mcg"] = (
-            self._calculate_iron_consumption(
-                vehicle_consumption,
-                pop_update.iron_fortification,
-                concentration_mcg_per_gram,
-            )
+        pop_update[
+            "iron_consumption_from_fortification_mcg"
+        ] = self._calculate_iron_consumption(
+            vehicle_consumption,
+            pop_update.iron_fortification,
+            concentration_mcg_per_gram,
         )
 
         self.population_view.update(pop_update)
@@ -435,9 +416,7 @@ class IronFortification(Component):
 
         # Delete the baseline effects of fortification that were baked into the GBD 2021
         # hemoglobin distribution
-        exposure -= (
-            baseline_2021_benefit * self.hemoglobin_effect_size_above_intake_threshold
-        )
+        exposure -= baseline_2021_benefit * self.hemoglobin_effect_size_above_intake_threshold
 
         benefit = pop.iron_consumption_from_fortification_mcg > 0
         exposure += benefit * self.hemoglobin_effect_size_above_intake_threshold

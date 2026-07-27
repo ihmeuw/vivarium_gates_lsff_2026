@@ -98,9 +98,7 @@ class PopulationLineList(BasePopulation):
             new_simulants["location"] = self.location
             new_simulants["entrance_time"] = pop_data.creation_time
             new_simulants["exit_time"] = new_births["exit_time"]
-            new_simulants["maternal_entrance_time"] = new_births[
-                "maternal_entrance_time"
-            ]
+            new_simulants["maternal_entrance_time"] = new_births["maternal_entrance_time"]
             new_simulants["maternal_age"] = new_births["maternal_age"]
 
         self.register_simulants(new_simulants[self.key_columns])
@@ -150,9 +148,7 @@ class EvenlyDistributedPopulation(BasePopulation):
         # self.subnational = builder.configuration.intervention.subnational
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        age_start = pop_data.user_data.get(
-            "age_start", self.config.initialization_age_min
-        )
+        age_start = pop_data.user_data.get("age_start", self.config.initialization_age_min)
         age_end = pop_data.user_data.get("age_end", self.config.initialization_age_max)
 
         population = pd.DataFrame(index=pop_data.index)

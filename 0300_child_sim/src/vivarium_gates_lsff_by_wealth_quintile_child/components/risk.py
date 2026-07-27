@@ -4,17 +4,10 @@ from typing import Any, Callable, Dict
 import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.values import Pipeline
-from vivarium_gates_lsff_by_wealth_quintile_child.components import (
-    CGFPolytomousDistribution,
-)
-from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
-    data_keys,
-    data_values,
-)
+from vivarium_gates_lsff_by_wealth_quintile_child.components import CGFPolytomousDistribution
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys, data_values
 from vivarium_public_health.risks import Risk, RiskEffect
-from vivarium_public_health.risks.data_transformations import (
-    get_exposure_post_processor,
-)
+from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
 from vivarium_public_health.risks.distributions import RiskExposureDistribution
 from vivarium_public_health.utilities import EntityString
 
@@ -61,9 +54,7 @@ class ChildUnderweight(Risk):
             preferred_post_processor=get_exposure_post_processor(builder, self.risk),
         )
 
-    def _get_distributions(
-        self, builder: Builder
-    ) -> Dict[str, CGFPolytomousDistribution]:
+    def _get_distributions(self, builder: Builder) -> Dict[str, CGFPolytomousDistribution]:
         """Store and setup distributions for each joint stunting and wasting state."""
         distributions = {}
         stunting_categories = [f"cat{i+1}" for i in range(4)]
@@ -82,9 +73,7 @@ class ChildUnderweight(Risk):
             )
 
             wasting_cat = wasting_cat.replace(".", "")
-            key = (
-                f"risk_factor.stunting_{stunting_cat}_wasting_{wasting_cat}_underweight"
-            )
+            key = f"risk_factor.stunting_{stunting_cat}_wasting_{wasting_cat}_underweight"
 
             distributions[key] = CGFPolytomousDistribution(
                 EntityString(key), distribution_data
@@ -112,9 +101,7 @@ class ChildUnderweight(Risk):
         for group, group_df in pop.groupby(["stunting", "wasting"]):
             stunting_category, wasting_category = group
             # update key to not include dot
-            wasting_category = (
-                "cat25" if wasting_category == "cat2.5" else wasting_category
-            )
+            wasting_category = "cat25" if wasting_category == "cat2.5" else wasting_category
             distribution = self.distributions[
                 f"risk_factor.stunting_{stunting_category}_wasting_{wasting_category}_underweight"
             ]
@@ -172,14 +159,10 @@ class CGFRiskEffect(RiskEffect):
 
     def build_all_lookup_tables(self, builder: Builder) -> None:
         for risk in self.cgf_models:
-            rr_data = self.get_relative_risk_data(
-                builder, self.configuration.sub_risks[risk]
-            )
+            rr_data = self.get_relative_risk_data(builder, self.configuration.sub_risks[risk])
             rr_value_columns = None
             if self.is_exposure_categorical:
-                rr_data, rr_value_columns = self.process_categorical_data(
-                    builder, rr_data
-                )
+                rr_data, rr_value_columns = self.process_categorical_data(builder, rr_data)
             self.lookup_tables[f"{risk.name}_relative_risk"] = self.build_lookup_table(
                 builder, rr_data, rr_value_columns
             )
@@ -187,8 +170,8 @@ class CGFRiskEffect(RiskEffect):
         paf_data = self.get_filtered_data(
             builder, self.configuration.data_sources.population_attributable_fraction
         )
-        self.lookup_tables["population_attributable_fraction"] = (
-            self.build_lookup_table(builder, paf_data)
+        self.lookup_tables["population_attributable_fraction"] = self.build_lookup_table(
+            builder, paf_data
         )
 
     def get_distribution_type(self, builder: Builder) -> str:
@@ -196,8 +179,7 @@ class CGFRiskEffect(RiskEffect):
 
     def get_risk_exposure(self, builder: Builder) -> Dict[str, Pipeline]:
         return {
-            risk: builder.value.get_value(f"{risk.name}.exposure")
-            for risk in self.cgf_models
+            risk: builder.value.get_value(f"{risk.name}.exposure") for risk in self.cgf_models
         }
 
     def get_target_modifier(

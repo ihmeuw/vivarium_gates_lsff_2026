@@ -2,9 +2,7 @@ from typing import Dict, NamedTuple, Tuple
 
 import pandas as pd
 from scipy import stats
-from vivarium_gates_lsff_by_wealth_quintile_child.constants.metadata import (
-    YEAR_DURATION,
-)
+from vivarium_gates_lsff_by_wealth_quintile_child.constants.metadata import YEAR_DURATION
 from vivarium_gates_lsff_by_wealth_quintile_child.utilities import (
     get_lognorm_from_quantiles,
     get_norm_from_quantiles,

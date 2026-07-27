@@ -56,16 +56,16 @@ def hemoglobin_sampler_from_mean_sd(mean, sd):
         propensity = np.clip(
             propensity, 0.001, 0.999
         )  # HACK: risk_distributions is way too conservative!
-        result[distribution_propensity < GAMMA_DISTRIBUTION_WEIGHT] = (
-            hemoglobin_distribution_gamma_part.ppf(propensity.copy())[
-                distribution_propensity < GAMMA_DISTRIBUTION_WEIGHT
-            ]
-        )
-        result[distribution_propensity >= GAMMA_DISTRIBUTION_WEIGHT] = (
-            hemoglobin_distribution_mgumbel_part.ppf(propensity.copy())[
-                distribution_propensity >= GAMMA_DISTRIBUTION_WEIGHT
-            ]
-        )
+        result[
+            distribution_propensity < GAMMA_DISTRIBUTION_WEIGHT
+        ] = hemoglobin_distribution_gamma_part.ppf(propensity.copy())[
+            distribution_propensity < GAMMA_DISTRIBUTION_WEIGHT
+        ]
+        result[
+            distribution_propensity >= GAMMA_DISTRIBUTION_WEIGHT
+        ] = hemoglobin_distribution_mgumbel_part.ppf(propensity.copy())[
+            distribution_propensity >= GAMMA_DISTRIBUTION_WEIGHT
+        ]
         return result
 
     return sampler

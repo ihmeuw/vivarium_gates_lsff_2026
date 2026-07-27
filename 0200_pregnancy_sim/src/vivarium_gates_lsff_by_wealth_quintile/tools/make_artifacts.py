@@ -16,7 +16,6 @@ from typing import Tuple, Union
 import click
 import vivarium_cluster_tools as vct
 from loguru import logger
-
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, metadata
 from vivarium_gates_lsff_by_wealth_quintile.tools.app_logging import (
     add_logging_sink,

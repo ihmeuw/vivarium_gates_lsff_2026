@@ -4,16 +4,11 @@ from typing import Any, Dict
 import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.results import Observer
-from vivarium_gates_lsff_by_wealth_quintile_child.constants import (
-    data_keys,
-    data_values,
-)
+from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys, data_values
 from vivarium_public_health.disease import DiseaseState
 from vivarium_public_health.results import COLUMNS
 from vivarium_public_health.results.disease import DiseaseObserver
-from vivarium_public_health.results.mortality import (
-    MortalityObserver as MortalityObserver_,
-)
+from vivarium_public_health.results.mortality import MortalityObserver as MortalityObserver_
 from vivarium_public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
@@ -183,9 +178,7 @@ class ResultsStratifier(ResultsStratifier_):
         pandas.Series
             A pd.Series with age group name string corresponding to the pop passed into the function
         """
-        bins = self.age_bins["age_start"].to_list() + [
-            self.age_bins["age_end"].iloc[-1]
-        ]
+        bins = self.age_bins["age_start"].to_list() + [self.age_bins["age_end"].iloc[-1]]
         labels = self.age_bins["age_group_name"].to_list()
         # need to include lowest to map people who are exactly 0
         pop = pop.copy()
@@ -256,8 +249,7 @@ class BirthObserver(Observer):
     def count_low_weight_births(self, x: pd.DataFrame) -> float:
         born_this_step = x["entrance_time"] == self.clock()
         has_low_birth_weight = (
-            x.loc[born_this_step, self.birth_weight_column_name]
-            < self.low_birth_weight_limit
+            x.loc[born_this_step, self.birth_weight_column_name] < self.low_birth_weight_limit
         )
         return sum(has_low_birth_weight)
 
@@ -309,9 +301,7 @@ class ChildWastingObserver(DiseaseObserver):
             requires_values=[self.exposure_pipeline_name],
         )
 
-    def register_person_time_observation(
-        self, builder: Builder, pop_filter: str
-    ) -> None:
+    def register_person_time_observation(self, builder: Builder, pop_filter: str) -> None:
         self.register_adding_observation(
             builder=builder,
             name=f"person_time_{self.disease}",
@@ -326,9 +316,7 @@ class ChildWastingObserver(DiseaseObserver):
     def format(self, measure: str, results: pd.DataFrame) -> pd.DataFrame:
         results = results.reset_index()
         if "transition_count_" in measure:
-            results = results[
-                results[self.transition_stratification_name] != "no_transition"
-            ]
+            results = results[results[self.transition_stratification_name] != "no_transition"]
             sub_entity = self.transition_stratification_name
         if "person_time_" in measure:
             sub_entity = "wasting_categories"

@@ -3,19 +3,19 @@ from functools import partial
 from typing import Any, Dict
 
 import pandas as pd
-from vivarium.framework.engine import Builder
-from vivarium.framework.results import Observer
-from vivarium.framework.time import get_time_stamp
-from vivarium_public_health.disease import DiseaseState
-from vivarium_public_health.results import COLUMNS
-from vivarium_public_health.results import DisabilityObserver as DisabilityObserver_
-from vivarium_public_health.results import (
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.results import Observer
+from vivarium.engine.framework.time import get_time_stamp
+from vivarium.public_health.disease import DiseaseState
+from vivarium.public_health.results import COLUMNS
+from vivarium.public_health.results import DisabilityObserver as DisabilityObserver_
+from vivarium.public_health.results import (
     DiseaseObserver,
     MortalityObserver,
     PublicHealthObserver,
 )
-from vivarium_public_health.results import ResultsStratifier as ResultsStratifier_
-from vivarium_public_health.utilities import to_years
+from vivarium.public_health.results import ResultsStratifier as ResultsStratifier_
+from vivarium.public_health.utilities import to_years
 
 from lsff_utils import data_processing
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_values, models
@@ -28,37 +28,37 @@ class ResultsStratifier(ResultsStratifier_):
         builder.results.register_stratification(
             "anemia_status_at_birth",
             data_values.ANEMIA_STATUS_AT_BIRTH_CATEGORIES,
-            requires_columns=["anemia_status_at_birth"],
+            requires_attributes=["anemia_status_at_birth"],
         )
 
         builder.results.register_stratification(
             "anemia_levels",
             data_values.ANEMIA_DISABILITY_WEIGHTS.keys(),
-            requires_values=["anemia_levels"],
+            requires_attributes=["anemia_levels"],
         )
 
         # builder.results.register_stratification(
         #     "maternal_bmi_anemia_category",
         #     models.BMI_ANEMIA_CATEGORIES,
-        #     requires_columns=["maternal_bmi_anemia_category"],
+        #     requires_attributes=["maternal_bmi_anemia_category"],
         # )
 
         # builder.results.register_stratification(
         #     "intervention",
         #     models.FORTIFICATION_CATEGORIES,
-        #     requires_columns=["intervention"],
+        #     requires_attributes=["intervention"],
         # )
 
         builder.results.register_stratification(
             "pregnancy_outcome",
             models.PREGNANCY_OUTCOMES,
-            requires_columns=["pregnancy_outcome"],
+            requires_attributes=["pregnancy_outcome"],
         )
 
         builder.results.register_stratification(
             "wealth_quintile",
             data_processing.WEALTH_QUINTILES,
-            requires_columns=["wealth_quintile"],
+            requires_attributes=["wealth_quintile"],
         )
 
 
@@ -94,8 +94,8 @@ class AnemiaObserver(PublicHealthObserver):
             name=f"person_time_anemia",
             pop_filter=f'alive == "alive" and tracked == True',
             when="time_step__prepare",
-            requires_columns=["alive"],
-            requires_values=["anemia_levels"],
+            requires_attributes=["alive"],
+            requires_attributes=["anemia_levels"],
             additional_stratifications=builder.configuration.stratification.anemia.include,
             excluded_stratifications=builder.configuration.stratification.anemia.exclude,
             aggregator=partial(aggregate_state_person_time, builder.time.step_size()()),
@@ -134,9 +134,9 @@ class MaternalInterventionObserver(PublicHealthObserver):
 
     def register_observations(self, builder: Builder) -> None:
         # 2 weeks between administration and effect
-        intervention_date = get_time_stamp(
-            builder.configuration.time.start
-        ) + pd.Timedelta(days=data_values.DURATIONS.INTERVENTION_DELAY_DAYS - 2 * 7)
+        intervention_date = get_time_stamp(builder.configuration.time.start) + pd.Timedelta(
+            days=data_values.DURATIONS.INTERVENTION_DELAY_DAYS - 2 * 7
+        )
         self.register_adding_observation(
             builder=builder,
             name="intervention_count",
@@ -145,7 +145,7 @@ class MaternalInterventionObserver(PublicHealthObserver):
                 f'event_time > "{intervention_date}" and '
                 f'event_time <= "{intervention_date + builder.time.step_size()()}"'
             ),
-            requires_columns=["alive", "intervention", "event_time"],
+            requires_attributes=["alive", "intervention", "event_time"],
             additional_stratifications=builder.configuration.stratification.maternal_intervention.include,
             excluded_stratifications=builder.configuration.stratification.maternal_intervention.exclude,
         )
@@ -191,7 +191,7 @@ class PregnancyOutcomeObserver(PublicHealthObserver):
             builder=builder,
             name=f"pregnancy_outcome_count",
             pop_filter="",
-            requires_columns=["pregnancy_outcome"],
+            requires_attributes=["pregnancy_outcome"],
             additional_stratifications=builder.configuration.stratification.pregnancy_outcome.include,
             excluded_stratifications=builder.configuration.stratification.pregnancy_outcome.exclude,
             aggregator=self.count_pregnancy_outcomes_at_initialization,
@@ -264,7 +264,7 @@ class BirthObserver(Observer):
                 f"and previous_pregnancy == '{models.PREGNANT_STATE_NAME}' "
                 f"and pregnancy == '{models.PARTURITION_STATE_NAME}'"
             ),
-            requires_columns=list(self.COL_MAPPING),
+            requires_attributes=list(self.COL_MAPPING),
             results_formatter=self.format,
         )
 

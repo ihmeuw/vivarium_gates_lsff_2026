@@ -13,7 +13,5 @@ MODEL_SPEC_DIR = BASE_DIR / "model_specifications"
 RAW_DATA_DIR = BASE_DIR / "data/raw_data"
 DATA_PREP_RESULTS_ROOT = BASE_DIR / ".." / ".." / ".." / "0100_data_prep" / "results"
 
-UNDERWEIGHT_CONDITIONAL_DISTRIBUTIONS_DIR = (
-    CLUSTER_BASE_DIR / "raw_data/underweight_exp/"
-)
+UNDERWEIGHT_CONDITIONAL_DISTRIBUTIONS_DIR = CLUSTER_BASE_DIR / "raw_data/underweight_exp/"
 CGF_PAFS = CLUSTER_BASE_DIR / "raw_data/cgf_pafs/"

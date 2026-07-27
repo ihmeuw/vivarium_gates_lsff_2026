@@ -25,9 +25,7 @@ def get_location_fortificant_vehicle_intervention_scenarios():
     # Expand "all" fortificants
     location_fortificant_vehicles = pd.concat(
         [
-            location_fortificant_vehicles[
-                location_fortificant_vehicles.fortificant != "all"
-            ],
+            location_fortificant_vehicles[location_fortificant_vehicles.fortificant != "all"],
             *[
                 location_fortificant_vehicles[
                     location_fortificant_vehicles.fortificant == "all"
@@ -37,16 +35,10 @@ def get_location_fortificant_vehicle_intervention_scenarios():
         ]
     )
 
-    assert (
-        location_fortificant_vehicles["fortificant"]
-        .isin(config["all_fortificants"])
-        .all()
-    )
+    assert location_fortificant_vehicles["fortificant"].isin(config["all_fortificants"]).all()
 
     location_fortificant_vehicle_intervention_scenarios = location_fortificant_vehicles[
-        ~location_fortificant_vehicles.location.isin(
-            config["custom_intervention_scenarios"]
-        )
+        ~location_fortificant_vehicles.location.isin(config["custom_intervention_scenarios"])
     ].assign(intervention_scenario="intervention")
 
     for location, custom_intervention_scenarios in config[
@@ -73,9 +65,7 @@ def get_configured_combos(variables):
     )
     return [
         combo_tuple
-        for _, combo_tuple in location_fortificant_vehicle_intervention_scenarios[
-            variables
-        ]
+        for _, combo_tuple in location_fortificant_vehicle_intervention_scenarios[variables]
         .drop_duplicates()
         .iterrows()
     ]

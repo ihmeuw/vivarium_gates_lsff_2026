@@ -5,14 +5,13 @@ import pandas as pd
 from vivarium import Component
 from vivarium.framework.engine import Builder
 from vivarium.framework.population import SimulantData
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values
 from vivarium_public_health.utilities import get_lookup_columns
 
 from lsff_utils import data_processing
-from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values
 
 
 class WealthQuintile(Component):
-
     @property
     def columns_created(self) -> List[str]:
         return ["wealth_quintile"]

@@ -3,7 +3,6 @@ from typing import Tuple
 import click
 from loguru import logger
 from vivarium.framework.utilities import handle_exceptions
-
 from vivarium_gates_lsff_by_wealth_quintile.constants import metadata, paths
 from vivarium_gates_lsff_by_wealth_quintile.tools import (
     build_artifacts,
@@ -17,9 +16,7 @@ from vivarium_gates_lsff_by_wealth_quintile.tools import (
     "--location",
     default="all",
     show_default=True,
-    type=click.Choice(
-        metadata.LOCATIONS + [l.lower() for l in metadata.LOCATIONS] + ["all"]
-    ),
+    type=click.Choice(metadata.LOCATIONS + [l.lower() for l in metadata.LOCATIONS] + ["all"]),
     help=(
         "Location for which to make an artifact. Note: prefer building archives on the cluster.\n"
         'If you specify location "all" you must be on a cluster node.'

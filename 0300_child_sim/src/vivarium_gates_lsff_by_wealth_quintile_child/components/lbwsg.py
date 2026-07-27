@@ -21,9 +21,7 @@ from vivarium.framework.population import PopulationView, SimulantData
 from vivarium.framework.time import get_time_stamp
 from vivarium.framework.values import Pipeline
 from vivarium_gates_lsff_by_wealth_quintile_child.constants import data_keys
-from vivarium_public_health.risks.data_transformations import (
-    get_exposure_post_processor,
-)
+from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
 from vivarium_public_health.risks.implementations.low_birth_weight_and_short_gestation import (
     LBWSGRisk,
     LBWSGRiskEffect,
@@ -66,14 +64,11 @@ class LBWSGLineList(LBWSGRisk):
             return builder.value.register_value_producer(
                 self.birth_exposure_pipeline_name(axis_),
                 source=lambda index: self.get_birth_exposure(axis_, index),
-                preferred_post_processor=get_exposure_post_processor(
-                    builder, self.risk
-                ),
+                preferred_post_processor=get_exposure_post_processor(builder, self.risk),
             )
 
         return {
-            self.birth_exposure_pipeline_name(axis): get_pipeline(axis)
-            for axis in self.AXES
+            self.birth_exposure_pipeline_name(axis): get_pipeline(axis) for axis in self.AXES
         }
 
     ########################
@@ -100,9 +95,7 @@ class LBWSGLineList(LBWSGRisk):
             super().on_initialize_simulants(pop_data)
 
             # add birth weight status to state table
-            birth_weight = self.population_view.get(pop_data.index)[
-                "birth_weight_exposure"
-            ]
+            birth_weight = self.population_view.get(pop_data.index)["birth_weight_exposure"]
             birth_weight_status = np.where(
                 birth_weight <= 2500, "low_birth_weight", "adequate_birth_weight"
             )
@@ -122,9 +115,7 @@ class LBWSGLineList(LBWSGRisk):
 class LBWSGPAFCalculationRiskEffect(LBWSGRiskEffect):
     """Risk effect component for calculating PAFs for LBWSG."""
 
-    def get_population_attributable_fraction_source(
-        self, builder: Builder
-    ) -> LookupTable:
+    def get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
         return 0, []
 
 
@@ -151,14 +142,11 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
                 self.birth_exposure_pipeline_name(axis_),
                 source=lambda index: self.get_birth_exposure(axis_, index),
                 requires_columns=["age", "sex"],
-                preferred_post_processor=get_exposure_post_processor(
-                    builder, self.risk
-                ),
+                preferred_post_processor=get_exposure_post_processor(builder, self.risk),
             )
 
         return {
-            self.birth_exposure_pipeline_name(axis): get_pipeline(axis)
-            for axis in self.AXES
+            self.birth_exposure_pipeline_name(axis): get_pipeline(axis) for axis in self.AXES
         }
 
     ########################
@@ -196,9 +184,7 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
     ##################################
 
     def get_birth_exposure(self, axis: str, index: pd.Index) -> pd.DataFrame:
-        pop = self.population_view.subview(["age_bin", "sex", "lbwsg_category"]).get(
-            index
-        )
+        pop = self.population_view.subview(["age_bin", "sex", "lbwsg_category"]).get(index)
         lbwsg_categories = self.lbwsg_categories.keys()
         num_simulants_in_category = int(
             len(pop)
@@ -215,10 +201,7 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
 
             birthweight_endpoints = [
                 float(val)
-                for val in description.split(", [")[1]
-                .split(")")[0]
-                .split("]")[0]
-                .split(", ")
+                for val in description.split(", [")[1].split(")")[0].split("]")[0].split(", ")
             ]
             birthweight_interval_values = np.linspace(
                 birthweight_endpoints[0],
@@ -228,10 +211,7 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
 
             gestational_age_endpoints = [
                 float(val)
-                for val in description.split("- [")[1]
-                .split(")")[0]
-                .split("+")[0]
-                .split(", ")
+                for val in description.split("- [")[1].split(")")[0].split("+")[0].split(", ")
             ]
             gestational_age_interval_values = np.linspace(
                 gestational_age_endpoints[0],
@@ -296,9 +276,7 @@ class LBWSGPAFObserver(Component):
         )
 
     def calculate_paf(self, x: pd.DataFrame) -> float:
-        relative_risk = self.risk_effect.target_modifier(
-            x.index, pd.Series(1, index=x.index)
-        )
+        relative_risk = self.risk_effect.target_modifier(x.index, pd.Series(1, index=x.index))
         relative_risk.name = "relative_risk"
         lbwsg_category = self.population_view.get(x.index)["lbwsg_category"]
         lbwsg_prevalence = self.lbwsg_exposure.rename(

@@ -9,9 +9,7 @@ if __name__ == "__main__":
 
     about = {}
     with open(
-        os.path.join(
-            src_dir, "vivarium_gates_lsff_by_wealth_quintile_child", "__about__.py"
-        )
+        os.path.join(src_dir, "vivarium_gates_lsff_by_wealth_quintile_child", "__about__.py")
     ) as f:
         exec(f.read(), about)
 
