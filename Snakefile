@@ -50,7 +50,7 @@ if update_packages:
             cd 0200_pregnancy_sim
             pip install .[data]
             pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
-            pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
+            pip uninstall -y vivarium_gates_lsff_2026_maternal # Remove sim itself, leaving dependencies
             cd ..
             pip freeze -l | grep -v '\-e ' | grep -v 'file:///' > pip_lock.txt
             touch .venv .venv/bin/activate # Should be newer than the lockfile
@@ -68,7 +68,7 @@ if update_packages:
             cd 0200_pregnancy_sim
             pip install .[dev] # NOT editable! We use PYTHONPATH for that
             pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
-            pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
+            pip uninstall -y vivarium_gates_lsff_2026_maternal # Remove sim itself, leaving dependencies
             # Assumed compatible with child sim
             cd ..
             pip install -e .

@@ -8,9 +8,7 @@ if __name__ == "__main__":
     src_dir = os.path.join(base_dir, "src")
 
     about = {}
-    with open(
-        os.path.join(src_dir, "vivarium_gates_lsff_by_wealth_quintile_child", "__about__.py")
-    ) as f:
+    with open(os.path.join(src_dir, "vivarium_gates_lsff_2026_child", "__about__.py")) as f:
         exec(f.read(), about)
 
     with open(os.path.join(base_dir, "README.rst")) as f:
@@ -74,6 +72,6 @@ if __name__ == "__main__":
         zip_safe=False,
         entry_points="""
             [console_scripts]
-            make_artifacts=vivarium_gates_lsff_by_wealth_quintile_child.tools.cli:make_artifacts
+            make_artifacts=vivarium_gates_lsff_2026_child.tools.cli:make_artifacts
         """,
     )

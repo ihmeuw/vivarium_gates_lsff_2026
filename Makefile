@@ -179,8 +179,10 @@ build-env: # Create a new environment with installed packages
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools\<81"; \
 	fi
 	@if [ "$(package_profile)" = "maternal" ]; then \
+		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_maternal || true; \
 		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
 	elif [ "$(package_profile)" = "child" ]; then \
+		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_child || true; \
 		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)]; \
 	fi
 	@if [ "$(lfs)" = "yes" ]; then \
