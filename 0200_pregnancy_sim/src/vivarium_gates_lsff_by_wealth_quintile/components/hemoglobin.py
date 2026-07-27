@@ -118,8 +118,8 @@ class Hemoglobin(Component):
         builder.value.register_value_modifier(
             "maternal_disorders.transition_proportion",
             self.adjust_maternal_disorder_proportion,
-            requires_attributes=["hemoglobin.exposure"],
-            requires_attributes=get_lookup_columns(
+            requires_attributes=["hemoglobin.exposure"]
+            + get_lookup_columns(
                 [
                     self.lookup_tables["maternal_disorders_population_attributable_fraction"],
                     self.lookup_tables["maternal_disorders_relative_risk"],
@@ -129,8 +129,8 @@ class Hemoglobin(Component):
         builder.value.register_value_modifier(
             "maternal_hemorrhage.transition_proportion",
             self.adjust_maternal_hemorrhage_proportion,
-            requires_attributes=["hemoglobin.exposure"],
-            requires_attributes=get_lookup_columns(
+            requires_attributes=["hemoglobin.exposure"]
+            + get_lookup_columns(
                 [
                     self.lookup_tables["hemorrhage_population_attributable_fraction"],
                     self.lookup_tables["hemorrhage_relative_risk"],
@@ -246,8 +246,8 @@ class Anemia(Component):
         self.anemia_levels = builder.value.register_value_producer(
             "anemia_levels",
             source=self.anemia_source,
-            requires_attributes=["hemoglobin.exposure"],
-            requires_attributes=get_lookup_columns([self.lookup_tables["anemia_thresholds"]]),
+            requires_attributes=["hemoglobin.exposure"]
+            + get_lookup_columns([self.lookup_tables["anemia_thresholds"]]),
         )
 
         self.disability_weight = builder.value.register_value_producer(
