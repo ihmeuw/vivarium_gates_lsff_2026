@@ -1,7 +1,7 @@
 from typing import List
 
 import pandas as pd
-from vivarium.framework.engine import Builder
+from vivarium.engine.framework.engine import Builder
 from vivarium.public_health.disease import DiseaseModel, DiseaseState, RecoveredState
 from vivarium.public_health.disease.transition import ProportionTransition
 from vivarium.public_health.utilities import to_years

@@ -15,11 +15,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from vivarium.component import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.lookup import LookupTable
-from vivarium.framework.population import PopulationView, SimulantData
-from vivarium.framework.time import get_time_stamp
-from vivarium.framework.values import Pipeline
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.lookup import LookupTable
+from vivarium.engine.framework.population import PopulationView, SimulantData
+from vivarium.engine.framework.time import get_time_stamp
+from vivarium.engine.framework.values import Pipeline
 from vivarium_gates_lsff_2026_child.constants import data_keys
 from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
 from vivarium_public_health.risks.implementations.low_birth_weight_and_short_gestation import (

@@ -17,8 +17,8 @@ if __name__ == "__main__":
 
     from vivarium.cluster_tools.psimulate import COMMANDS, model_specification
     from vivarium.cluster_tools.psimulate.branches import Keyspace
-    from vivarium.framework.configuration import build_model_specification
-    from vivarium.framework.engine import SimulationContext
+    from vivarium.engine.framework.configuration import build_model_specification
+    from vivarium.engine.framework.engine import SimulationContext
 
     keyspace = Keyspace.from_branch_configuration(Path(args.branches))
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
         results = sim.get_results()  # Dict[measure, results dataframe]
 
-        from vivarium.framework.utilities import collapse_nested_dict
+        from vivarium.engine.framework.utilities import collapse_nested_dict
 
         # https://github.com/ihmeuw/vivarium-suite/blob/main/libs/cluster-tools/src/vivarium/cluster_tools/psimulate/worker/vivarium_work_horse.py
         for key, val in collapse_nested_dict(branch_config):

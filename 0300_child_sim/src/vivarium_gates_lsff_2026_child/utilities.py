@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 from scipy import stats
-from vivarium.framework.randomness import get_hash
+from vivarium.engine.framework.randomness import get_hash
 from vivarium_gates_lsff_2026_child.constants import metadata
 from vivarium_public_health.risks.data_transformations import pivot_categorical
 

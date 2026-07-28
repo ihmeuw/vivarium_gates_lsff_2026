@@ -2,10 +2,10 @@
 
 # import numpy as np
 # import pandas as pd
-# from vivarium.framework.artifact.artifact import ArtifactException
-# from vivarium.framework.engine import Builder
-# from vivarium.framework.event import Event
-# from vivarium.framework.population import SimulantData
+# from vivarium.engine.framework.artifact.artifact import ArtifactException
+# from vivarium.engine.framework.engine import Builder
+# from vivarium.engine.framework.event import Event
+# from vivarium.engine.framework.population import SimulantData
 # from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
 # from vivarium_public_health.risks import Risk
 # from vivarium_public_health.risks.data_transformations import (

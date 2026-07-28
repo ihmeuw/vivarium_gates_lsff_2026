@@ -1,9 +1,9 @@
 from typing import Callable, Dict, List
 
 import pandas as pd
-from vivarium.framework.engine import Builder
-from vivarium.framework.state_machine import State, Transition
-from vivarium.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.state_machine import State, Transition
+from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
 from vivarium.public_health.disease import DiseaseState, SusceptibleState
 from vivarium.public_health.disease.transition import ProportionTransition
 from vivarium.public_health.utilities import get_lookup_columns

@@ -11,9 +11,9 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from vivarium.framework.engine import Builder
-from vivarium.framework.population import SimulantData
-from vivarium.framework.time import get_time_stamp
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.population import SimulantData
+from vivarium.engine.framework.time import get_time_stamp
 from vivarium_gates_lsff_2026_child.constants import data_keys
 from vivarium_public_health.population.base_population import BasePopulation
 from vivarium_public_health.population.data_transformations import (

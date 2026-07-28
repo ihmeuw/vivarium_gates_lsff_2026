@@ -7,11 +7,11 @@ from typing import Callable, List, Optional, Union
 import numpy as np
 import pandas as pd
 from vivarium import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.lookup import LookupTable
-from vivarium.framework.population import SimulantData
-from vivarium.framework.time import get_time_stamp
-from vivarium.framework.values import Pipeline
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.lookup import LookupTable
+from vivarium.engine.framework.population import SimulantData
+from vivarium.engine.framework.time import get_time_stamp
+from vivarium.engine.framework.values import Pipeline
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 from vivarium_public_health.risks import RiskEffect
 from vivarium_public_health.utilities import get_lookup_columns

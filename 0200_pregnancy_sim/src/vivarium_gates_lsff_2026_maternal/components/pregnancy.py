@@ -2,11 +2,11 @@ from typing import Dict, List
 
 import pandas as pd
 from vivarium.engine import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.event import Event
-from vivarium.framework.lookup import LookupTableData
-from vivarium.framework.population import SimulantData
-from vivarium.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.event import Event
+from vivarium.engine.framework.lookup import LookupTableData
+from vivarium.engine.framework.population import SimulantData
+from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
 from vivarium.public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
 from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.components.children import NewChildren

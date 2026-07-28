@@ -21,8 +21,8 @@ import pandas as pd
 import vivarium_inputs.validation.sim as validation
 from joblib import Memory
 from scipy import integrate, stats
-from vivarium.framework.artifact import EntityKey
-from vivarium.framework.randomness import get_hash
+from vivarium.engine.framework.artifact import EntityKey
+from vivarium.engine.framework.randomness import get_hash
 from vivarium_gates_lsff_2026_maternal.constants import (
     data_keys,
     data_values,

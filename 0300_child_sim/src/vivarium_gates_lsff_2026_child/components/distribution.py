@@ -2,7 +2,7 @@ from typing import Optional
 
 import pandas as pd
 from vivarium.config_tree import ConfigTree as LayeredConfigTree
-from vivarium.framework.engine import Builder
+from vivarium.engine.framework.engine import Builder
 from vivarium_public_health.risks.distributions import PolytomousDistribution
 from vivarium_public_health.utilities import EntityString
 

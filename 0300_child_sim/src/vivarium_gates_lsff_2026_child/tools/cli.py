@@ -3,7 +3,7 @@ from typing import Tuple
 
 import click
 from loguru import logger
-from vivarium.framework.utilities import handle_exceptions
+from vivarium.engine.framework.utilities import handle_exceptions
 from vivarium_gates_lsff_2026_child.constants import metadata, paths
 from vivarium_gates_lsff_2026_child.tools import (
     build_artifacts,

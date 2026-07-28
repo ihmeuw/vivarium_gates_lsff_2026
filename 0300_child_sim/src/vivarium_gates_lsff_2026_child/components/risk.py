@@ -2,8 +2,8 @@ import itertools
 from typing import Any, Callable, Dict
 
 import pandas as pd
-from vivarium.framework.engine import Builder
-from vivarium.framework.values import Pipeline
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.values import Pipeline
 from vivarium_gates_lsff_2026_child.components import CGFPolytomousDistribution
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 from vivarium_public_health.risks import Risk, RiskEffect

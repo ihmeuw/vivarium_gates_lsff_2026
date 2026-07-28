@@ -2,8 +2,8 @@ from functools import partial
 from typing import Any, Dict
 
 import pandas as pd
-from vivarium.framework.engine import Builder
-from vivarium.framework.results import Observer
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.results import Observer
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 from vivarium_public_health.disease import DiseaseState
 from vivarium_public_health.results import COLUMNS

@@ -15,8 +15,8 @@ import numpy as np
 import pandas as pd
 import vivarium
 from vivarium import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.event import Event
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.event import Event
 from vivarium_gates_lsff_2026_child.constants import data_keys
 from vivarium_public_health import utilities
 

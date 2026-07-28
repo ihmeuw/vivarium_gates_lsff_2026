@@ -2,12 +2,12 @@ from typing import Any, Dict, List, Union
 
 import pandas as pd
 from vivarium.engine import Component
-from vivarium.framework.engine import Builder
-from vivarium.framework.event import Event
-from vivarium.framework.lookup import LookupTable
-from vivarium.framework.population import PopulationView, SimulantData
-from vivarium.framework.randomness import RandomnessStream
-from vivarium.framework.values import Pipeline
+from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.event import Event
+from vivarium.engine.framework.lookup import LookupTable
+from vivarium.engine.framework.population import PopulationView, SimulantData
+from vivarium.engine.framework.randomness import RandomnessStream
+from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.population import Mortality
 from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.constants import data_keys
