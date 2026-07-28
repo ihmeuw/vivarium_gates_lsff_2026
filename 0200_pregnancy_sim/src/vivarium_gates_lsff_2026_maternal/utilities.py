@@ -7,7 +7,7 @@ import pandas as pd
 from loguru import logger
 from scipy import stats
 from vivarium.engine.framework.randomness import get_hash
-from vivarium.public_health.risks.data_transformations import pivot_categorical
+from vivarium.public_health.causal_factor.utilities import pivot_categorical
 from vivarium_gates_lsff_2026_maternal.constants import metadata
 
 SeededDistribution = Tuple[str, stats.rv_continuous]
