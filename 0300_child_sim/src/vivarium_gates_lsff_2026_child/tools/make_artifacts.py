@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Tuple, Union
 
 import click
-import vivarium_cluster_tools as vct
 from loguru import logger
+from vivarium import cluster_tools as vct
 from vivarium_gates_lsff_2026_child.constants import data_keys, metadata
 from vivarium_gates_lsff_2026_child.tools.app_logging import add_logging_sink, decode_status
 from vivarium_gates_lsff_2026_child.utilities import (
@@ -127,7 +127,7 @@ def build_artifacts(
         How noisy the logger should be.
     """
 
-    import vivarium_cluster_tools as vct
+    from vivarium import cluster_tools as vct
 
     output_dir = Path(output_dir)
     vct.mkdir(output_dir, parents=True, exists_ok=True)
@@ -191,7 +191,7 @@ def build_all_artifacts(
         called by the :func:`build_artifacts` function located in the same
         module.
     """
-    from vivarium_cluster_tools.utilities import get_drmaa
+    from vivarium.cluster_tools.utilities import get_drmaa
 
     drmaa = get_drmaa()
 

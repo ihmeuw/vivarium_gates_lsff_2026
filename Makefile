@@ -75,7 +75,7 @@ help:
 	@echo "  path [optional]"
 	@echo "      Absolute path where the environment should be created (overrides name for location)"
 	@echo "  p [optional]"
-	@echo "      Package profile to install. One of 'root' (default), 'maternal', or 'child'"
+	@echo "      Package profile to install. One of 'all' (default), 'maternal', or 'child'"
 	@echo "  profile [optional]"
 	@echo "      Alias for p"
 	@echo "  include_timestamp [optional]"
@@ -140,8 +140,8 @@ build-env: # Create a new environment with installed packages
 	@$(eval p ?=)
 	@$(eval profile ?=)
 	@$(if $(and $(strip $(p)),$(strip $(profile)),$(filter-out $(p),$(profile))),$(error Error: 'p' and 'profile' must match when both are set))
-	@$(eval package_profile := $(if $(strip $(p)),$(p),$(if $(strip $(profile)),$(profile),root)))
-	@$(call validate_arg,$(package_profile),root maternal child,package profile)
+	@$(eval package_profile := $(if $(strip $(p)),$(p),$(if $(strip $(profile)),$(profile),all)))
+	@$(call validate_arg,$(package_profile),all maternal child,package profile)
 #	lfs
 	@$(eval lfs ?= no)
 	@$(call validate_arg,$(lfs),yes no,lfs)
@@ -178,10 +178,11 @@ build-env: # Create a new environment with installed packages
 	elif [ "$(type)" = "artifact" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools\<81"; \
 	fi
-	@if [ "$(package_profile)" = "maternal" ]; then \
+	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "maternal" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_maternal || true; \
 		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
-	elif [ "$(package_profile)" = "child" ]; then \
+	fi
+	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "child" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_child || true; \
 		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)]; \
 	fi

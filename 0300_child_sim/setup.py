@@ -26,7 +26,7 @@ if __name__ == "__main__":
         "pyyaml",
         "scipy",
         "tables",
-        "layered_config_tree<5.0.0",
+        "vivarium-config-tree>=5.0.0",
     ]
 
     # use "pip install -e .[dev]" to install required components + extra components

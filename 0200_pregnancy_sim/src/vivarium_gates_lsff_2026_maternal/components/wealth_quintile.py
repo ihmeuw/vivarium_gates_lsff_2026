@@ -3,8 +3,8 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 from vivarium.engine import Component
-from vivarium.engine.framework.engine import Builder
-from vivarium.engine.framework.population import SimulantData
+from vivarium.framework.engine import Builder
+from vivarium.framework.population import SimulantData
 from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values
 
