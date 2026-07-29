@@ -617,6 +617,9 @@ def generate_hemoglobin_maternal_disorders_paf(
         ).pipe(_among_wra),
         location,
     )
+    # The RR is a biological constant and does not vary by year. Drop year levels so
+    # the lookup works regardless of which GBD estimation year the RR was pulled from.
+    hemoglobin_rr = hemoglobin_rr.droplevel(["year_start", "year_end"])
 
     pafs = pd.DataFrame(
         columns=["draw_0"] if mean_draw else vi_globals.DRAW_COLUMNS,
@@ -626,16 +629,20 @@ def generate_hemoglobin_maternal_disorders_paf(
 
     for draw in pafs.columns:
         for index in pafs.index:
+            # Drop wealth_quintile and year to look up the time-invariant RR
+            loc, sex, age_start, age_end = index[0], index[1], index[2], index[3]
             index_without_wealth = index[:-1]
-            assert (
-                (index in hemoglobin_mean_plw.index)
-                == (index in hemoglobin_std_plw.index)
-                == (index_without_wealth in hemoglobin_rr.index)
+            rr_index = (loc, sex, age_start, age_end)
+            assert (index in hemoglobin_mean_plw.index) == (
+                index in hemoglobin_std_plw.index
+            )
+            assert (index in hemoglobin_mean_plw.index) == (
+                rr_index in hemoglobin_rr.index
             )
             if index in hemoglobin_mean_plw.index:
                 mean = hemoglobin_mean_plw.loc[index][draw]
                 sd = hemoglobin_std_plw.loc[index][draw]
-                rr = hemoglobin_rr.loc[index_without_wealth][draw]
+                rr = hemoglobin_rr.loc[rr_index][draw]
 
                 pafs.loc[index, draw] = _hemoglobin_paf(mean, sd, rr)
             else:
