@@ -111,6 +111,7 @@ def build_artifacts(
 
     from vivarium import cluster_tools as vct
 
+    vehicle = vehicle or "rice"
     output_dir = Path(output_dir)
     vct.mkdir(output_dir, parents=True, exists_ok=True)
 

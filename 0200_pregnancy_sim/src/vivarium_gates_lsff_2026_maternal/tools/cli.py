@@ -47,6 +47,8 @@ from vivarium_gates_lsff_2026_maternal.tools import (
 @click.option(
     "--vehicle",
     "vehicle",
+    default="rice",
+    show_default=True,
     type=click.Choice(["rice", "bouillon"]),  # TODO
 )
 @click.option(
