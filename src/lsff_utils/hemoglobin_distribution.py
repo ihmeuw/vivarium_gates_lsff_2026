@@ -99,6 +99,7 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
         {
             "loc": XMAX - mean - (np.euler_gamma * np.sqrt(6) / np.pi * sd),
             "scale": np.sqrt(6) / np.pi * sd,
+            "mirror_point": XMAX,
             "computability_min": 0,
             "computability_max": XMAX,
         },
