@@ -6,7 +6,7 @@ from typing import Dict, List, Set, Tuple, Union
 import numpy as np
 import pandas as pd
 from gbd_mapping import Cause, ModelableEntity, RiskFactor, causes, covariates, risk_factors
-from vivarium.engine.framework.artifact import EntityKey
+from vivarium.artifact import EntityKey
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUND_ID,
     AGE_GROUP,

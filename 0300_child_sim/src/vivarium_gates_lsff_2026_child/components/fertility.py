@@ -13,8 +13,8 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-import vivarium
 from vivarium import Component
+from vivarium.artifact import Artifact
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.event import Event
 from vivarium_gates_lsff_2026_child.constants import data_keys
@@ -57,7 +57,7 @@ class FertilityLineList(Component):
         # HACK: cannot filter by more than one thing in the config!
         # If we don't do this, the entire fertility line-list gets
         # loaded into memory
-        artifact_copy = vivarium.Artifact(
+        artifact_copy = Artifact(
             builder.data._manager.artifact._path,
             builder.data._manager.artifact._filter_terms
             + [

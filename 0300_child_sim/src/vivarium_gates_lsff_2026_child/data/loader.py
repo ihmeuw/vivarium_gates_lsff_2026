@@ -21,7 +21,7 @@ import pandas as pd
 from gbd_mapping import Cause, RiskFactor, sequelae
 from scipy import stats
 from scipy.interpolate import RectBivariateSpline, griddata
-from vivarium.engine.framework.artifact import EntityKey
+from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, metadata, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import ARTIFACT_INDEX_COLUMNS

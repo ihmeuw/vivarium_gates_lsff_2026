@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 from loguru import logger
-from vivarium.engine.framework.artifact import Artifact, EntityKey
+from vivarium.artifact import Artifact, EntityKey
 from vivarium_gates_lsff_2026_child.constants import data_keys
 from vivarium_gates_lsff_2026_child.data import loader
 from vivarium_gates_lsff_2026_child.data.utilities import rename_subnational_level
