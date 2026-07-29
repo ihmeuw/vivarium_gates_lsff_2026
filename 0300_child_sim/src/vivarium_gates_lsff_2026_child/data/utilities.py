@@ -556,7 +556,7 @@ def scrub_neonatal_age_groups(data: pd.DataFrame) -> pd.DataFrame:
 """
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def load_lbwsg_exposure(location: str):
     entity = get_entity(data_keys.LBWSG.EXPOSURE)
     if type(location) == int:

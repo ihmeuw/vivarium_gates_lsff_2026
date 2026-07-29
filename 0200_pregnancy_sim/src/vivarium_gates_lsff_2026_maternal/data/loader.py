@@ -738,7 +738,12 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
         correction_factors = pd.Series([correction_factors.mean()], index=["draw_0"])
 
     location_id = utility_data.get_location_id(location)
-    hemoglobin_data = gbd.get_modelable_entity_draws(me_id=me_id, location_id=location_id)
+    hemoglobin_data = gbd.get_modelable_entity_draws(
+        me_id=me_id,
+        location_id=location_id,
+        year_id=None,
+        data_type="draws",
+    )
 
     existing_draw_cols = [col for col in hemoglobin_data if col.startswith("draw_")]
     extra_draw_cols = [

@@ -2,13 +2,12 @@ from vivarium.gbd_mapping import sequelae
 from vivarium_gates_lsff_2026_maternal.constants import data_keys
 from vivarium_gates_lsff_2026_maternal.data import utilities
 from vivarium_gbd_access import constants as gbd_constants
-from vivarium_gbd_access import gbd
 from vivarium_gbd_access import utilities as vi_utils
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def load_lbwsg_exposure(location: str):
     entity = utilities.get_entity(data_keys.LBWSG.EXPOSURE)
     location_id = utility_data.get_location_id(location)
@@ -25,7 +24,7 @@ def load_lbwsg_exposure(location: str):
     return data
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def get_all_cause_yld_rate(location: str):
     entity = utilities.get_entity("cause.all_causes.ylds")
     location_id = utility_data.get_location_id(location)
@@ -41,7 +40,7 @@ def get_all_cause_yld_rate(location: str):
     return data
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def get_maternal_disorder_ylds(location: str, metric_id=None):
     entity = utilities.get_entity(data_keys.MATERNAL_DISORDERS.YLDS)
     location_id = utility_data.get_location_id(location)
@@ -58,7 +57,7 @@ def get_maternal_disorder_ylds(location: str, metric_id=None):
     return data
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def get_anemia_ylds(location: str, metric_id=None):
     anemia_sequelae = [
         sequelae.mild_anemia_due_to_maternal_hemorrhage,
@@ -80,7 +79,7 @@ def get_anemia_ylds(location: str, metric_id=None):
     return data
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def get_anemia_yld_rate(location: str):
     location_id = utility_data.get_location_id(location)
     data = vi_utils.get_draws(
@@ -95,7 +94,7 @@ def get_anemia_yld_rate(location: str):
     return data
 
 
-@gbd.memory.cache
+@vi_utils.cache
 def get_hemoglobin_maternal_disorders_rr():
     """Relative risk associated with one g/dL decrease in hemoglobin concentration below 12 g/dL"""
     data = vi_utils.get_draws(
