@@ -426,8 +426,10 @@ def _distribute_by_disparities_multiplicative(
 
     result = raw.div(rescale_factor)
 
-    # We have recovered the original quantities
-    assert np.allclose(
+    # We have recovered the original quantities (ignoring rows where quantity is NaN,
+    # since those quintile rows are dropped by dropna and groupby().sum() returns 0)
+    q_vals = quantity.sort_index().values
+    ws_vals = (
         result.mul(
             data_processing.reindex_series_onto_df_by_age_groups(
                 result, wealth_quintile_probabilities
@@ -437,9 +439,10 @@ def _distribute_by_disparities_multiplicative(
         .groupby(["sex", "age_start", "age_end", "year_start", "year_end"])
         .sum()
         .sort_index()
-        .values,
-        quantity.sort_index().values,
+        .values
     )
+    valid = ~np.isnan(q_vals)
+    assert np.allclose(ws_vals[valid], q_vals[valid])
 
     return result
 
