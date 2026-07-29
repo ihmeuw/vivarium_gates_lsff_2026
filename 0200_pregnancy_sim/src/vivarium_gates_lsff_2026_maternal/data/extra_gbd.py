@@ -17,10 +17,10 @@ def load_lbwsg_exposure(location: str):
         gbd_id=entity.gbd_id,
         source=gbd_constants.SOURCES.EXPOSURE,
         location_id=location_id,
-        year_id=2021,
+        year_id=2023,
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=164,  # Birth prevalence
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
     )
     return data
 
@@ -34,7 +34,7 @@ def get_all_cause_yld_rate(location: str):
         entity.gbd_id,
         source=gbd_constants.SOURCES.COMO,
         location_id=location_id,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         measure_id=vi_globals.MEASURES["YLDs"],
         metric_id=3,  # rate
     )
@@ -50,8 +50,8 @@ def get_maternal_disorder_ylds(location: str, metric_id=None):
         entity.gbd_id,
         source=gbd_constants.SOURCES.COMO,
         location_id=location_id,
-        year_id=2021,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        year_id=2023,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         measure_id=vi_globals.MEASURES["YLDs"],
         metric_id=metric_id,
     )
@@ -72,8 +72,8 @@ def get_anemia_ylds(location: str, metric_id=None):
         anemia_ids,
         source=gbd_constants.SOURCES.COMO,
         location_id=location_id,
-        year_id=2021,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        year_id=2023,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         measure_id=vi_globals.MEASURES["YLDs"],
         metric_id=metric_id,
     )
@@ -88,7 +88,7 @@ def get_anemia_yld_rate(location: str):
         192,
         source=gbd_constants.SOURCES.COMO,
         location_id=location_id,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         measure_id=vi_globals.MEASURES["YLDs"],
         metric_id=3,
     )
@@ -101,8 +101,8 @@ def get_hemoglobin_maternal_disorders_rr():
     data = get_draws(
         gbd_id_type="rei_id",
         gbd_id=95,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
-        year_id=2021,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
+        year_id=2023,
         sex_id=2,
         source="rr",
         status="best",
