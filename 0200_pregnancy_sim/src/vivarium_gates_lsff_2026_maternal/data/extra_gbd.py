@@ -98,11 +98,14 @@ def get_anemia_yld_rate(location: str):
 @vi_utils.cache
 def get_hemoglobin_maternal_disorders_rr():
     """Relative risk associated with one g/dL decrease in hemoglobin concentration below 12 g/dL"""
+    # NOTE: GBD 2023 (release_id=16) does not appear to have rei_id=95 RR data available
+    # at the location hierarchy level needed. Keeping GBD 2021 until this is investigated.
+    # See: https://github.com/ihmeuw/vivarium_gates_lsff_2026/issues/TODO
     data = get_draws(
         gbd_id_type="rei_id",
         gbd_id=95,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        year_id=2023,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        year_id=2021,
         sex_id=2,
         source="rr",
         status="best",
