@@ -633,12 +633,8 @@ def generate_hemoglobin_maternal_disorders_paf(
             loc, sex, age_start, age_end = index[0], index[1], index[2], index[3]
             index_without_wealth = index[:-1]
             rr_index = (loc, sex, age_start, age_end)
-            assert (index in hemoglobin_mean_plw.index) == (
-                index in hemoglobin_std_plw.index
-            )
-            assert (index in hemoglobin_mean_plw.index) == (
-                rr_index in hemoglobin_rr.index
-            )
+            assert (index in hemoglobin_mean_plw.index) == (index in hemoglobin_std_plw.index)
+            assert (index in hemoglobin_mean_plw.index) == (rr_index in hemoglobin_rr.index)
             if index in hemoglobin_mean_plw.index:
                 mean = hemoglobin_mean_plw.loc[index][draw]
                 sd = hemoglobin_std_plw.loc[index][draw]

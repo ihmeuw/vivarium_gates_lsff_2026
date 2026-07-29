@@ -78,8 +78,8 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
     # NOTE: We have to override these, otherwise Gamma is overly conservative in what values
     # are computable
     # https://github.com/ihmeuw/risk_distributions/issues/61
-    gamma_params["x_min"] = 0
-    gamma_params["x_max"] = XMAX
+    gamma_params["computability_min"] = 0
+    gamma_params["computability_max"] = XMAX
     hemoglobin_distribution_gamma_part = risk_distributions.risk_distributions.Gamma(
         gamma_params
     )
@@ -99,8 +99,8 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
         {
             "loc": XMAX - mean - (np.euler_gamma * np.sqrt(6) / np.pi * sd),
             "scale": np.sqrt(6) / np.pi * sd,
-            "x_min": 0,
-            "x_max": XMAX,
+            "computability_min": 0,
+            "computability_max": XMAX,
         },
         **kwargs
     )
