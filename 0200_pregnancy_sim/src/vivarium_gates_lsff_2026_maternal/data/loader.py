@@ -199,9 +199,18 @@ def load_raw_incidence_data(key: str, location: str, mean_draw: bool) -> pd.Data
     """Temporary function to short circuit around validation issues in Vivarium Inputs"""
     key = EntityKey(key)
     entity = get_entity(key)
-    data = vi_core.get_data(entity, key.measure, location)
+    years = None
+    data_type = vi_utils.DataType(key.measure, "draws")
+    data = vi_core.get_data(entity, key.measure, location, years, data_type)
     data = vi_utils.scrub_gbd_conventions(data, location)
-    validation.validate_for_simulation(data, entity, "incidence_rate", location)
+    validation.validate_for_simulation(
+        data,
+        entity,
+        "incidence_rate",
+        location,
+        years,
+        data_type.value_columns,
+    )
     data = vi_utils.split_interval(data, interval_column="age", split_column_prefix="age")
     data = vi_utils.split_interval(data, interval_column="year", split_column_prefix="year")
     return vi_utils.sort_hierarchical_data(data).droplevel("location")
