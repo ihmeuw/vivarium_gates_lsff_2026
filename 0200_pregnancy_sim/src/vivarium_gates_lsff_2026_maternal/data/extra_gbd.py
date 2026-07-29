@@ -17,7 +17,7 @@ def load_lbwsg_exposure(location: str):
         gbd_id=entity.gbd_id,
         source=gbd_constants.SOURCES.EXPOSURE,
         location_id=location_id,
-        year_id=2023,
+        year_id=2021,  # LBWSG birth prevalence only estimated through 2021 in GBD 2023
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=164,  # Birth prevalence
         release_id=gbd_constants.RELEASE_IDS.GBD_2023,
