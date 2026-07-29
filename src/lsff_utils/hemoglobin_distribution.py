@@ -18,10 +18,8 @@ def hemoglobin_pdf_from_mean_sd(mean, sd):
 
     def pdf(x):
         return GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
-            x.copy()
-        ) + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(
-            x.copy()
-        )
+            x
+        ) + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(x)
 
     return pdf
 
@@ -33,10 +31,10 @@ def hemoglobin_cdf_from_mean_sd(mean, sd):
     ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
     def cdf(x):
-        gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x.copy())
+        gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
         # NOTE: There is a bug in this CDF function -- it is reversed!
         # https://github.com/ihmeuw/risk_distributions/issues/62
-        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x.copy())
+        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x)
         return (
             GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf
             + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * mgumbel_cdf
