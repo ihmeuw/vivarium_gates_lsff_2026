@@ -14,12 +14,12 @@ import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.time import get_time_stamp
-from vivarium_gates_lsff_2026_child.constants import data_keys
-from vivarium_public_health.population.base_population import BasePopulation
-from vivarium_public_health.population.data_transformations import (
+from vivarium.public_health.population.base_population import BasePopulation
+from vivarium.public_health.population.data_transformations import (
     assign_demographic_proportions,
     load_population_structure,
 )
+from vivarium_gates_lsff_2026_child.constants import data_keys
 
 
 class PopulationLineList(BasePopulation):

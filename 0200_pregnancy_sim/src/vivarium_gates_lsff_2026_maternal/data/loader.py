@@ -15,9 +15,9 @@ for an example.
 
 from functools import cache
 
-import gbd_mapping
 import numpy as np
 import pandas as pd
+import vivarium.gbd_mapping as gbd_mapping
 import vivarium_inputs.validation.sim as validation
 from joblib import Memory
 from scipy import integrate, stats

@@ -12,9 +12,9 @@ from vivarium.engine.framework.lookup import LookupTable
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
+from vivarium.public_health.risks import RiskEffect
+from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
-from vivarium_public_health.risks import RiskEffect
-from vivarium_public_health.utilities import get_lookup_columns
 
 
 class MaternalIronConsumptionFromFortification(Component):

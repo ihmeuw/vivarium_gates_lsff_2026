@@ -4,15 +4,15 @@ from typing import Any, Dict
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.results import Observer
-from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
-from vivarium_public_health.disease import DiseaseState
-from vivarium_public_health.results import COLUMNS
-from vivarium_public_health.results.disease import DiseaseObserver
-from vivarium_public_health.results.mortality import MortalityObserver as MortalityObserver_
-from vivarium_public_health.results.stratification import (
+from vivarium.public_health.disease import DiseaseState
+from vivarium.public_health.results import COLUMNS
+from vivarium.public_health.results.disease import DiseaseObserver
+from vivarium.public_health.results.mortality import MortalityObserver as MortalityObserver_
+from vivarium.public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
-from vivarium_public_health.utilities import to_years
+from vivarium.public_health.utilities import to_years
+from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 
 from lsff_utils import data_processing
 

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import risk_distributions
+import vivarium.risk_distributions as risk_distributions
 
 # NOTE: This is an unusual ensemble distribution. We should add functionality to the
 # EnsembleDistribution class to make this easier.

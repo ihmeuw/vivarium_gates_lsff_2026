@@ -6,12 +6,12 @@
 # from vivarium.engine.framework.engine import Builder
 # from vivarium.engine.framework.event import Event
 # from vivarium.engine.framework.population import SimulantData
-# from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
-# from vivarium_public_health.risks import Risk
-# from vivarium_public_health.risks.data_transformations import (
+# from vivarium.public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
+# from vivarium.public_health.risks import Risk
+# from vivarium.public_health.risks.data_transformations import (
 #     get_exposure_post_processor,
 # )
-# from vivarium_public_health.utilities import EntityString
+# from vivarium.public_health.utilities import EntityString
 
 # from vivarium_gates_lsff_2026_child.constants import (
 #     data_keys,

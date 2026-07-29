@@ -18,11 +18,12 @@ from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from gbd_mapping import Cause, RiskFactor, sequelae
 from scipy import stats
 from scipy.interpolate import RectBivariateSpline, griddata
 from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
+from vivarium.gbd_mapping import Cause, RiskFactor, sequelae
+from vivarium.public_health.utilities import TargetString
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, metadata, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import ARTIFACT_INDEX_COLUMNS
 from vivarium_gates_lsff_2026_child.data import utilities
@@ -39,7 +40,6 @@ from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 from vivarium_inputs.globals import DEMOGRAPHIC_COLUMNS, DRAW_COLUMNS
 from vivarium_inputs.mapping_extension import AlternativeRiskFactor
-from vivarium_public_health.utilities import TargetString
 
 NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.POPULATION.LOCATION,

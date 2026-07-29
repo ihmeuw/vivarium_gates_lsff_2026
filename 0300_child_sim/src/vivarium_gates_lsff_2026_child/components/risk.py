@@ -5,11 +5,11 @@ import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.causal_factor.utilities import get_exposure_post_processor
+from vivarium.public_health.risks import Risk, RiskEffect
+from vivarium.public_health.risks.distributions import RiskExposureDistribution
+from vivarium.public_health.utilities import EntityString
 from vivarium_gates_lsff_2026_child.components import CGFPolytomousDistribution
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
-from vivarium_public_health.risks import Risk, RiskEffect
-from vivarium_public_health.risks.distributions import RiskExposureDistribution
-from vivarium_public_health.utilities import EntityString
 
 
 class ChildUnderweight(Risk):

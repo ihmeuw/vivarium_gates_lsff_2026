@@ -3,10 +3,10 @@ Component to include birth prevalence in SIS model.
 """
 
 from vivarium.engine.framework.state_machine import State
-from vivarium_public_health.disease import DiseaseModel, DiseaseState
-from vivarium_public_health.disease import RiskAttributableDisease as RiskAttributableDisease_
-from vivarium_public_health.disease import SusceptibleState
-from vivarium_public_health.disease.transition import TransitionString
+from vivarium.public_health.disease import DiseaseModel, DiseaseState
+from vivarium.public_health.disease import RiskAttributableDisease as RiskAttributableDisease_
+from vivarium.public_health.disease import SusceptibleState
+from vivarium.public_health.disease.transition import TransitionString
 
 
 def SIS_with_birth_prevalence(cause: str) -> DiseaseModel:

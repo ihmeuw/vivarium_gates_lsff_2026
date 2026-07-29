@@ -3,8 +3,8 @@ from typing import Optional
 import pandas as pd
 from vivarium.config_tree import ConfigTree as LayeredConfigTree
 from vivarium.engine.framework.engine import Builder
-from vivarium_public_health.risks.distributions import PolytomousDistribution
-from vivarium_public_health.utilities import EntityString
+from vivarium.public_health.risks.distributions import PolytomousDistribution
+from vivarium.public_health.utilities import EntityString
 
 
 class CGFPolytomousDistribution(PolytomousDistribution):

@@ -21,12 +21,12 @@ from vivarium.engine.framework.population import PopulationView, SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.causal_factor.utilities import get_exposure_post_processor
-from vivarium_gates_lsff_2026_child.constants import data_keys
-from vivarium_public_health.risks.implementations.low_birth_weight_and_short_gestation import (
+from vivarium.public_health.risks.implementations.low_birth_weight_and_short_gestation import (
     LBWSGRisk,
     LBWSGRiskEffect,
 )
-from vivarium_public_health.utilities import TargetString
+from vivarium.public_health.utilities import TargetString
+from vivarium_gates_lsff_2026_child.constants import data_keys
 
 
 class LBWSGLineList(LBWSGRisk):

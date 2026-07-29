@@ -1,4 +1,4 @@
-from gbd_mapping import sequelae
+from vivarium.gbd_mapping import sequelae
 from vivarium_gates_lsff_2026_maternal.constants import data_keys
 from vivarium_gates_lsff_2026_maternal.data import utilities
 from vivarium_gbd_access import constants as gbd_constants
