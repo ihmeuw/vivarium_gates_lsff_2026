@@ -67,7 +67,7 @@ class ResultsStratifier(ResultsStratifier_):
 class PregnancyObserver(DiseaseObserver):
     def __init__(self):
         super().__init__("pregnancy")
-
+ok 
 
 class MaternalMortalityObserver(MortalityObserver):
     def set_causes_of_death(self, builder: Builder) -> None:
