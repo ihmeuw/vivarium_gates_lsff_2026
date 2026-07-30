@@ -8,11 +8,11 @@ from vivarium.engine.framework.lookup import LookupTableData
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
 from vivarium.public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
-from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.components.children import NewChildren
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, models
 from vivarium_gates_lsff_2026_maternal.constants.data_values import DURATIONS
 from vivarium_gates_lsff_2026_maternal.constants.metadata import ARTIFACT_INDEX_COLUMNS
+from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class NotPregnantState(SusceptibleState):
@@ -183,33 +183,27 @@ def Pregnancy():
     pregnant = PregnantState(
         models.PREGNANT_STATE_NAME,
         allow_self_transition=True,
-        get_data_functions={
-            "prevalence": lambda *_: 1.0,
-            "disability_weight": lambda *_: 0.0,
-            "excess_mortality_rate": lambda *_: 0.0,
-            # Add a dummy dwell time so we can overwrite it later
-            "dwell_time": lambda *_: 0.0,
-        },
+        prevalence=1.0,
+        disability_weight=0.0,
+        excess_mortality_rate=0.0,
+        # Add a dummy dwell time so we can overwrite it later
+        dwell_time=0.0,
     )
     parturition = DiseaseState(
         models.PARTURITION_STATE_NAME,
         allow_self_transition=True,
-        get_data_functions={
-            "prevalence": lambda *_: 0.0,
-            "disability_weight": lambda *_: 0.0,
-            "excess_mortality_rate": lambda *_: 0.0,
-            "dwell_time": lambda builder, cause: builder.time.step_size()(),
-        },
+        prevalence=0.0,
+        disability_weight=0.0,
+        excess_mortality_rate=0.0,
+        dwell_time=lambda builder: builder.time.step_size()(),
     )
     postpartum = DiseaseState(
         models.POSTPARTUM_STATE_NAME,
         allow_self_transition=True,
-        get_data_functions={
-            "prevalence": lambda *_: 0.0,
-            "disability_weight": lambda *_: 0.0,
-            "excess_mortality_rate": lambda *_: 0.0,
-            "dwell_time": lambda *_: pd.Timedelta(days=DURATIONS.POSTPARTUM_DAYS),
-        },
+        prevalence=0.0,
+        disability_weight=0.0,
+        excess_mortality_rate=0.0,
+        dwell_time=pd.Timedelta(days=DURATIONS.POSTPARTUM_DAYS),
     )
 
     pregnant.add_dwell_time_transition(parturition)
@@ -221,7 +215,7 @@ def Pregnancy():
     return PregnancyModel(
         models.PREGNANCY_MODEL_NAME,
         states=[not_pregnant, pregnant, parturition, postpartum],
-        get_data_functions={"cause_specific_mortality_rate": lambda *_: 0.0},
+        cause_specific_mortality_rate=0.0,
     )
 
 

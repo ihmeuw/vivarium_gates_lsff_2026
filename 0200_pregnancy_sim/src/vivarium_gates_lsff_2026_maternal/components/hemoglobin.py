@@ -8,7 +8,6 @@ from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.event import Event
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.randomness import RESIDUAL_CHOICE
-from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values, models
 from vivarium_gates_lsff_2026_maternal.constants.data_values import (
     ANEMIA_DISABILITY_WEIGHTS,
@@ -19,6 +18,7 @@ from vivarium_gates_lsff_2026_maternal.constants.data_values import (
     SEVERE_ANEMIA_AMONG_PREGNANT_WOMEN_THRESHOLD,
     TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS,
 )
+from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 from lsff_utils import hemoglobin_distribution
 

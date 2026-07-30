@@ -17,6 +17,7 @@ class __Population(NamedTuple):
     TMRLE: str = "population.theoretical_minimum_risk_life_expectancy"
     INFANT_MALE_PERCENTAGE: str = "population.infant_male_percentage"
     WEALTH_QUINTILE_PROBABILITIES: str = "population.wealth_quintile_probabilities"
+    ALL_CAUSE_MORTALITY_RATE: str = "cause.all_causes.cause_specific_mortality_rate"
     #    BACKGROUND_MORBIDITY: str = "cause.other_causes.disability_weight"
 
     @property

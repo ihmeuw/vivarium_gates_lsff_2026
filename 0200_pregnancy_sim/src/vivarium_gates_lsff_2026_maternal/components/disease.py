@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import List
 
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
@@ -6,8 +6,8 @@ from vivarium.engine.framework.state_machine import State, Transition
 from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
 from vivarium.public_health.disease import DiseaseState, SusceptibleState
 from vivarium.public_health.disease.transition import ProportionTransition
-from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.constants import models
+from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class ParturitionSelectionState(SusceptibleState):
@@ -15,24 +15,19 @@ class ParturitionSelectionState(SusceptibleState):
         self,
         output: State,
         source_data_type: str = "proportion",
-        get_data_functions: Dict[str, Callable] = None,
         **kwargs,
     ) -> Transition:
-        transition = ParturitionSelectionTransition(
-            self,
-            output,
-            get_data_functions={
-                "proportion": lambda builder, cause: builder.data.load(
-                    f"cause.{cause}.incident_probability"
-                )
-            },
-            **kwargs,
-        )
+        transition = ParturitionSelectionTransition(self, output, **kwargs)
         self.transition_set.append(transition)
         return transition
 
 
 class ParturitionSelectionTransition(ProportionTransition):
+    def __init__(self, input_state: State, output_state: State, **kwargs) -> None:
+        cause = output_state.state_id
+        proportion = lambda builder: builder.data.load(f"cause.{cause}.incident_probability")
+        super().__init__(input_state, output_state, proportion=proportion, **kwargs)
+
     ##############
     # Properties #
     ##############

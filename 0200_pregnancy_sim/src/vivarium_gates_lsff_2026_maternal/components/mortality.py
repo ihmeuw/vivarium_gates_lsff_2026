@@ -9,8 +9,8 @@ from vivarium.engine.framework.population import PopulationView, SimulantData
 from vivarium.engine.framework.randomness import RandomnessStream
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.population import Mortality
-from vivarium.public_health.utilities import get_lookup_columns
 from vivarium_gates_lsff_2026_maternal.constants import data_keys
+from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class MaternalMortality(Mortality):

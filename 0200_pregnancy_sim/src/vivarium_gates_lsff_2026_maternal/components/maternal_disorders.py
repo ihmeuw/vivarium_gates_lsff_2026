@@ -16,31 +16,21 @@ def MaternalDisorders():
     with_condition = DiseaseState(
         cause,
         allow_self_transition=True,
-        get_data_functions={
-            "prevalence": lambda *_: 0.0,
-            "disability_weight": get_maternal_disorders_disability_weight,
-            "excess_mortality_rate": lambda *_: 0.0,
-            "dwell_time": lambda builder, cause: builder.time.step_size()(),
-        },
+        prevalence=0.0,
+        disability_weight=get_maternal_disorders_disability_weight,
+        excess_mortality_rate=0.0,
+        dwell_time=lambda builder: builder.time.step_size()(),
     )
     recovered = RecoveredState(cause, allow_self_transition=True)
     susceptible.transition_set.append(
-        ParturitionSelectionTransition(
-            susceptible,
-            with_condition,
-            get_data_functions={
-                "proportion": lambda builder, cause: builder.data.load(
-                    f"cause.{cause}.incident_probability"
-                )
-            },
-        )
+        ParturitionSelectionTransition(susceptible, with_condition)
     )
     with_condition.add_dwell_time_transition(recovered)
 
     return DiseaseModel(
         cause,
         states=[susceptible, with_condition, recovered],
-        get_data_functions={"cause_specific_mortality_rate": lambda *_: 0.0},
+        cause_specific_mortality_rate=0.0,
     )
 
 
@@ -50,35 +40,30 @@ def MaternalHemorrhage():
     with_condition = DiseaseState(
         cause,
         allow_self_transition=True,
-        get_data_functions={
-            "prevalence": lambda *_: 0.0,
-            "disability_weight": lambda *_: 0.0,
-            "excess_mortality_rate": lambda *_: 0.0,
-            "dwell_time": lambda builder, cause: builder.time.step_size()(),
-        },
+        prevalence=0.0,
+        disability_weight=0.0,
+        excess_mortality_rate=0.0,
+        dwell_time=lambda builder: builder.time.step_size()(),
     )
     recovered = RecoveredState(cause, allow_self_transition=True)
     susceptible.transition_set.append(
-        ParturitionSelectionTransition(
-            susceptible,
-            with_condition,
-            get_data_functions={
-                "proportion": lambda builder, cause: builder.data.load(
-                    f"cause.{cause}.incident_probability"
-                )
-            },
-        )
+        ParturitionSelectionTransition(susceptible, with_condition)
     )
     with_condition.add_dwell_time_transition(recovered)
 
     return DiseaseModel(
         cause,
         states=[susceptible, with_condition, recovered],
-        get_data_functions={"cause_specific_mortality_rate": lambda *_: 0.0},
+        cause_specific_mortality_rate=0.0,
     )
 
 
 class ParturitionSelectionTransition(ProportionTransition):
+    def __init__(self, input_state, output_state, **kwargs) -> None:
+        cause = output_state.state_id
+        proportion = lambda builder: builder.data.load(f"cause.{cause}.incident_probability")
+        super().__init__(input_state, output_state, proportion=proportion, **kwargs)
+
     ##############
     # Properties #
     ##############
