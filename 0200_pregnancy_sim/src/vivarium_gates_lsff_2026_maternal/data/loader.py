@@ -47,6 +47,7 @@ from lsff_utils import data_processing, hemoglobin_distribution
 memory = Memory("./.cachedir", verbose=0)
 
 CSV_DATA_NAMES = {
+    data_keys.POPULATION.STRUCTURE: "population/stratified",
     data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: "wealth_quintile_probabilities",
     data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "{vehicle}/vehicle_consumption/any",
     data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY: "{vehicle}/vehicle_consumption/fortifiability",

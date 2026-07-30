@@ -21,13 +21,6 @@ class VehicleConsumption(Component):
     def columns_required(self) -> List[str]:
         return ["tracked", "wealth_quintile", "sex", "age"]
 
-    @property
-    def initialization_requirements(self) -> Dict[str, List[str]]:
-        return {
-            "requires_streams": [self.name],
-            "requires_attributes": self.columns_required,
-        }
-
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         self.randomness = builder.randomness.get_stream(self.name)
@@ -46,15 +39,11 @@ class VehicleConsumption(Component):
             .set_index(index_columns)["value"]
             .rename("any_consumed")
         )
-        any_consumed = self.build_lookup_table(
+        self.any_consumed = self.build_lookup_table(
             builder,
-            any_consumed.reset_index(),
+            "any_consumed",
+            data_source=any_consumed.reset_index(),
             value_columns=["any_consumed"],
-        )
-        self.any_consumed = builder.value.register_value_producer(
-            "vehicle_consumption.any_consumed",
-            source=any_consumed,
-            requires_attributes=get_lookup_columns([any_consumed]),
         )
 
         mean = (
@@ -69,14 +58,21 @@ class VehicleConsumption(Component):
         )
         distribution_parameters = self.build_lookup_table(
             builder,
-            pd.concat([mean, stddev], axis=1).reset_index(),
+            "vehicle_consumption_parameters",
+            data_source=pd.concat([mean, stddev], axis=1).reset_index(),
             value_columns=["mean", "stddev"],
         )
 
         self.distribution_parameters = builder.value.register_value_producer(
             "vehicle_consumption.exposure_parameters",
             source=distribution_parameters,
-            requires_attributes=get_lookup_columns([distribution_parameters]),
+            required_resources=get_lookup_columns([distribution_parameters]),
+        )
+
+        builder.population.register_initializer(
+            self.on_initialize_simulants,
+            columns=self.columns_created,
+            required_resources=[self.randomness],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -143,13 +139,6 @@ class IronFortification(Component):
     def columns_required(self) -> List[str]:
         return ["tracked", "vehicle_consumption_grams", "wealth_quintile", "sex", "age"]
 
-    @property
-    def initialization_requirements(self) -> Dict[str, List[str]]:
-        return {
-            "requires_streams": [self.name],
-            "requires_attributes": self.columns_required,
-        }
-
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         self.randomness = builder.randomness.get_stream(self.name)
@@ -166,7 +155,8 @@ class IronFortification(Component):
 
         self.baseline_any_coverage = self.build_lookup_table(
             builder,
-            drop_vehicle(
+            "baseline_any_coverage",
+            data_source=drop_vehicle(
                 builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_ANY_COVERAGE)
             ),
             value_columns=["value"],
@@ -174,7 +164,8 @@ class IronFortification(Component):
 
         self.baseline_full_coverage = self.build_lookup_table(
             builder,
-            drop_vehicle(
+            "baseline_full_coverage",
+            data_source=drop_vehicle(
                 builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_FULL_COVERAGE)
             ),
             value_columns=["value"],
@@ -198,13 +189,15 @@ class IronFortification(Component):
         ].rename("stddev")
         self.distribution_parameters = self.build_lookup_table(
             builder,
-            pd.concat([mean, stddev], axis=1).reset_index(),
+            "partial_coverage_parameters",
+            data_source=pd.concat([mean, stddev], axis=1).reset_index(),
             value_columns=["mean", "stddev"],
         )
 
         self.intervention_coverage = self.build_lookup_table(
             builder,
-            drop_vehicle(
+            "intervention_coverage",
+            data_source=drop_vehicle(
                 builder.data.load(data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE)
             ).assign(sex="Female"),
             value_columns=["value"],
@@ -214,7 +207,8 @@ class IronFortification(Component):
 
         self.baseline_effectiveness = self.build_lookup_table(
             builder,
-            drop_vehicle(
+            "baseline_effectiveness",
+            data_source=drop_vehicle(
                 builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_EFFECTIVENESS)
             ).assign(sex="Female"),
             value_columns=["value"],
@@ -227,7 +221,10 @@ class IronFortification(Component):
 
         self.effectiveness = self.build_lookup_table(
             builder,
-            drop_vehicle(builder.data.load(effectiveness_key)).assign(sex="Female"),
+            "effectiveness",
+            data_source=drop_vehicle(builder.data.load(effectiveness_key)).assign(
+                sex="Female"
+            ),
             value_columns=["value"],
         )
 
@@ -239,7 +236,8 @@ class IronFortification(Component):
 
         self.baseline_fortification_mcg_per_gram = self.build_lookup_table(
             builder,
-            drop_vehicle(
+            "baseline_fortification_mcg_per_gram",
+            data_source=drop_vehicle(
                 builder.data.load(data_keys.IRON_FORTIFICATION.BASELINE_CONCENTRATION)
             ).assign(sex="Female"),
             value_columns=["value"],
@@ -247,7 +245,8 @@ class IronFortification(Component):
 
         self.intervention_fortification_mcg_per_gram = self.build_lookup_table(
             builder,
-            drop_vehicle(
+            "intervention_fortification_mcg_per_gram",
+            data_source=drop_vehicle(
                 builder.data.load(data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION)
             ).assign(sex="Female"),
             value_columns=["value"],
@@ -255,14 +254,23 @@ class IronFortification(Component):
 
         self.fortifiability = self.build_lookup_table(
             builder,
-            drop_vehicle(builder.data.load(data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY)),
+            "fortifiability",
+            data_source=drop_vehicle(
+                builder.data.load(data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY)
+            ),
             value_columns=["value"],
         )
 
         builder.value.register_value_modifier(
             "hemoglobin.exposure",
             self.update_hemoglobin_exposure,
-            requires_attributes=["vehicle_consumption_grams"],
+            required_resources=["vehicle_consumption_grams"],
+        )
+
+        builder.population.register_initializer(
+            self.on_initialize_simulants,
+            columns=self.columns_created,
+            required_resources=[self.randomness],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:

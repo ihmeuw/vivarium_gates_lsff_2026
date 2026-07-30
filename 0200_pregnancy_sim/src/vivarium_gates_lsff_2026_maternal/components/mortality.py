@@ -62,12 +62,13 @@ class MaternalMortality(Mortality):
         )
         probability_pipeline_source = self.build_lookup_table(
             builder,
-            probability_data,
+            "mortality_probability",
+            data_source=probability_data,
         )
         return builder.value.register_value_producer(
             self.mortality_probability_pipeline_name,
             source=probability_pipeline_source,
-            requires_attributes=get_lookup_columns([probability_pipeline_source]),
+            required_resources=get_lookup_columns([probability_pipeline_source]),
         )
 
     ########################
@@ -97,6 +98,6 @@ class MaternalMortality(Mortality):
 
         pop.loc[deaths, "alive"] = "dead"
         pop.loc[deaths, "exit_time"] = event.time
-        pop.loc[deaths, "years_of_life_lost"] = self.lookup_tables["life_expectancy"](deaths)
+        pop.loc[deaths, "years_of_life_lost"] = self.life_expectancy_table(deaths)
         pop.loc[deaths, "cause_of_death"] = "maternal_disorders"
         self.population_view.update(pop)

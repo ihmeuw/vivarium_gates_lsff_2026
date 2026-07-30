@@ -12,5 +12,6 @@ from .observers import (
     PregnancyOutcomeObserver,
     ResultsStratifier,
 )
+from .population import BasePopulation
 from .pregnancy import Pregnancy, UntrackNotPregnant
 from .wealth_quintile import WealthQuintile

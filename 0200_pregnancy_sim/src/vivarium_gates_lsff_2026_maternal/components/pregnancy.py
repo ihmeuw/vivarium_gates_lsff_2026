@@ -45,13 +45,6 @@ class PregnantState(DiseaseState):
     def sub_components(self):
         return super().sub_components + [self.new_children]
 
-    @property
-    def initialization_requirements(self) -> Dict[str, List[str]]:
-        return {
-            "requires_attributes": [self.model, "birth_outcome_probabilities"],
-            "requires_streams": [],
-        }
-
     def setup(self, builder: Builder):
         """Performs this component's simulation setup.
 
@@ -64,23 +57,20 @@ class PregnantState(DiseaseState):
         self.time_step = builder.time.step_size()
         self.randomness = builder.randomness.get_stream(self.name)
 
-        self.birth_outcome_probabilities = builder.value.register_value_producer(
-            "birth_outcome_probabilities",
-            source=self.lookup_tables["birth_outcome_probabilities"],
-            requires_attributes=get_lookup_columns(
-                [self.lookup_tables["birth_outcome_probabilities"]]
-            ),
-        )
-
-    def build_all_lookup_tables(self, builder: Builder) -> None:
-        super().build_all_lookup_tables(builder)
         # I am not making birth outcome probabilities configurable because the
         # method is so complicated - albrja
         birth_outcome_probabilities = get_birth_outcome_probabilities(builder)
-        self.lookup_tables["birth_outcome_probabilities"] = self.build_lookup_table(
+        self.birth_outcome_probabilities_table = self.build_lookup_table(
             builder,
-            birth_outcome_probabilities,
+            "birth_outcome_probabilities",
+            data_source=birth_outcome_probabilities,
             value_columns=["live_birth", "partial_term", "stillbirth"],
+        )
+
+        self.birth_outcome_probabilities = builder.value.register_value_producer(
+            "birth_outcome_probabilities",
+            source=self.birth_outcome_probabilities_table,
+            required_resources=get_lookup_columns([self.birth_outcome_probabilities_table]),
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -155,7 +145,7 @@ class PregnantState(DiseaseState):
         return builder.value.register_value_producer(
             f"{self.state_id}.dwell_time",
             source=lambda index: self.population_view.get(index)["pregnancy_duration"],
-            requires_attributes=["age", "sex", "pregnancy_outcome"],
+            required_resources=["age", "sex", "pregnancy_outcome"],
         )
 
     def get_initial_event_times(self, pop_data: SimulantData) -> pd.DataFrame:

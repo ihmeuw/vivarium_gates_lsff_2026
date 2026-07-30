@@ -15,6 +15,8 @@ from vivarium.public_health.results import (
     PublicHealthObserver,
 )
 from vivarium.public_health.results import ResultsStratifier as ResultsStratifier_
+from vivarium.public_health.results.disability import SimpleCause as DisabilitySimpleCause
+from vivarium.public_health.results.mortality import SimpleCause as MortalitySimpleCause
 from vivarium.public_health.utilities import to_years
 from vivarium_gates_lsff_2026_maternal.constants import data_values, models
 
@@ -68,12 +70,15 @@ class PregnancyObserver(DiseaseObserver):
 
 
 class MaternalMortalityObserver(MortalityObserver):
-    def setup(self, builder: Builder) -> None:
-        super().setup(builder)
-        # Hack in maternal disorders
-        maternal_disorders = DiseaseState(models.MATERNAL_DISORDERS_MODEL_NAME)
-        maternal_disorders.set_model(models.MATERNAL_DISORDERS_MODEL_NAME)
-        self.causes_of_death += [maternal_disorders]
+    def set_causes_of_death(self, builder: Builder) -> None:
+        super().set_causes_of_death(builder)
+        self.causes_of_death += [
+            MortalitySimpleCause(
+                models.MATERNAL_DISORDERS_MODEL_NAME,
+                models.MATERNAL_DISORDERS_MODEL_NAME,
+                "cause",
+            )
+        ]
 
 
 class AnemiaObserver(PublicHealthObserver):
@@ -226,12 +231,9 @@ class PregnancyOutcomeObserver(PublicHealthObserver):
 
 
 class DisabilityObserver(DisabilityObserver_):
-    def setup(self, builder: Builder) -> None:
-        super().setup(builder)
-        # Hack in Anemia
-        anemia = DiseaseState("anemia")
-        anemia.set_model("anemia")
-        self.causes_of_disease += [anemia]
+    def set_causes_of_disability(self, builder: Builder) -> None:
+        super().set_causes_of_disability(builder)
+        self.causes_of_disability += [DisabilitySimpleCause("anemia", "anemia", "cause")]
 
 
 def aggregate_state_person_time(step_size, df: pd.DataFrame) -> float:

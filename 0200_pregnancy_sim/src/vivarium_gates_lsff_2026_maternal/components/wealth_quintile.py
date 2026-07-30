@@ -20,10 +20,6 @@ class WealthQuintile(Component):
     def columns_required(self) -> List[str]:
         return ["tracked"]
 
-    @property
-    def initialization_requirements(self) -> Dict[str, List[str]]:
-        return {"requires_streams": [self.name]}
-
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
         self.randomness = builder.randomness.get_stream(self.name)
@@ -41,16 +37,17 @@ class WealthQuintile(Component):
                 "5": 5,
             }
         )
-        quintile_probabilities = self.build_lookup_table(
+        self.quintile_probabilities = self.build_lookup_table(
             builder,
-            quintile_probabilities,
+            "quintile_probabilities",
+            data_source=quintile_probabilities,
             value_columns=data_processing.WEALTH_QUINTILES,
         )
 
-        self.quintile_probabilities = builder.value.register_value_producer(
-            "wealth_quintile.quintile_probabilities",
-            source=quintile_probabilities,
-            requires_attributes=get_lookup_columns([quintile_probabilities]),
+        builder.population.register_initializer(
+            self.on_initialize_simulants,
+            columns=self.columns_created,
+            required_resources=[self.randomness],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:

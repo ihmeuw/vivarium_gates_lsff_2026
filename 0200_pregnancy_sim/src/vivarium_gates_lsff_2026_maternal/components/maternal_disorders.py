@@ -17,7 +17,9 @@ def MaternalDisorders():
         cause,
         allow_self_transition=True,
         prevalence=0.0,
-        disability_weight=get_maternal_disorders_disability_weight,
+        disability_weight=lambda builder: get_maternal_disorders_disability_weight(
+            builder, cause
+        ),
         excess_mortality_rate=0.0,
         dwell_time=lambda builder: builder.time.step_size()(),
     )
@@ -82,7 +84,7 @@ class ParturitionSelectionTransition(ProportionTransition):
         self.proportion_pipeline = builder.value.register_value_producer(
             pipeline_name,
             source=self.compute_transition_proportion,
-            requires_attributes=["age", "sex", "wealth_quintile", "alive"],
+            required_resources=["age", "sex", "wealth_quintile", "alive"],
         )
 
     ###################
@@ -95,7 +97,7 @@ class ParturitionSelectionTransition(ProportionTransition):
             index, query="(alive == 'alive') & (pregnancy == 'parturition')"
         ).index
 
-        transition_proportion.loc[sub_pop] = self.lookup_tables["proportion"](sub_pop)
+        transition_proportion.loc[sub_pop] = self.proportion_table(sub_pop)
         return transition_proportion
 
     ####################

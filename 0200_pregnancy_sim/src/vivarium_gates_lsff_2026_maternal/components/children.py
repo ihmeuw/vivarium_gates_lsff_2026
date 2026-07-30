@@ -5,7 +5,6 @@ import pandas as pd
 from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values, models
-from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class NewChildren(Component):
@@ -26,16 +25,11 @@ class NewChildren(Component):
 
         # NOTE: I did not add this to the configurable lookup tables because
         # it is only used as the source for the pipeline.
-        male_sex_percentage = self.build_lookup_table(
+        self.male_sex_percentage = self.build_lookup_table(
             builder,
-            builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
+            "male_sex_percentage",
+            data_source=builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
             value_columns=["value"],
-        )
-
-        self.male_sex_percentage = builder.value.register_value_producer(
-            "new_children.male_sex_percentage",
-            source=male_sex_percentage,
-            requires_attributes=get_lookup_columns([male_sex_percentage]),
         )
 
     def empty(self, index: pd.Index) -> pd.DataFrame:

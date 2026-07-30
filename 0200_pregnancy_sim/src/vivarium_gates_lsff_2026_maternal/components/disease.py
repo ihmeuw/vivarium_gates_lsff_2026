@@ -46,7 +46,7 @@ class ParturitionSelectionTransition(ProportionTransition):
         self.proportion_pipeline = builder.value.register_value_producer(
             pipeline_name,
             source=self.compute_transition_proportion,
-            requires_attributes=["age", "sex", "alive"],
+            required_resources=["age", "sex", "alive"],
         )
 
     ###################
@@ -59,7 +59,7 @@ class ParturitionSelectionTransition(ProportionTransition):
             index, query="(alive == 'alive') & (pregnancy == 'parturition')"
         ).index
 
-        transition_proportion.loc[sub_pop] = self.lookup_tables["proportion"](sub_pop)
+        transition_proportion.loc[sub_pop] = self.proportion_table(sub_pop)
         return transition_proportion
 
     ####################
@@ -84,11 +84,11 @@ class ParturitionExclusionState(DiseaseState):
     # #####################
 
     def get_disability_weight_pipeline(self, builder: Builder) -> Pipeline:
-        lookup_columns = get_lookup_columns([self.lookup_tables["disability_weight"]])
+        lookup_columns = get_lookup_columns([self.disability_weight_table])
         return builder.value.register_value_producer(
             f"{self.state_id}.disability_weight",
             source=self.compute_disability_weight,
-            requires_attributes=lookup_columns + ["alive", self.model, "pregnancy"],
+            required_resources=lookup_columns + ["alive", self.model, "pregnancy"],
         )
 
     ##################################

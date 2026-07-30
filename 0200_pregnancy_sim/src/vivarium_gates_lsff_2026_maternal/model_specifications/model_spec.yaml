@@ -1,18 +1,16 @@
 components:
     vivarium.public_health:
-        population:
-            - BasePopulation()
         results:
             - DiseaseObserver("maternal_disorders")
             - DiseaseObserver("maternal_hemorrhage")
 
     vivarium_gates_lsff_2026_maternal:
         components:
+            - BasePopulation()
             - Pregnancy()
             - UntrackNotPregnant()
             - MaternalDisorders()
-            - MaternalHemorrhage()  
-            - MaternalMortality()
+            - MaternalHemorrhage()
             # - BackgroundMorbidity()
             - Hemoglobin()
             - Anemia()
