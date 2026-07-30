@@ -875,7 +875,9 @@ def load_csv_data(key: str, location: str, mean_draw: bool, vehicle: str) -> pd.
         df = df[(df.pregnant == "pregnant") | (df.age_end == 15) | (df.age_start == 50)].drop(
             columns=["pregnant"]
         )
-    return df.set_index([c for c in df.columns if c != "value"])
+    result = df.set_index([c for c in df.columns if c != "value"])
+    # Rename "value" column to "draw_0" for compatibility with artifact system
+    return result.rename(columns={"value": "draw_0"})
 
 
 ##########################
