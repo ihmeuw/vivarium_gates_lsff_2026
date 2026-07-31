@@ -70,8 +70,7 @@ if __name__ == "__main__":
             + interactive_requirements,
         },
         zip_safe=False,
-        entry_points="""
-            [console_scripts]
-            make_artifacts=vivarium_gates_lsff_2026_child.tools.cli:make_artifacts
-        """,
+        # NOTE: Deliberately no 'make_artifacts' console script -- see the note in
+        # 0200_pregnancy_sim/setup.py. The repo-level vivarium_gates_lsff_2026
+        # package owns that name and dispatches here via '-p/--project child'.
     )
