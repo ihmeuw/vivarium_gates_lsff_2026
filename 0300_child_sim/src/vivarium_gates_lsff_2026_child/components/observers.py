@@ -12,9 +12,9 @@ from vivarium.public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
 from vivarium.public_health.utilities import to_years
-from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 
 from lsff_utils import data_processing
+from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 
 # from vivarium_gates_lsff_2026_child.constants.metadata import (
 #     SUBNATIONAL_LOCATION_DICT,

@@ -4,6 +4,7 @@ from typing import Dict, List, NamedTuple, Union
 import pandas as pd
 import yaml
 from loguru import logger
+
 from vivarium_gates_lsff_2026_child.constants import results, scenarios
 
 SCENARIO_COLUMN = "child_scenario"

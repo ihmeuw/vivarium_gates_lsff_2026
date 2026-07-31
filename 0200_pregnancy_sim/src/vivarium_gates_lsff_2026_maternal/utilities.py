@@ -8,6 +8,7 @@ from loguru import logger
 from scipy import stats
 from vivarium.engine.framework.randomness import get_hash
 from vivarium.public_health.causal_factor.utilities import pivot_categorical
+
 from vivarium_gates_lsff_2026_maternal.constants import metadata
 
 SeededDistribution = Tuple[str, stats.rv_continuous]
@@ -17,12 +18,14 @@ def get_lookup_columns(lookup_tables: list) -> list[str]:
     """Get the lookup attributes from a list of LookupTable objects.
 
     Replacement for the removed vivarium.public_health.utilities.get_lookup_columns.
-    Deduplicates while preserving order.
+    Deduplicates while preserving order. 'year' is excluded because it is handled
+    internally by the lookup table rather than being a population attribute.
     """
     seen = {}
     for lt in lookup_tables:
         for col in lt.lookup_attributes:
-            seen[col] = None
+            if col != "year":
+                seen[col] = None
     return list(seen.keys())
 
 

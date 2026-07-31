@@ -15,12 +15,11 @@ from vivarium.public_health.results import (
     PublicHealthObserver,
 )
 from vivarium.public_health.results import ResultsStratifier as ResultsStratifier_
-from vivarium.public_health.results.disability import SimpleCause as DisabilitySimpleCause
-from vivarium.public_health.results.mortality import SimpleCause as MortalitySimpleCause
+from vivarium.public_health.results import SimpleCause
 from vivarium.public_health.utilities import to_years
-from vivarium_gates_lsff_2026_maternal.constants import data_values, models
 
 from lsff_utils import data_processing
+from vivarium_gates_lsff_2026_maternal.constants import data_values, models
 
 
 class ResultsStratifier(ResultsStratifier_):
@@ -29,13 +28,13 @@ class ResultsStratifier(ResultsStratifier_):
 
         builder.results.register_stratification(
             "anemia_status_at_birth",
-            data_values.ANEMIA_STATUS_AT_BIRTH_CATEGORIES,
+            list(data_values.ANEMIA_STATUS_AT_BIRTH_CATEGORIES),
             requires_attributes=["anemia_status_at_birth"],
         )
 
         builder.results.register_stratification(
             "anemia_levels",
-            data_values.ANEMIA_DISABILITY_WEIGHTS.keys(),
+            list(data_values.ANEMIA_DISABILITY_WEIGHTS),
             requires_attributes=["anemia_levels"],
         )
 
@@ -53,13 +52,13 @@ class ResultsStratifier(ResultsStratifier_):
 
         builder.results.register_stratification(
             "pregnancy_outcome",
-            models.PREGNANCY_OUTCOMES,
+            list(models.PREGNANCY_OUTCOMES),
             requires_attributes=["pregnancy_outcome"],
         )
 
         builder.results.register_stratification(
             "wealth_quintile",
-            data_processing.WEALTH_QUINTILES,
+            list(data_processing.WEALTH_QUINTILES),
             requires_attributes=["wealth_quintile"],
         )
 
@@ -73,7 +72,7 @@ class MaternalMortalityObserver(MortalityObserver):
     def set_causes_of_death(self, builder: Builder) -> None:
         super().set_causes_of_death(builder)
         self.causes_of_death += [
-            MortalitySimpleCause(
+            SimpleCause(
                 models.MATERNAL_DISORDERS_MODEL_NAME,
                 models.MATERNAL_DISORDERS_MODEL_NAME,
                 "cause",
@@ -97,9 +96,9 @@ class AnemiaObserver(PublicHealthObserver):
         self.register_adding_observation(
             builder=builder,
             name=f"person_time_anemia",
-            pop_filter=f'alive == "alive" and tracked == True',
+            pop_filter="is_alive == True",
             when="time_step__prepare",
-            requires_attributes=["alive", "anemia_levels"],
+            requires_attributes=["is_alive", "anemia_levels"],
             additional_stratifications=builder.configuration.stratification.anemia.include,
             excluded_stratifications=builder.configuration.stratification.anemia.exclude,
             aggregator=partial(aggregate_state_person_time, builder.time.step_size()()),
@@ -145,11 +144,11 @@ class MaternalInterventionObserver(PublicHealthObserver):
             builder=builder,
             name="intervention_count",
             pop_filter=(
-                'alive == "alive" and tracked == True and '
+                "is_alive == True and "
                 f'event_time > "{intervention_date}" and '
                 f'event_time <= "{intervention_date + builder.time.step_size()()}"'
             ),
-            requires_attributes=["alive", "intervention", "event_time"],
+            requires_attributes=["is_alive", "intervention", "event_time"],
             additional_stratifications=builder.configuration.stratification.maternal_intervention.include,
             excluded_stratifications=builder.configuration.stratification.maternal_intervention.exclude,
         )
@@ -233,7 +232,7 @@ class PregnancyOutcomeObserver(PublicHealthObserver):
 class DisabilityObserver(DisabilityObserver_):
     def set_causes_of_disability(self, builder: Builder) -> None:
         super().set_causes_of_disability(builder)
-        self.causes_of_disability += [DisabilitySimpleCause("anemia", "anemia", "cause")]
+        self.causes_of_disability += [SimpleCause("anemia", "anemia", "cause")]
 
 
 def aggregate_state_person_time(step_size, df: pd.DataFrame) -> float:

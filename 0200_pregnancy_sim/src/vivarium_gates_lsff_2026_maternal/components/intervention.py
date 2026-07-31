@@ -8,18 +8,14 @@ from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.randomness import RESIDUAL_CHOICE
+
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values, models
-from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class VehicleConsumption(Component):
     @property
     def columns_created(self) -> List[str]:
         return ["vehicle_consumption_grams"]
-
-    @property
-    def columns_required(self) -> List[str]:
-        return ["tracked", "wealth_quintile", "sex", "age"]
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
@@ -66,21 +62,20 @@ class VehicleConsumption(Component):
         self.distribution_parameters = builder.value.register_value_producer(
             "vehicle_consumption.exposure_parameters",
             source=distribution_parameters,
-            required_resources=get_lookup_columns([distribution_parameters]),
         )
 
         builder.population.register_initializer(
             self.on_initialize_simulants,
             columns=self.columns_created,
-            required_resources=[self.randomness],
+            required_resources=[self.randomness, "wealth_quintile"],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         pop_update = pd.DataFrame(
-            {"vehicle_consumption_grams": None},
+            {"vehicle_consumption_grams": np.nan},
             index=pop_data.index,
         )
-        any_consumed_prob = self.any_consumed(pop_data.index)
+        any_consumed_prob = self.any_consumed(pop_data.index).squeeze()
         any_consumed = self.randomness.filter_for_probability(
             pop_data.index,
             probability=any_consumed_prob,
@@ -116,9 +111,7 @@ class VehicleConsumption(Component):
             lower=0
         )
 
-        self.population_view.update(
-            "vehicle_consumption_grams", lambda _: pop_update["vehicle_consumption_grams"]
-        )
+        self.population_view.initialize(pop_update)
 
 
 class IronFortification(Component):
@@ -136,10 +129,6 @@ class IronFortification(Component):
             "baseline_2021_iron_consumption_from_fortification_mcg",
             "iron_consumption_from_fortification_mcg",
         ]
-
-    @property
-    def columns_required(self) -> List[str]:
-        return ["tracked", "vehicle_consumption_grams", "wealth_quintile", "sex", "age"]
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
@@ -266,13 +255,20 @@ class IronFortification(Component):
         builder.value.register_value_modifier(
             "hemoglobin.exposure",
             self.update_hemoglobin_exposure,
-            required_resources=["vehicle_consumption_grams"],
+            required_resources=[
+                "baseline_2021_iron_consumption_from_fortification_mcg",
+                "iron_consumption_from_fortification_mcg",
+            ],
         )
 
         builder.population.register_initializer(
             self.on_initialize_simulants,
             columns=self.columns_created,
-            required_resources=[self.randomness],
+            required_resources=[
+                self.randomness,
+                "wealth_quintile",
+                "vehicle_consumption_grams",
+            ],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -280,8 +276,10 @@ class IronFortification(Component):
             index=pop_data.index,
         )
 
-        baseline_full_prob = self.baseline_full_coverage(pop_data.index)
-        baseline_any_prob = self.baseline_any_coverage(pop_data.index) - baseline_full_prob
+        baseline_full_prob = self.baseline_full_coverage(pop_data.index).squeeze()
+        baseline_any_prob = (
+            self.baseline_any_coverage(pop_data.index).squeeze() - baseline_full_prob
+        )
 
         baseline_fortification = self.randomness.choice(
             pop_data.index,
@@ -346,9 +344,10 @@ class IronFortification(Component):
                 baseline_full_prob + baseline_any_prob * distribution_parameters["mean"]
             )
 
-            target_coverage = self.intervention_coverage(
-                pop_data.index
-            ) * self.fortifiability(pop_data.index)
+            target_coverage = (
+                self.intervention_coverage(pop_data.index).squeeze()
+                * self.fortifiability(pop_data.index).squeeze()
+            )
             additional_coverage = target_coverage - current_coverage
             assert ((additional_coverage >= 0) | np.isclose(additional_coverage, 0)).all()
             additional_coverage = additional_coverage.clip(lower=0)
@@ -369,26 +368,26 @@ class IronFortification(Component):
         # Not all coverage is effective
         ineffective_baseline_2021 = self.randomness.filter_for_probability(
             pop_data.index,
-            probability=1 - self.baseline_effectiveness(pop_data.index),
+            probability=1 - self.baseline_effectiveness(pop_data.index).squeeze(),
             # NOTE: Same key as next
             additional_key="ineffective",
         )
         ineffective = self.randomness.filter_for_probability(
             pop_data.index,
-            probability=1 - self.effectiveness(pop_data.index),
+            probability=1 - self.effectiveness(pop_data.index).squeeze(),
             additional_key="ineffective",
         )
         # NOTE: We assume ineffective means totally ineffective
         pop_update.loc[ineffective_baseline_2021, "baseline_2021_iron_fortification"] = 0.0
         pop_update.loc[ineffective, "iron_fortification"] = 0.0
 
-        vehicle_consumption = self.population_view.subview(["vehicle_consumption_grams"]).get(
-            pop_data.index
-        )["vehicle_consumption_grams"]
+        vehicle_consumption = self.population_view.get(
+            pop_data.index, "vehicle_consumption_grams"
+        )
 
         baseline_concentration_mcg_per_gram = self.baseline_fortification_mcg_per_gram(
             pop_data.index
-        )
+        ).squeeze()
 
         pop_update[
             "baseline_2021_iron_consumption_from_fortification_mcg"
@@ -405,7 +404,7 @@ class IronFortification(Component):
         elif self.scenario == "intervention":
             concentration_mcg_per_gram = self.intervention_fortification_mcg_per_gram(
                 pop_data.index
-            )
+            ).squeeze()
 
         pop_update[
             "iron_consumption_from_fortification_mcg"
@@ -415,10 +414,16 @@ class IronFortification(Component):
             concentration_mcg_per_gram,
         )
 
-        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
+        self.population_view.initialize(pop_update)
 
     def update_hemoglobin_exposure(self, index, exposure):
-        pop = self.population_view.get(index)
+        pop = self.population_view.get(
+            index,
+            [
+                "baseline_2021_iron_consumption_from_fortification_mcg",
+                "iron_consumption_from_fortification_mcg",
+            ],
+        )
 
         baseline_2021_benefit = (
             pop["baseline_2021_iron_consumption_from_fortification_mcg"] > 0

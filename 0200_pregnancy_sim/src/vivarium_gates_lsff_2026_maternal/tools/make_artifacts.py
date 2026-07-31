@@ -16,6 +16,7 @@ from typing import Tuple, Union
 import click
 from loguru import logger
 from vivarium import cluster_tools as vct
+
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
 from vivarium_gates_lsff_2026_maternal.tools.app_logging import (
     add_logging_sink,
@@ -108,8 +109,6 @@ def build_artifacts(
     verbose
         How noisy the logger should be.
     """
-
-    from vivarium import cluster_tools as vct
 
     vehicle = vehicle or "rice"
     output_dir = Path(output_dir)

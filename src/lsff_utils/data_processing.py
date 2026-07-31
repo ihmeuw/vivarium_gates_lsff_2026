@@ -34,7 +34,10 @@ def recode_extraction_wealth_quintile(series):
 
 def reindex_series_onto_df_by_age_groups(df, series):
     if "age_start" not in series.index.names:
-        return series.align(df)[1]
+        # NOTE: align returns (left, right); we want the series broadcast onto the
+        # union index, not the dataframe. Taking [1] here silently returned the
+        # dataframe's own values, dropping the series entirely.
+        return series.align(df)[0]
     # NOTE: Age groups can be different! Is there a more Vivarium way to do this, with a lookup table maybe?
     common = list(set(df.index.names) & set(series.index.names))
     result = (

@@ -23,6 +23,14 @@ from joblib import Memory
 from scipy import integrate, stats
 from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
+from vivarium_gbd_access import gbd
+from vivarium_inputs import core as vi_core
+from vivarium_inputs import globals as vi_globals
+from vivarium_inputs import interface
+from vivarium_inputs import utilities as vi_utils
+from vivarium_inputs import utility_data
+
+from lsff_utils import data_processing, hemoglobin_distribution
 from vivarium_gates_lsff_2026_maternal.constants import (
     data_keys,
     data_values,
@@ -33,14 +41,6 @@ from vivarium_gates_lsff_2026_maternal.constants import (
 from vivarium_gates_lsff_2026_maternal.data import extra_gbd, sampling
 from vivarium_gates_lsff_2026_maternal.data.utilities import get_entity
 from vivarium_gates_lsff_2026_maternal.utilities import get_random_variable_draws
-from vivarium_gbd_access import gbd
-from vivarium_inputs import core as vi_core
-from vivarium_inputs import globals as vi_globals
-from vivarium_inputs import interface
-from vivarium_inputs import utilities as vi_utils
-from vivarium_inputs import utility_data
-
-from lsff_utils import data_processing, hemoglobin_distribution
 
 ##Note: need to remove all instances where we limit the size of the data manually. This will be done when RT updates in the input files.
 
@@ -155,9 +155,12 @@ def load_population_structure(key: str, location: str, mean_draw: bool) -> pd.Da
         .assign(year_start=2021, year_end=2022)
         .set_index(["sex", "age_start", "age_end", "year_start", "year_end"])
     )
-    pregnancy_end_rate_avg = get_pregnancy_end_incidence(location, mean_draw)
-    pregnant_population_structure = pregnancy_end_rate_avg.multiply(
-        base_population_structure["value"], axis=0
+    pregnancy_end_rate = broadcast_onto(
+        get_pregnancy_end_incidence(location, mean_draw), base_population_structure.index
+    )
+    # NOTE: A "value" column rather than "draw_0" -- see the note in load_csv_data.
+    pregnant_population_structure = (
+        base_population_structure["value"].mul(pregnancy_end_rate).to_frame("value")
     )
     if "location" not in pregnant_population_structure.index.names:
         pregnant_population_structure = pregnant_population_structure.assign(
@@ -270,15 +273,46 @@ def load_categorical_paf(key: str, location: str, mean_draw: bool) -> pd.DataFra
 ##################
 
 
-def get_pregnancy_end_incidence(location: str, mean_draw: bool) -> pd.DataFrame:
+def get_pregnancy_end_incidence(location: str, mean_draw: bool) -> pd.Series:
+    """Load the rate at which pregnancies end, by sex and age group.
+
+    The data prep results are a single point estimate with no year or draw
+    dimension, so this returns a Series indexed only by the demographic columns
+    the CSV provides. Callers combining it with GBD data must broadcast it onto
+    that data's index with :func:`broadcast_onto`.
+    """
     path = paths.DATA_PREP_RESULTS_ROOT / "pregnancy/incidence" / (location.lower() + ".csv")
     df = pd.read_csv(path)
-    return (
-        df.set_index([c for c in df.columns if c != "value"])
-        .rename(columns={"value": "draw_0"})
-        .assign(year_start=2021, year_end=2022)
-        .set_index(["year_start", "year_end"], append=True)
+    return df.set_index([c for c in df.columns if c != "value"])["value"]
+
+
+def broadcast_onto(data: pd.Series, index: pd.MultiIndex) -> pd.Series:
+    """Broadcast a Series onto a target index using the levels the two share.
+
+    Data prep results carry no 'year_start'/'year_end' levels while GBD data does,
+    so combining the two requires repeating the former across the latter's years.
+    Broadcasting is used in preference to stamping a fixed year onto the data prep
+    results because a hardcoded year silently produces an all-NaN result whenever
+    the GBD release year moves on.
+    """
+    levels = list(data.index.names)
+    missing = set(levels) - set(index.names)
+    if missing:
+        raise ValueError(
+            f"Cannot broadcast data indexed by {levels} onto an index that is "
+            f"missing the level(s) {sorted(missing)}."
+        )
+    aligned = data.reindex(
+        pd.MultiIndex.from_arrays(
+            [index.get_level_values(level) for level in levels], names=levels
+        )
     )
+    if aligned.isna().all():
+        raise ValueError(
+            f"Broadcasting data indexed by {levels} onto the target index produced "
+            "no overlapping rows."
+        )
+    return pd.Series(aligned.to_numpy(), index=index, name=data.name)
 
 
 def load_asfr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
@@ -375,8 +409,10 @@ def load_pregnant_maternal_disorders_incidence_probability(
     total_incidence = get_data(
         data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw
     )
-    pregnancy_end_rate = get_pregnancy_end_incidence(location, mean_draw)
-    maternal_disorders_incidence = total_incidence / pregnancy_end_rate
+    pregnancy_end_rate = broadcast_onto(
+        get_pregnancy_end_incidence(location, mean_draw), total_incidence.index
+    )
+    maternal_disorders_incidence = total_incidence.div(pregnancy_end_rate, axis=0)
 
     disparities = (
         pd.read_csv(
@@ -399,6 +435,14 @@ def load_pregnant_maternal_disorders_incidence_probability(
 def _distribute_by_disparities_multiplicative(
     quantity: pd.DataFrame, disparities: pd.DataFrame, location: str
 ):
+    # NOTE: The recovery assertion below is vacuously true for an empty quantity,
+    # so an upstream misalignment would otherwise be written to the artifact as an
+    # all-zero key rather than failing the build.
+    if quantity.empty:
+        raise ValueError(
+            "Cannot distribute an empty quantity by disparities. This usually means "
+            "an upstream merge or division produced all NaNs."
+        )
     wealth_quintile_probabilities = (
         get_data(data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES, location, mean_draw=True)
         .reset_index()
@@ -519,8 +563,10 @@ def load_pregnant_maternal_hemorrhage_incidence(key: str, location: str, mean_dr
         data_keys.MATERNAL_HEMORRHAGE.RAW_INCIDENCE_RATE, location, mean_draw
     )
     mh_csmr = get_data(data_keys.MATERNAL_HEMORRHAGE.CSMR, location, mean_draw)
-    pregnancy_end_rate = get_pregnancy_end_incidence(location, mean_draw)
-    maternal_hemorrhage_incidence = (mh_incidence - mh_csmr) / pregnancy_end_rate
+    pregnancy_end_rate = broadcast_onto(
+        get_pregnancy_end_incidence(location, mean_draw), mh_incidence.index
+    )
+    maternal_hemorrhage_incidence = (mh_incidence - mh_csmr).div(pregnancy_end_rate, axis=0)
 
     disparities = (
         pd.read_csv(
@@ -882,9 +928,12 @@ def load_csv_data(key: str, location: str, mean_draw: bool, vehicle: str) -> pd.
         df = df[(df.pregnant == "pregnant") | (df.age_end == 15) | (df.age_start == 50)].drop(
             columns=["pregnant"]
         )
-    result = df.set_index([c for c in df.columns if c != "value"])
-    # Rename "value" column to "draw_0" for compatibility with artifact system
-    return result.rename(columns={"value": "draw_0"})
+    # NOTE: Keep the single column named "value" rather than "draw_0". These data prep
+    # results are point estimates with no draw dimension, and a "value" column is
+    # draw-agnostic: the artifact's "draw == N" filter leaves it untouched. Naming it
+    # "draw_0" makes every draw other than 0 select zero columns, which surfaces
+    # downstream as "KeyError: 'value'" during setup.
+    return df.set_index([c for c in df.columns if c != "value"])
 
 
 ##########################

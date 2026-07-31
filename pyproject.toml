@@ -57,3 +57,9 @@ line-length = 94
 profile = "black"
 line_length = 94
 multi_line_output = 3
+known_first_party = [
+    "lsff_utils",
+    "vivarium_gates_lsff_2026",
+    "vivarium_gates_lsff_2026_child",
+    "vivarium_gates_lsff_2026_maternal",
+]

@@ -1,10 +1,9 @@
-from typing import List
-
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.public_health.disease import DiseaseModel, DiseaseState, RecoveredState
 from vivarium.public_health.disease.transition import ProportionTransition
 from vivarium.public_health.utilities import to_years
+
 from vivarium_gates_lsff_2026_maternal.components.disease import ParturitionSelectionState
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, models
 from vivarium_gates_lsff_2026_maternal.constants.metadata import ARTIFACT_INDEX_COLUMNS
@@ -70,10 +69,6 @@ class ParturitionSelectionTransition(ProportionTransition):
     # Properties #
     ##############
 
-    @property
-    def columns_required(self) -> List[str]:
-        return ["alive", "pregnancy"]
-
     #####################
     # Lifecycle methods #
     #####################
@@ -84,7 +79,7 @@ class ParturitionSelectionTransition(ProportionTransition):
         self.proportion_pipeline = builder.value.register_value_producer(
             pipeline_name,
             source=self.compute_transition_proportion,
-            required_resources=["age", "sex", "wealth_quintile", "alive"],
+            required_resources=["age", "sex", "wealth_quintile", "is_alive", "pregnancy"],
         )
 
     ###################
@@ -93,9 +88,9 @@ class ParturitionSelectionTransition(ProportionTransition):
 
     def compute_transition_proportion(self, index) -> pd.Series:
         transition_proportion = pd.Series(0.0, index=index)
-        sub_pop = self.population_view.get(
-            index, query="(alive == 'alive') & (pregnancy == 'parturition')"
-        ).index
+        sub_pop = self.population_view.get_filtered_index(
+            index, query="(is_alive == True) & (pregnancy == 'parturition')"
+        )
 
         transition_proportion.loc[sub_pop] = self.proportion_table(sub_pop)
         return transition_proportion

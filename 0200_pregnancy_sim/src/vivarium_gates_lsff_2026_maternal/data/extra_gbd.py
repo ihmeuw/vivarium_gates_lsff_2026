@@ -1,11 +1,12 @@
 from vivarium.gbd_mapping import sequelae
-from vivarium_gates_lsff_2026_maternal.constants import data_keys
-from vivarium_gates_lsff_2026_maternal.data import utilities
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import utilities as vi_utils
 from vivarium_gbd_access.gbd.base_data import get_draws
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
+
+from vivarium_gates_lsff_2026_maternal.constants import data_keys
+from vivarium_gates_lsff_2026_maternal.data import utilities
 
 
 @vi_utils.cache

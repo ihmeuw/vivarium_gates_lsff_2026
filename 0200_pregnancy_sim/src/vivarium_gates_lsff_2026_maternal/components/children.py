@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
+
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values, models
 
 
@@ -29,7 +30,7 @@ class NewChildren(Component):
             builder,
             "male_sex_percentage",
             data_source=builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
-            value_columns=["value"],
+            value_columns="value",
         )
 
     def empty(self, index: pd.Index) -> pd.DataFrame:

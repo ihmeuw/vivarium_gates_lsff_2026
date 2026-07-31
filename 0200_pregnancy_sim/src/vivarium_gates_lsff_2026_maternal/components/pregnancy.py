@@ -8,11 +8,11 @@ from vivarium.engine.framework.lookup import LookupTableData
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
 from vivarium.public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
+
 from vivarium_gates_lsff_2026_maternal.components.children import NewChildren
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, models
 from vivarium_gates_lsff_2026_maternal.constants.data_values import DURATIONS
 from vivarium_gates_lsff_2026_maternal.constants.metadata import ARTIFACT_INDEX_COLUMNS
-from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class NotPregnantState(SusceptibleState):
@@ -31,9 +31,9 @@ class PregnantState(DiseaseState):
 
     @property
     def columns_created(self):
+        # NOTE: the event time and count columns are created by the initializer
+        # that ``BaseDiseaseState.setup`` registers.
         return [
-            self.event_time_column,
-            self.event_count_column,
             "pregnancy_outcome",
             "pregnancy_duration",
             "sex_of_child",
@@ -70,20 +70,31 @@ class PregnantState(DiseaseState):
         self.birth_outcome_probabilities = builder.value.register_value_producer(
             "birth_outcome_probabilities",
             source=self.birth_outcome_probabilities_table,
-            required_resources=get_lookup_columns([self.birth_outcome_probabilities_table]),
         )
 
-    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        for transition in self.transition_set:
-            if transition.start_active:
-                transition.set_active(pop_data.index)
-
-        pop_events = self.get_initial_event_times(pop_data)
-        pregnancy_outcomes_and_durations = self.sample_pregnancy_outcomes_and_durations(
-            pop_data
+        # The dwell time in the pregnant state is the sampled pregnancy duration
+        # rather than a value that can be looked up from data.
+        builder.value.register_attribute_modifier(
+            self.dwell_time_pipeline,
+            self.get_pregnancy_dwell_time,
+            required_resources=["pregnancy_duration"],
         )
-        pop_update = pd.concat([pop_events, pregnancy_outcomes_and_durations], axis=1)
-        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
+
+        builder.population.register_initializer(
+            initializer=self.initialize_pregnancy_outcomes,
+            columns=self.columns_created,
+            required_resources=[self.randomness, self.birth_outcome_probabilities],
+        )
+
+    def get_pregnancy_dwell_time(self, index: pd.Index, dwell_time: pd.Series) -> pd.Series:
+        """Return the sampled pregnancy duration in days."""
+        pregnancy_duration = self.population_view.get(index, "pregnancy_duration")
+        return pregnancy_duration.dt.total_seconds() / (60 * 60 * 24)
+
+    def initialize_pregnancy_outcomes(self, pop_data: SimulantData) -> None:
+        self.population_view.initialize(
+            self.sample_pregnancy_outcomes_and_durations(pop_data)
+        )
 
     def sample_pregnancy_outcomes_and_durations(self, pop_data: SimulantData) -> pd.DataFrame:
         # Order the columns so that partial_term isn't in the middle!
@@ -140,13 +151,6 @@ class PregnantState(DiseaseState):
             7 * child_status["gestational_age"], unit="days"
         )
         return child_status
-
-    def get_dwell_time_pipeline(self, builder: Builder) -> Pipeline:
-        return builder.value.register_value_producer(
-            f"{self.state_id}.dwell_time",
-            source=lambda index: self.population_view.get(index)["pregnancy_duration"],
-            required_resources=["age", "sex", "pregnancy_outcome"],
-        )
 
     def get_initial_event_times(self, pop_data: SimulantData) -> pd.DataFrame:
         return pd.DataFrame(
@@ -248,19 +252,44 @@ def get_birth_outcome_probabilities(builder: Builder) -> pd.DataFrame:
 class UntrackNotPregnant(Component):
     """Component for untracking not pregnant simulants"""
 
-    @property
-    def columns_required(self) -> List[str]:
-        return ["pregnancy", "exit_time", "tracked"]
+    UNTRACKED_COLUMN = "is_untracked_not_pregnant"
+
+    def setup(self, builder: Builder) -> None:
+        self.clock = builder.time.clock()
+        self.step_size = builder.time.step_size()
+        builder.value.register_attribute_modifier("exit_time", self.update_exit_times)
+        builder.population.register_tracked_query(f"{self.UNTRACKED_COLUMN} == False")
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.UNTRACKED_COLUMN,
+        )
+
+    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+        self.population_view.initialize(
+            pd.Series(False, index=pop_data.index, name=self.UNTRACKED_COLUMN)
+        )
+
+    def update_exit_times(self, index: pd.Index, target: pd.Series) -> pd.Series:
+        """Set the exit time of simulants untracked by this component."""
+        untracked_idx = self.population_view.get_filtered_index(
+            index,
+            query=f"{self.UNTRACKED_COLUMN} == True",
+            include_untracked=True,
+        )
+        newly_untracked_idx = untracked_idx.intersection(target[target.isna()].index)
+        target.loc[newly_untracked_idx] = self.clock() + self.step_size()
+        return target
 
     def on_time_step_cleanup(self, event: Event) -> None:
-        population = self.population_view.get(event.index)
-        pop = population[
-            (population["pregnancy"] == models.NOT_PREGNANT_STATE_NAME)
-            & population["tracked"]
-        ].copy()
-        if len(pop) > 0:
-            pop["tracked"] = pd.Series(False, index=pop.index)
-            pop["exit_time"] = event.time
+        newly_untracked = self.population_view.get_filtered_index(
+            event.index,
+            query=(
+                f"pregnancy == '{models.NOT_PREGNANT_STATE_NAME}' "
+                f"and {self.UNTRACKED_COLUMN} == False"
+            ),
+        )
+        if len(newly_untracked) > 0:
             self.population_view.update(
-                ["tracked", "exit_time"], lambda _: pop[["tracked", "exit_time"]]
+                self.UNTRACKED_COLUMN,
+                lambda _: pd.Series(True, index=newly_untracked, name=self.UNTRACKED_COLUMN),
             )

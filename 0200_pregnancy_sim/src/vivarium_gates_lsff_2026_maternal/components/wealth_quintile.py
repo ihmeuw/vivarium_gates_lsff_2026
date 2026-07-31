@@ -5,20 +5,15 @@ import pandas as pd
 from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.population import SimulantData
-from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values
-from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 from lsff_utils import data_processing
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values
 
 
 class WealthQuintile(Component):
     @property
     def columns_created(self) -> List[str]:
         return ["wealth_quintile"]
-
-    @property
-    def columns_required(self) -> List[str]:
-        return ["tracked"]
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -63,6 +58,4 @@ class WealthQuintile(Component):
             quintile_probabilities,
             additional_key="wealth_quintile",
         )
-        self.population_view.update(
-            "wealth_quintile", lambda _: pop_update["wealth_quintile"]
-        )
+        self.population_view.initialize(pop_update)

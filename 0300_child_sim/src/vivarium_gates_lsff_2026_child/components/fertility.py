@@ -18,6 +18,7 @@ from vivarium.artifact import Artifact
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.event import Event
 from vivarium.public_health import utilities
+
 from vivarium_gates_lsff_2026_child.constants import data_keys
 
 PREGNANCY_DURATION = pd.Timedelta(days=9 * utilities.DAYS_PER_MONTH)

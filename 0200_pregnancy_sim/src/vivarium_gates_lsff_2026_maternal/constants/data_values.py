@@ -2,7 +2,8 @@ from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
-from vivarium_gates_lsff_2026_maternal.constants import data_keys, models, paths
+
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata, models, paths
 
 
 ############################
@@ -18,7 +19,7 @@ class _Durations(NamedTuple):
 
 
 DURATIONS = _Durations()
-draw_count = 500
+draw_count = metadata.DRAW_COUNT
 
 MATERNAL_HEMORRHAGE_HEMOGLOBIN_POSTPARTUM_SHIFT = 6.8  # g/L
 PROBABILITY_MODERATE_MATERNAL_HEMORRHAGE = (0.85, 0.81, 0.89)
@@ -83,9 +84,14 @@ RR_SCALAR = (
 )
 
 PREGNANCY_CORRECTION_FACTORS = {
+    # NOTE: The CSV carries 500 draws from GBD 2021. Subset to the draws GBD
+    # currently provides; otherwise multiplying it into GBD data unions the two
+    # sets of draw columns and the surplus columns end up empty.
     data_keys.HEMOGLOBIN.MEAN: pd.read_csv(
         paths.HEMOGLOBIN_PREGNANCY_ADJUSTMENT_FACTORS_CSV, index_col=0
-    ).squeeze(),
+    )
+    .squeeze()
+    .reindex(metadata.ARTIFACT_COLUMNS),
     data_keys.HEMOGLOBIN.STANDARD_DEVIATION: pd.Series(
         np.repeat(1.032920188, draw_count), [f"draw_{i}" for i in range(draw_count)]
     ),

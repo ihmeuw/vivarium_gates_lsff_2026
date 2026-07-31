@@ -1,5 +1,6 @@
 from vivarium.public_health.population import BasePopulation as BasePopulation_
 from vivarium.public_health.population.base_population import AgeOutSimulants, Disability
+
 from vivarium_gates_lsff_2026_maternal.components.mortality import MaternalMortality
 
 

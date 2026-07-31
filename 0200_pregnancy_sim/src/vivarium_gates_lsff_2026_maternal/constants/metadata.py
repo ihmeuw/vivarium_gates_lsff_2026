@@ -25,7 +25,9 @@ ARTIFACT_INDEX_COLUMNS = [
     "year_end",
 ]
 
-DRAW_COUNT = 500
+# GBD 2023 provides 250 draws (GBD 2021 provided 500). Keys sourced from GBD are
+# built with this many draw columns, so it bounds the draws a simulation can request.
+DRAW_COUNT = 250
 ARTIFACT_COLUMNS = pd.Index([f"draw_{i}" for i in range(DRAW_COUNT)])
 
 

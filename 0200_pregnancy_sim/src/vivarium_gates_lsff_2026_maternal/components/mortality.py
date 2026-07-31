@@ -9,8 +9,8 @@ from vivarium.engine.framework.population import PopulationView, SimulantData
 from vivarium.engine.framework.randomness import RandomnessStream
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.population import Mortality
+
 from vivarium_gates_lsff_2026_maternal.constants import data_keys
-from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class MaternalMortality(Mortality):
@@ -19,8 +19,10 @@ class MaternalMortality(Mortality):
     ##############
 
     @property
-    def columns_required(self) -> List[str]:
-        return super().columns_required + ["maternal_disorders", "pregnancy"]
+    def standard_lookup_tables(self) -> List[str]:
+        # This component only models maternal-disorder deaths, so it does not
+        # use an all-cause mortality rate.
+        return ["life_expectancy"]
 
     @property
     def time_step_priority(self) -> int:
@@ -48,7 +50,20 @@ class MaternalMortality(Mortality):
     def setup(self, builder: Builder) -> None:
         self.random = self.get_randomness_stream(builder)
         self.clock = builder.time.clock()
+        self.step_size = builder.time.step_size()
+        self.life_expectancy_table = self.build_lookup_table(builder, "life_expectancy")
         self.mortality_probability = self.get_mortality_probability(builder)
+
+        builder.value.register_attribute_modifier("exit_time", self.update_exit_times)
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=[
+                "is_alive",
+                self.cause_of_death_column_name,
+                self.years_of_life_lost_column_name,
+            ],
+        )
 
     ###################
     # Setup Methods   #
@@ -68,7 +83,6 @@ class MaternalMortality(Mortality):
         return builder.value.register_value_producer(
             self.mortality_probability_pipeline_name,
             source=probability_pipeline_source,
-            required_resources=get_lookup_columns([probability_pipeline_source]),
         )
 
     ########################
@@ -78,26 +92,34 @@ class MaternalMortality(Mortality):
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         pop_update = pd.DataFrame(
             {
+                "is_alive": True,
                 self.cause_of_death_column_name: "not_dead",
                 self.years_of_life_lost_column_name: 0.0,
             },
             index=pop_data.index,
         )
-        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
+        self.population_view.initialize(pop_update)
 
     def on_time_step(self, event: Event) -> None:
-        pop = self.population_view.get(
+        at_risk = self.population_view.get_filtered_index(
             event.index,
-            query="(alive == 'alive') & (maternal_disorders == 'maternal_disorders')",
+            query="(is_alive == True) & (maternal_disorders == 'maternal_disorders')",
         )
-        mortality_probability = self.mortality_probability(pop.index)
+        mortality_probability = self.mortality_probability(at_risk)
 
         deaths = self.random.filter_for_probability(
-            pop.index, mortality_probability, additional_key="death"
+            at_risk, mortality_probability, additional_key="death"
         )
+        if deaths.empty:
+            return
 
-        pop.loc[deaths, "alive"] = "dead"
-        pop.loc[deaths, "exit_time"] = event.time
-        pop.loc[deaths, "years_of_life_lost"] = self.life_expectancy_table(deaths)
-        pop.loc[deaths, "cause_of_death"] = "maternal_disorders"
-        self.population_view.update(list(pop.columns), lambda _: pop.loc[deaths])
+        # 'exit_time' is updated by the attribute modifier registered in setup.
+        pop_update = pd.DataFrame(
+            {
+                "is_alive": False,
+                self.cause_of_death_column_name: "maternal_disorders",
+                self.years_of_life_lost_column_name: self.life_expectancy_table(deaths),
+            },
+            index=deaths,
+        )
+        self.population_view.update(list(pop_update.columns), lambda _: pop_update)

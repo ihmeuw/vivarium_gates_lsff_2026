@@ -2,6 +2,7 @@ from typing import Dict, NamedTuple, Tuple
 
 import pandas as pd
 from scipy import stats
+
 from vivarium_gates_lsff_2026_child.constants.metadata import YEAR_DURATION
 from vivarium_gates_lsff_2026_child.utilities import (
     get_lognorm_from_quantiles,

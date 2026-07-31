@@ -24,13 +24,6 @@ from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
 from vivarium.gbd_mapping import Cause, RiskFactor, sequelae
 from vivarium.public_health.utilities import TargetString
-from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, metadata, paths
-from vivarium_gates_lsff_2026_child.constants.metadata import ARTIFACT_INDEX_COLUMNS
-from vivarium_gates_lsff_2026_child.data import utilities
-from vivarium_gates_lsff_2026_child.utilities import (
-    get_lognorm_from_quantiles,
-    get_random_variable_draws,
-)
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_inputs import extract
@@ -40,6 +33,14 @@ from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 from vivarium_inputs.globals import DEMOGRAPHIC_COLUMNS, DRAW_COLUMNS
 from vivarium_inputs.mapping_extension import AlternativeRiskFactor
+
+from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, metadata, paths
+from vivarium_gates_lsff_2026_child.constants.metadata import ARTIFACT_INDEX_COLUMNS
+from vivarium_gates_lsff_2026_child.data import utilities
+from vivarium_gates_lsff_2026_child.utilities import (
+    get_lognorm_from_quantiles,
+    get_random_variable_draws,
+)
 
 NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.POPULATION.LOCATION,

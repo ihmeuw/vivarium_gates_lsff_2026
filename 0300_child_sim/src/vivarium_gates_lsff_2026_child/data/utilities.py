@@ -14,6 +14,15 @@ from vivarium.gbd_mapping import (
     covariates,
     risk_factors,
 )
+from vivarium_gbd_access import constants as gbd_constants
+from vivarium_gbd_access import gbd
+from vivarium_gbd_access.gbd.base_data import get_draws, query
+from vivarium_inputs import globals as vi_globals
+from vivarium_inputs import utilities as vi_utils
+from vivarium_inputs import utility_data
+from vivarium_inputs.mapping_extension import AlternativeRiskFactor, alternative_risk_factors
+from vivarium_inputs.validation.raw import check_metadata
+
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUND_ID,
     AGE_GROUP,
@@ -24,14 +33,6 @@ from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUN
     NEONATAL_END_AGE,
 )
 from vivarium_gates_lsff_2026_child.utilities import get_random_variable_draws
-from vivarium_gbd_access import constants as gbd_constants
-from vivarium_gbd_access import gbd
-from vivarium_gbd_access.gbd.base_data import get_draws, query
-from vivarium_inputs import globals as vi_globals
-from vivarium_inputs import utilities as vi_utils
-from vivarium_inputs import utility_data
-from vivarium_inputs.mapping_extension import AlternativeRiskFactor, alternative_risk_factors
-from vivarium_inputs.validation.raw import check_metadata
 
 
 def get_data(

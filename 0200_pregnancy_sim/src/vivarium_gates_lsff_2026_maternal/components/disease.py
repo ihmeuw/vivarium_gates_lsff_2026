@@ -1,13 +1,11 @@
-from typing import List
-
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.state_machine import State, Transition
 from vivarium.engine.framework.values import Pipeline, list_combiner, union_post_processor
 from vivarium.public_health.disease import DiseaseState, SusceptibleState
 from vivarium.public_health.disease.transition import ProportionTransition
+
 from vivarium_gates_lsff_2026_maternal.constants import models
-from vivarium_gates_lsff_2026_maternal.utilities import get_lookup_columns
 
 
 class ParturitionSelectionState(SusceptibleState):
@@ -32,10 +30,6 @@ class ParturitionSelectionTransition(ProportionTransition):
     # Properties #
     ##############
 
-    @property
-    def columns_required(self) -> List[str]:
-        return ["alive", "pregnancy"]
-
     #####################
     # Lifecycle methods #
     #####################
@@ -46,7 +40,7 @@ class ParturitionSelectionTransition(ProportionTransition):
         self.proportion_pipeline = builder.value.register_value_producer(
             pipeline_name,
             source=self.compute_transition_proportion,
-            required_resources=["age", "sex", "alive"],
+            required_resources=["age", "sex", "is_alive", "pregnancy"],
         )
 
     ###################
@@ -55,9 +49,9 @@ class ParturitionSelectionTransition(ProportionTransition):
 
     def compute_transition_proportion(self, index) -> pd.Series:
         transition_proportion = pd.Series(0.0, index=index)
-        sub_pop = self.population_view.get(
-            index, query="(alive == 'alive') & (pregnancy == 'parturition')"
-        ).index
+        sub_pop = self.population_view.get_filtered_index(
+            index, query="(is_alive == True) & (pregnancy == 'parturition')"
+        )
 
         transition_proportion.loc[sub_pop] = self.proportion_table(sub_pop)
         return transition_proportion
@@ -75,20 +69,20 @@ class ParturitionExclusionState(DiseaseState):
     # Properties #
     ##############
 
-    @property
-    def columns_required(self) -> List[str]:
-        return super().columns_required + ["pregnancy", "tracked"]
-
     # #####################
     # # Lifecycle methods #
     # #####################
 
-    def get_disability_weight_pipeline(self, builder: Builder) -> Pipeline:
-        lookup_columns = get_lookup_columns([self.disability_weight_table])
-        return builder.value.register_value_producer(
+    def register_disability_weight_pipeline(self, builder: Builder) -> None:
+        builder.value.register_attribute_producer(
             f"{self.state_id}.disability_weight",
             source=self.compute_disability_weight,
-            required_resources=lookup_columns + ["alive", self.model, "pregnancy"],
+            required_resources=[
+                self.disability_weight_table,
+                "is_alive",
+                self.model,
+                "pregnancy",
+            ],
         )
 
     ##################################
@@ -111,8 +105,8 @@ class ParturitionExclusionState(DiseaseState):
             models.POSTPARTUM_STATE_NAME: raw_disability_weight,
         }
 
-        pop = self.population_view.get(index)
-        alive = pop["alive"] == "alive"
+        pop = self.population_view.get(index, ["is_alive", "pregnancy"])
+        alive = pop["is_alive"]
         for state, dw in dw_map.items():
             in_state = alive & (pop["pregnancy"] == state)
             disability_weight[in_state] = dw.loc[in_state]
