@@ -63,4 +63,6 @@ class WealthQuintile(Component):
             quintile_probabilities,
             additional_key="wealth_quintile",
         )
-        self.population_view.update(pop_update)
+        self.population_view.update(
+            "wealth_quintile", lambda _: pop_update["wealth_quintile"]
+        )

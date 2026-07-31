@@ -83,7 +83,7 @@ class PregnantState(DiseaseState):
             pop_data
         )
         pop_update = pd.concat([pop_events, pregnancy_outcomes_and_durations], axis=1)
-        self.population_view.update(pop_update)
+        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
 
     def sample_pregnancy_outcomes_and_durations(self, pop_data: SimulantData) -> pd.DataFrame:
         # Order the columns so that partial_term isn't in the middle!
@@ -261,4 +261,6 @@ class UntrackNotPregnant(Component):
         if len(pop) > 0:
             pop["tracked"] = pd.Series(False, index=pop.index)
             pop["exit_time"] = event.time
-            self.population_view.update(pop)
+            self.population_view.update(
+                ["tracked", "exit_time"], lambda _: pop[["tracked", "exit_time"]]
+            )

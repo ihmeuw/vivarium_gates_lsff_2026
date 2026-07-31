@@ -83,7 +83,7 @@ class MaternalMortality(Mortality):
             },
             index=pop_data.index,
         )
-        self.population_view.update(pop_update)
+        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
 
     def on_time_step(self, event: Event) -> None:
         pop = self.population_view.get(
@@ -100,4 +100,4 @@ class MaternalMortality(Mortality):
         pop.loc[deaths, "exit_time"] = event.time
         pop.loc[deaths, "years_of_life_lost"] = self.life_expectancy_table(deaths)
         pop.loc[deaths, "cause_of_death"] = "maternal_disorders"
-        self.population_view.update(pop)
+        self.population_view.update(list(pop.columns), lambda _: pop.loc[deaths])

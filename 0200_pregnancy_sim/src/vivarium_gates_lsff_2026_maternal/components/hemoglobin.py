@@ -183,7 +183,7 @@ class Hemoglobin(Component):
             },
             index=pop_data.index,
         )
-        self.population_view.update(pop_update)
+        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
 
     def hemoglobin_source(self, idx: pd.Index) -> pd.Series:
         if len(idx) == 0:
@@ -319,12 +319,18 @@ class Anemia(Component):
         return disability_weight
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        pop_update = pd.DataFrame({"anemia_status_at_birth": "invalid"}, index=pop_data.index)
-        self.population_view.update(pop_update)
+        self.population_view.update(
+            "anemia_status_at_birth",
+            lambda _: pd.Series(
+                "invalid", index=pop_data.index, name="anemia_status_at_birth"
+            ),
+        )
 
     def on_time_step(self, event: Event):
         pop_update = self.population_view.get(
             event.index, query=("alive == 'alive' & pregnancy == 'parturition'")
         )
-        pop_update["anemia_status_at_birth"] = self.anemia_levels(pop_update.index)
-        self.population_view.update(pop_update)
+        self.population_view.update(
+            "anemia_status_at_birth",
+            lambda _: self.anemia_levels(pop_update.index).rename("anemia_status_at_birth"),
+        )

@@ -116,7 +116,9 @@ class VehicleConsumption(Component):
             lower=0
         )
 
-        self.population_view.update(pop_update)
+        self.population_view.update(
+            "vehicle_consumption_grams", lambda _: pop_update["vehicle_consumption_grams"]
+        )
 
 
 class IronFortification(Component):
@@ -413,7 +415,7 @@ class IronFortification(Component):
             concentration_mcg_per_gram,
         )
 
-        self.population_view.update(pop_update)
+        self.population_view.update(list(pop_update.columns), lambda _: pop_update)
 
     def update_hemoglobin_exposure(self, index, exposure):
         pop = self.population_view.get(index)
