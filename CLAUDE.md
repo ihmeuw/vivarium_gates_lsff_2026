@@ -343,8 +343,8 @@ The suite runs in **either** environment and skips what that environment cannot 
 because the two halves need incompatible dependencies:
 
 ```bash
-source .test_venv/bin/activate && pytest tests/ --runslow -q   # 289 passed, 3 skipped
-source .venv/bin/activate      && pytest tests/ -q             # 157 passed, 135 skipped
+source .test_venv/bin/activate && pytest tests/ --runslow -q   # 302 passed, 3 skipped
+source .venv/bin/activate      && pytest tests/ -q             # 170 passed, 135 skipped
 ```
 
 `.test_venv` has the fuzzy checker but no GBD access; `.venv` has GBD access but cannot
@@ -379,6 +379,20 @@ Three layers:
   Each reads the project's assumption from its real source of truth — the notebook or
   constants module that owns it — so the test follows the code if someone edits it. All
   three were verified to fire by deliberately violating them.
+
+- **`test_simulation_plausibility.py`** — asserts transitions that must fire actually do,
+  in every scenario, and land inside a wide sanity band. **Needs no baseline**, which is the
+  point: the other layers compare against a reference run and so cannot help on a branch
+  whose output is legitimately expected to differ — exactly the migration case. Written after
+  maternal hemorrhage incidence came out zero on the migration branch, and verified to catch
+  a full zero, a single zeroed scenario, and a near-zero (0.04% against an expected 8.4%).
+
+  `ParturitionSelectionTransition.compute_transition_proportion` seeds an all-zero series
+  and only fills rows matching `pregnancy == 'parturition'`, so any failure of that filter
+  yields zeros with no error. `EXPECTED_ZERO_TRANSITIONS` records
+  `postpartum_to_not_pregnant` as zero *by design* — `UntrackNotPregnant` untracks simulants
+  on time-step cleanup as soon as they reach `not_pregnant`, and observers filter on
+  `tracked` — so nobody "fixes" it by moving it into `MUST_FIRE`.
 
 Supporting pieces: `tests/baseline.py` (git-backed reference loading, and the
 `STOCHASTIC_RESULTS` classification — anything unlisted is checked exactly, so a new output
