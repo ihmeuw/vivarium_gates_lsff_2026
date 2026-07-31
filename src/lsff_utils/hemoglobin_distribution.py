@@ -17,6 +17,10 @@ def hemoglobin_pdf_from_mean_sd(mean, sd):
     ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
     def pdf(x):
+        # scipy.integrate.quad calls the integrand with a Python float, which has no
+        # .copy(); risk_distributions also rejects 0-d arrays, so use atleast_1d.
+        # This is a no-op for array input.
+        x = np.atleast_1d(np.asarray(x, dtype=float))
         return GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
             x.copy()
         ) + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(
