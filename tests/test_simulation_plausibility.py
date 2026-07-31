@@ -7,21 +7,28 @@ migration. These checks assert from first principles that a quantity cannot be
 zero, so they work anywhere, including on the migration branch.
 
 Motivated by a real failure: maternal hemorrhage incidence coming out zero on
-albrja/mic-7325/framework-updates-pt1. There is a silent zero built into
-``ParturitionSelectionTransition.compute_transition_proportion``
-(``components/disease.py``):
+albrja/mic-7325/framework-updates-pt1.
 
-    transition_proportion = pd.Series(0.0, index=index)
-    sub_pop = self.population_view.get(
-        index, query="(alive == 'alive') & (pregnancy == 'parturition')"
-    ).index
-    transition_proportion.loc[sub_pop] = self.lookup_tables["proportion"](sub_pop)
+There are two silent zeros on that path, either of which turns a data or wiring
+problem into a plausible-looking result rather than an error.
 
-If that filter matches nobody the function returns all zeros and raises nothing.
-One way for it to match nobody: the class obtains ``pregnancy`` by declaring
-``columns_required``, which the pinned engine reads at ``component.py:771`` but
-which does not exist anywhere in vivarium-engine 5.5.3 -- so declaring it there is
-a silent no-op and the column never reaches the population view.
+The first is in the data loader, and is the more likely culprit.
+``load_pregnant_maternal_hemorrhage_incidence`` ends with::
+
+    return result.reindex(...).fillna(0)
+
+so any index misalignment -- different age bins, a changed disparity join, an
+extra index level -- silently becomes zeros. That is a live risk on the migration
+branch, which carries commits explicitly working around "2021 vs 2023 data
+misalignment" and one that loosened a ``np.allclose`` assertion in
+``_distribute_by_disparities_multiplicative`` to mask NaNs. Masked NaNs feeding a
+``fillna(0)`` is exactly how you get a silent zero.
+
+The second is in the component: ``compute_transition_proportion`` seeds an
+all-zero series and only fills rows matching ``pregnancy == 'parturition'``, so a
+filter matching nobody also returns zeros without raising.
+
+Check the artifact key before the component -- it is cheaper and more likely.
 
 For reference, the values this produced on the verified GBD-2021 run: hemorrhage
 8.4% of parturitions in India/rice and 11.6% in Nigeria; maternal disorders much
@@ -99,10 +106,15 @@ def test_transition_fires_in_every_scenario(
     assert zeroed.empty, (
         f"{location}/{vehicle}: {sub_entity} never fires in "
         f"{list(zeroed.index)} (counts {zeroed.to_dict()}).\n"
-        "  For the maternal disease transitions, check that `pregnancy` is in "
-        "ParturitionSelectionTransition's population view -- compute_transition_proportion "
-        "returns an all-zero series when its parturition filter matches nobody, silently. "
-        "`columns_required` is not read by vivarium-engine 5.5.3."
+        "  Check the artifact input first: for the maternal disease transitions, load\n"
+        "  `cause.<cause>.incident_probability` and see whether it is zero. Its loader\n"
+        "  (data/loader.py::load_pregnant_maternal_hemorrhage_incidence) ends with\n"
+        "  `.reindex(...).fillna(0)`, so any index misalignment becomes zeros rather\n"
+        "  than an error. On the verified GBD-2021 run that key has mean 0.011,\n"
+        "  max 0.110, 45/250 rows non-zero.\n"
+        "  If the input is fine, then look at the component: compute_transition_proportion\n"
+        "  seeds an all-zero series and only fills rows matching\n"
+        "  `pregnancy == 'parturition'`, so a filter that matches nobody is also silent."
     )
 
     if low is None:
