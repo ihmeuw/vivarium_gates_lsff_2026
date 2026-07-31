@@ -46,7 +46,7 @@ if update_packages:
             python -m venv .venv
             source .venv/bin/activate
             pip install -r requirements.txt
-            pip install -e .
+            pip install -e . --no-deps
             cd 0200_pregnancy_sim
             pip install .[data]
             pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
@@ -71,7 +71,7 @@ if update_packages:
             pip uninstall -y vivarium_gates_lsff_by_wealth_quintile # Remove sim itself, leaving dependencies
             # Assumed compatible with child sim
             cd ..
-            pip install -e .
+            pip install -e . --no-deps
             pip freeze -l  | grep -v '\-e ' | grep -v 'file:///' > simulation_running_pip_lock.txt
             touch .simulation_running_venv .simulation_running_venv/bin/activate # Should be newer than the lockfile
             """
@@ -84,7 +84,7 @@ else:
             python -m venv .venv
             source .venv/bin/activate
             pip install -r pip_lock.txt
-            pip install -e .
+            pip install -e . --no-deps
             """
     
     # Vivarium currently requires a different version of Pandas than GBD
@@ -97,5 +97,5 @@ else:
             python -m venv .simulation_running_venv
             source .simulation_running_venv/bin/activate
             pip install -r simulation_running_pip_lock.txt
-            pip install -e .
+            pip install -e . --no-deps
             """
