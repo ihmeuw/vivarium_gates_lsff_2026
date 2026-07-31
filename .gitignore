@@ -130,6 +130,11 @@ dmypy.json
 .conda_env/
 .venv/
 .simulation_running_venv/
+.test_venv/
+
+# FuzzyChecker per-run diagnostics. tests/reference/ is deliberately NOT ignored:
+# it is the committed baseline the regression harness compares against.
+tests/.diagnostics/
 
 .snakemake/
 *.rdb
