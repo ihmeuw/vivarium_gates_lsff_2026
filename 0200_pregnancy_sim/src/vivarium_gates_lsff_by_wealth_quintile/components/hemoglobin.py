@@ -3,13 +3,19 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import scipy.stats
-from vivarium.engine import Component
-from vivarium.engine.framework.engine import Builder
-from vivarium.engine.framework.event import Event
-from vivarium.engine.framework.population import SimulantData
-from vivarium.engine.framework.randomness import RESIDUAL_CHOICE
-from vivarium.public_health.utilities import get_lookup_columns
-from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values, models
+from vivarium import Component
+from vivarium.framework.engine import Builder
+from vivarium.framework.event import Event
+from vivarium.framework.population import SimulantData
+from vivarium.framework.randomness import RESIDUAL_CHOICE
+from vivarium_public_health.utilities import get_lookup_columns
+
+from lsff_utils import hemoglobin_distribution
+from vivarium_gates_lsff_by_wealth_quintile.constants import (
+    data_keys,
+    data_values,
+    models,
+)
 from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import (
     ANEMIA_DISABILITY_WEIGHTS,
     ANEMIA_THRESHOLD_DATA,
@@ -19,8 +25,6 @@ from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import (
     SEVERE_ANEMIA_AMONG_PREGNANT_WOMEN_THRESHOLD,
     TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS,
 )
-
-from lsff_utils import hemoglobin_distribution
 
 
 class Hemoglobin(Component):
@@ -99,14 +103,14 @@ class Hemoglobin(Component):
         self.distribution_parameters = builder.value.register_value_producer(
             "hemoglobin.exposure_parameters",
             source=distribution_parameters,
-            requires_attributes=get_lookup_columns([distribution_parameters]),
+            requires_columns=get_lookup_columns([distribution_parameters]),
         )
 
         # Fix resource dependency cycle
         self.raw_hemoglobin = builder.value.register_value_producer(
             "raw_hemoglobin.exposure",
             source=self.hemoglobin_source,
-            requires_attributes=["hemoglobin.exposure_parameters"],
+            requires_values=["hemoglobin.exposure_parameters"],
             requires_streams=[self.name],
         )
 
@@ -118,10 +122,12 @@ class Hemoglobin(Component):
         builder.value.register_value_modifier(
             "maternal_disorders.transition_proportion",
             self.adjust_maternal_disorder_proportion,
-            requires_attributes=["hemoglobin.exposure"]
-            + get_lookup_columns(
+            requires_values=["hemoglobin.exposure"],
+            requires_columns=get_lookup_columns(
                 [
-                    self.lookup_tables["maternal_disorders_population_attributable_fraction"],
+                    self.lookup_tables[
+                        "maternal_disorders_population_attributable_fraction"
+                    ],
                     self.lookup_tables["maternal_disorders_relative_risk"],
                 ]
             ),
@@ -129,8 +135,8 @@ class Hemoglobin(Component):
         builder.value.register_value_modifier(
             "maternal_hemorrhage.transition_proportion",
             self.adjust_maternal_hemorrhage_proportion,
-            requires_attributes=["hemoglobin.exposure"]
-            + get_lookup_columns(
+            requires_values=["hemoglobin.exposure"],
+            requires_columns=get_lookup_columns(
                 [
                     self.lookup_tables["hemorrhage_population_attributable_fraction"],
                     self.lookup_tables["hemorrhage_relative_risk"],
@@ -141,7 +147,7 @@ class Hemoglobin(Component):
         builder.value.register_value_modifier(
             "hemoglobin.exposure",
             self.adjust_hemoglobin_exposure,
-            requires_attributes=["maternal_hemorrhage"],
+            requires_columns=["maternal_hemorrhage"],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -192,14 +198,18 @@ class Hemoglobin(Component):
         hemoglobin_level = self.hemoglobin(index)
         rr = self.lookup_tables["maternal_disorders_relative_risk"](index)
         ## annoyingly formatted
-        paf = self.lookup_tables["maternal_disorders_population_attributable_fraction"](index)
+        paf = self.lookup_tables["maternal_disorders_population_attributable_fraction"](
+            index
+        )
         tmrel = TMREL_HEMOGLOBIN_ON_MATERNAL_DISORDERS
         per_simulant_exposure = (tmrel - hemoglobin_level).clip(lower=0) / RR_SCALAR
         per_simulant_rr = rr**per_simulant_exposure
         maternal_disorder_probability *= (1 - paf) * per_simulant_rr
         return maternal_disorder_probability.clip(upper=1)
 
-    def adjust_maternal_hemorrhage_proportion(self, index, maternal_hemorrhage_probability):
+    def adjust_maternal_hemorrhage_proportion(
+        self, index, maternal_hemorrhage_probability
+    ):
         paf = self.lookup_tables["hemorrhage_population_attributable_fraction"](index)
         rr = self.lookup_tables["hemorrhage_relative_risk"](index)
         hemoglobin = self.hemoglobin(index)
@@ -246,14 +256,16 @@ class Anemia(Component):
         self.anemia_levels = builder.value.register_value_producer(
             "anemia_levels",
             source=self.anemia_source,
-            requires_attributes=["hemoglobin.exposure"]
-            + get_lookup_columns([self.lookup_tables["anemia_thresholds"]]),
+            requires_values=["hemoglobin.exposure"],
+            requires_columns=get_lookup_columns(
+                [self.lookup_tables["anemia_thresholds"]]
+            ),
         )
 
         self.disability_weight = builder.value.register_value_producer(
             "anemia.disability_weight",
             source=self.compute_disability_weight,
-            requires_attributes=["alive", "pregnancy"],
+            requires_columns=["alive", "pregnancy"],
         )
 
         builder.value.register_value_modifier(
@@ -299,7 +311,9 @@ class Anemia(Component):
         return disability_weight
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        pop_update = pd.DataFrame({"anemia_status_at_birth": "invalid"}, index=pop_data.index)
+        pop_update = pd.DataFrame(
+            {"anemia_status_at_birth": "invalid"}, index=pop_data.index
+        )
         self.population_view.update(pop_update)
 
     def on_time_step(self, event: Event):

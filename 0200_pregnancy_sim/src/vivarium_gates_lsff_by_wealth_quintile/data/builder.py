@@ -15,6 +15,7 @@ from pathlib import Path
 import pandas as pd
 from loguru import logger
 from vivarium.framework.artifact import Artifact, EntityKey
+
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
 from vivarium_gates_lsff_by_wealth_quintile.data import loader
 

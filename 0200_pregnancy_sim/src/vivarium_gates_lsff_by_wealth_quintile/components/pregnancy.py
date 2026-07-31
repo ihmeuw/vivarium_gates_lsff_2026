@@ -7,17 +7,22 @@ from vivarium.framework.event import Event
 from vivarium.framework.lookup import LookupTableData
 from vivarium.framework.population import SimulantData
 from vivarium.framework.values import Pipeline, list_combiner, union_post_processor
+from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
+from vivarium_public_health.utilities import get_lookup_columns
+
 from vivarium_gates_lsff_by_wealth_quintile.components.children import NewChildren
 from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, models
 from vivarium_gates_lsff_by_wealth_quintile.constants.data_values import DURATIONS
-from vivarium_gates_lsff_by_wealth_quintile.constants.metadata import ARTIFACT_INDEX_COLUMNS
-from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
-from vivarium_public_health.utilities import get_lookup_columns
+from vivarium_gates_lsff_by_wealth_quintile.constants.metadata import (
+    ARTIFACT_INDEX_COLUMNS,
+)
 
 
 class NotPregnantState(SusceptibleState):
     def __init__(self, state_id, *args, **kwargs):
-        super(SusceptibleState, self).__init__(state_id, *args, name_prefix="not_", **kwargs)
+        super(SusceptibleState, self).__init__(
+            state_id, *args, name_prefix="not_", **kwargs
+        )
 
 
 class PregnantState(DiseaseState):
@@ -96,7 +101,9 @@ class PregnantState(DiseaseState):
         pop_update = pd.concat([pop_events, pregnancy_outcomes_and_durations], axis=1)
         self.population_view.update(pop_update)
 
-    def sample_pregnancy_outcomes_and_durations(self, pop_data: SimulantData) -> pd.DataFrame:
+    def sample_pregnancy_outcomes_and_durations(
+        self, pop_data: SimulantData
+    ) -> pd.DataFrame:
         # Order the columns so that partial_term isn't in the middle!
         outcome_probabilities = self.birth_outcome_probabilities(pop_data.index)[
             ["partial_term", "stillbirth", "live_birth"]

@@ -1,7 +1,8 @@
+from vivarium_public_health.disease import DiseaseModel, SusceptibleState
+
 from vivarium_gates_lsff_by_wealth_quintile.components.disease import (
     ParturitionExclusionState,
 )
-from vivarium_public_health.disease import DiseaseModel, SusceptibleState
 
 
 def BackgroundMorbidity():

@@ -8,9 +8,10 @@ from vivarium.framework.lookup import LookupTable
 from vivarium.framework.population import PopulationView, SimulantData
 from vivarium.framework.randomness import RandomnessStream
 from vivarium.framework.values import Pipeline
-from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
 from vivarium_public_health.population import Mortality
 from vivarium_public_health.utilities import get_lookup_columns
+
+from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys
 
 
 class MaternalMortality(Mortality):
@@ -97,6 +98,8 @@ class MaternalMortality(Mortality):
 
         pop.loc[deaths, "alive"] = "dead"
         pop.loc[deaths, "exit_time"] = event.time
-        pop.loc[deaths, "years_of_life_lost"] = self.lookup_tables["life_expectancy"](deaths)
+        pop.loc[deaths, "years_of_life_lost"] = self.lookup_tables["life_expectancy"](
+            deaths
+        )
         pop.loc[deaths, "cause_of_death"] = "maternal_disorders"
         self.population_view.update(pop)

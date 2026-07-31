@@ -4,8 +4,13 @@ import numpy as np
 import pandas as pd
 from vivarium import Component
 from vivarium.framework.engine import Builder
-from vivarium_gates_lsff_by_wealth_quintile.constants import data_keys, data_values, models
 from vivarium_public_health.utilities import get_lookup_columns
+
+from vivarium_gates_lsff_by_wealth_quintile.constants import (
+    data_keys,
+    data_values,
+    models,
+)
 
 
 class NewChildren(Component):
@@ -102,7 +107,9 @@ class LBWSGDistribution(Component):
         intervals.index = categorical_exposure.index
         exposures = []
         for axis in ["birth_weight", "gestational_age"]:
-            draw = self.randomness.get_draw(categorical_exposure.index, additional_key=axis)
+            draw = self.randomness.get_draw(
+                categorical_exposure.index, additional_key=axis
+            )
             lower, upper = intervals[f"{axis}_lower"], intervals[f"{axis}_upper"]
             exposures.append((lower + (upper - lower) * draw).rename(axis))
         return pd.concat(exposures, axis=1)
@@ -132,10 +139,16 @@ class LBWSGDistribution(Component):
     def _parse_description(description: str) -> Tuple:
         birth_weight = [
             float(val)
-            for val in description.split(", [")[1].split(")")[0].split("]")[0].split(", ")
+            for val in description.split(", [")[1]
+            .split(")")[0]
+            .split("]")[0]
+            .split(", ")
         ]
         gestational_age = [
             float(val)
-            for val in description.split("- [")[1].split(")")[0].split("+")[0].split(", ")
+            for val in description.split("- [")[1]
+            .split(")")[0]
+            .split("+")[0]
+            .split(", ")
         ]
         return *birth_weight, *gestational_age

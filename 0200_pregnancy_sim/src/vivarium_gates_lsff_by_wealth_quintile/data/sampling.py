@@ -99,7 +99,9 @@ def generate_vectorized_lognormal_draws(
     lognorm_samples = pd.DataFrame(lognorm_samples, index=df[sample_mask].index)
 
     use_means = (
-        np.tile(mean[~sample_mask], draw_count).reshape((draw_count, ~sample_mask.sum())).T
+        np.tile(mean[~sample_mask], draw_count)
+        .reshape((draw_count, ~sample_mask.sum()))
+        .T
     )
     use_means = pd.DataFrame(use_means, index=df[~sample_mask].index)
     draws = pd.concat([lognorm_samples, use_means])
