@@ -25,7 +25,11 @@ test = [
     "vivarium-dependencies[pytest]",
     "vivarium-testing-utils",
 ]
-cluster = ["vivarium-cluster-tools>=4.2.14"]
+# NOTE: The [cluster] extra is required, not optional. vivarium-cluster-tools gates
+# jobmon_installer_ihme behind it, and psimulate imports jobmon at module load, so a
+# plain "vivarium-cluster-tools" install yields a psimulate that dies with
+# "ModuleNotFoundError: No module named 'jobmon'".
+cluster = ["vivarium-cluster-tools[cluster]>=4.2.14"]
 data = [
     "vivarium-inputs>=8.0.2",
     "vivarium_gates_lsff_2026[cluster]",

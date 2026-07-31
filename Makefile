@@ -178,13 +178,23 @@ build-env: # Create a new environment with installed packages
 	elif [ "$(type)" = "artifact" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools\<81"; \
 	fi
+#	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
+#	reasons. First, both extras pull IHME-internal packages that are absent from public
+#	PyPI -- 'dev' needs jobmon_installer_ihme (via vivarium-cluster-tools[cluster]) and
+#	'data' needs vivarium-gbd-access (via vivarium-inputs) -- so the Artifactory index
+#	is required, not optional. Second, EXTRA_INDEX_FLAGS includes '--index-strategy',
+#	which plain pip rejects outright; reusing the shared variable keeps the Artifactory
+#	URL defined in one place and installs these packages with the same resolver and
+#	index strategy as the root package above. 'uv' is available here because the
+#	'make install' invoked above installs it along with setuptools, which
+#	'--no-build-isolation' requires.
 	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "maternal" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_maternal || true; \
-		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)]; \
+		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
 	fi
 	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "child" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_child || true; \
-		conda run $(CONDA_RUN_FLAG) pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)]; \
+		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
 	fi
 	@if [ "$(lfs)" = "yes" ]; then \
 		conda run $(CONDA_RUN_FLAG) conda install -c conda-forge git-lfs --yes; \
