@@ -339,13 +339,19 @@ Snakemake DAG:
 `tests/` holds a regression harness that answers one question: **did the pipeline's output
 change in a way nobody intended?** It does not validate the science — it detects change.
 
+The suite runs in **either** environment and skips what that environment cannot do,
+because the two halves need incompatible dependencies:
+
 ```bash
-source .test_venv/bin/activate
-pytest tests/ -q               # 154 exact-match checks (fast, no cluster needed)
-pytest tests/ --runslow -q     # + 135 statistical checks on simulation output
+source .test_venv/bin/activate && pytest tests/ --runslow -q   # 289 passed, 3 skipped
+source .venv/bin/activate      && pytest tests/ -q             # 157 passed, 135 skipped
 ```
 
-Two layers:
+`.test_venv` has the fuzzy checker but no GBD access; `.venv` has GBD access but cannot
+host `vivarium-testing-utils`. Run both to cover everything. Note `--runslow` only exists
+in `.test_venv`, since that flag comes from the plugin.
+
+Three layers:
 
 - **`test_deterministic_results.py`** — every tracked result CSV outside the
   microsimulations must match the committed baseline **exactly**. That is possible because
@@ -358,9 +364,33 @@ Two layers:
   Bayes-factor evidence. Measured sensitivity at ~124k samples: detects a 2% relative shift,
   warns "not conclusive" at 1%, passes below that. At 200 seeds the threshold tightens ~4.5×.
 
+- **`test_gbd_assumptions.py`** — the other two layers detect changed *output*; this one
+  detects a changed *input contract*, where GBD moves something underneath code that
+  hardcodes it. All three checks guard failures that are otherwise **silent**:
+  - GBD age bins still nest inside the DHS disparity bins `[0, 5, 15, 30, 50, 125]`, so
+    `data_processing.reindex_series_onto_df_by_age_groups` cannot quietly drop rows.
+  - The 30 hardcoded LBWSG categories are still exactly GBD's sub-2500g set. This parses
+    the birth-weight interval out of each category's description rather than just checking
+    the name exists, which is what makes it catch a renumbering.
+  - The `0400` anemia responsiveness lists still account for every anemia sequela GBD
+    exposes. A removed sequela already fails loudly (`AttributeError`); an *added* one is
+    silent, and this is what makes it loud.
+
+  Each reads the project's assumption from its real source of truth — the notebook or
+  constants module that owns it — so the test follows the code if someone edits it. All
+  three were verified to fire by deliberately violating them.
+
 Supporting pieces: `tests/baseline.py` (git-backed reference loading, and the
 `STOCHASTIC_RESULTS` classification — anything unlisted is checked exactly, so a new output
 file fails loudly until classified) and `tests/reference_proportions.py`.
+
+**Open research question recorded in code:** `KNOWN_UNCOVERED_ANEMIA_SEQUELAE` in
+`test_gbd_assumptions.py` lists 26 genetic and endocrine anemias (G6PD deficiency,
+hemoglobin H disease, hemoglobin E beta thalassemia, beta thalassemia major, thyroid-related)
+that are in `gbd_mapping` but in neither `0400` bucket, as of GBD 2021. They look like they
+belong in the non-iron-responsive bucket; omitting them excludes those people from the
+population rather than counting them as non-responsive, which biases the responsive
+fraction. Needs a decision from whoever owns the anemia model.
 
 **`tests/reference/sim_proportions.csv` is the committed baseline for the stochastic layer**
 and is deliberately not gitignored. The raw simulation parquet is gitignored and the
