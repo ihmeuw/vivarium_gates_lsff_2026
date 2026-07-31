@@ -47,7 +47,6 @@ from lsff_utils import data_processing, hemoglobin_distribution
 memory = Memory("./.cachedir", verbose=0)
 
 CSV_DATA_NAMES = {
-    data_keys.POPULATION.STRUCTURE: "population/stratified",
     data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: "wealth_quintile_probabilities",
     data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "{vehicle}/vehicle_consumption/any",
     data_keys.VEHICLE_CONSUMPTION.FORTIFIABILITY: "{vehicle}/vehicle_consumption/fortifiability",
@@ -93,6 +92,7 @@ def get_data(
 
     mapping = {
         data_keys.POPULATION.LOCATION: load_population_location,
+        data_keys.POPULATION.STRUCTURE: load_population_structure,
         data_keys.POPULATION.AGE_BINS: load_age_bins,
         data_keys.POPULATION.DEMOGRAPHY: load_demographic_dimensions,
         data_keys.POPULATION.TMRLE: load_theoretical_minimum_risk_life_expectancy,
@@ -123,7 +123,6 @@ def get_data(
         data_keys.HEMOGLOBIN.MEAN: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.STANDARD_DEVIATION: get_hemoglobin_data,
         data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70: get_hemoglobin_below_70,
-        **{k: load_csv_data for k in CSV_DATA_NAMES.keys()},
         # data_keys.POPULATION.BACKGROUND_MORBIDITY: load_background_morbidity,
     }
     data = mapping[lookup_key](lookup_key, location, mean_draw)
@@ -147,7 +146,15 @@ def load_population_location(key: str, location: str, mean_draw: bool) -> str:
 
 
 def load_population_structure(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    base_population_structure = interface.get_population_structure(location)
+    # Use precomputed population from data prep instead of GBD interface
+    total_csv = (
+        paths.DATA_PREP_RESULTS_ROOT / "population" / "total" / (location.lower() + ".csv")
+    )
+    base_population_structure = (
+        pd.read_csv(total_csv)
+        .assign(year_start=2021, year_end=2022)
+        .set_index(["sex", "age_start", "age_end", "year_start", "year_end"])
+    )
     pregnancy_end_rate_avg = get_pregnancy_end_incidence(location, mean_draw)
     pregnant_population_structure = pregnancy_end_rate_avg.multiply(
         base_population_structure["value"], axis=0
