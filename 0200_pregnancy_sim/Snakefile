@@ -30,7 +30,7 @@ data_inputs = [
 ] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
-    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/data/loader.py"] + data_inputs
+    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py"] + data_inputs
     output: ["0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
     shell:
         f"""
@@ -38,17 +38,17 @@ rule pregnancy_artifacts:
         cd 0200_pregnancy_sim
         rm -f artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
         export PYTHONPATH=./src
-        python src/vivarium_gates_lsff_by_wealth_quintile/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} -a --mean {'--pdb -vvv' if debug else ''}
+        python src/vivarium_gates_lsff_2026_maternal/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} -a --mean {'--pdb -vvv' if debug else ''}
         """
 
-code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/**/*.py")
+code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/**/*.py")
 
 rule pregnancy_simulations:
     input:
         config["simulation_running_env_input"] + [
             "0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios" + ('_small' if not full_scale else '') + ".yaml",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml",
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios" + ('_small' if not full_scale else '') + ".yaml",
         ] + code_inputs + data_inputs
     output:
         [
@@ -71,7 +71,7 @@ rule pregnancy_simulations:
         mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
         export PYTHONPATH=../../../src
-        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_by_wealth_quintile/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
+        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -rf *.rdb
         {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
         mv ./*/results/*.parquet .

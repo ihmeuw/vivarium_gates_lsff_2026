@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import json
 import re
-import sys
 
 import pytest
 
@@ -94,6 +93,37 @@ def notebook_source(path: str) -> str:
     return "\n".join("".join(cell["source"]) for cell in cells)
 
 
+def child_sim_data_values_source() -> str:
+    """The child sim's data_values.py source, whatever the package is called.
+
+    Read as text rather than imported. The module absolute-imports its own package,
+    which in turn imports the Vivarium suite, so importing it would tie this test to
+    whichever suite generation is installed -- and the whole point is to run it in
+    the artifact environment, which has GBD access. The package has also been
+    renamed once already (``vivarium_gates_lsff_by_wealth_quintile_child`` ->
+    ``vivarium_gates_lsff_2026_child``), so resolve the name from the filesystem.
+    """
+    src = REPO_ROOT / "0300_child_sim" / "src"
+    candidates = sorted(src.glob("*/constants/data_values.py"))
+    assert len(candidates) == 1, (
+        f"expected exactly one child-sim constants/data_values.py under {src}, found "
+        f"{[str(c.relative_to(src)) for c in candidates]}. A rename probably left the "
+        "old directory behind."
+    )
+    return candidates[0].read_text()
+
+
+def parse_low_birth_weight_categories(source: str) -> set[str]:
+    match = re.search(
+        r"LOW_BIRTH_WEIGHT_CATEGORIES\s*(?::[^=]+)?=\s*\[(.*?)\]", source, re.DOTALL
+    )
+    assert match, (
+        "could not find LOW_BIRTH_WEIGHT_CATEGORIES in the child sim's data_values.py "
+        "-- if it was renamed or restructured, update this test rather than deleting it"
+    )
+    return set(re.findall(r'"(cat\d+)"', match.group(1)))
+
+
 def test_gbd_age_bins_nest_inside_disparity_age_bins() -> None:
     """The wealth-quintile disparity joins assume GBD age bins nest.
 
@@ -142,10 +172,8 @@ def test_low_birth_weight_categories_still_mean_low_birth_weight(gbd_mapping) ->
     weights. Checking the interval in each category's description, rather than
     just that the name exists, is what makes this catch a renumbering.
     """
-    sys.path.insert(0, str(REPO_ROOT / "0300_child_sim" / "src"))
-    from vivarium_gates_lsff_by_wealth_quintile_child.constants.data_values import LBWSG
-
-    listed = set(LBWSG.LOW_BIRTH_WEIGHT_CATEGORIES)
+    listed = parse_low_birth_weight_categories(child_sim_data_values_source())
+    assert len(listed) > 20, f"only parsed {len(listed)} categories; check the regex"
     categories = gbd_mapping.risk_factors.low_birth_weight_and_short_gestation.categories.to_dict()
 
     missing_from_gbd = listed - set(categories)

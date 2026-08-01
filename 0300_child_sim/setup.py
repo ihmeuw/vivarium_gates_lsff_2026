@@ -8,18 +8,16 @@ if __name__ == "__main__":
     src_dir = os.path.join(base_dir, "src")
 
     about = {}
-    with open(
-        os.path.join(src_dir, "vivarium_gates_lsff_by_wealth_quintile_child", "__about__.py")
-    ) as f:
+    with open(os.path.join(src_dir, "vivarium_gates_lsff_2026_child", "__about__.py")) as f:
         exec(f.read(), about)
 
     with open(os.path.join(base_dir, "README.rst")) as f:
         long_description = f.read()
 
     install_requirements = [
-        "gbd_mapping>=4.0.0",
-        "vivarium>=2.0.0",
-        "vivarium_public_health>=2.1.0",
+        "vivarium-gbd-mapping>=6.0.7",
+        "vivarium-engine>=5.5.3",
+        "vivarium-public-health>=6.4.5",
         "click",
         "jinja2",
         "loguru",
@@ -28,15 +26,21 @@ if __name__ == "__main__":
         "pyyaml",
         "scipy",
         "tables",
-        "layered_config_tree",
+        "vivarium-config-tree>=5.0.0",
     ]
 
     # use "pip install -e .[dev]" to install required components + extra components
-    data_requirements = ["vivarium_inputs[data]>=5.0.0"]
-    cluster_requirements = ["vivarium_cluster_tools>=1.3.13"]
-
-    test_requirements = ["pytest"]
-    lint_requirements = ["black", "isort"]
+    data_requirements = ["vivarium-inputs>=8.0.2"]
+    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14", "drmaa"]
+    test_requirements = [
+        "vivarium-dependencies[pytest]",
+        "vivarium-testing-utils",
+        "papermill",
+        "jupyterlab",
+    ]
+    validation_requirements = ["vivarium-testing-utils[validation]"]
+    lint_requirements = ["vivarium-dependencies[lint]"]
+    interactive_requirements = ["vivarium-dependencies[interactive]", "nbdime"]
 
     setup(
         name=about["__title__"],
@@ -54,12 +58,19 @@ if __name__ == "__main__":
         extras_require={
             "test": test_requirements,
             "cluster": cluster_requirements,
-            "data": data_requirements + cluster_requirements,
-            "dev": test_requirements + cluster_requirements + lint_requirements,
+            "data": data_requirements
+            + cluster_requirements
+            + lint_requirements
+            + test_requirements
+            + validation_requirements,
+            "interactive": interactive_requirements,
+            "dev": test_requirements
+            + cluster_requirements
+            + lint_requirements
+            + interactive_requirements,
         },
         zip_safe=False,
-        entry_points="""
-            [console_scripts]
-            make_artifacts=vivarium_gates_lsff_by_wealth_quintile_child.tools.cli:make_artifacts
-        """,
+        # NOTE: Deliberately no 'make_artifacts' console script -- see the note in
+        # 0200_pregnancy_sim/setup.py. The repo-level vivarium_gates_lsff_2026
+        # package owns that name and dispatches here via '-p/--project child'.
     )

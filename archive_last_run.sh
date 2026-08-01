@@ -3,7 +3,7 @@
 set -e
 
 timestamp=$(date '+%Y_%m_%d_%H_%M_%S')
-new_dir=/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_by_wealth_quintile/$timestamp
+new_dir=/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026_maternal/$timestamp
 mkdir -p $new_dir
 
 # https://unix.stackexchange.com/a/2503

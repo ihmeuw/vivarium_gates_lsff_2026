@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import risk_distributions
+import vivarium.risk_distributions as risk_distributions
 
 # NOTE: This is an unusual ensemble distribution. We should add functionality to the
 # EnsembleDistribution class to make this easier.
@@ -22,10 +22,8 @@ def hemoglobin_pdf_from_mean_sd(mean, sd):
         # This is a no-op for array input.
         x = np.atleast_1d(np.asarray(x, dtype=float))
         return GAMMA_DISTRIBUTION_WEIGHT * hemoglobin_distribution_gamma_part.pdf(
-            x.copy()
-        ) + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(
-            x.copy()
-        )
+            x
+        ) + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * hemoglobin_distribution_mgumbel_part.pdf(x)
 
     return pdf
 
@@ -37,10 +35,10 @@ def hemoglobin_cdf_from_mean_sd(mean, sd):
     ) = _hemoglobin_distribution_parts_from_mean_sd(mean, sd)
 
     def cdf(x):
-        gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x.copy())
+        gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
         # NOTE: There is a bug in this CDF function -- it is reversed!
         # https://github.com/ihmeuw/risk_distributions/issues/62
-        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x.copy())
+        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x)
         return (
             GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf
             + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * mgumbel_cdf
@@ -82,8 +80,8 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
     # NOTE: We have to override these, otherwise Gamma is overly conservative in what values
     # are computable
     # https://github.com/ihmeuw/risk_distributions/issues/61
-    gamma_params["x_min"] = 0
-    gamma_params["x_max"] = XMAX
+    gamma_params["computability_min"] = 0
+    gamma_params["computability_max"] = XMAX
     hemoglobin_distribution_gamma_part = risk_distributions.risk_distributions.Gamma(
         gamma_params
     )
@@ -103,8 +101,9 @@ def _hemoglobin_distribution_parts_from_mean_sd(mean, sd):
         {
             "loc": XMAX - mean - (np.euler_gamma * np.sqrt(6) / np.pi * sd),
             "scale": np.sqrt(6) / np.pi * sd,
-            "x_min": 0,
-            "x_max": XMAX,
+            "mirror_point": XMAX,
+            "computability_min": 0,
+            "computability_max": XMAX,
         },
         **kwargs
     )
