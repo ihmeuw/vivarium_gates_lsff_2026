@@ -622,12 +622,25 @@ Confirmed good:
   all-zero in *both* vintages, and `0100_data_prep/results/iron/rice/baseline_fortification/any_coverage/nigeria.csv`
   is genuinely `0.0` — Nigeria has no existing rice fortification programme. Bouillon is ~0.52.
 
-Open problems, most impactful first:
+Open problems. **Note they point in opposite directions** — one is a GBD-2023 problem, the
+other looks like a pre-existing error that GBD 2023 corrected:
 
-1. **`cause.maternal_disorders.ylds` is ~187× larger** over childbearing ages (sum 0.000786 →
-   0.147; median of finite non-zero rows 332×). Not a plausible revision, and it feeds one of
-   the four DALY streams directly, so it would dominate final results.
-2. **`risk_factor.hemoglobin.standard_deviation` roughly doubled** (max 16.9 → 36.1 g/L). A
+1. **`cause.maternal_disorders.ylds` differs by 150–340×, and the GBD-2021 value is probably
+   the wrong one.** Computing that key's own formula
+   (`(all_md_ylds - anemia_ylds) / (incidence - csmr)`) directly from raw GBD for Nigeria gives
+   ~0.0123 under release 9 and ~0.0075 under release 16. The GBD-2023 artifact holds 0.0131,
+   which matches; the GBD-2021 artifact holds 0.0000394, ~300× below what its own inputs imply.
+   0.000015 disability-years per maternal-disorder case is about thirty seconds, which is not
+   credible. So this looks like a **long-standing under-count in the April-2025 published
+   results** that the migration fixed, not a migration regression. `maternal_disorders` is
+   2.32% of published baseline DALYs for india/rice, though YLLs likely dominate that share, so
+   work out the YLD/YLL split before drawing conclusions.
+   *Ruled out:* subnational aggregation (five locations, three with GBD subnational detail and
+   two without, all moved 0.70×–1.08×) and `metric_id=None` in the `get_draws` calls (both
+   releases return only `metric_id=3`). *Decisive test:* run `load_maternal_disorders_ylds`
+   itself under release 9 vs 16 — needs the modern-suite environment.
+2. **`risk_factor.hemoglobin.standard_deviation` roughly doubled** (max 16.9 → 36.1 g/L) — this
+   one *is* a GBD-2023-direction problem. A
    population hemoglobin SD of 36 is not credible. Because severe anemia is a far-tail
    quantity the error amplifies downstream: `pregnant_proportion_below_70_gL` up 22× to 0.58
    in the worst stratum, and `hemoglobin_on_maternal_hemorrhage.paf` up 11×. Note the SD's own
