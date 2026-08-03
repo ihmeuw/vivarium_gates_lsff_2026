@@ -46,8 +46,9 @@ class ChildUnderweight(Risk):
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
             source=self.get_current_exposure,
-            requires_columns=["age", "sex"],
-            requires_values=[
+            required_resources=[
+                "age",
+                "sex",
                 self.propensity_pipeline_name,
                 data_values.PIPELINES.STUNTING_EXPOSURE,
                 data_values.PIPELINES.WASTING_EXPOSURE,

@@ -48,10 +48,15 @@ class MaternalIronConsumptionFromFortification(Component):
         builder.value.register_value_modifier(
             "birth_weight.birth_exposure",
             self.update_birth_weight,
-            requires_columns=[
+            required_resources=[
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
                 "maternal_iron_consumption_from_fortification_mcg",
             ],
+        )
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.columns_created,
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -73,10 +78,10 @@ class MaternalIronConsumptionFromFortification(Component):
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
             ] = new_births["baseline_2021_iron_consumption_from_fortification_mcg"].copy()
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
     def update_birth_weight(self, index, exposure):
-        pop = self.population_view.get(index)
+        pop = self.population_view.get(index, self.columns_created)
 
         # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
         exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
@@ -108,16 +113,22 @@ class WealthQuintile(Component):
         self.start_time = get_time_stamp(builder.configuration.time.start)
         self.birth_weight_disparities_multiplier = self.build_lookup_table(
             builder,
-            builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
-            value_columns=["value"],
+            "birth_weight_wealth_disparities",
+            data_source=builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
+            value_columns="value",
         )
 
         builder.value.register_value_modifier(
             "birth_weight.birth_exposure",
             self.update_birth_weight,
-            requires_columns=[
+            required_resources=[
                 "wealth_quintile",
             ],
+        )
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.columns_created,
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -136,7 +147,7 @@ class WealthQuintile(Component):
                 new_births["wealth_quintile"].astype(int).copy()
             )
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
     def update_birth_weight(self, index, exposure):
         mean_exposure = exposure.mean()
