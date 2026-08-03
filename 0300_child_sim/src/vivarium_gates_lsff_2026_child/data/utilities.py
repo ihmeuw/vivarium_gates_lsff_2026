@@ -17,6 +17,7 @@ from vivarium.gbd_mapping import (
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_gbd_access.gbd.base_data import get_draws, query
+from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
@@ -557,7 +558,7 @@ def scrub_neonatal_age_groups(data: pd.DataFrame) -> pd.DataFrame:
 """
 
 
-@vi_utils.cache
+@cache
 def load_lbwsg_exposure(location: str):
     entity = get_entity(data_keys.LBWSG.EXPOSURE)
     if type(location) == int:

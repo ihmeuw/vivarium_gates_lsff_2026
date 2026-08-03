@@ -1,7 +1,7 @@
 from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
-from vivarium_gbd_access import utilities as vi_utils
 from vivarium_gbd_access.gbd.base_data import get_draws
+from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
 
@@ -9,7 +9,7 @@ from vivarium_gates_lsff_2026_maternal.constants import data_keys
 from vivarium_gates_lsff_2026_maternal.data import utilities
 
 
-@vi_utils.cache
+@cache
 def load_lbwsg_exposure(location: str):
     entity = utilities.get_entity(data_keys.LBWSG.EXPOSURE)
     location_id = utility_data.get_location_id(location)
@@ -26,7 +26,7 @@ def load_lbwsg_exposure(location: str):
     return data
 
 
-@vi_utils.cache
+@cache
 def get_all_cause_yld_rate(location: str):
     entity = utilities.get_entity("cause.all_causes.ylds")
     location_id = utility_data.get_location_id(location)
@@ -42,7 +42,7 @@ def get_all_cause_yld_rate(location: str):
     return data
 
 
-@vi_utils.cache
+@cache
 def get_maternal_disorder_ylds(location: str, metric_id=None):
     entity = utilities.get_entity(data_keys.MATERNAL_DISORDERS.YLDS)
     location_id = utility_data.get_location_id(location)
@@ -59,7 +59,7 @@ def get_maternal_disorder_ylds(location: str, metric_id=None):
     return data
 
 
-@vi_utils.cache
+@cache
 def get_anemia_ylds(location: str, metric_id=None):
     anemia_sequelae = [
         sequelae.mild_anemia_due_to_maternal_hemorrhage,
@@ -81,7 +81,7 @@ def get_anemia_ylds(location: str, metric_id=None):
     return data
 
 
-@vi_utils.cache
+@cache
 def get_anemia_yld_rate(location: str):
     location_id = utility_data.get_location_id(location)
     data = get_draws(
@@ -96,7 +96,7 @@ def get_anemia_yld_rate(location: str):
     return data
 
 
-@vi_utils.cache
+@cache
 def get_hemoglobin_maternal_disorders_rr():
     """Relative risk associated with one g/dL decrease in hemoglobin concentration below 12 g/dL"""
     # NOTE: GBD 2023 (release_id=16) does not appear to have rei_id=95 RR data available
