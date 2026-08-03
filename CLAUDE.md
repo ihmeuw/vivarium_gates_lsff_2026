@@ -394,6 +394,22 @@ Three layers:
   on time-step cleanup as soon as they reach `not_pregnant`, and observers filter on
   `tracked` — so nobody "fixes" it by moving it into `MUST_FIRE`.
 
+- **`test_artifact_sanity.py`** — compares two artifacts directly, before any simulation
+  runs. The cheapest place to catch a data problem: it localises to a single key in seconds,
+  where a pipeline run would show only "the DALYs moved", smeared across two microsims and
+  mixed with Monte Carlo noise. Three checks — no key gains `inf`/`NaN`, no key newly goes
+  all-zero, and no key's scale moves more than `RATIO_THRESHOLD` (3×) — all framed as
+  *regressions against a reference artifact* rather than against an allowlist, because
+  whether zero is legitimate is context-dependent (Nigeria has no baseline rice fortification
+  programme, so `0.0` is correct there, but bouillon is ~0.52).
+
+  ```bash
+  LSFF_ARTIFACT=new.hdf LSFF_REFERENCE_ARTIFACT=known-good.hdf pytest tests/test_artifact_sanity.py
+  ```
+
+  Run against a GBD-2023 artifact vs the verified GBD-2021 one it flags four keys, which is
+  what it was written for — see "GBD 2023 artifact review" below.
+
 Supporting pieces: `tests/baseline.py` (git-backed reference loading, and the
 `STOCHASTIC_RESULTS` classification — anything unlisted is checked exactly, so a new output
 file fails loudly until classified) and `tests/reference_proportions.py`.
@@ -584,6 +600,48 @@ completion (`results_spreadsheet.xlsx` and `results_plots.ipynb` both produced) 
   numbers are not preserved anywhere.
 - Following the documented setup breaks the environment: see the `pip install -e .` note in
   the environments section.
+
+## GBD 2023 artifact review (2026-08-03)
+
+Diffed Jim's GBD-2023 maternal artifact
+(`/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/artifacts/legacy/maternal/nigeria.hdf`,
+read-only — copy before opening, `Artifact` can write) against the verified GBD-2021
+`mean_draw_artifacts/rice/nigeria.hdf`. Reproduce with `tests/test_artifact_sanity.py`.
+
+Confirmed good:
+
+- **Maternal hemorrhage incidence is restored.** `cause.maternal_hemorrhage.incident_probability`
+  mean 0.0139 with 45 non-zero rows, against 0.0182 and the same 45 rows in GBD 2021. The
+  fix in PR #3's `02158e1` works.
+- **Data-prep-derived keys are numerically identical** across vintages
+  (`vehicle_consumption.*`, fortification coverages, effect sizes) — exactly as they should
+  be, since those come from CSVs with no GBD coupling. Only GBD-derived keys moved.
+- The GBD 2023 covariate rename landed (`stillbirth_to_live_birth_ratio` →
+  `stillbirth_28_weeks_to_live_birth_ratio`).
+- **Not a bug:** five `iron_fortification.baseline_*` keys are all-zero, but they are
+  all-zero in *both* vintages, and `0100_data_prep/results/iron/rice/baseline_fortification/any_coverage/nigeria.csv`
+  is genuinely `0.0` — Nigeria has no existing rice fortification programme. Bouillon is ~0.52.
+
+Open problems, most impactful first:
+
+1. **`cause.maternal_disorders.ylds` is ~187× larger** over childbearing ages (sum 0.000786 →
+   0.147; median of finite non-zero rows 332×). Not a plausible revision, and it feeds one of
+   the four DALY streams directly, so it would dominate final results.
+2. **`risk_factor.hemoglobin.standard_deviation` roughly doubled** (max 16.9 → 36.1 g/L). A
+   population hemoglobin SD of 36 is not credible. Because severe anemia is a far-tail
+   quantity the error amplifies downstream: `pregnant_proportion_below_70_gL` up 22× to 0.58
+   in the worst stratum, and `hemoglobin_on_maternal_hemorrhage.paf` up 11×. Note the SD's own
+   median movement is *below* the 3× threshold so it is not itself flagged — it is the likely
+   upstream cause of two keys that are. Produced by `get_hemoglobin_data` from me_ids
+   10487/10488, one of the six `.fillna(0)` loaders.
+3. **`cause.maternal_disorders.ylds` carries 8 `inf` values in both vintages**, from dividing
+   by a zero maternal-disorders incidence at ages 60+. `.fillna(0)` catches NaN, not `inf`.
+   Harmless while the sim runs ages 10–54, but latent.
+4. `cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.8× — flagged for
+   review, less obviously wrong than the above.
+
+Every other key moved within 0.47×–2.7×, an ordinary GBD-revision range. That contrast is
+what makes the ratio check informative.
 
 ## Modernization: modern Vivarium + GBD 2023
 
