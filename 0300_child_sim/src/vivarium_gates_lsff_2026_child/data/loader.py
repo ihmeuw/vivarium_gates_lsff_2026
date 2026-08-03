@@ -14,10 +14,12 @@ for an example.
 """
 
 import pickle
+from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from scipy import stats
 from scipy.interpolate import RectBivariateSpline, griddata
 from vivarium.artifact import EntityKey
@@ -309,15 +311,80 @@ def load_theoretical_minimum_risk_life_expectancy(
 
 
 def load_fertility_data(fertility_data_path: str) -> pd.DataFrame:
-    df = pd.read_parquet(fertility_data_path)
-    if "input_draw" not in df.columns:
-        df = df.assign(input_draw=0)
-    if "random_seed" not in df.columns:
-        df = df.assign(random_seed=0)
-    if "scenario" not in df.columns:
-        df = df.assign(scenario="baseline")
+    """Load the maternal simulation's birth records.
+
+    Accepts either results layout:
+
+    - ``simulate run`` writes a single file, ``<run>/results/births.parquet``.
+    - ``psimulate`` writes one file per task into a directory per metric,
+      ``<run>/results/births/<task_id>.parquet``, and injects ``input_draw``,
+      ``random_seed``, and ``scenario`` as columns. ``pd.read_parquet`` on the
+      directory concatenates every file in it.
+
+    A run root or a ``results`` directory is also accepted and resolved to the
+    births data underneath it.
+
+    The three job columns are backfilled when absent so that a single-run file still
+    satisfies the filters ``FertilityLineList`` applies when reading this key back
+    out of the artifact. Backfilled values pin the child model to draw 0 / seed 0 /
+    baseline; use psimulate output to vary them.
+    """
+    if fertility_data_path is None:
+        raise ValueError(
+            "No fertility data path provided. The child model's population comes from "
+            "the maternal simulation's birth records; pass --fertility-data-path "
+            "pointing at a maternal run's 'births.parquet' or 'births/' directory."
+        )
+
+    path = _resolve_fertility_data_path(Path(fertility_data_path))
+    df = pd.read_parquet(path)
+    if df.empty:
+        raise ValueError(f"Fertility data at '{path}' contains no birth records.")
+
+    for column, default in (
+        ("input_draw", 0),
+        ("random_seed", 0),
+        ("scenario", "baseline"),
+    ):
+        if column not in df.columns:
+            logger.debug(f"Fertility data has no '{column}' column; using {default!r}.")
+            df = df.assign(**{column: default})
+
     df = df.set_index(list(df.columns))
     return df
+
+
+def _resolve_fertility_data_path(path: Path) -> Path:
+    """Resolve a user-supplied path to the births data itself.
+
+    Tolerates being handed a run root or a ``results`` directory rather than the
+    births file/directory, since which of those is convenient depends on whether the
+    upstream run came from ``simulate run`` or ``psimulate``.
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Fertility data path does not exist: '{path}'.")
+
+    if path.is_file():
+        return path
+
+    name = paths.FERTILITY_DATA_NAME
+    # A metric directory of per-task parquet files.
+    if any(path.glob("*.parquet")):
+        return path
+    # A run root or a results directory sitting above the births data.
+    for candidate in (
+        path / name,
+        path / f"{name}.parquet",
+        path / "results" / name,
+        path / "results" / f"{name}.parquet",
+    ):
+        if candidate.exists():
+            return candidate
+
+    raise FileNotFoundError(
+        f"Could not find '{name}' data under '{path}'. Expected either "
+        f"'{name}.parquet' or a '{name}/' directory of parquet files."
+    )
 
 
 def load_standard_data(
