@@ -1,7 +1,9 @@
 components:
-    vivarium_public_health:
-        population:
-            - Mortality()
+    vivarium.public_health:
+        # NOTE: No Mortality() here. BasePopulation now adds a mortality sub-component
+        # itself, and PopulationLineList supplies ChildMortality in its place (see
+        # components/population.py). Listing Mortality() as well would register the
+        # 'is_alive' private column twice.
         # disease:
         #     - SIS_fixed_duration('measles', '10.0')
         #     - SIS('lower_respiratory_infections')

@@ -14,12 +14,16 @@ import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.time import get_time_stamp
-from vivarium.public_health.population.base_population import BasePopulation
+from vivarium.public_health.population.base_population import (
+    AgeOutSimulants,
+    BasePopulation,
+    Disability,
+)
 from vivarium.public_health.population.data_transformations import (
     assign_demographic_proportions,
-    load_population_structure,
 )
 
+from vivarium_gates_lsff_2026_child.components.mortality import ChildMortality
 from vivarium_gates_lsff_2026_child.constants import data_keys
 
 
@@ -30,10 +34,12 @@ class PopulationLineList(BasePopulation):
 
     @property
     def columns_created(self) -> List[str]:
+        # NOTE: 'is_alive' is deliberately absent -- it is a private column of the
+        # mortality sub-component (ChildMortality), which initializes it from the
+        # same line list birth records this component reads.
         return [
             "age",
             "sex",
-            "alive",
             # "subnational",
             "location",
             "entrance_time",
@@ -46,6 +52,12 @@ class PopulationLineList(BasePopulation):
     def time_step_priority(self) -> int:
         return 8
 
+    def __init__(self) -> None:
+        # Swap the stock Mortality sub-component for one that can initialize
+        # stillbirths as already dead. Mirrors the maternal package's BasePopulation.
+        super(BasePopulation, self).__init__()
+        self._sub_components += [AgeOutSimulants(), ChildMortality(), Disability()]
+
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         self.config = builder.configuration.population
@@ -57,7 +69,7 @@ class PopulationLineList(BasePopulation):
                 f"Provided value: {self.config.include_sex}."
             )
 
-        source_population_structure = load_population_structure(builder)
+        source_population_structure = self._load_population_structure(builder)
         self.population_data = assign_demographic_proportions(
             source_population_structure,
             include_sex=self.config.include_sex,
@@ -81,7 +93,12 @@ class PopulationLineList(BasePopulation):
         self.location = self._get_location(builder)
         # self.subnational = builder.configuration.intervention.subnational
 
-    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+        builder.population.register_initializer(
+            initializer=self.initialize_population,
+            columns=self.columns_created,
+        )
+
+    def initialize_population(self, pop_data: SimulantData) -> None:
         """
         Creates simulants based on their birth date from the line list data.  Their demographic characteristics are also
         determined by the input data.
@@ -95,7 +112,6 @@ class PopulationLineList(BasePopulation):
             # Create columns for state table
             new_simulants["age"] = 0.0
             new_simulants["sex"] = new_births["sex"]
-            new_simulants["alive"] = new_births["alive"]
             new_simulants["location"] = self.location
             new_simulants["entrance_time"] = pop_data.creation_time
             new_simulants["exit_time"] = new_births["exit_time"]
@@ -112,7 +128,7 @@ class PopulationLineList(BasePopulation):
         #     else:
         #         new_simulants["subnational"] = self.subnational
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
     def _get_location(self, builder: Builder) -> Dict[str, str]:
         return builder.data.load("population.location")
@@ -138,9 +154,8 @@ class EvenlyDistributedPopulation(BasePopulation):
     male and female.
     """
 
-    @property
-    def columns_created(self) -> List[str]:
-        return super().columns_created  # + ["subnational"]
+    # NOTE: 'is_alive' is created by the Mortality sub-component, not here.
+    COLUMNS_CREATED = ["age", "sex", "location", "entrance_time", "exit_time"]
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
@@ -148,14 +163,13 @@ class EvenlyDistributedPopulation(BasePopulation):
         self.location = builder.data.load(data_keys.POPULATION.LOCATION)
         # self.subnational = builder.configuration.intervention.subnational
 
-    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+    def initialize_population(self, pop_data: SimulantData) -> None:
         age_start = pop_data.user_data.get("age_start", self.config.initialization_age_min)
         age_end = pop_data.user_data.get("age_end", self.config.initialization_age_max)
 
         population = pd.DataFrame(index=pop_data.index)
         population["entrance_time"] = pop_data.creation_time
         population["exit_time"] = pd.NaT
-        population["alive"] = "alive"
         population["location"] = self.location
         population["age"] = np.linspace(
             age_start, age_end, num=len(population) + 1, endpoint=False
@@ -169,7 +183,7 @@ class EvenlyDistributedPopulation(BasePopulation):
         # else:
         #     population["subnational"] = self.subnational
 
-        self.population_view.update(population)
+        self.population_view.initialize(population[self.COLUMNS_CREATED])
 
     # def _distribute_subnational_locations(self, pop_index: pd.Index) -> pd.Series:
     #     subnational_locations = pd.read_csv(SUBNATIONAL_PERCENTAGES)

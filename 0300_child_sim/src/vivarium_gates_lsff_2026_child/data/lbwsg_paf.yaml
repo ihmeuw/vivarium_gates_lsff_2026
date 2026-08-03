@@ -1,5 +1,5 @@
 components:
-    vivarium_public_health:
+    vivarium.public_health:
         results:
             - ResultsStratifier()
     vivarium_gates_lsff_2026_child:

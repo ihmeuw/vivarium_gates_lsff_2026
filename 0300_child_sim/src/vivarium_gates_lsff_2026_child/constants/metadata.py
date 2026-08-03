@@ -49,7 +49,10 @@ DEMOGRAPHIC_COLUMNS = [
 #     "subnational",
 # ]
 
-DRAW_COUNT = 500
+# GBD 2023 provides 250 draws (GBD 2021 provided 500). This bounds the draws a
+# simulation can request, and data/loader.py selects columns with ARTIFACT_COLUMNS,
+# so a count larger than GBD actually returns raises a KeyError during the build.
+DRAW_COUNT = 250
 ARTIFACT_COLUMNS = pd.Index([f"draw_{i}" for i in range(DRAW_COUNT)])
 GBD_2021_ROUND_ID = 7
 GBD_EXTRACT_YEAR = 2021

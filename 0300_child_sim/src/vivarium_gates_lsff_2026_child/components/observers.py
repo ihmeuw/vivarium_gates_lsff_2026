@@ -4,8 +4,7 @@ from typing import Any, Dict
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.results import Observer
-from vivarium.public_health.disease import DiseaseState
-from vivarium.public_health.results import COLUMNS
+from vivarium.public_health.results import COLUMNS, SimpleCause
 from vivarium.public_health.results.disease import DiseaseObserver
 from vivarium.public_health.results.mortality import MortalityObserver as MortalityObserver_
 from vivarium.public_health.results.stratification import (
@@ -29,9 +28,16 @@ class ResultsStratifier(ResultsStratifier_):
     final column labels for the subgroups.
     """
 
-    def get_age_bins(self, builder: Builder) -> pd.DataFrame:
-        """Define final age groups for production runs."""
-        age_bins = super().get_age_bins(builder)
+    @staticmethod
+    def get_age_bins(builder: Builder) -> pd.DataFrame:
+        """Define final age groups for production runs.
+
+        Notes
+        -----
+        The base implementation is a ``staticmethod``, so this override matches it.
+        The returned bins fully replace the artifact's age bins rather than refining
+        them, so the base result is not consulted.
+        """
         data_dict = {
             "age_start": [
                 0.0,
@@ -69,7 +75,7 @@ class ResultsStratifier(ResultsStratifier_):
             "wealth_quintile",
             data_processing.WEALTH_QUINTILES,
             is_vectorized=True,
-            requires_columns=["wealth_quintile"],
+            requires_attributes=["wealth_quintile"],
         )
 
         # builder.results.register_stratification(
@@ -77,66 +83,66 @@ class ResultsStratifier(ResultsStratifier_):
         #     [category.value for category in data_keys.ChildWastingCategories],
         #     self.child_wasting_stratification_mapper,
         #     is_vectorized=True,
-        #     requires_values=["child_wasting.exposure"],
+        #     requires_attributes=["child_wasting.exposure"],
         # )
         # builder.results.register_stratification(
         #     "stunting_state",
         #     [category.value for category in data_keys.CGFCategories],
         #     self.child_growth_risk_factor_stratification_mapper,
         #     is_vectorized=True,
-        #     requires_values=["child_stunting.exposure"],
+        #     requires_attributes=["child_stunting.exposure"],
         # )
         # builder.results.register_stratification(
         #     "underweight_state",
         #     [category.value for category in data_keys.CGFCategories],
         #     self.child_growth_risk_factor_stratification_mapper,
         #     is_vectorized=True,
-        #     requires_values=["child_underweight.exposure"],
+        #     requires_attributes=["child_underweight.exposure"],
         # )
         # builder.results.register_stratification(
         #     "maternal_supplementation",
         #     results.MATERNAL_SUPPLEMENTATION_TYPES,
         #     is_vectorized=True,
-        #     requires_columns=["maternal_supplementation_exposure"],
+        #     requires_attributes=["maternal_supplementation_exposure"],
         # )
         # builder.results.register_stratification(
         #     "bmi_anemia",
         #     ["cat4", "cat3", "cat2", "cat1"],
         #     is_vectorized=True,
-        #     requires_columns=["maternal_bmi_anemia_exposure"],
+        #     requires_attributes=["maternal_bmi_anemia_exposure"],
         # )
         # builder.results.register_stratification(
         #     "sam_treatment",
         #     ["covered", "uncovered"],
         #     self.map_wasting_treatment,
         #     is_vectorized=True,
-        #     requires_values=[f"{data_keys.SAM_TREATMENT.name}.exposure"],
+        #     requires_attributes=[f"{data_keys.SAM_TREATMENT.name}.exposure"],
         # )
         # builder.results.register_stratification(
         #     "mam_treatment",
         #     ["covered", "uncovered"],
         #     self.map_wasting_treatment,
         #     is_vectorized=True,
-        #     requires_values=[f"{data_keys.MAM_TREATMENT.name}.exposure"],
+        #     requires_attributes=[f"{data_keys.MAM_TREATMENT.name}.exposure"],
         # )
         # builder.results.register_stratification(
         #     "sqlns_coverage",
         #     ["covered", "uncovered", "received"],
         #     is_vectorized=True,
-        #     requires_values=[data_values.SQ_LNS.COVERAGE_PIPELINE],
+        #     requires_attributes=[data_values.SQ_LNS.COVERAGE_PIPELINE],
         # )
         # builder.results.register_stratification(
         #     "birth_weight_status",
         #     ["low_birth_weight", "adequate_birth_weight"],
         #     is_vectorized=True,
-        #     requires_columns=["birth_weight_status"],
+        #     requires_attributes=["birth_weight_status"],
         # )
         # location = builder.data.load("population.location")
         # builder.results.register_stratification(
         #     "subnational",
         #     SUBNATIONAL_LOCATION_DICT[location],
         #     is_vectorized=True,
-        #     requires_columns=["subnational"],
+        #     requires_attributes=["subnational"],
         # )
 
     ###########################
@@ -204,31 +210,31 @@ class BirthObserver(Observer):
     def register_observations(self, builder: Builder) -> None:
         builder.results.register_adding_observation(
             name="live_births",
-            pop_filter='alive == "alive" and tracked == True',
+            pop_filter="is_alive == True",
             when="collect_metrics",
             aggregator=self.count_live_births,
-            requires_columns=["entrance_time"],
+            requires_attributes=["entrance_time"],
         )
         builder.results.register_adding_observation(
             name="birth_weight_sum",
-            pop_filter='alive == "alive" and tracked == True',
+            pop_filter="is_alive == True",
             when="collect_metrics",
             aggregator=self.sum_birth_weights,
-            requires_columns=["entrance_time", self.birth_weight_column_name],
+            requires_attributes=["entrance_time", self.birth_weight_column_name],
         )
         builder.results.register_adding_observation(
             name="gestational_age_sum",
-            pop_filter='alive == "alive" and tracked == True',
+            pop_filter="is_alive == True",
             when="collect_metrics",
             aggregator=self.sum_gestational_ages,
-            requires_columns=["entrance_time", self.gestational_age_column_name],
+            requires_attributes=["entrance_time", self.gestational_age_column_name],
         )
         builder.results.register_adding_observation(
             name="low_weight_births",
-            pop_filter="alive=='alive' and tracked == True",
+            pop_filter="is_alive == True",
             when="collect_metrics",
             aggregator=self.count_low_weight_births,
-            requires_columns=["entrance_time", self.birth_weight_column_name],
+            requires_attributes=["entrance_time", self.birth_weight_column_name],
         )
 
     ########################
@@ -255,11 +261,11 @@ class BirthObserver(Observer):
 
 
 class MortalityObserver(MortalityObserver_):
-    def setup(self, builder: Builder) -> None:
-        super().setup(builder)
-        stillborn = DiseaseState("stillborn")
-        stillborn.set_model("stillborn")
-        self.causes_of_death += [stillborn]
+    def set_causes_of_death(self, builder: Builder) -> None:
+        super().set_causes_of_death(builder)
+        # 'stillborn' is not a modelled DiseaseState -- ChildMortality stamps it as a
+        # cause_of_death at initialization -- so declare it as a SimpleCause.
+        self.causes_of_death += [SimpleCause("stillborn", "stillborn", "cause")]
 
 
 class ChildWastingObserver(DiseaseObserver):
@@ -298,7 +304,7 @@ class ChildWastingObserver(DiseaseObserver):
         builder.results.register_stratification(
             "wasting_categories",
             list(builder.data.load(f"risk_factor.{self.disease}.categories").keys()),
-            requires_values=[self.exposure_pipeline_name],
+            requires_attributes=[self.exposure_pipeline_name],
         )
 
     def register_person_time_observation(self, builder: Builder, pop_filter: str) -> None:
@@ -307,7 +313,7 @@ class ChildWastingObserver(DiseaseObserver):
             name=f"person_time_{self.disease}",
             pop_filter=pop_filter,
             when="time_step__prepare",
-            requires_columns=["alive"],
+            requires_attributes=["is_alive"],
             additional_stratifications=self.config.include + ["wasting_categories"],
             excluded_stratifications=self.config.exclude,
             aggregator=self.aggregate_state_person_time,
@@ -328,8 +334,8 @@ class PersonTimeObserver(Observer):
     def register_observations(self, builder: Builder) -> None:
         builder.results.register_adding_observation(
             name="person_time",
-            pop_filter='alive == "alive" and tracked == True',
-            when="time_step_prepare",
+            pop_filter="is_alive == True",
+            when="time_step__prepare",
             aggregator=partial(aggregate_person_time, builder.time.step_size()()),
         )
 
