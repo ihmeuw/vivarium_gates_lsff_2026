@@ -10,6 +10,11 @@ from vivarium.public_health.results.mortality import MortalityObserver as Mortal
 from vivarium.public_health.results.stratification import (
     ResultsStratifier as ResultsStratifier_,
 )
+from vivarium.public_health.risks.implementations.low_birth_weight_and_short_gestation import (
+    BIRTH_WEIGHT,
+    GESTATIONAL_AGE,
+    LBWSGRisk,
+)
 from vivarium.public_health.utilities import to_years
 
 from lsff_utils import data_processing
@@ -198,8 +203,10 @@ class ResultsStratifier(ResultsStratifier_):
 class BirthObserver(Observer):
     def __init__(self):
         super().__init__()
-        self.birth_weight_column_name = "birth_weight_exposure"
-        self.gestational_age_column_name = "gestational_age_exposure"
+        # Derive these from LBWSGRisk rather than spelling them out: the exposure
+        # columns are named '<axis>.exposure' now, not '<axis>_exposure'.
+        self.birth_weight_column_name = LBWSGRisk.get_exposure_name(BIRTH_WEIGHT)
+        self.gestational_age_column_name = LBWSGRisk.get_exposure_name(GESTATIONAL_AGE)
         self.low_birth_weight_limit = 2500  # grams
 
     # noinspection PyAttributeOutsideInit
