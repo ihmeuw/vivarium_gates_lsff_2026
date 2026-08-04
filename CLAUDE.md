@@ -622,40 +622,38 @@ Confirmed good:
   all-zero in *both* vintages, and `0100_data_prep/results/iron/rice/baseline_fortification/any_coverage/nigeria.csv`
   is genuinely `0.0` — Nigeria has no existing rice fortification programme. Bouillon is ~0.52.
 
-Open problems. **Note they point in opposite directions** — one is a GBD-2023 problem, the
-other looks like a pre-existing error that GBD 2023 corrected:
+Open problems, one pre-existing and one round-related:
 
-1. **`cause.maternal_disorders.ylds` differs by 150–340×, and the GBD-2021 value is probably
-   the wrong one.** Computing that key's own formula
-   (`(all_md_ylds - anemia_ylds) / (incidence - csmr)`) directly from raw GBD for Nigeria gives
-   ~0.0123 under release 9 and ~0.0075 under release 16. The GBD-2023 artifact holds 0.0131,
-   which matches; the GBD-2021 artifact holds 0.0000394, ~300× below what its own inputs imply.
-   0.000015 disability-years per maternal-disorder case is about thirty seconds, which is not
-   credible. So this looks like a **long-standing under-count that the migration fixed**, not a
-   migration regression. **Impact measured, and small:** `maternal_disorders` is 2.32% of
-   published baseline DALYs for india/rice, but that stream is almost entirely deaths — YLDs are
-   558 against 2,213,530 YLLs, i.e. **0.03%** of it (0.01% for Nigeria). Correcting the YLDs
-   150–340× therefore moves total published DALYs by 0.045%–0.203%, and DALYs *averted* by
-   0.000% (india/rice), 0.107% (nigeria/rice) and 0.124% (nigeria/bouillon). No published
-   conclusion is affected; worth fixing for correctness and because whatever caused it may
-   touch other keys.
-   *Ruled out:* subnational aggregation (five locations, three with GBD subnational detail and
-   two without, all moved 0.70×–1.08×) and `metric_id=None` in the `get_draws` calls (both
-   releases return only `metric_id=3`). *Decisive test:* run `load_maternal_disorders_ylds`
-   itself under release 9 vs 16 — needs the modern-suite environment.
-2. **`risk_factor.hemoglobin.standard_deviation` roughly doubled** (max 16.9 → 36.1 g/L) — this
-   one *is* a GBD-2023-direction problem. A
-   population hemoglobin SD of 36 is not credible. Because severe anemia is a far-tail
-   quantity the error amplifies downstream: `pregnant_proportion_below_70_gL` up 22× to 0.58
-   in the worst stratum, and `hemoglobin_on_maternal_hemorrhage.paf` up 11×. Note the SD's own
-   median movement is *below* the 3× threshold so it is not itself flagged — it is the likely
-   upstream cause of two keys that are. Produced by `get_hemoglobin_data` from me_ids
-   10487/10488, one of the six `.fillna(0)` loaders.
-3. **`cause.maternal_disorders.ylds` carries 8 `inf` values in both vintages**, from dividing
-   by a zero maternal-disorders incidence at ages 60+. `.fillna(0)` catches NaN, not `inf`.
-   Harmless while the sim runs ages 10–54, but latent.
-4. `cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.8× — flagged for
-   review, less obviously wrong than the above.
+1. **`cause.maternal_disorders.ylds` is divided by the draw count (250×) whenever an
+   artifact is built with `--mean`** — which the Snakefile always passes. `get_data`
+   collapses 250 draw columns to one mean when `mean_draw=True`, so anything fetched
+   through it has 1 column while `extra_gbd.*` and `load_raw_incidence_data` keep 250.
+   `load_maternal_disorders_ylds` mixes both: `incidence - csmr` aligns on column names,
+   249 columns go NaN, the trailing `.fillna(0)` turns those into zeros, and the outer
+   mean then averages one real value against 249 zeros. Confirmed: the loader returns
+   250 draws with exactly **one** non-zero per row, and stored/direct = 250.0 to five
+   significant figures. **Pre-existing** — the pre-migration loader is identical, so every
+   `--mean` artifact including the published one is affected. Scope is exactly this one
+   loader (verified by scanning every consumer of the module-local `get_data`).
+   *Impact bounded:* YLDs are 0.03% of the maternal-disorders DALY stream (558 against
+   2,213,530 YLLs), so ≤0.203% of total DALYs and ≤0.124% of DALYs averted. Guarded by
+   `tests/test_draw_alignment.py`. Fix by fetching every term through one convention, or
+   by dropping the `fillna(0)` so the mismatch raises.
+2. **`risk_factor.hemoglobin.pregnant_proportion_below_70_gL` reaches 0.58 under GBD 2023**
+   against 0.026 in 2021 — 58% of pregnant women in the worst stratum classed as severely
+   anemic. Reproduces in two independently built GBD-2023 artifacts, so it is a genuine
+   round effect. `hemoglobin_on_maternal_hemorrhage.paf` follows (11×). **The SD is not the
+   cause** — an earlier read blamed it, but that was reading an artifact built without
+   `--mean` (single draw, SD 23.7); a `--mean` rebuild gives 18.05 against 2021's 15.25,
+   an ordinary 1.18×. Since the mean and dispersion are both fine and only the far tail is
+   wrong, look at `get_hemoglobin_below_70` and the ensemble-distribution changes
+   (`mirror_point`, the `computability_*` renames) in `lsff_utils.hemoglobin_distribution`.
+3. `cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.8× — flagged for
+   review, no amplifying downstream, not obviously wrong.
+
+**Beware comparing artifacts built with and without `--mean`.** A no-`--mean` build stores
+`draw_0`; a `--mean` build stores the mean across draws. That alone explains modest
+differences in many keys, and it is what made finding 1 look like a GBD-2023 effect.
 
 Every other key moved within 0.47×–2.7×, an ordinary GBD-revision range. That contrast is
 what makes the ratio check informative.
