@@ -6,14 +6,27 @@ config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_for
 
 # Use the Snakemake config as a way to pass "globals" through all Snakefiles
 
+# One environment now serves both roles. The old split existed because the
+# vivarium generation used for running simulations needed pandas 2.2.2 while GBD's
+# db_queries needed 1.5.3; the modern suite pins pandas 1.5.3 via
+# vivarium-dependencies[numpy_lt_2,pandas], so both sides agree and the artifact
+# env and the simulation env can be the same venv. Both config keys are kept and
+# pointed at it so no stage Snakefile needs to change.
+#
+# Deliberately NOT named .venv: the old-generation .venv and
+# .simulation_running_venv are what reproduce the April-2025 results, and keeping
+# them runnable is useful while the migration is in flight. Collapse this to
+# .venv once the migration lands.
+MODERN_VENV = ".venv_modern"
+
 config = {
-    "env_input": [".venv/bin/activate"],
-    "env_setup": """
-source .venv/bin/activate
+    "env_input": [f"{MODERN_VENV}/bin/activate"],
+    "env_setup": f"""
+source {MODERN_VENV}/bin/activate
 """,
-    "simulation_running_env_input": [".simulation_running_venv/bin/activate"],
-    "simulation_running_env_setup": """
-source .simulation_running_venv/bin/activate
+    "simulation_running_env_input": [f"{MODERN_VENV}/bin/activate"],
+    "simulation_running_env_setup": f"""
+source {MODERN_VENV}/bin/activate
 """,
     "debug": "false",
     "local": "false",
@@ -38,64 +51,41 @@ include: "5000_analyze_results/Snakefile"
 update_packages = config.get("update_packages", "n").lower() in ("t", "true", "y", "yes")
 
 if update_packages:
-    rule general_venv_from_scratch:
-        input: ["requirements.txt"]
-        output: [directory(".venv/"), ".venv/bin/activate"]
-        shell:
-            """
-            python -m venv .venv
-            source .venv/bin/activate
-            pip install -r requirements.txt
-            pip install -e . --no-deps
-            cd 0200_pregnancy_sim
-            pip install .[data]
-            pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
-            pip uninstall -y vivarium_gates_lsff_2026_maternal # Remove sim itself, leaving dependencies
-            cd ..
-            pip freeze -l | grep -v '\-e ' | grep -v 'file:///' > pip_lock.txt
-            touch .venv .venv/bin/activate # Should be newer than the lockfile
-            """
-
-    # Vivarium currently requires a different version of Pandas than GBD
-    # uses, which is why we need this.
-    rule simulation_running_venv_from_scratch:
-        input: ["0200_pregnancy_sim/setup.py"]
-        output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
+    # The sub-package setup.py files are the source of truth for the suite
+    # versions; the `data` extra pulls vivarium-inputs, vivarium-cluster-tools,
+    # drmaa, vivarium-testing-utils and papermill. The sims themselves are
+    # installed non-editable and then uninstalled, keeping only their
+    # dependencies, because they must be run in-tree via PYTHONPATH -- see the
+    # note in CLAUDE.md about DATA_PREP_RESULTS_ROOT.
+    rule modern_venv_from_scratch:
+        input: ["0200_pregnancy_sim/setup.py", "0300_child_sim/setup.py", "requirements.txt"]
+        output: [directory(f"{MODERN_VENV}/"), f"{MODERN_VENV}/bin/activate"]
         shell:
             f"""
-            python -m venv .simulation_running_venv
-            source .simulation_running_venv/bin/activate
-            cd 0200_pregnancy_sim
-            pip install .[dev] # NOT editable! We use PYTHONPATH for that
-            pip install git+https://github.com/ihmeuw/vivarium_public_health.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium.git@release-candidate-spring git+https://github.com/ihmeuw/vivarium_cluster_tools.git@release-candidate-spring
-            pip uninstall -y vivarium_gates_lsff_2026_maternal # Remove sim itself, leaving dependencies
-            # Assumed compatible with child sim
-            cd ..
+            python -m venv {MODERN_VENV}
+            source {MODERN_VENV}/bin/activate
+            pip install --upgrade pip
+            pip install ./0200_pregnancy_sim[data]
+            pip uninstall -y vivarium_gates_lsff_2026_maternal
+            pip install ./0300_child_sim[data]
+            pip uninstall -y vivarium_gates_lsff_2026_child
+            # Notebook/analysis stack, plus pytest-mock: the vivarium-testing-utils
+            # pytest plugin imports it without declaring it, and without it the
+            # plugin is silently skipped and --runslow disappears.
+            pip install ploomber-engine jupyter openpyxl matplotlib statsmodels \
+                scikit-learn seaborn xlsxwriter pytest-mock
             pip install -e . --no-deps
-            pip freeze -l  | grep -v '\-e ' | grep -v 'file:///' > simulation_running_pip_lock.txt
-            touch .simulation_running_venv .simulation_running_venv/bin/activate # Should be newer than the lockfile
+            pip freeze -l | grep -v '\\-e ' | grep -v 'file:///' > modern_pip_lock.txt
+            touch {MODERN_VENV} {MODERN_VENV}/bin/activate # Should be newer than the lockfile
             """
 else:
-    rule general_venv:
-        input: ["pip_lock.txt"]
-        output: [directory(".venv/"), ".venv/bin/activate"]
+    rule modern_venv:
+        input: ["modern_pip_lock.txt"]
+        output: [directory(f"{MODERN_VENV}/"), f"{MODERN_VENV}/bin/activate"]
         shell:
-            """
-            python -m venv .venv
-            source .venv/bin/activate
-            pip install -r pip_lock.txt
-            pip install -e . --no-deps
-            """
-    
-    # Vivarium currently requires a different version of Pandas than GBD
-    # uses, which is why we need this.
-    rule simulation_running_venv:
-        input: ["simulation_running_pip_lock.txt"]
-        output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
-        shell:
-            """
-            python -m venv .simulation_running_venv
-            source .simulation_running_venv/bin/activate
-            pip install -r simulation_running_pip_lock.txt
+            f"""
+            python -m venv {MODERN_VENV}
+            source {MODERN_VENV}/bin/activate
+            pip install -r modern_pip_lock.txt
             pip install -e . --no-deps
             """
