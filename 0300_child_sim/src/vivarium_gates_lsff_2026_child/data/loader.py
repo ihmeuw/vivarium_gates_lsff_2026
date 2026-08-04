@@ -299,7 +299,13 @@ def load_age_bins(key: str, location: Union[str, List[int]], mean_draw: bool) ->
 def load_demographic_dimensions(
     key: str, location: Union[str, List[int]], mean_draw: bool
 ) -> pd.DataFrame:
-    demographic_dimensions = interface.get_demographic_dimensions(location)
+    # Pin to the same year the GBD measures are pulled for. This index is used to
+    # build non-GBD data (durations, PAFs, reindexing targets) that then gets combined
+    # with GBD data; a different year here unions into non-contiguous year bins, which
+    # the lookup table rejects with "Interpolation only supports contiguous bins".
+    demographic_dimensions = interface.get_demographic_dimensions(
+        location, years=metadata.GBD_EXTRACT_YEAR
+    )
     is_under_five = demographic_dimensions.index.get_level_values("age_end") <= 5
     return demographic_dimensions[is_under_five]
 
