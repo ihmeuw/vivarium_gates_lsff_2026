@@ -457,6 +457,22 @@ belong in the non-iron-responsive bucket; omitting them excludes those people fr
 population rather than counting them as non-responsive, which biases the responsive
 fraction. Needs a decision from whoever owns the anemia model.
 
+**GBD 2023 added three more, and the check caught them** (2026-08-04):
+`puerperal_sepsis_with_{mild,moderate,severe}_anemia`, recorded separately in
+`UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE`. GBD 2021 exposes 2088 sequelae with none of them;
+GBD 2023 exposes 2106 with all three. This is exactly the silent failure the check was
+written for — an *added* sequela lands in neither bucket and shifts the iron-responsive
+fraction — so it is the first confirmed catch by layer 3, not a test defect. Anemia
+accompanying puerperal sepsis is plausibly inflammatory rather than iron-deficiency, which
+would put it in the non-responsive bucket, but that is the model owner's call.
+
+**These two checks were dark in `.venv_modern` until 2026-08-04.** The `gbd_mapping` fixture
+did `importorskip("gbd_mapping")`, and the modern suite renamed that to
+`vivarium.gbd_mapping`, so the LBWSG-category and anemia-sequela checks skipped there while
+appearing to pass — in the one environment now used for everything. The fixture tries both
+names. Run layer 3 in **both** `.venv_modern` and `.venv`: the rounds disagree about which
+sequelae exist, so each environment exercises a different input contract.
+
 **`tests/reference/sim_proportions.csv` is the committed baseline for the stochastic layer**
 and is deliberately not gitignored. The raw simulation parquet is gitignored and the
 April-2025 run's copies no longer exist, so the proportions had to be snapshotted from a

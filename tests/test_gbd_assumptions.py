@@ -10,18 +10,27 @@ Each check reads the project's assumption from its actual source of truth (the
 notebook or constants module that owns it) rather than duplicating the values
 here, so the test follows the code if someone edits it.
 
-Requires GBD access, so these run in the artifact environment:
+Requires GBD access, and runs in either generation's environment:
 
-    source .venv/bin/activate && pytest tests/test_gbd_assumptions.py
+    source .venv_modern/bin/activate && pytest tests/test_gbd_assumptions.py
+    source .venv/bin/activate        && pytest tests/test_gbd_assumptions.py
 
-They skip cleanly wherever gbd_mapping is unavailable, including .test_venv.
+Running in both matters more than it looks. The two rounds disagree about which
+sequelae exist, so each environment exercises a different input contract -- and
+the ``gbd_mapping`` fixture had to learn the modern ``vivarium.gbd_mapping`` name
+before these ran in ``.venv_modern`` at all. Until then two of the three checks
+skipped there, silently, which is the failure mode this whole file exists to
+prevent.
+
+They skip cleanly wherever no gbd_mapping is available, including .test_venv.
 They are not marked ``slow``: the GBD lookups are cached and take seconds, and
-``--runslow`` does not exist in the artifact env anyway, since that flag comes
+``--runslow`` does not exist in the old artifact env anyway, since that flag comes
 from the vivarium-testing-utils pytest plugin.
 """
 
 from __future__ import annotations
 
+import importlib
 import json
 import re
 
@@ -70,6 +79,34 @@ KNOWN_UNCOVERED_ANEMIA_SEQUELAE = frozenset(
     }
 )
 
+# Anemia sequelae that GBD 2023 *added*, and that the 0400 notebook therefore
+# classifies into neither bucket. Kept separate from the GBD-2021 backlog above
+# because these are a live consequence of the round change, not inherited scope:
+# GBD 2021 exposes 2088 sequelae with no `puerperal_sepsis_with_*_anemia`, GBD 2023
+# exposes 2106 with all three.
+#
+# This is the case the check below was written for -- an added sequela is dropped
+# from the population rather than counted as non-responsive, shifting the
+# iron-responsive fraction that drives the whole anemia YLD calculation. Recorded
+# rather than left failing so the rest of the suite stays legible, but it is an
+# open decision for the anemia model owner, not a settled exclusion. Anemia
+# accompanying puerperal sepsis is plausibly inflammatory rather than
+# iron-deficiency, which would put it in the non-responsive bucket, but that is a
+# judgement for whoever owns the model.
+UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE = frozenset(
+    {
+        "puerperal_sepsis_with_mild_anemia",
+        "puerperal_sepsis_with_moderate_anemia",
+        "puerperal_sepsis_with_severe_anemia",
+    }
+)
+
+# Both buckets of "we know about this one". Separate constants above so the reason
+# for each is legible; combined here because the check treats them alike.
+RECORDED_UNCOVERED_ANEMIA_SEQUELAE = (
+    KNOWN_UNCOVERED_ANEMIA_SEQUELAE | UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE
+)
+
 # Sequela names containing "anemia" that describe its *absence*.
 ABSENCE_MARKERS = ("without_anemia", "with_no_anemia", "no_anemia")
 
@@ -81,11 +118,21 @@ LOW_BIRTH_WEIGHT_GRAMS = 2500
 BIRTH_WEIGHT_PATTERN = re.compile(r"\[\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*[)\]]\s*g")
 
 
+# The modern suite moved `gbd_mapping` under the `vivarium` namespace. Both names
+# are tried because this file has to run in either generation's environment, and
+# skipping on the old name alone silently switched off the two checks below --
+# exactly the two guarding the GBD-2023 changes that fail without an error.
+GBD_MAPPING_MODULES = ("gbd_mapping", "vivarium.gbd_mapping")
+
+
 @pytest.fixture(scope="module")
 def gbd_mapping():
-    return pytest.importorskip(
-        "gbd_mapping", reason="needs the artifact environment (.venv)"
-    )
+    for name in GBD_MAPPING_MODULES:
+        try:
+            return importlib.import_module(name)
+        except ImportError:
+            continue
+    pytest.skip(f"needs one of {', '.join(GBD_MAPPING_MODULES)}")
 
 
 def notebook_source(path: str) -> str:
@@ -174,12 +221,14 @@ def test_low_birth_weight_categories_still_mean_low_birth_weight(gbd_mapping) ->
     """
     listed = parse_low_birth_weight_categories(child_sim_data_values_source())
     assert len(listed) > 20, f"only parsed {len(listed)} categories; check the regex"
-    categories = gbd_mapping.risk_factors.low_birth_weight_and_short_gestation.categories.to_dict()
+    categories = (
+        gbd_mapping.risk_factors.low_birth_weight_and_short_gestation.categories.to_dict()
+    )
 
     missing_from_gbd = listed - set(categories)
-    assert not missing_from_gbd, (
-        f"categories hardcoded in 0300 no longer exist in GBD: {sorted(missing_from_gbd)}"
-    )
+    assert (
+        not missing_from_gbd
+    ), f"categories hardcoded in 0300 no longer exist in GBD: {sorted(missing_from_gbd)}"
 
     upper_bound = {}
     for name, description in categories.items():
@@ -241,16 +290,24 @@ def test_anemia_sequela_lists_cover_gbd(gbd_mapping) -> None:
     }
     uncovered = present_anemia - listed
 
-    newly_uncovered = uncovered - KNOWN_UNCOVERED_ANEMIA_SEQUELAE
+    newly_uncovered = uncovered - RECORDED_UNCOVERED_ANEMIA_SEQUELAE
     assert not newly_uncovered, (
         f"{len(newly_uncovered)} anemia sequelae are in GBD but in neither the "
         f"iron-responsive nor the non-responsive list, so they are silently excluded "
         f"from the anemia model: {sorted(newly_uncovered)}\n"
-        "Classify them, or add them to KNOWN_UNCOVERED_ANEMIA_SEQUELAE with a reason."
+        "Classify them, or record them with a reason -- in "
+        "UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE if the round added them, otherwise in "
+        "KNOWN_UNCOVERED_ANEMIA_SEQUELAE."
     )
 
-    now_covered = KNOWN_UNCOVERED_ANEMIA_SEQUELAE - uncovered
+    # Only recorded sequelae that this GBD round actually exposes can be judged, so
+    # intersect with present_anemia first. Without that, running against GBD 2021 --
+    # which has no `puerperal_sepsis_with_*_anemia` at all -- would demand their
+    # removal, and running against 2023 would demand they be put back. The cost is
+    # that a sequela GBD drops entirely lingers in the constant rather than
+    # prompting cleanup; that is the cheaper of the two failure modes.
+    now_covered = RECORDED_UNCOVERED_ANEMIA_SEQUELAE & present_anemia & listed
     assert not now_covered, (
-        "these were recorded as uncovered but are now classified (or gone from GBD); "
-        f"remove them from KNOWN_UNCOVERED_ANEMIA_SEQUELAE: {sorted(now_covered)}"
+        "these were recorded as uncovered but the notebook now classifies them; "
+        f"remove them from the recorded sets: {sorted(now_covered)}"
     )
