@@ -1355,7 +1355,17 @@ def load_lbwsg_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         raise ValueError(f"Unrecognized key {key}")
 
     data = load_standard_data(key, location, mean_draw)
-    data = data.query("year_start == 2021").droplevel(["affected_entity", "affected_measure"])
+    # load_standard_data pulls GBD_EXTRACT_YEAR, so the filter has to track it. A
+    # hardcoded year silently empties this key whenever the extract year moves.
+    data = data.query(f"year_start == {metadata.GBD_EXTRACT_YEAR}").droplevel(
+        ["affected_entity", "affected_measure"]
+    )
+    if data.empty:
+        raise ValueError(
+            f"No '{key}' data for year {metadata.GBD_EXTRACT_YEAR}. The relative risk "
+            "is only estimated for the neonatal age groups; check that the extract "
+            "year is one the current GBD release provides this measure for."
+        )
     data = data[~data.index.duplicated()]
     return data
 
