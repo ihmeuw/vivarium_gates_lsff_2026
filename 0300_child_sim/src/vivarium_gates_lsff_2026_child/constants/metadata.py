@@ -54,8 +54,10 @@ DEMOGRAPHIC_COLUMNS = [
 # so a count larger than GBD actually returns raises a KeyError during the build.
 DRAW_COUNT = 250
 ARTIFACT_COLUMNS = pd.Index([f"draw_{i}" for i in range(DRAW_COUNT)])
-GBD_2021_ROUND_ID = 7
-GBD_EXTRACT_YEAR = 2021
+# Must be one of the current release's estimation years, which no longer include 2021.
+# 2023 is what vivarium_inputs resolves to when no year is requested, and matches the
+# year the maternal package's artifact is built with.
+GBD_EXTRACT_YEAR = 2023
 
 
 class __Scenarios(NamedTuple):
@@ -83,7 +85,9 @@ class __AgeGroup(NamedTuple):
     GBD_2019_SIDS = {LATE_NEONATAL_ID}
 
     ## Could make this through vivarium_inputs instead of defining it here
-    GBD_2021 = {
+    # NOTE: These are standard GBD age group ids and are not release specific, so the
+    # name deliberately does not mention a release.
+    UNDER_FIVE = {
         EARLY_NEONATAL_ID,
         LATE_NEONATAL_ID,
         MONTHS_1_TO_5,
