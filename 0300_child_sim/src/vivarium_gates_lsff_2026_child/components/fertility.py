@@ -13,8 +13,8 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-from vivarium import Component
 from vivarium.artifact import Artifact
+from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.event import Event
 from vivarium.public_health import utilities
@@ -29,10 +29,6 @@ class FertilityLineList(Component):
     This class will determine what simulants need to be added to the state table based on their birth data from existing
     line list data.  Simulants will be registered to the state table on the time steps in which their birth takes place.
     """
-
-    @property
-    def columns_required(self) -> List[str]:
-        return ["alive", "cause_of_death"]
 
     #################
     # Setup methods #
@@ -89,12 +85,10 @@ class FertilityLineList(Component):
         # everyone is currently born on the first time step so this is always empty after the first time step
         if born_previous_step.empty:
             return
-        # stillbirths should be initialized as dead and with exit time
-        born_previous_step.loc[:, "alive"] = "alive"
+        # Stillbirths get an exit time immediately. Their 'is_alive' and
+        # 'cause_of_death' are set by ChildMortality, which owns those columns.
         born_previous_step.loc[:, "exit_time"] = np.datetime64("NaT")
-
         is_stillbirth = born_previous_step["pregnancy_outcome"] == "stillbirth"
-        born_previous_step.loc[is_stillbirth, "alive"] = "dead"
         born_previous_step.loc[is_stillbirth, "exit_time"] = self.clock()
 
         simulants_to_add = len(born_previous_step)
@@ -110,9 +104,7 @@ class FertilityLineList(Component):
                 },
             )
 
-    def on_time_step_cleanup(self, event: Event) -> None:
-        # update cause_of_death on cleanup because mortality handles that column on initialization
-        pop = self.population_view.get(event.index)
-        is_stillborn = (pop["alive"] == "dead") & (pop["cause_of_death"] == "not_dead")
-        pop.loc[is_stillborn, "cause_of_death"] = "stillborn"
-        self.population_view.update(pop)
+    # NOTE: The former on_time_step_cleanup that stamped 'cause_of_death' as
+    # "stillborn" is gone. A component may only write its own private columns now,
+    # and 'cause_of_death' belongs to the mortality component -- ChildMortality
+    # sets it during initialization instead.

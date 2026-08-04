@@ -4,12 +4,12 @@ from typing import Any, Callable, Dict
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.values import Pipeline
+from vivarium.public_health.causal_factor.distributions import CausalFactorDistribution
 from vivarium.public_health.causal_factor.utilities import get_exposure_post_processor
 from vivarium.public_health.risks import Risk, RiskEffect
-from vivarium.public_health.risks.distributions import RiskExposureDistribution
 from vivarium.public_health.utilities import EntityString
 
-from vivarium_gates_lsff_2026_child.components import CGFPolytomousDistribution
+from vivarium_gates_lsff_2026_child.components.distribution import CGFPolytomousDistribution
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 
 
@@ -39,15 +39,16 @@ class ChildUnderweight(Risk):
     def get_distribution_type(self, builder: Builder) -> str:
         pass
 
-    def get_exposure_distribution(self, builder: Builder) -> RiskExposureDistribution:
+    def get_exposure_distribution(self, builder: Builder) -> CausalFactorDistribution:
         pass
 
     def get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
             source=self.get_current_exposure,
-            requires_columns=["age", "sex"],
-            requires_values=[
+            required_resources=[
+                "age",
+                "sex",
                 self.propensity_pipeline_name,
                 data_values.PIPELINES.STUNTING_EXPOSURE,
                 data_values.PIPELINES.WASTING_EXPOSURE,

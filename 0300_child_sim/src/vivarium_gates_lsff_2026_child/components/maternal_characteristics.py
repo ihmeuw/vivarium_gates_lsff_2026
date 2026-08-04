@@ -6,28 +6,32 @@ from typing import Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from vivarium import Component
+from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.lookup import LookupTable
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.risks import RiskEffect
-from vivarium.public_health.utilities import get_lookup_columns
 
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
+from vivarium_gates_lsff_2026_child.utilities import get_lookup_columns
 
 
 class MaternalIronConsumptionFromFortification(Component):
     def __init__(self):
         super().__init__()
 
+    # NOTE: Building the frame without dtypes registers these as 'object', which a
+    # later batch's real values then cannot be coerced onto. See PopulationLineList.
+    COLUMN_DTYPES = {
+        "baseline_2021_maternal_iron_consumption_from_fortification_mcg": float,
+        "maternal_iron_consumption_from_fortification_mcg": float,
+    }
+
     @property
     def columns_created(self) -> List[str]:
-        return [
-            "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
-            "maternal_iron_consumption_from_fortification_mcg",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     #################
     # Setup methods #
@@ -48,10 +52,15 @@ class MaternalIronConsumptionFromFortification(Component):
         builder.value.register_value_modifier(
             "birth_weight.birth_exposure",
             self.update_birth_weight,
-            requires_columns=[
+            required_resources=[
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
                 "maternal_iron_consumption_from_fortification_mcg",
             ],
+        )
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.columns_created,
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -59,8 +68,10 @@ class MaternalIronConsumptionFromFortification(Component):
         Initialize simulants from line list data. Population configuration
         contains a key "new_births" which is the line list data.
         """
-        columns = self.columns_created
-        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]
@@ -73,10 +84,10 @@ class MaternalIronConsumptionFromFortification(Component):
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
             ] = new_births["baseline_2021_iron_consumption_from_fortification_mcg"].copy()
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
     def update_birth_weight(self, index, exposure):
-        pop = self.population_view.get(index)
+        pop = self.population_view.get(index, self.columns_created)
 
         # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
         exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
@@ -93,11 +104,13 @@ class WealthQuintile(Component):
     def __init__(self):
         super().__init__()
 
+    # NOTE: An untyped frame registers this as 'object'; coercing that to int later
+    # fails outright, since the placeholder nulls have no integer representation.
+    COLUMN_DTYPES = {"wealth_quintile": int}
+
     @property
     def columns_created(self) -> List[str]:
-        return [
-            "wealth_quintile",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     #################
     # Setup methods #
@@ -108,16 +121,22 @@ class WealthQuintile(Component):
         self.start_time = get_time_stamp(builder.configuration.time.start)
         self.birth_weight_disparities_multiplier = self.build_lookup_table(
             builder,
-            builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
-            value_columns=["value"],
+            "birth_weight_wealth_disparities",
+            data_source=builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
+            value_columns="value",
         )
 
         builder.value.register_value_modifier(
             "birth_weight.birth_exposure",
             self.update_birth_weight,
-            requires_columns=[
+            required_resources=[
                 "wealth_quintile",
             ],
+        )
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.columns_created,
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -125,8 +144,10 @@ class WealthQuintile(Component):
         Initialize simulants from line list data. Population configuration
         contains a key "new_births" which is the line list data.
         """
-        columns = self.columns_created
-        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]
@@ -136,7 +157,7 @@ class WealthQuintile(Component):
                 new_births["wealth_quintile"].astype(int).copy()
             )
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
     def update_birth_weight(self, index, exposure):
         mean_exposure = exposure.mean()

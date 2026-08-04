@@ -17,6 +17,7 @@ from vivarium.gbd_mapping import (
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_gbd_access.gbd.base_data import get_draws, query
+from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
@@ -28,7 +29,6 @@ from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUN
     AGE_GROUP,
     ARTIFACT_COLUMNS,
     ARTIFACT_INDEX_COLUMNS,
-    GBD_2021_ROUND_ID,
     LOCATIONS,
     NEONATAL_END_AGE,
 )
@@ -66,7 +66,7 @@ def get_data(
         location_id=location_id,
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=age_group_ids,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         status="best",
     )
     return data
@@ -295,8 +295,8 @@ def normalize_age_and_years(
     data: pd.DataFrame,
     fill_value: Real = None,
     cols_to_fill: List[str] = vi_globals.DRAW_COLUMNS,
-    gbd_release_id: int = gbd_constants.RELEASE_IDS.GBD_2021,
-    age_group_ids: List[int] = AGE_GROUP.GBD_2021,
+    gbd_release_id: int = gbd_constants.RELEASE_IDS.GBD_2023,
+    age_group_ids: List[int] = AGE_GROUP.UNDER_FIVE,
 ) -> pd.DataFrame:
     data = vi_utils.normalize_sex(data, fill_value, cols_to_fill)
 
@@ -557,7 +557,7 @@ def scrub_neonatal_age_groups(data: pd.DataFrame) -> pd.DataFrame:
 """
 
 
-@vi_utils.cache
+@cache
 def load_lbwsg_exposure(location: str):
     entity = get_entity(data_keys.LBWSG.EXPOSURE)
     if type(location) == int:
@@ -571,7 +571,7 @@ def load_lbwsg_exposure(location: str):
         location_id=location_id,
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=[2, 3],
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         # This data set is big, so let's reduce it by a factor of ~40
         year_id=2019,
     )
@@ -586,13 +586,13 @@ def get_gbd_2021_entity(key: str) -> ModelableEntity:
     if isinstance(entity, RiskFactor) or isinstance(entity, Cause):
         # Set risk factor age restrictions for GBD 2021
         if "yll_age_group_id_start" in entity.restrictions:
-            entity.restrictions.yll_age_group_id_start = min(AGE_GROUP.GBD_2021)
+            entity.restrictions.yll_age_group_id_start = min(AGE_GROUP.UNDER_FIVE)
         if "yld_age_group_id_start" in entity.restrictions:
-            entity.restrictions.yld_age_group_id_start = min(AGE_GROUP.GBD_2021)
+            entity.restrictions.yld_age_group_id_start = min(AGE_GROUP.UNDER_FIVE)
         if "yll_age_group_id_end" in entity.restrictions:
-            entity.restrictions.yll_age_group_id_end = max(AGE_GROUP.GBD_2021)
+            entity.restrictions.yll_age_group_id_end = max(AGE_GROUP.UNDER_FIVE)
         if "yld_age_group_id_end" in entity.restrictions:
-            entity.restrictions.yld_age_group_id_end = max(AGE_GROUP.GBD_2021)
+            entity.restrictions.yld_age_group_id_end = max(AGE_GROUP.UNDER_FIVE)
 
     return entity
 
@@ -638,9 +638,9 @@ def reshape_gbd_2019_data_as_gbd_2021_data(gbd_2019_data: pd.DataFrame) -> pd.Da
 
 
 def get_gbd_2021_demographic_dimensions() -> pd.DataFrame:
-    estimation_years = get_gbd_estimation_years(GBD_2021_ROUND_ID)
+    estimation_years = get_gbd_estimation_years(gbd_constants.RELEASE_IDS.GBD_2023)
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
-    age_bins = get_gbd_age_bins(AGE_GROUP.GBD_2021)
+    age_bins = get_gbd_age_bins(AGE_GROUP.UNDER_FIVE)
 
     unique_index_data = pd.DataFrame(
         product(["Female", "Male"], age_bins.age_start, year_starts)
@@ -657,7 +657,7 @@ def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
     if "year_end" not in data.columns:
         data["year_end"] = data["year_start"] + 1
     if "age_end" not in data.columns:
-        age_bins = get_gbd_age_bins(AGE_GROUP.GBD_2021)
+        age_bins = get_gbd_age_bins(AGE_GROUP.UNDER_FIVE)
         data["age_end"] = data["age_start"].apply(
             lambda x: {
                 start: end for start, end in zip(age_bins.age_start, age_bins.age_end)
@@ -707,6 +707,8 @@ def get_wasting_treatment_parameter_data(parameter: str, location: str) -> pd.Se
 
 
 def rename_subnational_level(data: pd.DataFrame) -> pd.DataFrame:
-    if data.index.get_level_values("location")[0] not in LOCATIONS:
+    locations = data.index.get_level_values("location")
+    # Nothing to inspect on empty data; the caller warns about that separately.
+    if len(locations) and locations[0] not in LOCATIONS:
         data.index = data.index.rename({"location": "subnational"})
     return data

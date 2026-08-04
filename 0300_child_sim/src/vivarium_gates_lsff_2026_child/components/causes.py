@@ -10,18 +10,17 @@ from vivarium.public_health.disease.transition import TransitionString
 
 
 def SIS_with_birth_prevalence(cause: str) -> DiseaseModel:
-    with_condition_data_functions = {
-        "birth_prevalence": lambda builder, cause: builder.data.load(
-            f"cause.{cause}.birth_prevalence"
-        )
-    }
+    # 'get_data_functions' is gone; each data source is now its own constructor
+    # argument, and a string in entity-key format is read from the artifact.
+    # Self transitions are likewise a constructor argument rather than a method call.
+    healthy = SusceptibleState(cause, allow_self_transition=True)
+    infected = DiseaseState(
+        cause,
+        allow_self_transition=True,
+        birth_prevalence=f"cause.{cause}.birth_prevalence",
+    )
 
-    healthy = SusceptibleState(cause)
-    infected = DiseaseState(cause, get_data_functions=with_condition_data_functions)
-
-    healthy.allow_self_transitions()
     healthy.add_rate_transition(infected)
-    infected.allow_self_transitions()
     infected.add_rate_transition(healthy)
 
     return DiseaseModel(cause, states=[healthy, infected])

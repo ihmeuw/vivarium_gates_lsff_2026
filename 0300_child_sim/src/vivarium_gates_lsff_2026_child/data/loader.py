@@ -14,10 +14,12 @@ for an example.
 """
 
 import pickle
+from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from scipy import stats
 from scipy.interpolate import RectBivariateSpline, griddata
 from vivarium.artifact import EntityKey
@@ -297,7 +299,13 @@ def load_age_bins(key: str, location: Union[str, List[int]], mean_draw: bool) ->
 def load_demographic_dimensions(
     key: str, location: Union[str, List[int]], mean_draw: bool
 ) -> pd.DataFrame:
-    demographic_dimensions = interface.get_demographic_dimensions(location)
+    # Pin to the same year the GBD measures are pulled for. This index is used to
+    # build non-GBD data (durations, PAFs, reindexing targets) that then gets combined
+    # with GBD data; a different year here unions into non-contiguous year bins, which
+    # the lookup table rejects with "Interpolation only supports contiguous bins".
+    demographic_dimensions = interface.get_demographic_dimensions(
+        location, years=metadata.GBD_EXTRACT_YEAR
+    )
     is_under_five = demographic_dimensions.index.get_level_values("age_end") <= 5
     return demographic_dimensions[is_under_five]
 
@@ -309,15 +317,80 @@ def load_theoretical_minimum_risk_life_expectancy(
 
 
 def load_fertility_data(fertility_data_path: str) -> pd.DataFrame:
-    df = pd.read_parquet(fertility_data_path)
-    if "input_draw" not in df.columns:
-        df = df.assign(input_draw=0)
-    if "random_seed" not in df.columns:
-        df = df.assign(random_seed=0)
-    if "scenario" not in df.columns:
-        df = df.assign(scenario="baseline")
+    """Load the maternal simulation's birth records.
+
+    Accepts either results layout:
+
+    - ``simulate run`` writes a single file, ``<run>/results/births.parquet``.
+    - ``psimulate`` writes one file per task into a directory per metric,
+      ``<run>/results/births/<task_id>.parquet``, and injects ``input_draw``,
+      ``random_seed``, and ``scenario`` as columns. ``pd.read_parquet`` on the
+      directory concatenates every file in it.
+
+    A run root or a ``results`` directory is also accepted and resolved to the
+    births data underneath it.
+
+    The three job columns are backfilled when absent so that a single-run file still
+    satisfies the filters ``FertilityLineList`` applies when reading this key back
+    out of the artifact. Backfilled values pin the child model to draw 0 / seed 0 /
+    baseline; use psimulate output to vary them.
+    """
+    if fertility_data_path is None:
+        raise ValueError(
+            "No fertility data path provided. The child model's population comes from "
+            "the maternal simulation's birth records; pass --fertility-data-path "
+            "pointing at a maternal run's 'births.parquet' or 'births/' directory."
+        )
+
+    path = _resolve_fertility_data_path(Path(fertility_data_path))
+    df = pd.read_parquet(path)
+    if df.empty:
+        raise ValueError(f"Fertility data at '{path}' contains no birth records.")
+
+    for column, default in (
+        ("input_draw", 0),
+        ("random_seed", 0),
+        ("scenario", "baseline"),
+    ):
+        if column not in df.columns:
+            logger.debug(f"Fertility data has no '{column}' column; using {default!r}.")
+            df = df.assign(**{column: default})
+
     df = df.set_index(list(df.columns))
     return df
+
+
+def _resolve_fertility_data_path(path: Path) -> Path:
+    """Resolve a user-supplied path to the births data itself.
+
+    Tolerates being handed a run root or a ``results`` directory rather than the
+    births file/directory, since which of those is convenient depends on whether the
+    upstream run came from ``simulate run`` or ``psimulate``.
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Fertility data path does not exist: '{path}'.")
+
+    if path.is_file():
+        return path
+
+    name = paths.FERTILITY_DATA_NAME
+    # A metric directory of per-task parquet files.
+    if any(path.glob("*.parquet")):
+        return path
+    # A run root or a results directory sitting above the births data.
+    for candidate in (
+        path / name,
+        path / f"{name}.parquet",
+        path / "results" / name,
+        path / "results" / f"{name}.parquet",
+    ):
+        if candidate.exists():
+            return candidate
+
+    raise FileNotFoundError(
+        f"Could not find '{name}' data under '{path}'. Expected either "
+        f"'{name}.parquet' or a '{name}/' directory of parquet files."
+    )
 
 
 def load_standard_data(
@@ -1288,7 +1361,17 @@ def load_lbwsg_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
         raise ValueError(f"Unrecognized key {key}")
 
     data = load_standard_data(key, location, mean_draw)
-    data = data.query("year_start == 2021").droplevel(["affected_entity", "affected_measure"])
+    # load_standard_data pulls GBD_EXTRACT_YEAR, so the filter has to track it. A
+    # hardcoded year silently empties this key whenever the extract year moves.
+    data = data.query(f"year_start == {metadata.GBD_EXTRACT_YEAR}").droplevel(
+        ["affected_entity", "affected_measure"]
+    )
+    if data.empty:
+        raise ValueError(
+            f"No '{key}' data for year {metadata.GBD_EXTRACT_YEAR}. The relative risk "
+            "is only estimated for the neonatal age groups; check that the extract "
+            "year is one the current GBD release provides this measure for."
+        )
     data = data[~data.index.duplicated()]
     return data
 
@@ -1354,14 +1437,7 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f"Unrecognized key {key}")
 
-    import pathlib
-
-    output_dir = pathlib.Path("./lbwsg_pafs") / location.lower().replace(" ", "_")
-
-    df = pd.read_parquet(
-        output_dir
-        / "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"
-    )
+    df = pd.read_parquet(_resolve_lbwsg_paf_path(location))
     if "input_draw" in df.columns:
         df = df.assign(input_draw="draw_" + df.input_draw.astype(str))
     else:
@@ -1387,6 +1463,52 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
             df.loc[(sex, age_start, age_end, 2021, 2022), :] = 0
 
     return df.sort_index()
+
+
+def _resolve_lbwsg_paf_path(location: str) -> Path:
+    """Locate the output of the LBWSG PAF calculation simulation.
+
+    Results live under :data:`paths.LBWSG_PAF_RESULTS_ROOT`. Both layouts are handled:
+
+    - ``simulate run`` writes ``<measure>.parquet``.
+    - ``psimulate`` writes ``<measure>/<task_id>.parquet``, and nests the whole lot
+      under ``<location>/<timestamp>/results/``.
+
+    The search is recursive so that the run's timestamp directory does not have to be
+    named on the command line, and so the flattening ``mv`` the old Snakefile did after
+    the simulation is no longer required. When several runs are present the most recent
+    is used, since run directories are named by timestamp and stale runs are otherwise
+    picked up silently.
+    """
+    measure = paths.LBWSG_PAF_MEASURE_NAME
+    location_dir = paths.LBWSG_PAF_RESULTS_ROOT / location.lower().replace(" ", "_")
+
+    if not location_dir.exists():
+        raise FileNotFoundError(
+            f"No LBWSG PAF results found at '{location_dir}'. These are produced by "
+            f"running the PAF calculation simulation ('data/lbwsg_paf.yaml') against "
+            f"the artifact built with --for-lbwsg-pafs, and are required before the "
+            f"full child artifact can be built."
+        )
+
+    # Prefer a flat file, then a metric directory, then the newest nested run. Run
+    # directories are timestamp-named, so reverse-sorting puts the latest first.
+    candidates = [
+        location_dir / f"{measure}.parquet",
+        location_dir / measure,
+        *sorted(location_dir.glob(f"**/{measure}.parquet"), reverse=True),
+        *sorted((p for p in location_dir.glob(f"**/{measure}") if p.is_dir()), reverse=True),
+    ]
+    for candidate in candidates:
+        if candidate.is_file() or (candidate.is_dir() and any(candidate.glob("*.parquet"))):
+            logger.info(f"Using LBWSG PAF results from '{candidate}'.")
+            return candidate
+
+    raise FileNotFoundError(
+        f"Found '{location_dir}' but no '{measure}' results inside it. Expected either "
+        f"'{measure}.parquet' or a '{measure}/' directory of parquet files, at the top "
+        f"level or under a run's 'results/' directory."
+    )
 
 
 def load_birth_weight_wealth_disparities(

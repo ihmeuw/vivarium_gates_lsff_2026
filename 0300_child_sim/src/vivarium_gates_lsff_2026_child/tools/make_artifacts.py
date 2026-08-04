@@ -128,8 +128,6 @@ def build_artifacts(
         How noisy the logger should be.
     """
 
-    from vivarium import cluster_tools as vct
-
     output_dir = Path(output_dir)
     vct.mkdir(output_dir, parents=True, exists_ok=True)
 
