@@ -1476,7 +1476,9 @@ def _resolve_lbwsg_paf_path(location: str) -> Path:
 
     The search is recursive so that the run's timestamp directory does not have to be
     named on the command line, and so the flattening ``mv`` the old Snakefile did after
-    the simulation is no longer required.
+    the simulation is no longer required. When several runs are present the most recent
+    is used, since run directories are named by timestamp and stale runs are otherwise
+    picked up silently.
     """
     measure = paths.LBWSG_PAF_MEASURE_NAME
     location_dir = paths.LBWSG_PAF_RESULTS_ROOT / location.lower().replace(" ", "_")
@@ -1489,15 +1491,17 @@ def _resolve_lbwsg_paf_path(location: str) -> Path:
             f"full child artifact can be built."
         )
 
-    # Prefer a flat file, then a metric directory, then anything nested under a run.
+    # Prefer a flat file, then a metric directory, then the newest nested run. Run
+    # directories are timestamp-named, so reverse-sorting puts the latest first.
     candidates = [
         location_dir / f"{measure}.parquet",
         location_dir / measure,
-        *sorted(location_dir.glob(f"**/{measure}.parquet")),
-        *sorted(p for p in location_dir.glob(f"**/{measure}") if p.is_dir()),
+        *sorted(location_dir.glob(f"**/{measure}.parquet"), reverse=True),
+        *sorted((p for p in location_dir.glob(f"**/{measure}") if p.is_dir()), reverse=True),
     ]
     for candidate in candidates:
         if candidate.is_file() or (candidate.is_dir() and any(candidate.glob("*.parquet"))):
+            logger.info(f"Using LBWSG PAF results from '{candidate}'.")
             return candidate
 
     raise FileNotFoundError(
