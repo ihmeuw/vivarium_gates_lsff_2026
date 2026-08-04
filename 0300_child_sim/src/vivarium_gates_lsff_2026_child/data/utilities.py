@@ -707,6 +707,8 @@ def get_wasting_treatment_parameter_data(parameter: str, location: str) -> pd.Se
 
 
 def rename_subnational_level(data: pd.DataFrame) -> pd.DataFrame:
-    if data.index.get_level_values("location")[0] not in LOCATIONS:
+    locations = data.index.get_level_values("location")
+    # Nothing to inspect on empty data; the caller warns about that separately.
+    if len(locations) and locations[0] not in LOCATIONS:
         data.index = data.index.rename({"location": "subnational"})
     return data
