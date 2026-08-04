@@ -155,7 +155,7 @@ reads the maternal birth records and the PAF results. Name the maternal run
 explicitly so the artifact records which run it came from::
 
   (artifact) :~$ make_artifacts -p child -l nigeria --vehicle rice --national -vvv \
-      --fertility-data-path /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/results/legacy/maternal/nigeria/<run>/results/births
+      --fertility-data-path /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/results/legacy_1.0/maternal/nigeria/<run>/results/births
 
 The PAF results are found automatically under ``data/<n>/lbwsg_pafs/``; the build
 logs which run it used, and it takes the most recent, so check that line if more
