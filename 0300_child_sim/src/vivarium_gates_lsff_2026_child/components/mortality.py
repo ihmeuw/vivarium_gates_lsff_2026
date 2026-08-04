@@ -33,6 +33,15 @@ class ChildMortality(Mortality):
     STILLBIRTH_OUTCOME = "stillbirth"
     STILLBIRTH_CAUSE_OF_DEATH = "stillborn"
 
+    @property
+    def name(self) -> str:
+        """Keep the base class's configuration key.
+
+        A component's configuration is looked up by its name, and ``Mortality``
+        hardcodes ``"mortality"`` in its ``configuration_defaults``. 
+        """
+        return "mortality"
+
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         super().setup(builder)
