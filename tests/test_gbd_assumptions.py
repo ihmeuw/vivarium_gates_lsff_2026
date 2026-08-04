@@ -50,9 +50,10 @@ from tests.baseline import REPO_ROOT
 # and receives the fortification hemoglobin shift, which overstates the modelled
 # benefit rather than shrinking the population.
 #
-# That is not a rounding error here: combined prevalence of these 26 in Nigeria is
-# 0.0182 at its peak (mean 0.0049), against total anemia prevalence around 0.5 --
-# so roughly 3-4% of anemia. Whether this is deliberate scoping or an oversight is
+# That is not a rounding error here: combined prevalence of these 26 in Nigeria
+# averages 0.0049 and peaks at 0.0182, against a modelled anemia prevalence of
+# 0.472 -- so about 1% of all anemia on average, up to ~3.9% where these causes
+# concentrate. Whether this is deliberate scoping or an oversight is
 # an open question for the anemia model owner; the notebook's own provenance
 # comment says the lists were adapted from another repo and "not checked in
 # extreme detail".
