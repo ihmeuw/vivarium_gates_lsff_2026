@@ -132,6 +132,16 @@ class PregnantState(DiseaseState):
                 ],
             ] = sampling_function(term_pop)
 
+        # The .loc assignment above creates pregnancy_duration as object dtype, since
+        # the column does not exist on pregnancy_outcomes yet and pandas only infers a
+        # dtype for the numeric ones. That was harmless while the dwell time pipeline
+        # returned this column as-is -- object-dtype Timedeltas still compare correctly
+        # -- but get_pregnancy_dwell_time now uses the .dt accessor, which needs the
+        # real timedelta64 dtype.
+        pregnancy_outcomes["pregnancy_duration"] = pd.to_timedelta(
+            pregnancy_outcomes["pregnancy_duration"]
+        )
+
         return pregnancy_outcomes
 
     def sample_partial_term_durations(self, partial_term_pop: pd.Index) -> pd.DataFrame:
