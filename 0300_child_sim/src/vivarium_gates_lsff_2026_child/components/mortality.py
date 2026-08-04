@@ -38,7 +38,7 @@ class ChildMortality(Mortality):
         """Keep the base class's configuration key.
 
         A component's configuration is looked up by its name, and ``Mortality``
-        hardcodes ``"mortality"`` in its ``configuration_defaults``. 
+        hardcodes ``"mortality"`` in its ``configuration_defaults``.
         """
         return "mortality"
 

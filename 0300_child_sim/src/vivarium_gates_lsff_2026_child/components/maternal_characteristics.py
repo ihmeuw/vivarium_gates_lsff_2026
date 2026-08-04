@@ -22,12 +22,16 @@ class MaternalIronConsumptionFromFortification(Component):
     def __init__(self):
         super().__init__()
 
+    # NOTE: Building the frame without dtypes registers these as 'object', which a
+    # later batch's real values then cannot be coerced onto. See PopulationLineList.
+    COLUMN_DTYPES = {
+        "baseline_2021_maternal_iron_consumption_from_fortification_mcg": float,
+        "maternal_iron_consumption_from_fortification_mcg": float,
+    }
+
     @property
     def columns_created(self) -> List[str]:
-        return [
-            "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
-            "maternal_iron_consumption_from_fortification_mcg",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     #################
     # Setup methods #
@@ -64,8 +68,10 @@ class MaternalIronConsumptionFromFortification(Component):
         Initialize simulants from line list data. Population configuration
         contains a key "new_births" which is the line list data.
         """
-        columns = self.columns_created
-        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]
@@ -98,11 +104,13 @@ class WealthQuintile(Component):
     def __init__(self):
         super().__init__()
 
+    # NOTE: An untyped frame registers this as 'object'; coercing that to int later
+    # fails outright, since the placeholder nulls have no integer representation.
+    COLUMN_DTYPES = {"wealth_quintile": int}
+
     @property
     def columns_created(self) -> List[str]:
-        return [
-            "wealth_quintile",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     #################
     # Setup methods #
@@ -136,8 +144,10 @@ class WealthQuintile(Component):
         Initialize simulants from line list data. Population configuration
         contains a key "new_births" which is the line list data.
         """
-        columns = self.columns_created
-        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]

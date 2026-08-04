@@ -32,21 +32,29 @@ class PopulationLineList(BasePopulation):
     Component to produce and age simulants based on line list data.
     """
 
+    # NOTE: 'is_alive' is deliberately absent -- it is a private column of the mortality
+    # sub-component (ChildMortality), which initializes it from the same line list birth
+    # records this component reads.
+    #
+    # The dtypes matter. The initial population is empty (population_size is 0; simulants
+    # arrive from the line list on later time steps), and building the frame without
+    # dtypes registers every column as 'object'. A later batch's real values then cannot
+    # be coerced onto that column -- an object column holding NaN will not cast to
+    # datetime64, for instance.
+    COLUMN_DTYPES = {
+        "age": float,
+        "sex": object,
+        # "subnational": object,
+        "location": object,
+        "entrance_time": "datetime64[ns]",
+        "exit_time": "datetime64[ns]",
+        "maternal_entrance_time": "datetime64[ns]",
+        "maternal_age": float,
+    }
+
     @property
     def columns_created(self) -> List[str]:
-        # NOTE: 'is_alive' is deliberately absent -- it is a private column of the
-        # mortality sub-component (ChildMortality), which initializes it from the
-        # same line list birth records this component reads.
-        return [
-            "age",
-            "sex",
-            # "subnational",
-            "location",
-            "entrance_time",
-            "exit_time",
-            "maternal_entrance_time",
-            "maternal_age",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     @property
     def time_step_priority(self) -> int:
@@ -103,7 +111,10 @@ class PopulationLineList(BasePopulation):
         Creates simulants based on their birth date from the line list data.  Their demographic characteristics are also
         determined by the input data.
         """
-        new_simulants = pd.DataFrame(columns=self.columns_created, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]
