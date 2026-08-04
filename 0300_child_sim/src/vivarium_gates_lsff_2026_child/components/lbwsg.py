@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
-from vivarium.engine.framework.lookup import LookupTable
+from vivarium.engine.framework.lookup import LookupTable, LookupTableData
 from vivarium.engine.framework.population import PopulationView, SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
@@ -134,10 +134,20 @@ class LBWSGLineList(LBWSGRisk):
 
 
 class LBWSGPAFCalculationRiskEffect(LBWSGRiskEffect):
-    """Risk effect component for calculating PAFs for LBWSG."""
+    """Risk effect component for calculating PAFs for LBWSG.
 
-    def get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        return 0, []
+    Notes
+    -----
+    This simulation is what produces the LBWSG PAF, so the artifact it runs against
+    deliberately does not contain that key. The base class would otherwise try to load
+    it, so the calibration constant is supplied as zero here instead.
+
+    The hook is ``get_calibration_constant_data``; the PAF was previously read through
+    ``get_population_attributable_fraction_source``, which no longer exists.
+    """
+
+    def get_calibration_constant_data(self, builder: Builder) -> LookupTableData:
+        return 0.0
 
 
 class LBWSGPAFCalculationExposure(LBWSGRisk):
