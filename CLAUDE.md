@@ -631,10 +631,14 @@ other looks like a pre-existing error that GBD 2023 corrected:
    ~0.0123 under release 9 and ~0.0075 under release 16. The GBD-2023 artifact holds 0.0131,
    which matches; the GBD-2021 artifact holds 0.0000394, ~300× below what its own inputs imply.
    0.000015 disability-years per maternal-disorder case is about thirty seconds, which is not
-   credible. So this looks like a **long-standing under-count in the April-2025 published
-   results** that the migration fixed, not a migration regression. `maternal_disorders` is
-   2.32% of published baseline DALYs for india/rice, though YLLs likely dominate that share, so
-   work out the YLD/YLL split before drawing conclusions.
+   credible. So this looks like a **long-standing under-count that the migration fixed**, not a
+   migration regression. **Impact measured, and small:** `maternal_disorders` is 2.32% of
+   published baseline DALYs for india/rice, but that stream is almost entirely deaths — YLDs are
+   558 against 2,213,530 YLLs, i.e. **0.03%** of it (0.01% for Nigeria). Correcting the YLDs
+   150–340× therefore moves total published DALYs by 0.045%–0.203%, and DALYs *averted* by
+   0.000% (india/rice), 0.107% (nigeria/rice) and 0.124% (nigeria/bouillon). No published
+   conclusion is affected; worth fixing for correctness and because whatever caused it may
+   touch other keys.
    *Ruled out:* subnational aggregation (five locations, three with GBD subnational detail and
    two without, all moved 0.70×–1.08×) and `metric_id=None` in the `get_draws` calls (both
    releases return only `metric_id=3`). *Decisive test:* run `load_maternal_disorders_ylds`
