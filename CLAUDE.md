@@ -316,7 +316,11 @@ The only real Python package at the top level (installed via `pip install -e .`)
   override ([#61](https://github.com/ihmeuw/risk_distributions/issues/61)). Do not "fix"
   the `1 - cdf` as if it were a typo.
 - `results.py` — scenario aggregation helpers
-- `snakemake_utils.py` — papermill parameter formatting; currently unused
+- `snakemake_utils.py` — `tolerant_psimulate_restart`, used by both simulation rules, plus
+  `dict_to_papermill`, which nothing imports
+- `collect_results.py` — flattens a psimulate run's partitioned per-observer results back
+  into the `<observer>.parquet` files every downstream stage reads. Invoked by both
+  simulation rules as `python -m lsff_utils.collect_results . .`
 
 Note `config_utils` resolves `0050_config/` relative to `__file__`, so it is the one part of
 the codebase that works regardless of cwd.
@@ -339,13 +343,22 @@ Snakemake DAG:
 `tests/` holds a regression harness that answers one question: **did the pipeline's output
 change in a way nobody intended?** It does not validate the science — it detects change.
 
-The suite runs in **either** environment and skips what that environment cannot do,
-because the two halves need incompatible dependencies:
+`.venv_modern` runs the whole suite, since it has both GBD access and the fuzzy checker:
 
 ```bash
-source .test_venv/bin/activate && pytest tests/ --runslow -q   # 302 passed, 3 skipped
-source .venv/bin/activate      && pytest tests/ -q             # 170 passed, 135 skipped
+source .venv_modern/bin/activate && pytest tests/ --runslow -q
+# 2026-08-04: 264 passed, 45 failed, 5 skipped, 1 xfailed
 ```
+
+The 45 failures are **expected on this branch** and are the harness working: they are
+exactly the `nigeria/rice` stochastic checks, whose simulation output is now GBD 2023
+against a GBD-2021 reference. See the end-to-end migration run section.
+
+The suite also still runs in the old split environments, skipping whatever the environment
+cannot do — `.test_venv` has the fuzzy checker but no GBD access, `.venv` the reverse. That
+split existed because the two halves needed incompatible dependencies; `.venv_modern` makes
+it unnecessary. Note `--runslow` comes from the `vivarium-testing-utils` plugin, so it does
+not exist in `.venv`.
 
 `.test_venv` has the fuzzy checker but no GBD access; `.venv` has GBD access but cannot
 host `vivarium-testing-utils`. Run both to cover everything. Note `--runslow` only exists
@@ -413,6 +426,11 @@ Three layers:
 Supporting pieces: `tests/baseline.py` (git-backed reference loading, and the
 `STOCHASTIC_RESULTS` classification — anything unlisted is checked exactly, so a new output
 file fails loudly until classified) and `tests/reference_proportions.py`.
+
+`tests/test_collect_results.py` is a plain unit test rather than a regression layer: it pins
+both simulation-output layouts that `lsff_utils.collect_results` has to handle, and pins
+that an unrecognized one fails loudly instead of collecting nothing. Needs no cluster, no
+GBD, and no baseline.
 
 **Open research question recorded in code:** `KNOWN_UNCOVERED_ANEMIA_SEQUELAE` in
 `test_gbd_assumptions.py` lists 26 genetic and endocrine anemias (G6PD deficiency,
@@ -500,8 +518,10 @@ Gotchas:
 - The old project name `vivarium_gates_lsff_by_wealth_quintile` is still hardcoded in
   `archive_last_run.sh`'s destination path and the `Snakefile`'s `pip uninstall` line.
   Renaming packages requires updating both.
-- `lsff_utils/snakemake_utils.py` is dead code — nothing imports `dict_to_papermill`. It is
-  worth keeping only for the comment explaining the papermill-over-Snakemake decision.
+- `dict_to_papermill` in `lsff_utils/snakemake_utils.py` is dead code — nothing imports it.
+  It is worth keeping only for the comment explaining the papermill-over-Snakemake decision.
+  (The module itself is no longer dead: both simulation rules use
+  `tolerant_psimulate_restart` from it.)
 - The three `calculate_effective_coverage_<location>` rules are copy-pasted rather than
   looped because of [snakemake#2178](https://github.com/snakemake/snakemake/issues/2178).
 - Sub-simulation *directories* (`0200_pregnancy_sim`) and *package* names
@@ -648,8 +668,23 @@ Open problems, one pre-existing and one round-related:
    an ordinary 1.18×. Since the mean and dispersion are both fine and only the far tail is
    wrong, look at `get_hemoglobin_below_70` and the ensemble-distribution changes
    (`mirror_point`, the `computability_*` renames) in `lsff_utils.hemoglobin_distribution`.
-3. `cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.8× — flagged for
-   review, no amplifying downstream, not obviously wrong.
+3. **`cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.5×**
+   (0.0164 → 0.0740). Originally logged here as "no amplifying downstream, not obviously
+   wrong" — **that was wrong**, and running the simulation is what showed it. It is a
+   primary driver of the model's output: the partial-term share of parturitions goes
+   18.4% → 46.2%, crowding live births down 78.9% → 52.7% and stillbirths 3.05% → 1.34%.
+   The birth line list shrinks by a third, which propagates straight into `0300_child_sim`,
+   whose entire population is `births.parquet`.
+4. **`cause.maternal_disorders.incident_probability` saturates at exactly 1.0.**
+   `loader.py:429` ends `load_pregnant_maternal_disorders_incidence_probability` with
+   `.clip(upper=1)`. That guard was inert under GBD 2021 (max 0.841, nothing clipped) and is
+   now load-bearing: 27 of 250 values are exactly 1.0, which is over half the
+   childbearing-age rows, so the median non-zero probability is 1.0 against 0.614 before.
+   Every pregnant woman in those age×quintile cells deterministically gets a maternal
+   disorder, and the simulation duly reports maternal disorders in **91.8%** of parturitions
+   against 76.5% under GBD 2021. `raw_incidence_rate` itself rose only 1.59×, so the
+   saturation is the amplifier. A probability pinned at its clip bound is the failure mode
+   the clip was meant to hide, and it is silent — the artifact looks well-formed.
 
 **Beware comparing artifacts built with and without `--mean`.** A no-`--mean` build stores
 `draw_0`; a `--mean` build stores the mean across draws. That alone explains modest
@@ -657,6 +692,41 @@ differences in many keys, and it is what made finding 1 look like a GBD-2023 eff
 
 Every other key moved within 0.47×–2.7×, an ordinary GBD-revision range. That contrast is
 what makes the ratio check informative.
+
+## End-to-end migration run: `0200_pregnancy_sim` works (verified 2026-08-04)
+
+The pregnancy simulation **runs end to end on the modern suite against a GBD 2023
+artifact**, through Snakemake on Slurm: `snakemake --cores 1
+0200_pregnancy_sim/sim_results/rice/nigeria/births.parquet`, 10 seeds × 3 scenarios = 30
+tasks, all 12 observers produced. Three blockers had to be fixed first, and all three
+failed *after* a successful cluster run, at which point Snakemake deleted the good results
+as possibly corrupted — so debug them with `--keep-incomplete` or the evidence disappears.
+
+1. **`pregnancy_duration` had `object` dtype**, so the migrated dwell-time hook's
+   `.dt.total_seconds()` killed every task at setup. See commit `96c6fb3`.
+2. **`psimulate restart` now raises `WorkflowAlreadyComplete`** when the first run left
+   nothing to retry, instead of being a no-op. Both simulation rules call it
+   unconditionally, so success failed the rule under bash strict mode.
+3. **Modern psimulate writes partitioned results.** `<run>/results/<observer>.parquet`
+   became `<run>/results/<observer>/<hash>.parquet`, one part per task, so
+   `mv ./*/results/*.parquet .` matched nothing. `lsff_utils.collect_results` restores the
+   flat per-observer files the rest of the pipeline reads; 2 and 3 are commit `feba2f2`.
+
+**The harness behaved exactly as designed on this run.** Layer 4 (plausibility, needs no
+baseline) passed all 13 checks — every transition fires in every scenario, including
+maternal hemorrhage. Layer 2 (fuzzy, against the GBD-2021 reference) failed **45 of 45
+`nigeria/rice` checks and passed all 91 for `india/rice` and `nigeria/bouillon`**, which
+still hold GBD-2021 output. That is the intended signal: it isolated the one combination
+that changed and stayed quiet everywhere else. Do not "fix" those 45 by regenerating
+`tests/reference/sim_proportions.csv` until the GBD-2023 findings above are resolved —
+the reference is the only record of the published behaviour.
+
+Preserve the old-stack output before rerunning anything, because the rule's `rm -rf` and
+Snakemake's failure cleanup both destroy it:
+`cp -rn 0200_pregnancy_sim/sim_results/rice .sim_results_gbd2021_reference/` (gitignored,
+and the parquet exists nowhere else — see the archive note in the reproduction section).
+
+`0300_child_sim` is still blocked on part-2 migration work and was not run.
 
 ## Modernization: modern Vivarium + GBD 2023
 
