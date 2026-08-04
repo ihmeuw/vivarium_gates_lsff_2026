@@ -1421,14 +1421,7 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f"Unrecognized key {key}")
 
-    import pathlib
-
-    output_dir = pathlib.Path("./lbwsg_pafs") / location.lower().replace(" ", "_")
-
-    df = pd.read_parquet(
-        output_dir
-        / "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"
-    )
+    df = pd.read_parquet(_resolve_lbwsg_paf_path(location))
     if "input_draw" in df.columns:
         df = df.assign(input_draw="draw_" + df.input_draw.astype(str))
     else:
@@ -1454,6 +1447,48 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
             df.loc[(sex, age_start, age_end, 2021, 2022), :] = 0
 
     return df.sort_index()
+
+
+def _resolve_lbwsg_paf_path(location: str) -> Path:
+    """Locate the output of the LBWSG PAF calculation simulation.
+
+    Results live under :data:`paths.LBWSG_PAF_RESULTS_ROOT`. Both layouts are handled:
+
+    - ``simulate run`` writes ``<measure>.parquet``.
+    - ``psimulate`` writes ``<measure>/<task_id>.parquet``, and nests the whole lot
+      under ``<location>/<timestamp>/results/``.
+
+    The search is recursive so that the run's timestamp directory does not have to be
+    named on the command line, and so the flattening ``mv`` the old Snakefile did after
+    the simulation is no longer required.
+    """
+    measure = paths.LBWSG_PAF_MEASURE_NAME
+    location_dir = paths.LBWSG_PAF_RESULTS_ROOT / location.lower().replace(" ", "_")
+
+    if not location_dir.exists():
+        raise FileNotFoundError(
+            f"No LBWSG PAF results found at '{location_dir}'. These are produced by "
+            f"running the PAF calculation simulation ('data/lbwsg_paf.yaml') against "
+            f"the artifact built with --for-lbwsg-pafs, and are required before the "
+            f"full child artifact can be built."
+        )
+
+    # Prefer a flat file, then a metric directory, then anything nested under a run.
+    candidates = [
+        location_dir / f"{measure}.parquet",
+        location_dir / measure,
+        *sorted(location_dir.glob(f"**/{measure}.parquet")),
+        *sorted(p for p in location_dir.glob(f"**/{measure}") if p.is_dir()),
+    ]
+    for candidate in candidates:
+        if candidate.is_file() or (candidate.is_dir() and any(candidate.glob("*.parquet"))):
+            return candidate
+
+    raise FileNotFoundError(
+        f"Found '{location_dir}' but no '{measure}' results inside it. Expected either "
+        f"'{measure}.parquet' or a '{measure}/' directory of parquet files, at the top "
+        f"level or under a run's 'results/' directory."
+    )
 
 
 def load_birth_weight_wealth_disparities(

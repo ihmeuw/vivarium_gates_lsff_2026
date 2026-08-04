@@ -15,11 +15,23 @@ DATA_PREP_RESULTS_ROOT = BASE_DIR / ".." / ".." / ".." / "0100_data_prep" / "res
 
 REPO_ROOT = (BASE_DIR / ".." / ".." / "..").resolve()
 
+# Shared-filesystem root for this model's inputs and intermediate outputs. Results are
+# too large to keep in the repo, and the LBWSG PAF artifact and the full child artifact
+# have different key sets, so they get separate subdirectories rather than one path.
+LEGACY_DATA_ROOT = Path(
+    "/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/data/legacy"
+)
+
+LBWSG_PAF_ARTIFACT_ROOT = LEGACY_DATA_ROOT / "lbwsg_paf_artifacts"
+LBWSG_PAF_RESULTS_ROOT = LEGACY_DATA_ROOT / "lbwsg_pafs"
+LBWSG_PAF_MEASURE_NAME = (
+    "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate"
+)
+CHILD_ARTIFACT_ROOT = LEGACY_DATA_ROOT / "child_artifacts"
+
 # The child model's population comes from the maternal simulation's birth records:
-# one child simulant per maternal birth. The Snakefile writes maternal output to
-# 0200_pregnancy_sim/sim_results/<vehicle>/<location>/, so that is the default place
-# to look for it; override with the --fertility-data-path CLI flag.
-MATERNAL_SIM_RESULTS_ROOT = REPO_ROOT / "0200_pregnancy_sim" / "sim_results"
+# one child simulant per maternal birth. Override with the --fertility-data-path flag.
+MATERNAL_SIM_RESULTS_ROOT = LEGACY_DATA_ROOT / "maternal"
 FERTILITY_DATA_NAME = "births"
 
 
@@ -30,7 +42,7 @@ def get_default_fertility_data_path(location: str, vehicle: str) -> Path:
     Both layouts are supported, so this returns the directory when psimulate wrote a
     partitioned result and the single file when ``simulate run`` wrote one.
     """
-    run_dir = MATERNAL_SIM_RESULTS_ROOT / vehicle / location.lower()
+    run_dir = MATERNAL_SIM_RESULTS_ROOT / location.lower() / vehicle
     partitioned = run_dir / FERTILITY_DATA_NAME
     if partitioned.is_dir():
         return partitioned
