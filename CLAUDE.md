@@ -453,18 +453,35 @@ GBD, and no baseline.
 `test_gbd_assumptions.py` lists 26 genetic and endocrine anemias (G6PD deficiency,
 hemoglobin H disease, hemoglobin E beta thalassemia, beta thalassemia major, thyroid-related)
 that are in `gbd_mapping` but in neither `0400` bucket, as of GBD 2021. They look like they
-belong in the non-iron-responsive bucket; omitting them excludes those people from the
-population rather than counting them as non-responsive, which biases the responsive
-fraction. Needs a decision from whoever owns the anemia model.
+belong in the non-iron-responsive bucket. Needs a decision from whoever owns the anemia
+model.
+
+**The direction of that bias is the opposite of what this file used to say** (corrected
+2026-08-04 after reading the notebook to quantify it). The `0400` notebook pulls prevalence
+for **only** the non-responsive list — `iron_responsive_anemia_sequelae`, all 138 entries, is
+referenced solely by `len()` and is otherwise dead — and builds `iron_responsive_distributions`
+as the total hemoglobin distribution **minus** the non-responsive part. The iron-responsive
+group is therefore a *residual*. A sequela in neither list is not excluded from the
+population; it is treated as **iron-responsive** and receives the fortification hemoglobin
+shift, which **overstates** the modelled benefit.
+
+That matters because the 26 are not small: combined prevalence in Nigeria peaks at 0.0182
+(mean 0.0049) against total anemia prevalence around 0.5 — roughly 3–4% of all anemia,
+currently getting an iron-fortification benefit despite being thalassemia, G6PD and
+thyroid-related.
 
 **GBD 2023 added three more, and the check caught them** (2026-08-04):
 `puerperal_sepsis_with_{mild,moderate,severe}_anemia`, recorded separately in
 `UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE`. GBD 2021 exposes 2088 sequelae with none of them;
 GBD 2023 exposes 2106 with all three. This is exactly the silent failure the check was
-written for — an *added* sequela lands in neither bucket and shifts the iron-responsive
-fraction — so it is the first confirmed catch by layer 3, not a test defect. Anemia
-accompanying puerperal sepsis is plausibly inflammatory rather than iron-deficiency, which
-would put it in the non-responsive bucket, but that is the model owner's call.
+written for — an *added* sequela falls into the residual and is treated as iron-responsive —
+so it is the first confirmed catch by layer 3, not a test defect. Anemia accompanying
+puerperal sepsis is plausibly inflammatory rather than iron-deficiency, which would put it in
+the non-responsive bucket, but that is the model owner's call.
+
+**Their magnitude, unlike the 26, is negligible:** combined prevalence in Nigeria peaks at
+2.7e-06. Puerperal sepsis is a postpartum condition and `0400` models the non-pregnant
+population, so that is expected. Worth classifying deliberately; not worth a rerun.
 
 **These two checks were dark in `.venv_modern` until 2026-08-04.** The `gbd_mapping` fixture
 did `importorskip("gbd_mapping")`, and the modern suite renamed that to
@@ -802,7 +819,11 @@ Three GBD-2023 risks that fail *silently* rather than loudly:
 1. `0400_non_pregnant_anemia_model/non_pregnant_anemia.ipynb` splits ~198 named
    `gbd_mapping.sequelae` into iron-responsive (138) and non-responsive (60). A renamed or
    removed sequela raises `AttributeError`; an **added** one is silently omitted from both
-   buckets and shifts the responsiveness split.
+   buckets, and since the responsive group is a *residual* (only the non-responsive list is
+   pulled; the 138-entry list is dead code) it is then treated as iron-responsive and given a
+   fortification benefit. **This already happened:** GBD 2023 added
+   `puerperal_sepsis_with_{mild,moderate,severe}_anemia`. Caught by
+   `tests/test_gbd_assumptions.py` — see the harness section for magnitudes.
 2. `src/lsff_utils/data_processing.py` notes "Depends on a GBD age group always fitting into
    a disparity age group." If GBD 2023 age bins straddle a DHS bin edge
    (`[0, 5, 15, 30, 50, 125]`), the disparity join drops rows without erroring.

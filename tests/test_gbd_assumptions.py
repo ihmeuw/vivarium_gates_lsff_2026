@@ -42,12 +42,20 @@ from tests.baseline import REPO_ROOT
 # 0400 notebook's responsiveness buckets, measured against GBD 2021. Recorded so
 # that a *new* omission fails while these known ones do not spam every run.
 #
-# These look like they belong in the non-iron-responsive bucket: leaving them out
-# excludes those people from the population entirely rather than counting them as
-# non-responsive, which biases the responsive fraction. Whether that is
-# deliberate scoping or an oversight is an open question for the anemia model
-# owner -- the notebook's own provenance comment says the lists were adapted from
-# another repo and "not checked in extreme detail".
+# These look like they belong in the non-iron-responsive bucket, and leaving them
+# out is not neutral. The notebook builds the iron-responsive group as a
+# *residual*: only the non-responsive list is ever pulled, and
+# `iron_responsive_distributions` is the total hemoglobin distribution minus the
+# non-responsive part. So a sequela in neither list is treated as iron-responsive
+# and receives the fortification hemoglobin shift, which overstates the modelled
+# benefit rather than shrinking the population.
+#
+# That is not a rounding error here: combined prevalence of these 26 in Nigeria is
+# 0.0182 at its peak (mean 0.0049), against total anemia prevalence around 0.5 --
+# so roughly 3-4% of anemia. Whether this is deliberate scoping or an oversight is
+# an open question for the anemia model owner; the notebook's own provenance
+# comment says the lists were adapted from another repo and "not checked in
+# extreme detail".
 KNOWN_UNCOVERED_ANEMIA_SEQUELAE = frozenset(
     {
         "controlled_medically_managed_heart_failure_due_to_other_hemoglobinopathies_and_hemolytic_anemias",
@@ -85,14 +93,18 @@ KNOWN_UNCOVERED_ANEMIA_SEQUELAE = frozenset(
 # GBD 2021 exposes 2088 sequelae with no `puerperal_sepsis_with_*_anemia`, GBD 2023
 # exposes 2106 with all three.
 #
-# This is the case the check below was written for -- an added sequela is dropped
-# from the population rather than counted as non-responsive, shifting the
-# iron-responsive fraction that drives the whole anemia YLD calculation. Recorded
-# rather than left failing so the rest of the suite stays legible, but it is an
-# open decision for the anemia model owner, not a settled exclusion. Anemia
-# accompanying puerperal sepsis is plausibly inflammatory rather than
-# iron-deficiency, which would put it in the non-responsive bucket, but that is a
-# judgement for whoever owns the model.
+# This is the case the check below was written for -- an added sequela falls into
+# the residual and is therefore treated as iron-responsive, receiving a
+# fortification benefit it may not be entitled to. Recorded rather than left
+# failing so the rest of the suite stays legible, but it is an open decision for
+# the anemia model owner, not a settled exclusion. Anemia accompanying puerperal
+# sepsis is plausibly inflammatory rather than iron-deficiency, which would put it
+# in the non-responsive bucket, but that is a judgement for whoever owns the model.
+#
+# Magnitude, unlike the 26 above, is negligible: combined prevalence in Nigeria is
+# 2.7e-06 at its peak. Puerperal sepsis is a postpartum condition and 0400 models
+# the non-pregnant population, so that is unsurprising. Recorded because the
+# classification should still be deliberate, not because the numbers move.
 UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE = frozenset(
     {
         "puerperal_sepsis_with_mild_anemia",
@@ -264,9 +276,20 @@ def test_anemia_sequela_lists_cover_gbd(gbd_mapping) -> None:
     """The 0400 responsiveness split must still account for every anemia sequela.
 
     A renamed or removed sequela raises AttributeError in the notebook, which is
-    loud. An *added* one is silent: it lands in neither bucket, is dropped from
-    the population, and shifts the iron-responsive fraction that drives the whole
-    anemia YLD calculation. This is the check that makes that case loud.
+    loud. An *added* one is silent, and not neutral: the notebook pulls prevalence
+    only for the non-responsive list and builds the iron-responsive group as the
+    residual, so anything in neither list is treated as iron-responsive and gets
+    the fortification hemoglobin shift. An unclassified non-responsive sequela
+    therefore overstates the modelled benefit. This is the check that makes that
+    case loud.
+
+    Caveat on what this check can enforce: it compares against sequelae named
+    anywhere in the notebook, but only `non_iron_responsive_anemia_sequelae` is
+    actually consumed -- `iron_responsive_anemia_sequelae` is referenced solely by
+    `len()`. So adding a sequela to the iron-responsive list silences this check
+    without changing the model. That is the right default, since the residual
+    already treats it as responsive, but it means a green run means "classified",
+    not "classified correctly".
     """
     source = notebook_source("0400_non_pregnant_anemia_model/non_pregnant_anemia.ipynb")
     listed = set(re.findall(r"sequelae\.([a-z0-9_]+)", source))
@@ -293,8 +316,9 @@ def test_anemia_sequela_lists_cover_gbd(gbd_mapping) -> None:
     newly_uncovered = uncovered - RECORDED_UNCOVERED_ANEMIA_SEQUELAE
     assert not newly_uncovered, (
         f"{len(newly_uncovered)} anemia sequelae are in GBD but in neither the "
-        f"iron-responsive nor the non-responsive list, so they are silently excluded "
-        f"from the anemia model: {sorted(newly_uncovered)}\n"
+        f"iron-responsive nor the non-responsive list, so the model's residual treats "
+        f"them as iron-responsive and gives them a fortification benefit: "
+        f"{sorted(newly_uncovered)}\n"
         "Classify them, or record them with a reason -- in "
         "UNCLASSIFIED_GBD_2023_ANEMIA_SEQUELAE if the round added them, otherwise in "
         "KNOWN_UNCOVERED_ANEMIA_SEQUELAE."
