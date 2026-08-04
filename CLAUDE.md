@@ -659,15 +659,20 @@ Open problems, one pre-existing and one round-related:
    2,213,530 YLLs), so ≤0.203% of total DALYs and ≤0.124% of DALYs averted. Guarded by
    `tests/test_draw_alignment.py`. Fix by fetching every term through one convention, or
    by dropping the `fillna(0)` so the mismatch raises.
-2. **`risk_factor.hemoglobin.pregnant_proportion_below_70_gL` reaches 0.58 under GBD 2023**
-   against 0.026 in 2021 — 58% of pregnant women in the worst stratum classed as severely
-   anemic. Reproduces in two independently built GBD-2023 artifacts, so it is a genuine
-   round effect. `hemoglobin_on_maternal_hemorrhage.paf` follows (11×). **The SD is not the
-   cause** — an earlier read blamed it, but that was reading an artifact built without
-   `--mean` (single draw, SD 23.7); a `--mean` rebuild gives 18.05 against 2021's 15.25,
-   an ordinary 1.18×. Since the mean and dispersion are both fine and only the far tail is
-   wrong, look at `get_hemoglobin_below_70` and the ensemble-distribution changes
-   (`mirror_point`, the `computability_*` renames) in `lsff_utils.hemoglobin_distribution`.
+2. **`risk_factor.hemoglobin.pregnant_proportion_below_70_gL` reaches 0.582 under GBD 2023**
+   against 0.0153 in 2021 — **38×**, i.e. 58% of pregnant women in the worst stratum classed
+   as severely anemic. Reproduces in two independently built GBD-2023 artifacts, so it is a
+   genuine round effect. `hemoglobin_on_maternal_hemorrhage.paf` follows (14.93×), and
+   because a PAF enters as `rate × (1 - paf)`, that pushes hemorrhage **down**: simulated
+   hemorrhage incidence falls to 0.21× of the GBD-2021 level (9.54% → 2.00% of parturitions).
+   All figures are median-of-non-zero across two `--mean` builds. (An earlier note here said
+   "22× against 0.026"; that baseline was not the same statistic as the rest of the
+   comparison.) **The SD is not the cause** — an earlier read blamed it, but that was reading
+   an artifact built without `--mean` (single draw, SD 23.74); a `--mean` rebuild gives 18.05
+   against 2021's 15.25, an ordinary 1.18×. Since the mean (1.02×) and dispersion are both
+   fine and only the far tail is wrong, look at `get_hemoglobin_below_70` and the
+   ensemble-distribution changes (`mirror_point`, the `computability_*` renames) in
+   `lsff_utils.hemoglobin_distribution`.
 3. **`cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.5×**
    (0.0164 → 0.0740). Originally logged here as "no amplifying downstream, not obviously
    wrong" — **that was wrong**, and running the simulation is what showed it. It is a
@@ -690,8 +695,12 @@ Open problems, one pre-existing and one round-related:
 `draw_0`; a `--mean` build stores the mean across draws. That alone explains modest
 differences in many keys, and it is what made finding 1 look like a GBD-2023 effect.
 
-Every other key moved within 0.47×–2.7×, an ordinary GBD-revision range. That contrast is
-what makes the ratio check informative.
+Of the 35 keys comparable between the two `--mean` builds, the 30 not flagged above all moved
+within **0.42×–1.94×** — an ordinary GBD-revision range, the extremes being
+`ectopic_pregnancy.raw_incidence_rate` and `hemoglobin_on_maternal_disorder.paf`. That
+contrast is what makes the ratio check informative: the flagged keys are not at the edge of a
+broad distribution, they are far outside it. (An earlier 0.47×–2.7× here came from diffing
+against the non-`--mean` `/mnt/team/` artifact, so it is not comparable.)
 
 ## End-to-end migration run: `0200_pregnancy_sim` works (verified 2026-08-04)
 
