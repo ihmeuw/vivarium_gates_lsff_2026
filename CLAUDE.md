@@ -410,18 +410,35 @@ Three layers:
 - **`test_artifact_sanity.py`** — compares two artifacts directly, before any simulation
   runs. The cheapest place to catch a data problem: it localises to a single key in seconds,
   where a pipeline run would show only "the DALYs moved", smeared across two microsims and
-  mixed with Monte Carlo noise. Three checks — no key gains `inf`/`NaN`, no key newly goes
-  all-zero, and no key's scale moves more than `RATIO_THRESHOLD` (3×) — all framed as
-  *regressions against a reference artifact* rather than against an allowlist, because
-  whether zero is legitimate is context-dependent (Nigeria has no baseline rice fortification
-  programme, so `0.0` is correct there, but bouillon is ~0.52).
+  mixed with Monte Carlo noise. Four checks. Three are *regressions against a reference
+  artifact* — no key gains `inf`/`NaN`, no key newly goes all-zero, and no key's scale moves
+  more than `RATIO_THRESHOLD` (3×) — framed that way rather than against an allowlist,
+  because whether zero is legitimate is context-dependent (Nigeria has no baseline rice
+  fortification programme, so `0.0` is correct there, but bouillon is ~0.52).
+
+  The fourth, `test_probability_key_is_not_saturated_at_its_bound`, needs **no reference**:
+  no key bounded in [0, 1] may sit at exactly 1.0 for more than
+  `SATURATION_FRACTION_THRESHOLD` (5%) of its non-zero values. This exists because the other
+  three cannot see a clip: a value pinned at 1.0 has nowhere to move, so
+  `maternal_disorders.incident_probability` registered a mere 1.63× on the ratio check while
+  60% of its live rows were saturated. Empirical basis for the threshold — across three
+  verified GBD-2021 artifacts, *no* probability-valued key had a single exact-1.0 value, so
+  the allowance is non-zero only to leave room for a proportion that is 1.0 by definition.
 
   ```bash
   LSFF_ARTIFACT=new.hdf LSFF_REFERENCE_ARTIFACT=known-good.hdf pytest tests/test_artifact_sanity.py
   ```
 
-  Run against a GBD-2023 artifact vs the verified GBD-2021 one it flags four keys, which is
-  what it was written for — see "GBD 2023 artifact review" below.
+  Run against the GBD-2023 rice/nigeria artifact vs the verified GBD-2021 one — both built
+  with `--mean` — it flags exactly four keys, which is what it was written for:
+  `hemoglobin.pregnant_proportion_below_70_gL`, `hemoglobin_on_maternal_hemorrhage.paf`,
+  `maternal_abortion_and_miscarriage.raw_incidence_rate`, and (via the saturation check)
+  `maternal_disorders.incident_probability`. See "GBD 2023 artifact review" below.
+
+  Note `maternal_disorders.ylds` is *not* among them, because both artifacts were built with
+  `--mean` and so share the draw-alignment bug — its ratio is 1.33×. It shows as ~250× only
+  when one side of the comparison was built without `--mean`. That asymmetry is why the
+  vintage-versus-build-flag distinction matters so much in this section.
 
 Supporting pieces: `tests/baseline.py` (git-backed reference loading, and the
 `STOCHASTIC_RESULTS` classification — anything unlisted is checked exactly, so a new output
