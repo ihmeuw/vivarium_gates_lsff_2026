@@ -465,10 +465,11 @@ group is therefore a *residual*. A sequela in neither list is not excluded from 
 population; it is treated as **iron-responsive** and receives the fortification hemoglobin
 shift, which **overstates** the modelled benefit.
 
-That matters because the 26 are not small: combined prevalence in Nigeria peaks at 0.0182
-(mean 0.0049) against total anemia prevalence around 0.5 — roughly 3–4% of all anemia,
-currently getting an iron-fortification benefit despite being thalassemia, G6PD and
-thyroid-related.
+That matters because the 26 are not small: combined prevalence in Nigeria averages 0.0049 and
+peaks at 0.0182, against a modelled anemia prevalence of 0.472 (range 0.441–0.514 over 45
+strata, computed with `lsff_utils.hemoglobin_distribution` at the `adult_female_np` threshold
+of 120 g/L). So **~1% of all anemia on average, up to ~3.9% where it peaks** — currently
+getting an iron-fortification benefit despite being thalassemia, G6PD and thyroid-related.
 
 **GBD 2023 added three more, and the check caught them** (2026-08-04):
 `puerperal_sepsis_with_{mild,moderate,severe}_anemia`, recorded separately in
