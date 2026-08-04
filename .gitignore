@@ -133,6 +133,7 @@ dmypy.json
 .test_venv/
 .venv_modern/
 .artifacts_gbd2021_reference/
+.sim_results_gbd2021_reference/
 
 # FuzzyChecker per-run diagnostics. tests/reference/ is deliberately NOT ignored:
 # it is the committed baseline the regression harness compares against.

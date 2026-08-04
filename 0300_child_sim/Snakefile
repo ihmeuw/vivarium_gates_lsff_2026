@@ -1,5 +1,7 @@
 from snakemake.io import directory
 
+from lsff_utils.snakemake_utils import tolerant_psimulate_restart
+
 debug = config["debug"]
 local = config["local"]
 full_scale = config["full_scale"]
@@ -85,6 +87,6 @@ rule child_simulations:
         export PYTHONPATH=../../../src
         {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -f dump.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
-        mv ./*/results/*.parquet .
+        {'' if debug or local else tolerant_psimulate_restart('-P proj_simscience -m 2 -r 01:00:00 -q all.q')}
+        python -m lsff_utils.collect_results . .
         """
