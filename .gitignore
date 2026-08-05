@@ -154,3 +154,8 @@ model_spec_int.yaml
 .sim_results_gbd2023_pt1/
 .child_results_gbd2023_pt2/
 .child_results_gbd2021_reference/
+
+# Stage-5000 output from the GBD-2023 migration run. Kept out of git deliberately: the
+# committed CSVs are the 200-seed published GBD-2021 baseline that the regression harness
+# compares against, and these are 10-seed GBD-2023 numbers.
+.results_gbd2023/
