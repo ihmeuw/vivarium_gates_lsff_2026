@@ -851,6 +851,17 @@ for `rice/india` and `bouillon/nigeria`. Preserved going forward in
 `.child_results_gbd2021_reference/` and `.child_results_gbd2023_pt2/` (both gitignored).
 **Preserve both sims' output before any rerun, not just `0200`.**
 
+## Migration findings, written up
+
+`docs/gbd_2023_migration/` holds the three GBD-2023 findings as issue drafts, with the
+measurements behind each. They are drafts — the `#<ISSUE-B>` / `#<ISSUE-C>`
+cross-references still need real numbers. Start with that directory's `README.md`.
+
+- `issue_a_maternal_disorder_saturation.md` — the `.clip(upper=1)` saturation, the
+  country-divergent revisions, **and the retraction below**
+- `issue_b_draw_alignment.md` — `maternal_disorders.ylds` divided by the draw count
+- `issue_c_anemia_responsiveness.md` — unclassified anemia sequelae treated as responsive
+
 ## The severe-anemia finding was a code bug (2026-08-04)
 
 `pregnant_proportion_below_70_gL` at 0.582 was **not** a GBD-2023 effect. It was the
