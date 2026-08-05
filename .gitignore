@@ -145,4 +145,6 @@ tests/.diagnostics/
 *.parquet
 *.tmp
 .cachedir
-model_spec_int.yaml
+model_spec_int.yaml.sim_results_gbd2023_pt1/
+.child_results_gbd2023_pt2/
+.child_results_gbd2021_reference/
