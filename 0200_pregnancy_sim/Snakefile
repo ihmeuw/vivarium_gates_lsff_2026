@@ -32,7 +32,10 @@ data_inputs = [
 ] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
-    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py"] + data_inputs
+    # loader.get_hemoglobin_below_70 integrates lsff_utils.hemoglobin_distribution, so a
+    # change there changes the artifact. That dependency was undeclared until
+    # 2026-08-04, which meant fixing the distribution left every artifact silently stale.
+    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py", "src/lsff_utils/hemoglobin_distribution.py"] + data_inputs
     output: ["0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
     shell:
         f"""

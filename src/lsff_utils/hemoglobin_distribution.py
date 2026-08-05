@@ -36,9 +36,19 @@ def hemoglobin_cdf_from_mean_sd(mean, sd):
 
     def cdf(x):
         gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
-        # NOTE: There is a bug in this CDF function -- it is reversed!
-        # https://github.com/ihmeuw/risk_distributions/issues/62
-        mgumbel_cdf = 1 - hemoglobin_distribution_mgumbel_part.cdf(x)
+        # The reversed MirroredGumbel CDF that this used to correct for --
+        # https://github.com/ihmeuw/risk_distributions/issues/62 -- is FIXED in
+        # vivarium.risk_distributions. The old `1 - cdf` workaround therefore
+        # re-inverted an already-correct CDF, and because the mirrored-Gumbel part
+        # carries 60% of the ensemble weight the result was wrong by up to 0.6 and
+        # decreased with x. Verified against the numerically integrated PDF: without
+        # the inversion the mean absolute error is 0.0000 at every test point, with
+        # it 0.4815.
+        #
+        # Do not reinstate the inversion against the modern library. If this module
+        # is ever run against the OLD risk_distributions (<= 2.0.16, in `.venv`), the
+        # inversion IS needed there -- that library really does return a reversed CDF.
+        mgumbel_cdf = hemoglobin_distribution_mgumbel_part.cdf(x)
         return (
             GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf
             + MIRROR_GUMBEL_DISTRIBUTION_WEIGHT * mgumbel_cdf
