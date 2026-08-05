@@ -4,6 +4,9 @@ def non_pregnant_anemia_inputs(wildcards):
     return (
         config["env_input"] + [
             "0400_non_pregnant_anemia_model/non_pregnant_anemia.ipynb",
+            # The notebook's whole calculation is a shift of this ensemble
+            # distribution, so a change here changes every number it writes.
+            "src/lsff_utils/hemoglobin_distribution.py",
             "0100_data_prep/results/iron/fortification_hemoglobin_effects.csv",
             "0100_data_prep/results/iron/{vehicle}/baseline_fortification/effective_coverage/{location}.csv",
             "0100_data_prep/results/population/stratified/{location}.csv",
