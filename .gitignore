@@ -157,3 +157,8 @@ model_spec_int.yaml
 # Local stand-in for the shared team model directory, via LSFF_MODEL_ROOT. See the note
 # in src/lsff_utils/paths.py.
 .model_root/
+
+# Stage-5000 output from the GBD-2023 migration run. Kept out of git deliberately: the
+# committed CSVs are the 200-seed published GBD-2021 baseline that the regression harness
+# compares against, and these are 10-seed GBD-2023 numbers.
+.results_gbd2023/
