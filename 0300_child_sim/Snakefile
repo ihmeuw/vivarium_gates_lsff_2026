@@ -32,6 +32,11 @@ rule lbwsg_pafs:
         export PYTHONPATH=./src
         {'python ../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml' if not debug else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         python -m lsff_utils.collect_results lbwsg_pafs/{{wildcards.location}} lbwsg_pafs/{{wildcards.location}}
+        # The child artifact build reads these through paths.LBWSG_PAF_RESULTS_ROOT, with
+        # no command-line override, so the in-tree output has to be reachable from there.
+        # A symlink rather than a copy: the resolver only reads, and the parquet is large.
+        mkdir -p "$LSFF_MODEL_ROOT/data/legacy/lbwsg_pafs"
+        ln -sfn "$PWD/lbwsg_pafs/{{wildcards.location}}" "$LSFF_MODEL_ROOT/data/legacy/lbwsg_pafs/{{wildcards.location}}"
         """
 
 

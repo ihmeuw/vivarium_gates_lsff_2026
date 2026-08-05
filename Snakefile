@@ -19,14 +19,27 @@ config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_for
 # .venv once the migration lands.
 MODERN_VENV = ".venv_modern"
 
+# lsff_utils.paths points the artifact/data/results roots at the shared team drive.
+# A pipeline run writes into those roots, which would overwrite whatever a colleague's
+# run left there, and IHME policy treats those paths as read-only. So redirect them
+# into the working tree for pipeline runs. Absolute because every rule cds elsewhere.
+#
+# This is a bridge, not the destination: the Snakefiles keep intermediates in-tree
+# while the packages expect them on the shared drive. Deciding where they belong is
+# still open -- see the note in src/lsff_utils/paths.py.
+import os
+LOCAL_MODEL_ROOT = os.path.join(os.path.abspath("."), ".model_root")
+
 config = {
     "env_input": [f"{MODERN_VENV}/bin/activate"],
     "env_setup": f"""
 source {MODERN_VENV}/bin/activate
+export LSFF_MODEL_ROOT={LOCAL_MODEL_ROOT}
 """,
     "simulation_running_env_input": [f"{MODERN_VENV}/bin/activate"],
     "simulation_running_env_setup": f"""
 source {MODERN_VENV}/bin/activate
+export LSFF_MODEL_ROOT={LOCAL_MODEL_ROOT}
 """,
     "debug": "false",
     "local": "false",

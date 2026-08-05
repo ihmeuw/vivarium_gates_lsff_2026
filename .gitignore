@@ -145,6 +145,15 @@ tests/.diagnostics/
 *.parquet
 *.tmp
 .cachedir
-model_spec_int.yaml.sim_results_gbd2023_pt1/
+model_spec_int.yaml
+
+# Preserved simulation output, kept so a rerun can be compared against the vintage it
+# replaced. The rules `rm -rf` their results directory and Snakemake deletes the outputs
+# of a failed job, so anything not copied aside is gone.
+.sim_results_gbd2023_pt1/
 .child_results_gbd2023_pt2/
 .child_results_gbd2021_reference/
+
+# Local stand-in for the shared team model directory, via LSFF_MODEL_ROOT. See the note
+# in src/lsff_utils/paths.py.
+.model_root/

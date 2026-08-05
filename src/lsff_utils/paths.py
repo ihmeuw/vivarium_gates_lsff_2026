@@ -33,9 +33,29 @@ wrote to. Defining the roots twice invites the two halves of the pipeline to
 disagree about which iteration they are part of.
 """
 
+import os
 from pathlib import Path
 
-MODEL_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
+DEFAULT_MODEL_ROOT = Path(
+    "/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026"
+)
+
+# `LSFF_MODEL_ROOT` relocates every root below at once. Unset -- the default -- gives
+# exactly the shared-drive layout described above, so this changes nothing for anyone
+# working against the team directory.
+#
+# It exists because that directory is shared, and a pipeline run writes artifacts and
+# results into it: a Snakemake run would overwrite whatever a colleague's run put
+# there, and IHME policy treats these paths as read-only. Pointing this at a writable
+# directory lets the pipeline run end to end without touching shared state.
+#
+# This is also the seam where the orchestration and the packages currently disagree.
+# The Snakefiles keep intermediates in-tree, while these constants expect them on the
+# shared drive; `LBWSG_PAF_RESULTS_ROOT` is the one the child artifact build reads with
+# no command-line override, so it is the one that actually blocks a run. Reconciling
+# the two properly -- deciding where intermediates belong and updating the Snakefiles
+# to match -- is still open.
+MODEL_ROOT = Path(os.environ.get("LSFF_MODEL_ROOT") or DEFAULT_MODEL_ROOT)
 
 # Bump this to start a new model iteration. See the module docstring.
 MODEL_NUMBER = "legacy"
