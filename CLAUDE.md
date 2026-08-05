@@ -786,7 +786,44 @@ Snakemake's failure cleanup both destroy it:
 `cp -rn 0200_pregnancy_sim/sim_results/rice .sim_results_gbd2021_reference/` (gitignored,
 and the parquet exists nowhere else — see the archive note in the reproduction section).
 
-`0300_child_sim` is still blocked on part-2 migration work and was not run.
+## `0300_child_sim` also runs, on Jim's part-2 branch (verified 2026-08-04)
+
+**The part-2 branch is `origin/albrja/mic-7325/updates-pt2`** — not `framework-updates-pt2`,
+which does not exist. 18 commits covering the child components, loader, model spec and CLI,
+plus a new `src/lsff_utils/paths.py`. It merges onto the harness branch with **no file
+overlap**. Tested on a throwaway branch `abie/test-child-sim-pt2`; do not assume it has
+landed on `main`.
+
+With part-2 merged, the whole child chain completes on the modern suite against GBD 2023:
+
+| stage | result |
+|---|---|
+| all 28 child modules import | clean — part-1's `Component` / `requires_columns` breakage is fixed |
+| `artifact_for_lbwsg_pafs` | 5,571,850 bytes vs India's GBD-2021 5,571,661; **~45 min** |
+| `lbwsg_pafs` (psimulate) | PAF 0.802–0.878 (India/GBD-2021 was 0.889–0.931) |
+| `child_artifacts` → `child_simulations` | 30 tasks, all 8 observers |
+
+**There is a third copy of the partitioned-results bug.** `rule lbwsg_pafs` has its own
+`mv lbwsg_pafs/{location}/*/results/*.parquet`, separate from the two `*_simulations` rules,
+and fails identically. All three now use `lsff_utils.collect_results`. Grep for `*/results/`
+before assuming a rule is covered.
+
+Two things about child output that look wrong and are not:
+
+- **`ylds.parquet` is all zero.** Pre-existing, not a migration regression: the GBD-2021 runs
+  produce a *completely empty* ylds file, the modern one produces well-formed rows that are
+  all zero. Consistent with most disability-causing components being commented out (see the
+  dead-code gotcha) — the child sim contributes YLLs only. Stage 5000 still reads it.
+- **`child_scenario` has only `baseline`.** Correct: `branches/scenarios_small.yaml` declares
+  `child_scenario: ['baseline']` × `maternal_scenario: [zero, baseline, intervention]`, so 3
+  scenarios × 10 seeds = 30 tasks.
+
+**The GBD-2021 `rice/nigeria` child output was lost** — the rule's `rm -rf` overwrote it and
+only the *pregnancy* sim had been preserved. The committed stage-5000 CSVs remain the real
+baseline for child-derived numbers (layer 1 covers them), and GBD-2021 child output survives
+for `rice/india` and `bouillon/nigeria`. Preserved going forward in
+`.child_results_gbd2021_reference/` and `.child_results_gbd2023_pt2/` (both gitignored).
+**Preserve both sims' output before any rerun, not just `0200`.**
 
 ## Modernization: modern Vivarium + GBD 2023
 
