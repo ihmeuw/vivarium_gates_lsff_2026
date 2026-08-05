@@ -310,11 +310,32 @@ The only real Python package at the top level (installed via `pip install -e .`)
 - `data_processing.py` — wealth-quintile recoding (DHS `poorest…richest` → 1–5, extraction
   sheet `Lowest…Highest` → 1–5) and reindexing disparity series onto GBD age groups
 - `hemoglobin_distribution.py` — the hemoglobin ensemble distribution (40% gamma / 60%
-  mirrored Gumbel, `XMAX = 220`), used by both `0400` notebooks. Contains documented
-  workarounds for two upstream `risk_distributions` bugs: a reversed MirroredGumbel CDF
-  ([#62](https://github.com/ihmeuw/risk_distributions/issues/62)) and an x_min/x_max
-  override ([#61](https://github.com/ihmeuw/risk_distributions/issues/61)). Do not "fix"
-  the `1 - cdf` as if it were a typo.
+  mirrored Gumbel, `XMAX = 220`), used by both `0400` notebooks **and by
+  `0200`'s `loader.get_hemoglobin_below_70`**. It carried workarounds for two upstream
+  `risk_distributions` bugs, and **the two have diverged — re-test them individually on
+  any library upgrade rather than trusting or discarding them as a group:**
+
+  - **[#62](https://github.com/ihmeuw/risk_distributions/issues/62), the reversed
+    MirroredGumbel CDF: FIXED upstream, workaround REMOVED (2026-08-04).** An earlier
+    version of this file said "Do not 'fix' the `1 - cdf` as if it were a typo." That was
+    right for the old library and exactly backwards for the modern one, where the `1 - cdf`
+    re-inverted an already-correct CDF. Since the mirrored-Gumbel part carries 60% of the
+    ensemble weight, the "CDF" was wrong by up to 0.6 and *decreased* with x. Ground truth
+    is the numerically integrated PDF: mean absolute error was 0.4815 with the inversion
+    and 0.0000 without. See "The severe-anemia finding was a code bug" below.
+  - **[#61](https://github.com/ihmeuw/risk_distributions/issues/61), the x_min/x_max
+    override: still needed.** Checked, because finding #62 stale made this suspect too.
+    `Gamma.get_parameters` returns computability bounds of [69.4, 162.2] for mean 110 /
+    sd 15; with the defaults, 4 of 9 hemoglobin test points come back NaN. Hemoglobin
+    genuinely ranges outside 69–162, so the override to `[0, XMAX]` must stay. It is now
+    spelled `computability_min`/`computability_max`.
+
+  **Still open upstream:** `MirroredGumbel` in `vivarium.risk_distributions` 3.1.8 no
+  longer broadcasts length-1 parameters over an N-element `x` — it returns NaN for every
+  element but the first, and this reaches `hemoglobin_cdf_from_mean_sd` directly (8 NaN of
+  9 in a direct test). No call site triggers it: `loader.py:888` passes matched-length
+  `.values` arrays and is backed by `assert result[draw].notnull().all()`. Worth a guard
+  in the module anyway.
 - `results.py` — scenario aggregation helpers
 - `snakemake_utils.py` — `tolerant_psimulate_restart`, used by both simulation rules, plus
   `dict_to_papermill`, which nothing imports
@@ -347,12 +368,21 @@ change in a way nobody intended?** It does not validate the science — it detec
 
 ```bash
 source .venv_modern/bin/activate && pytest tests/ --runslow -q
-# 2026-08-04: 264 passed, 45 failed, 5 skipped, 1 xfailed
+# 2026-08-05: 193 passed, 123 failed, 4 skipped, 1 xfailed
 ```
 
-The 45 failures are **expected on this branch** and are the harness working: they are
-exactly the `nigeria/rice` stochastic checks, whose simulation output is now GBD 2023
-against a GBD-2021 reference. See the end-to-end migration run section.
+**All 123 failures are `test_stochastic_results.py` and all are expected** — the harness
+working, not breakage. Every combination's simulation output is now GBD 2023 while the
+committed reference is GBD 2021. The count grew from 45 to 123 simply as more combinations
+were rerun: 45 when only `nigeria/rice` had been migrated, 123 once all three had.
+
+Everything else passes, which is the check that matters: **layer 1 deterministic 152/152**
+(the published CSVs are intact — if a rerun's output ever gets committed by accident, this
+is where it shows), layer 3 GBD contract 3/3, layer 4 plausibility 13/13, collect-results
+5/5, draw-alignment 1 passed + 1 xfail.
+
+Do not regenerate `tests/reference/sim_proportions.csv` to make the 123 pass until the
+GBD-2023 findings are settled — it is the only surviving record of published behaviour.
 
 The suite also still runs in the old split environments, skipping whatever the environment
 cannot do — `.test_venv` has the fuzzy checker but no GBD access, `.venv` the reverse. That
@@ -710,20 +740,15 @@ Open problems, one pre-existing and one round-related:
    2,213,530 YLLs), so ≤0.203% of total DALYs and ≤0.124% of DALYs averted. Guarded by
    `tests/test_draw_alignment.py`. Fix by fetching every term through one convention, or
    by dropping the `fillna(0)` so the mismatch raises.
-2. **`risk_factor.hemoglobin.pregnant_proportion_below_70_gL` reaches 0.582 under GBD 2023**
-   against 0.0153 in 2021 — **38×**, i.e. 58% of pregnant women in the worst stratum classed
-   as severely anemic. Reproduces in two independently built GBD-2023 artifacts, so it is a
-   genuine round effect. `hemoglobin_on_maternal_hemorrhage.paf` follows (14.93×), and
-   because a PAF enters as `rate × (1 - paf)`, that pushes hemorrhage **down**: simulated
-   hemorrhage incidence falls to 0.21× of the GBD-2021 level (9.54% → 2.00% of parturitions).
-   All figures are median-of-non-zero across two `--mean` builds. (An earlier note here said
-   "22× against 0.026"; that baseline was not the same statistic as the rest of the
-   comparison.) **The SD is not the cause** — an earlier read blamed it, but that was reading
-   an artifact built without `--mean` (single draw, SD 23.74); a `--mean` rebuild gives 18.05
-   against 2021's 15.25, an ordinary 1.18×. Since the mean (1.02×) and dispersion are both
-   fine and only the far tail is wrong, look at `get_hemoglobin_below_70` and the
-   ensemble-distribution changes (`mirror_point`, the `computability_*` renames) in
-   `lsff_utils.hemoglobin_distribution`.
+2. ~~**`risk_factor.hemoglobin.pregnant_proportion_below_70_gL` reaches 0.582, a genuine
+   round effect**~~ — **RETRACTED 2026-08-04. This was our own bug, not GBD 2023.** See
+   "The severe-anemia finding was a code bug" below. Kept here rather than deleted because
+   the *reasoning* failure is the reusable lesson: the value reproduced in two
+   independently built GBD-2023 artifacts and that was treated as evidence of a data
+   effect, but both were built with the modern library and so shared an inverted CDF.
+   **Reproducibility across builds distinguishes nothing if the builds share a code path.**
+   The dependent claims — `hemoglobin_on_maternal_hemorrhage.paf` at 14.93× and simulated
+   hemorrhage falling to 0.21× — are downstream of the same bug and are also void.
 3. **`cause.maternal_abortion_and_miscarriage.raw_incidence_rate` moved 4.5×**
    (0.0164 → 0.0740). Originally logged here as "no amplifying downstream, not obviously
    wrong" — **that was wrong**, and running the simulation is what showed it. It is a
@@ -776,10 +801,11 @@ as possibly corrupted — so debug them with `--keep-incomplete` or the evidence
 baseline) passed all 13 checks — every transition fires in every scenario, including
 maternal hemorrhage. Layer 2 (fuzzy, against the GBD-2021 reference) failed **45 of 45
 `nigeria/rice` checks and passed all 91 for `india/rice` and `nigeria/bouillon`**, which
-still hold GBD-2021 output. That is the intended signal: it isolated the one combination
-that changed and stayed quiet everywhere else. Do not "fix" those 45 by regenerating
-`tests/reference/sim_proportions.csv` until the GBD-2023 findings above are resolved —
-the reference is the only record of the published behaviour.
+still held GBD-2021 output *at that point*. That is the intended signal: it isolated the one
+combination that changed and stayed quiet everywhere else. (The full-pipeline run of
+2026-08-05 rebuilt all three combinations, so the count is now 123 — see the harness
+section.) Do not "fix" them by regenerating `tests/reference/sim_proportions.csv` until the
+GBD-2023 findings are resolved — the reference is the only record of published behaviour.
 
 Preserve the old-stack output before rerunning anything, because the rule's `rm -rf` and
 Snakemake's failure cleanup both destroy it:
@@ -824,6 +850,80 @@ baseline for child-derived numbers (layer 1 covers them), and GBD-2021 child out
 for `rice/india` and `bouillon/nigeria`. Preserved going forward in
 `.child_results_gbd2021_reference/` and `.child_results_gbd2023_pt2/` (both gitignored).
 **Preserve both sims' output before any rerun, not just `0200`.**
+
+## The severe-anemia finding was a code bug (2026-08-04)
+
+`pregnant_proportion_below_70_gL` at 0.582 was **not** a GBD-2023 effect. It was the
+`1 - cdf` MirroredGumbel workaround in `lsff_utils.hemoglobin_distribution`, still applied
+against a library that had fixed the upstream bug. The workaround re-inverted a correct
+CDF, and since that component carries 60% of the ensemble weight the result was wrong by
+up to 0.6.
+
+The smoking gun: as shipped, `cdf(70)` = **0.5896**, which *is* the 0.582 the artifact was
+reporting. With the fix, Nigeria's GBD-2023 value is **0.0241 against GBD 2021's 0.0153 —
+1.57×**, an ordinary revision.
+
+How it surfaced: the `0400` notebook's own `test_pdfs_cdfs_consistency` assertion failed
+with a mean discrepancy of **0.5866** against a 0.005 tolerance, and a maximum of exactly
+**0.600000** — the mirrored-Gumbel weight. A quantity pinned at a component's weight is a
+strong hint that the component is inverted rather than merely mis-parameterised.
+
+Three lessons worth keeping:
+
+- **"Reproduces in two independent builds" is not evidence about data** when both builds
+  share a code path.
+- **Workaround comments need individual re-testing on a library upgrade.** #62 became
+  harmful; its sibling #61 is still required. A blanket "do not touch these" was wrong.
+- **The notebook's own internal consistency check found this**, not any of the five harness
+  layers. Self-checks inside the science code are worth keeping and worth reading when they
+  fire, rather than loosening the tolerance.
+
+## Full pipeline under GBD 2023 (verified 2026-08-05)
+
+`snakemake --cores 1` ran to completion on the merged part-2 branch: **all steps, zero
+errors**, both `results_spreadsheet.xlsx` and `results_plots.ipynb` produced. Ten blockers
+had to be cleared — see commits `579cf10`, `92264b0`, `faad9d1`.
+
+**DALYs averted, the study's headline, survives the round change:**
+
+| combination | comparison | GBD 2021 | GBD 2023 | ratio |
+|---|---|---|---|---|
+| india/rice | baseline → intervention | 476,326 | 476,531 | 1.000 |
+| nigeria/rice | baseline → intervention | 280,678 | 270,990 | 0.965 |
+| nigeria/bouillon | baseline → intervention | 1,978,043 | 1,700,343 | 0.860 |
+| ethiopia/salt | baseline → 100% NRV | 528,422 | 541,116 | 1.024 |
+| ethiopia/salt | baseline → 25% NRV | 278,756 | 282,070 | 1.012 |
+
+**128 of 165 tracked CSVs are byte-identical.** Of the 37 that moved, the levels moved much
+more than the differences — which is why the averted figures barely budge:
+
+- total DALYs 0.93–0.97×; neonatal deaths ~0.91×
+- `maternal_disorders_incident_cases` **1.84× Nigeria but 0.578× India** — opposite
+  directions, so the `.clip(upper=1)` saturation is not the whole story
+- Ethiopia DALYs 1.269× and prevalent anemia 1.244×, entirely from the `0400` closed-form
+  model since Ethiopia never runs a microsim
+- upstream, `pregnancy/incidence` moved **0.768× India but 1.175× Ethiopia**, while
+  population moved only 1.02–1.04× — a country-specific fertility revision, not a
+  denominator effect
+
+**The round and the estimation year are not separable.** `vivarium_inputs.get_measure` with
+no `years` argument returns the round's terminal year — verified directly: `year_start`
+comes back `[2021]` from the old library and `[2023]` from the modern one. So every pull
+that does not pin a year moved from a 2021 to a 2023 estimate. GBD 2023 also does not
+estimate hemoglobin me_ids 10487/10488 for 2021 *at all*, so holding the year fixed is
+impossible.
+
+Where the year did **not** move: `0500` pins `years=2022` for both covariate pulls and
+projects population to 2030 with `forecasted_pop=True`. That — not any structural immunity
+of the folate pathway — is why NTD output moved by at most **0.0075%**, and why india/rice's
+folate-driven averted DALYs come out at 1.000×. An earlier note framing this as "the round
+change flows through the iron pathway only, as the architecture predicts" was wrong about
+the mechanism.
+
+**Do not commit the regenerated outputs.** They are 10-seed GBD-2023 numbers; the committed
+CSVs are the 200-seed published GBD-2021 baseline that the whole regression harness compares
+against. The run's output is preserved in `.results_gbd2023/` (gitignored) and the tracked
+files were restored with `git checkout`.
 
 ## Modernization: modern Vivarium + GBD 2023
 
@@ -880,10 +980,17 @@ callers and the `use_2019_data_keys` routing is fully commented out — but it i
 anyone re-enabling those keys. The child sim already bridges two GBD rounds; going to 2023
 makes three, so decide whether to extend or delete that machinery.
 
-Genuinely clean, needs no round work: `0100_data_prep/coverage_calculation/`,
-`extraction/prep_*.ipynb` (no GBD coupling at all), and the `5000_analyze_results` notebooks
-plus `0100_rescale_results/*` (they call `vivarium_inputs` without pinning a round, so they
-follow the library default).
+Genuinely clean, needs no round work: `0100_data_prep/coverage_calculation/` and
+`extraction/prep_*.ipynb` — no GBD coupling at all.
+
+**`0400`, `0500` and the `5000_analyze_results` notebooks were previously listed here too.
+That was wrong** (corrected 2026-08-05 by actually running them). They need no *round*
+work in the sense that they do not pin a release id — but they needed six separate fixes
+before they would run at all: the `gbd_mapping` namespace rename in 8 notebooks, a new
+required `data_type` argument, a forced extract-year move, a hardcoded draw count that no
+longer matches either source, a population validation ceiling the world outgrew, and a
+covariate GBD split in two. "Follows the library default" cuts both ways: it also means
+these notebooks silently changed estimation year from 2021 to 2023.
 
 ## Filesystem safety (IHME)
 
