@@ -893,7 +893,17 @@ Three lessons worth keeping:
 
 `snakemake --cores 1` ran to completion on the merged part-2 branch: **all steps, zero
 errors**, both `results_spreadsheet.xlsx` and `results_plots.ipynb` produced. Ten blockers
-had to be cleared — see commits `579cf10`, `92264b0`, `faad9d1`.
+had to be cleared.
+
+**This branch carries nine of the ten.** The tenth needs part-2 and therefore lives only on
+`abie/test-child-sim-pt2`: an `LSFF_MODEL_ROOT` override in `src/lsff_utils/paths.py`, which
+part-2 adds and this branch does not have. Part-2 relocates artifacts, PAF intermediates and
+simulation results to `/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/`
+while the Snakefiles still keep intermediates in-tree, and `LBWSG_PAF_RESULTS_ROOT` is the
+one root the child artifact build reads with no command-line override — so it blocks a run,
+and writing to that shared, `albrja`-owned directory is not an option. **A full-pipeline run
+on this branch will stop at `child_artifacts` until part-2 lands and that override comes with
+it.** Everything up to and including `lbwsg_pafs` works here.
 
 **DALYs averted, the study's headline, survives the round change:**
 
