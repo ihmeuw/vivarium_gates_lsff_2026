@@ -13,9 +13,19 @@ from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.risks import RiskEffect
+from vivarium.public_health.risks.implementations.low_birth_weight_and_short_gestation import (
+    BIRTH_WEIGHT,
+)
 
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 from vivarium_gates_lsff_2026_child.utilities import get_lookup_columns
+
+# LBWSG no longer exposes one birth exposure pipeline per axis. LBWSGRisk registers a
+# single attribute pipeline, named for the risk rather than the axis, whose value is a
+# frame with one column per axis -- see LBWSGRisk.birth_exposure_pipeline. Modifiers
+# therefore target this name and shift a single column, and must be registered as
+# attribute modifiers, since an attribute producer backs the pipeline.
+LBWSG_BIRTH_EXPOSURE_PIPELINE = "low_birth_weight_and_short_gestation.birth_exposure"
 
 
 class MaternalIronConsumptionFromFortification(Component):
@@ -49,8 +59,8 @@ class MaternalIronConsumptionFromFortification(Component):
             .value.loc[vehicle]
         )
 
-        builder.value.register_value_modifier(
-            "birth_weight.birth_exposure",
+        builder.value.register_attribute_modifier(
+            LBWSG_BIRTH_EXPOSURE_PIPELINE,
             self.update_birth_weight,
             required_resources=[
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
@@ -86,17 +96,25 @@ class MaternalIronConsumptionFromFortification(Component):
 
         self.population_view.initialize(new_simulants)
 
-    def update_birth_weight(self, index, exposure):
+    def update_birth_weight(self, index: pd.Index, exposure: pd.DataFrame) -> pd.DataFrame:
+        """Shift birth weight by the change in maternal iron intake.
+
+        Only the birth weight axis is shifted; every other axis in the frame passes
+        through untouched.
+        """
         pop = self.population_view.get(index, self.columns_created)
 
-        # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
-        exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
+        # Delete the baseline effects of fortification baked into the GBD 2021
+        # birthweight distribution, then apply this scenario's intake.
+        shift = (
+            pop["maternal_iron_consumption_from_fortification_mcg"]
+            - pop["baseline_2021_maternal_iron_consumption_from_fortification_mcg"]
+        ) * (
             self.birth_weight_effect_size_per_mg_intake / 1_000
         )  # convert mg to mcg
-        exposure += pop.maternal_iron_consumption_from_fortification_mcg * (
-            self.birth_weight_effect_size_per_mg_intake / 1_000
-        )
 
+        exposure = exposure.copy()
+        exposure[BIRTH_WEIGHT] = exposure[BIRTH_WEIGHT] + shift
         return exposure
 
 
@@ -126,8 +144,8 @@ class WealthQuintile(Component):
             value_columns="value",
         )
 
-        builder.value.register_value_modifier(
-            "birth_weight.birth_exposure",
+        builder.value.register_attribute_modifier(
+            LBWSG_BIRTH_EXPOSURE_PIPELINE,
             self.update_birth_weight,
             required_resources=[
                 "wealth_quintile",
@@ -159,14 +177,23 @@ class WealthQuintile(Component):
 
         self.population_view.initialize(new_simulants)
 
-    def update_birth_weight(self, index, exposure):
-        mean_exposure = exposure.mean()
+    def update_birth_weight(self, index: pd.Index, exposure: pd.DataFrame) -> pd.DataFrame:
+        """Apply the wealth quintile birth weight gradient, holding the mean fixed.
+
+        Only the birth weight axis is scaled; every other axis in the frame passes
+        through untouched.
+        """
+        birth_weight = exposure[BIRTH_WEIGHT]
+        mean_exposure = birth_weight.mean()
 
         multipliers = self.birth_weight_disparities_multiplier(index)
         multipliers /= multipliers.mean()
-        scaled = exposure * multipliers
+        scaled = birth_weight * multipliers
         scale_down_factor = mean_exposure / scaled.mean()
-        return scaled * scale_down_factor
+
+        exposure = exposure.copy()
+        exposure[BIRTH_WEIGHT] = scaled * scale_down_factor
+        return exposure
 
 
 # class AdditiveRiskEffect(RiskEffect):
