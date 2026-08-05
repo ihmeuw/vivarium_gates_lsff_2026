@@ -851,6 +851,23 @@ for `rice/india` and `bouillon/nigeria`. Preserved going forward in
 `.child_results_gbd2021_reference/` and `.child_results_gbd2023_pt2/` (both gitignored).
 **Preserve both sims' output before any rerun, not just `0200`.**
 
+## The DHS surveys are 1–3 rounds stale
+
+`TODO.md` holds an ordered refresh plan. The short version: India is on **2015–2016**,
+Nigeria on **2018**, Ethiopia on **2016**, and newer extracts (India 2023_2024, Nigeria
+2023_2024, Ethiopia 2024_2025) are already on `/snfs1/DATA/DHS_PROG_DHS/`. The GBD-2023
+migration touched none of it, because DHS is not GBD.
+
+It matters out of proportion to its size: DHS produces *every* wealth-quintile disparity
+in the study — `wealth_quintile_probabilities`, `hemoglobin/{mean,sd}_disparities`,
+`birth_weight_disparities`, `maternal_disorders_incidence_disparities` — which is the
+stratification the study exists to report. Counted blast radius is up to ~38 of the 165
+tracked CSVs (14 direct, up to 24 via stage 5000); `coverage_calculation/` and the `0500`
+NTD model read no DHS output.
+
+Do it on its own branch, and refresh the wealth quintiles *first*: they are a
+within-survey relative measure, so a new round re-bases every disparity below them.
+
 ## Migration findings, written up
 
 `docs/gbd_2023_migration/` holds the three GBD-2023 findings as issue drafts, with the
