@@ -176,7 +176,11 @@ build-env: # Create a new environment with installed packages
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation"; \
+#	--upgrade: jobmon_installer_ihme is unpinned (by vivarium-cluster-tools[cluster]), and
+#	uv leaves an unpinned requirement alone once anything satisfies it. Without this the
+#	environment keeps whatever jobmon it first acquired -- 10.6.5, whose config has no
+#	'http.gui_url' key, which breaks 'make_artifacts -l all'.
+		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation --upgrade"; \
 	fi
 #	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
 #	reasons. First, both extras pull IHME-internal packages that are absent from public
