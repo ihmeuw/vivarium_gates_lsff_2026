@@ -91,7 +91,9 @@ def make_artifacts(
     build_national: bool,
     for_lbwsg_pafs: bool,
 ) -> None:
-    location = location.title()  # HACK
+    # Accept locations in any case, but leave the "all" sentinel lowercase:
+    # build_artifacts compares against it exactly, and "all".title() is "All".
+    location = "all" if location.lower() == "all" else location.title()
     # This is a flag for national level data but we want default to be to write subnational data
     fetch_subnationals = not build_national
     configure_logging_to_terminal(verbose)

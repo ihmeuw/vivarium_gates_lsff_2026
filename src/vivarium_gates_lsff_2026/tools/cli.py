@@ -93,7 +93,9 @@ def make_artifacts(
     for_lbwsg_pafs: bool,
     fertility_data_path: Optional[str],
 ) -> None:
-    location = location.title()
+    # Accept locations in any case, but leave the "all" sentinel lowercase:
+    # build_artifacts compares against it exactly, and "all".title() is "All".
+    location = "all" if location.lower() == "all" else location.title()
 
     if project == "maternal":
         from vivarium_gates_lsff_2026_maternal.constants import paths
