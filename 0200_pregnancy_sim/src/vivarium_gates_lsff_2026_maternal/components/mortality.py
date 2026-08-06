@@ -52,7 +52,7 @@ class MaternalMortality(Mortality):
         self.clock = builder.time.clock()
         self.step_size = builder.time.step_size()
         self.life_expectancy_table = self.build_lookup_table(builder, "life_expectancy")
-        self.mortality_probability = self.get_mortality_probability(builder)
+        self.register_mortality_probability(builder)
 
         builder.value.register_attribute_modifier("exit_time", self.update_exit_times)
 
@@ -69,7 +69,7 @@ class MaternalMortality(Mortality):
     # Setup Methods   #
     ###################
 
-    def get_mortality_probability(self, builder: Builder):
+    def register_mortality_probability(self, builder: Builder) -> None:
         # NOTE: I did not add this to the configurable lookup tables because
         # it is only used as the source for the pipeline.
         probability_data = builder.data.load(
@@ -80,9 +80,10 @@ class MaternalMortality(Mortality):
             "mortality_probability",
             data_source=probability_data,
         )
-        return builder.value.register_value_producer(
+        builder.value.register_attribute_producer(
             self.mortality_probability_pipeline_name,
             source=probability_pipeline_source,
+            required_resources=[probability_pipeline_source],
         )
 
     ########################
@@ -105,7 +106,9 @@ class MaternalMortality(Mortality):
             event.index,
             query="(is_alive == True) & (maternal_disorders == 'maternal_disorders')",
         )
-        mortality_probability = self.mortality_probability(at_risk)
+        mortality_probability = self.population_view.get(
+            at_risk, self.mortality_probability_pipeline_name
+        )
 
         deaths = self.random.filter_for_probability(
             at_risk, mortality_probability, additional_key="death"

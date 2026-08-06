@@ -26,11 +26,21 @@ class NewChildren(Component):
 
         # NOTE: I did not add this to the configurable lookup tables because
         # it is only used as the source for the pipeline.
-        self.male_sex_percentage = self.build_lookup_table(
+        male_sex_percentage_table = self.build_lookup_table(
             builder,
             "male_sex_percentage",
             data_source=builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
             value_columns="value",
+        )
+
+        # The table backs a pipeline rather than being read directly, so other
+        # components can register modifiers against this value. Read it back through
+        # the population view; register_attribute_producer returns None.
+        self.male_sex_percentage_name = "new_children.male_sex_percentage"
+        builder.value.register_attribute_producer(
+            self.male_sex_percentage_name,
+            source=male_sex_percentage_table,
+            required_resources=[male_sex_percentage_table],
         )
 
     def empty(self, index: pd.Index) -> pd.DataFrame:
@@ -44,7 +54,7 @@ class NewChildren(Component):
         )
 
     def generate_children(self, index: pd.Index) -> pd.DataFrame:
-        male_sex_percentage = self.male_sex_percentage(index)
+        male_sex_percentage = self.population_view.get(index, self.male_sex_percentage_name)
         male_sex = self.randomness.filter_for_probability(
             index, male_sex_percentage, additional_key="male_sex"
         )

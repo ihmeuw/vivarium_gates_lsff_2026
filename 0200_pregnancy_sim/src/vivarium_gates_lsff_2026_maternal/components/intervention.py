@@ -35,11 +35,21 @@ class VehicleConsumption(Component):
             .set_index(index_columns)["value"]
             .rename("any_consumed")
         )
-        self.any_consumed = self.build_lookup_table(
+        any_consumed_table = self.build_lookup_table(
             builder,
             "any_consumed",
             data_source=any_consumed.reset_index(),
             value_columns=["any_consumed"],
+        )
+
+        # The table backs a pipeline rather than being read directly, so other
+        # components can register modifiers against this value. Read it back through
+        # the population view; register_attribute_producer returns None.
+        self.any_consumed_name = "vehicle_consumption.any_consumed"
+        builder.value.register_attribute_producer(
+            self.any_consumed_name,
+            source=any_consumed_table,
+            required_resources=[any_consumed_table],
         )
 
         mean = (
@@ -59,15 +69,22 @@ class VehicleConsumption(Component):
             value_columns=["mean", "stddev"],
         )
 
-        self.distribution_parameters = builder.value.register_value_producer(
-            "vehicle_consumption.exposure_parameters",
+        self.distribution_parameters_name = "vehicle_consumption.exposure_parameters"
+        builder.value.register_attribute_producer(
+            self.distribution_parameters_name,
             source=distribution_parameters,
+            required_resources=[distribution_parameters],
         )
 
         builder.population.register_initializer(
             self.on_initialize_simulants,
             columns=self.columns_created,
-            required_resources=[self.randomness, "wealth_quintile"],
+            required_resources=[
+                self.randomness,
+                "wealth_quintile",
+                self.any_consumed_name,
+                self.distribution_parameters_name,
+            ],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -75,7 +92,9 @@ class VehicleConsumption(Component):
             {"vehicle_consumption_grams": np.nan},
             index=pop_data.index,
         )
-        any_consumed_prob = self.any_consumed(pop_data.index).squeeze()
+        any_consumed_prob = self.population_view.get(
+            pop_data.index, self.any_consumed_name
+        ).squeeze()
         any_consumed = self.randomness.filter_for_probability(
             pop_data.index,
             probability=any_consumed_prob,
@@ -85,7 +104,9 @@ class VehicleConsumption(Component):
         # Consider the original distribution, described by mean and stddev, to be
         # not normal but a mixture of a normal distribution and a point mass at 0.
         # This is a mixture of Gaussians (M), for the degenerate case where one has mean = 0, variance = 0.
-        distribution_parameters = self.distribution_parameters(any_consumed)
+        distribution_parameters = self.population_view.get_frame(
+            any_consumed, self.distribution_parameters_name
+        )
         # Mean of the mixture is just p_A * mean(A), so mean(A) = mean(M) / p_A
         nonzero_component_mean = (
             distribution_parameters["mean"] / any_consumed_prob.loc[any_consumed]
@@ -252,7 +273,7 @@ class IronFortification(Component):
             value_columns=["value"],
         )
 
-        builder.value.register_value_modifier(
+        builder.value.register_attribute_modifier(
             "hemoglobin.exposure",
             self.update_hemoglobin_exposure,
             required_resources=[
