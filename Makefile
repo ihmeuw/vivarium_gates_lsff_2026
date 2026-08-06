@@ -171,15 +171,16 @@ build-env: # Create a new environment with installed packages
 	conda create $(CONDA_CREATE_FLAG) python=$(py) --yes
 # 	Bootstrap vivarium_build_utils into the new environment.
 	conda run $(CONDA_RUN_FLAG) pip install "vivarium-build-utils>=4.4.2,<5.0.0"
-#	Install packages based on type
+#	Install packages based on type.
+#	The artifact install passes '--upgrade' because jobmon_installer_ihme is unpinned (by
+#	vivarium-cluster-tools[cluster]) and uv leaves an unpinned requirement alone once
+#	anything satisfies it. Without it the environment keeps whatever jobmon it first
+#	acquired -- 10.6.5, whose config has no 'http.gui_url' key, which breaks
+#	'make_artifacts -l all'.
 	@if [ "$(type)" = "simulation" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-#	--upgrade: jobmon_installer_ihme is unpinned (by vivarium-cluster-tools[cluster]), and
-#	uv leaves an unpinned requirement alone once anything satisfies it. Without this the
-#	environment keeps whatever jobmon it first acquired -- 10.6.5, whose config has no
-#	'http.gui_url' key, which breaks 'make_artifacts -l all'.
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation --upgrade"; \
 	fi
 #	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
