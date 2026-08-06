@@ -171,15 +171,12 @@ build-env: # Create a new environment with installed packages
 	conda create $(CONDA_CREATE_FLAG) python=$(py) --yes
 # 	Bootstrap vivarium_build_utils into the new environment.
 	conda run $(CONDA_RUN_FLAG) pip install "vivarium-build-utils>=4.4.2,<5.0.0"
-#	Install packages based on type.
-#	NOTE: do not put '--upgrade' in UV_FLAGS -- base.mk already passes it on its own
-#	'uv pip install --upgrade pip setuptools' line, and uv rejects a repeated flag.
-#	See UPGRADE_FLAG below for where the artifact env asks for a fresh resolution.
+#	Install packages based on type
 	@if [ "$(type)" = "simulation" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation"; \
+		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools\<81"; \
 	fi
 #	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
 #	reasons. First, both extras pull IHME-internal packages that are absent from public
@@ -191,19 +188,13 @@ build-env: # Create a new environment with installed packages
 #	index strategy as the root package above. 'uv' is available here because the
 #	'make install' invoked above installs it along with setuptools, which
 #	'--no-build-isolation' requires.
-#	UPGRADE_FLAG: jobmon_installer_ihme is unpinned (by vivarium-cluster-tools[cluster]),
-#	and uv leaves an unpinned requirement alone once anything satisfies it. Without a
-#	fresh resolution the artifact env keeps whatever jobmon it first acquired -- 10.6.5,
-#	whose config has no 'http.gui_url' key, which breaks 'make_artifacts -l all'. The
-#	simulation env already resolves current jobmon, so this is artifact-only.
-	@$(eval UPGRADE_FLAG := $(if $(filter artifact,$(type)),--upgrade,))
 	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "maternal" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_maternal || true; \
-		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation $(UPGRADE_FLAG) -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
+		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
 	fi
 	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "child" ]; then \
 		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_child || true; \
-		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation $(UPGRADE_FLAG) -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
+		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
 	fi
 	@if [ "$(lfs)" = "yes" ]; then \
 		conda run $(CONDA_RUN_FLAG) conda install -c conda-forge git-lfs --yes; \
