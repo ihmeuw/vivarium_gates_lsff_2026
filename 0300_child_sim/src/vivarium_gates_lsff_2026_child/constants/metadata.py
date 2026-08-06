@@ -10,10 +10,11 @@ PROJECT_NAME = "vivarium_gates_lsff_2026_child"
 CLUSTER_PROJECT = "proj_simscience"
 
 CLUSTER_QUEUE = "all.q"
-MAKE_ARTIFACT_MEM = "10G"
-MAKE_ARTIFACT_CPU = "1"
+# Resources for one location's artifact build. Memory is in GB and cores is a
+# count, as NativeSpecification expects; they are not SLURM-formatted strings.
+MAKE_ARTIFACT_MEM = 10
+MAKE_ARTIFACT_CPU = 1
 MAKE_ARTIFACT_RUNTIME = "3:00:00"
-MAKE_ARTIFACT_SLEEP = 10
 
 YEAR_DURATION: float = 365.25
 

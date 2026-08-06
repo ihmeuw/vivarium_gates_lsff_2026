@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     # use "pip install -e .[dev]" to install required components + extra components
     data_requirements = ["vivarium-inputs>=8.0.2"]
-    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14", "drmaa"]
+    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14"]
     test_requirements = [
         "vivarium-dependencies[pytest]",
         "vivarium-testing-utils",

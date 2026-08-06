@@ -7,21 +7,20 @@
 
 """
 
-import shutil
+import argparse
 import sys
-import time
+from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Union
 
 import click
 from loguru import logger
 from vivarium import cluster_tools as vct
+from vivarium.cluster_tools.core.cluster.interface import NativeSpecification
+from vivarium.cluster_tools.core.jobmon.artifact import build_artifacts_in_parallel
 
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
-from vivarium_gates_lsff_2026_maternal.tools.app_logging import (
-    add_logging_sink,
-    decode_status,
-)
+from vivarium_gates_lsff_2026_maternal.tools.app_logging import add_logging_sink
 from vivarium_gates_lsff_2026_maternal.utilities import (
     delete_if_exists,
     len_longest_location,
@@ -149,56 +148,49 @@ def build_all_artifacts(
         called by the :func:`build_artifacts` function located in the same
         module.
     """
-    from vivarium.cluster_tools.utilities import get_drmaa
+    build_commands = {}
+    for location in metadata.LOCATIONS:
+        location_cleaned = sanitize_location(location)
+        artifact_path = output_dir / f"{location_cleaned}.hdf"
+        command = (
+            f"{sys.executable} {Path(__file__).resolve()} "
+            f'--artifact-path "{artifact_path}" '
+            f'--location "{location}" '
+            f'--vehicle "{vehicle}"'
+        )
+        if mean_draw:
+            command += " --mean"
+        build_commands[f"{location_cleaned}_artifact"] = command
 
-    drmaa = get_drmaa()
+    native_specification = NativeSpecification(
+        job_name="make_artifacts",
+        project=metadata.CLUSTER_PROJECT,
+        queue=metadata.CLUSTER_QUEUE,
+        peak_memory=metadata.MAKE_ARTIFACT_MEM,
+        max_runtime=metadata.MAKE_ARTIFACT_RUNTIME,
+        hardware=[],
+        cores=metadata.MAKE_ARTIFACT_CPU,
+        requires_archive_node=True,  # Need J-drive access for data
+    )
 
-    jobs = {}
-    with drmaa.Session() as session:
-        for location in metadata.LOCATIONS:
-            path = output_dir / f"{sanitize_location(location)}.hdf"
+    # SLURM will not create a missing log directory; it fails the job instead.
+    worker_logging_root = output_dir / "logs"
+    vct.mkdir(worker_logging_root, parents=True, exists_ok=True)
 
-            job_template = session.createJobTemplate()
-            job_template.remoteCommand = shutil.which("python")
-            job_template.args = [__file__, str(path), f'"{location}"']
-            job_template.nativeSpecification = (
-                f"-V "  # Export all environment variables
-                f"-b y "  # Command is a binary (python)
-                f"-P {metadata.CLUSTER_PROJECT} "
-                f"-q {metadata.CLUSTER_QUEUE} "
-                f"-l fmem={metadata.MAKE_ARTIFACT_MEM} "
-                f"-l fthread={metadata.MAKE_ARTIFACT_CPU} "
-                f"-l h_rt={metadata.MAKE_ARTIFACT_RUNTIME} "
-                f"-l archive=TRUE "  # Need J-drive access for data
-                f"-N {sanitize_location(location)}_artifact"
-            )  # Name of the job
-            jobs[location] = (session.runJob(job_template), drmaa.JobState.UNDETERMINED)
-            logger.info(
-                f"Submitted job {jobs[location][0]} to build artifact for {location}."
-            )
-            session.deleteJobTemplate(job_template)
-
-        if verbose:
-            logger.info("Entering monitoring loop.")
-            logger.info("-------------------------")
-            logger.info("")
-
-            while any(
-                [
-                    job[1] not in [drmaa.JobState.DONE, drmaa.JobState.FAILED]
-                    for job in jobs.values()
-                ]
-            ):
-                for location, (job_id, status) in jobs.items():
-                    jobs[location] = (job_id, session.jobStatus(job_id))
-                    logger.info(
-                        f"{location:<35}: {decode_status(drmaa, jobs[location][1]):>15}"
-                    )
-                logger.info("")
-                time.sleep(metadata.MAKE_ARTIFACT_SLEEP)
-                logger.info("Checking status again")
-                logger.info("---------------------")
-                logger.info("")
+    # A workflow name is also its resume key, so it must be unique per run:
+    # reusing one without resume=True makes Jobmon refuse to start.
+    launch_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    logger.info(f"Submitting {len(build_commands)} artifact builds to Jobmon.")
+    _, monitoring_url = build_artifacts_in_parallel(
+        workflow_name=f"build_maternal_artifacts_{launch_time}",
+        build_commands=build_commands,
+        native_specification=native_specification,
+        worker_logging_root=worker_logging_root,
+        env_prefix=sys.prefix,
+        max_concurrently_running=len(build_commands),
+    )
+    if monitoring_url:
+        logger.info(f"Monitor the workflow at {monitoring_url}")
 
     logger.info("**Done**")
 
@@ -253,6 +245,21 @@ def build_single_location_artifact(
 
 
 if __name__ == "__main__":
-    artifact_path = sys.argv[1]
-    artifact_location = sys.argv[2]
-    build_single_location_artifact(artifact_path, artifact_location, log_to_file=True)
+    # Entry point for the per-location tasks that build_all_artifacts submits.
+    # Named flags rather than positional argv: booleans passed positionally arrive
+    # as strings, and every non-empty string is truthy, so '--mean False' would
+    # silently enable mean draws.
+    parser = argparse.ArgumentParser(description="Build the artifact for a single location.")
+    parser.add_argument("--artifact-path", required=True)
+    parser.add_argument("--location", required=True)
+    parser.add_argument("--vehicle", default="rice")
+    parser.add_argument("--mean", dest="mean_draw", action="store_true")
+    args = parser.parse_args()
+
+    build_single_location_artifact(
+        args.artifact_path,
+        args.location,
+        mean_draw=args.mean_draw,
+        vehicle=args.vehicle,
+        log_to_file=True,
+    )
