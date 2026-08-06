@@ -32,10 +32,7 @@ if __name__ == "__main__":
 
     # use "pip install -e .[dev]" to install required components + extra components
     data_requirements = ["vivarium-inputs>=8.0.2"]
-    # NOTE: Do not add jobmon_installer_ihme here. It reaches this environment only as
-    # a transitive dependency of vivarium-cluster-tools[cluster]; naming it directly
-    # makes the build unresolvable, because the index this install step uses does not
-    # carry it under that name.
+    # NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
     cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14"]
     test_requirements = [
         "vivarium-dependencies[pytest]",
