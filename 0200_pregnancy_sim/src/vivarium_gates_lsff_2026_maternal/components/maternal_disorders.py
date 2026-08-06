@@ -75,9 +75,9 @@ class ParturitionSelectionTransition(ProportionTransition):
 
     def setup(self, builder: Builder) -> None:
         super().setup(builder)
-        pipeline_name = f"{self.output_state.state_id}.transition_proportion"
-        self.proportion_pipeline = builder.value.register_value_producer(
-            pipeline_name,
+        self.proportion_pipeline_name = f"{self.output_state.state_id}.transition_proportion"
+        builder.value.register_attribute_producer(
+            self.proportion_pipeline_name,
             source=self.compute_transition_proportion,
             required_resources=["age", "sex", "wealth_quintile", "is_alive", "pregnancy"],
         )
@@ -100,7 +100,7 @@ class ParturitionSelectionTransition(ProportionTransition):
     ####################
 
     def _probability(self, index) -> pd.Series:
-        return self.proportion_pipeline(index)
+        return self.population_view.get(index, self.proportion_pipeline_name)
 
 
 def get_maternal_disorders_disability_weight(builder: Builder, cause: str):
