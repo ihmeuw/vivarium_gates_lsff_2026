@@ -1,6 +1,6 @@
-===============================
+=================================
 vivarium_gates_lsff_2026_maternal
-===============================
+=================================
 
 Research repository for the vivarium_gates_lsff_2026_maternal project.
 
@@ -70,14 +70,22 @@ system.
 Usage
 -----
 
+**For how the maternal model fits into the wider pipeline -- what has to be built
+before it and what consumes its output -- see "The Modeling Pipeline" in the
+repository root README.** This file covers only this package.
+
+Artifacts are not stored in this package. They are written to the team's shared
+drive under the current model iteration; see ``lsff_utils.paths`` and the root
+README. You can examine one with the vivarium artifact tools; a tutorial is at
+https://vivarium.readthedocs.io/en/latest/tutorials/artifact.html#reading-data
+
 You'll find six directories inside the main
 ``src/vivarium_gates_lsff_2026_maternal`` package directory:
 
-- ``artifacts``
+- ``constants``
 
-  This directory contains all input data used to run the simulations.
-  You can open these files and examine the input data using the vivarium
-  artifact tools.  A tutorial can be found at https://vivarium.readthedocs.io/en/latest/tutorials/artifact.html#reading-data
+  Project-wide constants: locations, cluster resources, artifact keys, and the
+  data values the components read.
 
 - ``components``
 
@@ -112,11 +120,16 @@ Running Simulations
 You can run your simulation from the command line. 
 With your conda environment active, you can run with, e.g.::
 
-   (vivarium_gates_lsff_2026_maternal) :~$ simulate run -vvv /<REPO_INSTALLATION_DIRECTORY>/vivarium_gates_lsff_2026_maternal/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml -o /FILE/PATH/TO/SAVE/RESULTS -i src/vivarium_gates_lsff_2026_maternal/artifacts/<COUNTRY_TO_RUN_IN>.hdf
+   (vivarium_gates_lsff_2026_maternal) :~$ simulate run -vvv src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml -o /FILE/PATH/TO/SAVE/RESULTS
 
-The simulation will run in one location at a time, enter the country you wish to 
-run the simulation for in your call. Currently Ethiopia, Nigeria, and Paksitan are supported. 
-The country name should be in lower case, for example 'ethiopia' or 'nigeria'.  
+The specification already names the artifact for the current model iteration, so
+``-i`` is only needed to run against a different one.
+
+The simulation runs one location at a time. The maternal model supports **Nigeria
+and India**; Ethiopia is not modeled here, though the child model does run for it.
+Which location runs is determined by the artifact, not by a command line flag --
+point ``-i`` at that location's artifact, or change ``artifact_path`` in the
+specification.
 
 The ``-vvv`` flag will log verbosely, so you will get log messages every time
 step. For more ways to run simulations, see the tutorials at
