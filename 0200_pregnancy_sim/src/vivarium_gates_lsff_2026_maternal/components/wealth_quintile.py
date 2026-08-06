@@ -32,22 +32,37 @@ class WealthQuintile(Component):
                 "5": 5,
             }
         )
-        self.quintile_probabilities = self.build_lookup_table(
+        # NOTE: the table name must differ from the pipeline name below -- see the note
+        # in components/children.py.
+        quintile_probabilities_table = self.build_lookup_table(
             builder,
-            "quintile_probabilities",
+            "quintile_probabilities_data",
             data_source=quintile_probabilities,
             value_columns=data_processing.WEALTH_QUINTILES,
+        )
+
+        # The table backs a pipeline rather than being read directly, so other
+        # components can register modifiers against these probabilities. Read it back
+        # through the population view; register_attribute_producer returns None.
+        self.quintile_probabilities_name = "wealth_quintile.quintile_probabilities"
+        builder.value.register_attribute_producer(
+            self.quintile_probabilities_name,
+            source=quintile_probabilities_table,
+            required_resources=[quintile_probabilities_table],
         )
 
         builder.population.register_initializer(
             self.on_initialize_simulants,
             columns=self.columns_created,
-            required_resources=[self.randomness],
+            required_resources=[self.randomness, self.quintile_probabilities_name],
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         pop_update = pd.DataFrame(index=pop_data.index)
-        quintile_probabilities = self.quintile_probabilities(pop_data.index)
+        # Multi-column attribute, so get_frame rather than get.
+        quintile_probabilities = self.population_view.get_frame(
+            pop_data.index, self.quintile_probabilities_name
+        )
         # HACK: release-candidate-spring currently has nondeterminism about column order
         # https://github.com/ihmeuw/vivarium/blob/7491e099b96a958a607f8291581f1ce7b5c6c21c/src/vivarium/component.py#L687
         columns = sorted(quintile_probabilities.columns)

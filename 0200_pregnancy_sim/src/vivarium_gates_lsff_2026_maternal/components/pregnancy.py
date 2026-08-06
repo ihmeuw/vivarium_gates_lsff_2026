@@ -67,9 +67,11 @@ class PregnantState(DiseaseState):
             value_columns=["live_birth", "partial_term", "stillbirth"],
         )
 
-        self.birth_outcome_probabilities = builder.value.register_value_producer(
-            "birth_outcome_probabilities",
+        self.birth_outcome_probabilities_name = "birth_outcome_probabilities"
+        builder.value.register_attribute_producer(
+            self.birth_outcome_probabilities_name,
             source=self.birth_outcome_probabilities_table,
+            required_resources=[self.birth_outcome_probabilities_table],
         )
 
         # The dwell time in the pregnant state is the sampled pregnancy duration
@@ -83,7 +85,7 @@ class PregnantState(DiseaseState):
         builder.population.register_initializer(
             initializer=self.initialize_pregnancy_outcomes,
             columns=self.columns_created,
-            required_resources=[self.randomness, self.birth_outcome_probabilities],
+            required_resources=[self.randomness, self.birth_outcome_probabilities_name],
         )
 
     def get_pregnancy_dwell_time(self, index: pd.Index, dwell_time: pd.Series) -> pd.Series:
@@ -98,9 +100,9 @@ class PregnantState(DiseaseState):
 
     def sample_pregnancy_outcomes_and_durations(self, pop_data: SimulantData) -> pd.DataFrame:
         # Order the columns so that partial_term isn't in the middle!
-        outcome_probabilities = self.birth_outcome_probabilities(pop_data.index)[
-            ["partial_term", "stillbirth", "live_birth"]
-        ]
+        outcome_probabilities = self.population_view.get_frame(
+            pop_data.index, self.birth_outcome_probabilities_name
+        )[["partial_term", "stillbirth", "live_birth"]]
         pregnancy_outcomes = pd.DataFrame(
             {
                 "pregnancy_outcome": self.randomness.choice(

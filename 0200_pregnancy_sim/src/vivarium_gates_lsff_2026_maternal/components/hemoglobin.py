@@ -102,48 +102,54 @@ class Hemoglobin(Component):
             data_keys.MATERNAL_HEMORRHAGE.MODERATE_HEMORRHAGE_PROBABILITY
         ).value.values[0]
 
-        self.distribution_parameters = builder.value.register_value_producer(
-            "hemoglobin.exposure_parameters",
+        self.distribution_parameters_name = "hemoglobin.exposure_parameters"
+        builder.value.register_attribute_producer(
+            self.distribution_parameters_name,
             source=distribution_parameters,
+            required_resources=[distribution_parameters],
         )
 
         # Fix resource dependency cycle
-        self.raw_hemoglobin = builder.value.register_value_producer(
-            "raw_hemoglobin.exposure",
+        self.raw_hemoglobin_name = "raw_hemoglobin.exposure"
+        builder.value.register_attribute_producer(
+            self.raw_hemoglobin_name,
             source=self.hemoglobin_source,
             required_resources=[
-                self.distribution_parameters,
+                self.distribution_parameters_name,
                 "hemoglobin_distribution_propensity",
                 "hemoglobin_percentile",
             ],
         )
 
-        self.hemoglobin = builder.value.register_value_producer(
-            "hemoglobin.exposure",
-            source=self.raw_hemoglobin,
+        # Sourced from the raw attribute by name: the modifiers below apply on top of it.
+        self.hemoglobin_name = "hemoglobin.exposure"
+        builder.value.register_attribute_producer(
+            self.hemoglobin_name,
+            source=[self.raw_hemoglobin_name],
+            required_resources=[self.raw_hemoglobin_name],
         )
 
-        builder.value.register_value_modifier(
+        builder.value.register_attribute_modifier(
             "maternal_disorders.transition_proportion",
             self.adjust_maternal_disorder_proportion,
             required_resources=[
-                self.hemoglobin,
+                self.hemoglobin_name,
                 self.maternal_disorders_population_attributable_fraction_table,
                 self.maternal_disorders_relative_risk_table,
             ],
         )
-        builder.value.register_value_modifier(
+        builder.value.register_attribute_modifier(
             "maternal_hemorrhage.transition_proportion",
             self.adjust_maternal_hemorrhage_proportion,
             required_resources=[
-                self.hemoglobin,
+                self.hemoglobin_name,
                 self.hemorrhage_population_attributable_fraction_table,
                 self.hemorrhage_relative_risk_table,
             ],
         )
 
-        builder.value.register_value_modifier(
-            "hemoglobin.exposure",
+        builder.value.register_attribute_modifier(
+            self.hemoglobin_name,
             self.adjust_hemoglobin_exposure,
             required_resources=["maternal_hemorrhage", "is_alive", "hemoglobin_scale_factor"],
         )
@@ -183,7 +189,9 @@ class Hemoglobin(Component):
         pop = self.population_view.get(
             idx, ["hemoglobin_distribution_propensity", "hemoglobin_percentile"]
         )
-        distribution_parameters = self.distribution_parameters(pop.index)
+        distribution_parameters = self.population_view.get_frame(
+            pop.index, self.distribution_parameters_name
+        )
         sampler = hemoglobin_distribution.hemoglobin_sampler_from_mean_sd(
             distribution_parameters["mean"],
             distribution_parameters["stddev"],
@@ -201,7 +209,7 @@ class Hemoglobin(Component):
     def adjust_maternal_disorder_proportion(
         self, index: pd.Index, maternal_disorder_probability: pd.DataFrame
     ) -> pd.Series:
-        hemoglobin_level = self.hemoglobin(index)
+        hemoglobin_level = self.population_view.get(index, self.hemoglobin_name)
         rr = self.maternal_disorders_relative_risk_table(index)
         ## annoyingly formatted
         paf = self.maternal_disorders_population_attributable_fraction_table(index)
@@ -214,7 +222,7 @@ class Hemoglobin(Component):
     def adjust_maternal_hemorrhage_proportion(self, index, maternal_hemorrhage_probability):
         paf = self.hemorrhage_population_attributable_fraction_table(index)
         rr = self.hemorrhage_relative_risk_table(index)
-        hemoglobin = self.hemoglobin(index)
+        hemoglobin = self.population_view.get(index, self.hemoglobin_name)
         maternal_hemorrhage_probability *= 1 - paf
         # Dichotomous risk based on severe anemia
         maternal_hemorrhage_probability.loc[
@@ -249,7 +257,8 @@ class Anemia(Component):
         return 4
 
     def setup(self, builder: Builder):
-        self.hemoglobin = builder.value.get_value("hemoglobin.exposure")
+        # An attribute rather than a callable pipeline; read it via the population view.
+        self.hemoglobin_name = "hemoglobin.exposure"
 
         self.anemia_thresholds_table = self.build_lookup_table(
             builder,
@@ -261,7 +270,7 @@ class Anemia(Component):
         builder.value.register_attribute_producer(
             "anemia_levels",
             source=self.anemia_source,
-            required_resources=[self.hemoglobin, self.anemia_thresholds_table],
+            required_resources=[self.hemoglobin_name, self.anemia_thresholds_table],
         )
 
         builder.value.register_attribute_producer(
@@ -281,7 +290,7 @@ class Anemia(Component):
         )
 
     def anemia_source(self, index: pd.Index) -> pd.Series:
-        hemoglobin_level = self.hemoglobin(index)
+        hemoglobin_level = self.population_view.get(index, self.hemoglobin_name)
         thresholds = self.anemia_thresholds_table(index)
 
         choice_index = (hemoglobin_level.values[np.newaxis].T < thresholds).sum(axis=1)
