@@ -31,7 +31,16 @@ if __name__ == "__main__":
 
     # use "pip install -e .[dev]" to install required components + extra components
     data_requirements = ["vivarium-inputs>=8.0.2"]
-    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14"]
+    cluster_requirements = [
+        "vivarium-cluster-tools[cluster]>=4.2.14",
+        # vivarium-cluster-tools leaves jobmon_installer_ihme unpinned, so the version
+        # resolved depends on when the environment was built. Installer 10.6.5 has no
+        # 'http.gui_url' config key, which cluster_tools.core.jobmon.client
+        # .get_monitoring_url requires; it raises there, between binding a workflow and
+        # running it, so '-l all' fails without submitting a single task. Pin a floor
+        # here so environments are reproducible. Remove once pinned upstream.
+        "jobmon_installer_ihme>=10.12.2",
+    ]
     test_requirements = [
         "vivarium-dependencies[pytest]",
         "vivarium-testing-utils",
