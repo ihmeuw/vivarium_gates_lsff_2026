@@ -32,9 +32,11 @@ class WealthQuintile(Component):
                 "5": 5,
             }
         )
+        # NOTE: the table name must differ from the pipeline name below -- see the note
+        # in components/children.py.
         quintile_probabilities_table = self.build_lookup_table(
             builder,
-            "quintile_probabilities",
+            "quintile_probabilities_data",
             data_source=quintile_probabilities,
             value_columns=data_processing.WEALTH_QUINTILES,
         )

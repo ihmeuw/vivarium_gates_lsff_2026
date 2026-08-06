@@ -26,9 +26,13 @@ class NewChildren(Component):
 
         # NOTE: I did not add this to the configurable lookup tables because
         # it is only used as the source for the pipeline.
+        # NOTE: the table name must differ from the pipeline name below. A LookupTable
+        # is named "<component>.<table name>", and lifecycle constraints are keyed by
+        # that name, so a table called "male_sex_percentage" on this component would
+        # collide with the pipeline and fail at registration.
         male_sex_percentage_table = self.build_lookup_table(
             builder,
-            "male_sex_percentage",
+            "male_sex_percentage_data",
             data_source=builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
             value_columns="value",
         )

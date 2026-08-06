@@ -35,9 +35,11 @@ class VehicleConsumption(Component):
             .set_index(index_columns)["value"]
             .rename("any_consumed")
         )
+        # NOTE: the table name must differ from the pipeline name below -- see the note
+        # in components/children.py.
         any_consumed_table = self.build_lookup_table(
             builder,
-            "any_consumed",
+            "any_consumed_data",
             data_source=any_consumed.reset_index(),
             value_columns=["any_consumed"],
         )
