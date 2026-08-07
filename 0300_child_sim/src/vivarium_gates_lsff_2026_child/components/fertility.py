@@ -103,8 +103,3 @@ class FertilityLineList(Component):
                     "new_births": born_previous_step,
                 },
             )
-
-    # NOTE: The former on_time_step_cleanup that stamped 'cause_of_death' as
-    # "stillborn" is gone. A component may only write its own private columns now,
-    # and 'cause_of_death' belongs to the mortality component -- ChildMortality
-    # sets it during initialization instead.

@@ -10,9 +10,6 @@ from vivarium.public_health.disease.transition import TransitionString
 
 
 def SIS_with_birth_prevalence(cause: str) -> DiseaseModel:
-    # 'get_data_functions' is gone; each data source is now its own constructor
-    # argument, and a string in entity-key format is read from the artifact.
-    # Self transitions are likewise a constructor argument rather than a method call.
     healthy = SusceptibleState(cause, allow_self_transition=True)
     infected = DiseaseState(
         cause,

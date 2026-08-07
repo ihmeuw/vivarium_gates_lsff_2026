@@ -291,9 +291,6 @@ class LBWSGPAFObserver(Component):
         )
 
     def calculate_paf(self, x: pd.DataFrame) -> float:
-        # The risk effect no longer exposes a 'target_modifier' callable; the relative
-        # risk is an attribute pipeline that gets registered as the target's modifier.
-        # Reading that attribute is equivalent to the old call against a target of 1.
         relative_risk = self.population_view.get(x.index, self.risk_effect.relative_risk_name)
         relative_risk.name = "relative_risk"
         lbwsg_category = self.population_view.get(x.index, "lbwsg_category")
