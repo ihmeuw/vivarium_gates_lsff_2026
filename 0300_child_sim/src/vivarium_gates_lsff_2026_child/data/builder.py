@@ -87,6 +87,13 @@ def load_and_write_data(
             fetch_subnationals=fetch_subnationals,
             vehicle=vehicle,
         )
+        if isinstance(data, pd.DataFrame) and data.empty:
+            # Empty data written to the artifact resurfaces later as an all-zero or
+            # missing key, which is far harder to diagnose than it is here.
+            logger.warning(
+                f"Loaded NO DATA for key '{key}' at location '{location}'. This key "
+                "will be written to the artifact empty."
+            )
         if isinstance(data, pd.DataFrame) and ("location" in data.index.names):
             data = rename_subnational_level(data)
         if key not in artifact:

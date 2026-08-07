@@ -6,28 +6,37 @@ from typing import Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from vivarium import Component
+from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.lookup import LookupTable
 from vivarium.engine.framework.population import SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.risks import RiskEffect
-from vivarium.public_health.utilities import get_lookup_columns
+from vivarium.public_health.risks.implementations.low_birth_weight_and_short_gestation import (
+    BIRTH_WEIGHT,
+)
 
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
+from vivarium_gates_lsff_2026_child.utilities import get_lookup_columns
+
+LBWSG_BIRTH_EXPOSURE_PIPELINE = "low_birth_weight_and_short_gestation.birth_exposure"
 
 
 class MaternalIronConsumptionFromFortification(Component):
     def __init__(self):
         super().__init__()
 
+    # NOTE: Building the frame without dtypes registers these as 'object', which a
+    # later batch's real values then cannot be coerced onto. See PopulationLineList.
+    COLUMN_DTYPES = {
+        "baseline_2021_maternal_iron_consumption_from_fortification_mcg": float,
+        "maternal_iron_consumption_from_fortification_mcg": float,
+    }
+
     @property
     def columns_created(self) -> List[str]:
-        return [
-            "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
-            "maternal_iron_consumption_from_fortification_mcg",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     #################
     # Setup methods #
@@ -45,13 +54,18 @@ class MaternalIronConsumptionFromFortification(Component):
             .value.loc[vehicle]
         )
 
-        builder.value.register_value_modifier(
-            "birth_weight.birth_exposure",
+        builder.value.register_attribute_modifier(
+            LBWSG_BIRTH_EXPOSURE_PIPELINE,
             self.update_birth_weight,
-            requires_columns=[
+            required_resources=[
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
                 "maternal_iron_consumption_from_fortification_mcg",
             ],
+        )
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.columns_created,
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -59,8 +73,10 @@ class MaternalIronConsumptionFromFortification(Component):
         Initialize simulants from line list data. Population configuration
         contains a key "new_births" which is the line list data.
         """
-        columns = self.columns_created
-        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]
@@ -73,19 +89,27 @@ class MaternalIronConsumptionFromFortification(Component):
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
             ] = new_births["baseline_2021_iron_consumption_from_fortification_mcg"].copy()
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
-    def update_birth_weight(self, index, exposure):
-        pop = self.population_view.get(index)
+    def update_birth_weight(self, index: pd.Index, exposure: pd.DataFrame) -> pd.DataFrame:
+        """Shift birth weight by the change in maternal iron intake.
 
-        # Delete the baseline effects of fortification baked into the GBD 2021 birthweight distribution
-        exposure -= pop.baseline_2021_maternal_iron_consumption_from_fortification_mcg * (
+        Only the birth weight axis is shifted; every other axis in the frame passes
+        through untouched.
+        """
+        pop = self.population_view.get(index, self.columns_created)
+
+        # Delete the baseline effects of fortification baked into the GBD 2021
+        # birthweight distribution, then apply this scenario's intake.
+        shift = (
+            pop["maternal_iron_consumption_from_fortification_mcg"]
+            - pop["baseline_2021_maternal_iron_consumption_from_fortification_mcg"]
+        ) * (
             self.birth_weight_effect_size_per_mg_intake / 1_000
         )  # convert mg to mcg
-        exposure += pop.maternal_iron_consumption_from_fortification_mcg * (
-            self.birth_weight_effect_size_per_mg_intake / 1_000
-        )
 
+        exposure = exposure.copy()
+        exposure[BIRTH_WEIGHT] = exposure[BIRTH_WEIGHT] + shift
         return exposure
 
 
@@ -93,11 +117,13 @@ class WealthQuintile(Component):
     def __init__(self):
         super().__init__()
 
+    # NOTE: An untyped frame registers this as 'object'; coercing that to int later
+    # fails outright, since the placeholder nulls have no integer representation.
+    COLUMN_DTYPES = {"wealth_quintile": int}
+
     @property
     def columns_created(self) -> List[str]:
-        return [
-            "wealth_quintile",
-        ]
+        return list(self.COLUMN_DTYPES)
 
     #################
     # Setup methods #
@@ -108,16 +134,22 @@ class WealthQuintile(Component):
         self.start_time = get_time_stamp(builder.configuration.time.start)
         self.birth_weight_disparities_multiplier = self.build_lookup_table(
             builder,
-            builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
-            value_columns=["value"],
+            "birth_weight_wealth_disparities",
+            data_source=builder.data.load(data_keys.LBWSG.BIRTH_WEIGHT_WEALTH_DISPARITIES),
+            value_columns="value",
         )
 
-        builder.value.register_value_modifier(
-            "birth_weight.birth_exposure",
+        builder.value.register_attribute_modifier(
+            LBWSG_BIRTH_EXPOSURE_PIPELINE,
             self.update_birth_weight,
-            requires_columns=[
+            required_resources=[
                 "wealth_quintile",
             ],
+        )
+
+        builder.population.register_initializer(
+            initializer=self.on_initialize_simulants,
+            columns=self.columns_created,
         )
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
@@ -125,8 +157,10 @@ class WealthQuintile(Component):
         Initialize simulants from line list data. Population configuration
         contains a key "new_births" which is the line list data.
         """
-        columns = self.columns_created
-        new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
+        new_simulants = pd.DataFrame(
+            {col: pd.Series(dtype=dtype) for col, dtype in self.COLUMN_DTYPES.items()},
+            index=pop_data.index,
+        )
 
         if pop_data.creation_time >= self.start_time:
             new_births = pop_data.user_data["new_births"]
@@ -136,16 +170,25 @@ class WealthQuintile(Component):
                 new_births["wealth_quintile"].astype(int).copy()
             )
 
-        self.population_view.update(new_simulants)
+        self.population_view.initialize(new_simulants)
 
-    def update_birth_weight(self, index, exposure):
-        mean_exposure = exposure.mean()
+    def update_birth_weight(self, index: pd.Index, exposure: pd.DataFrame) -> pd.DataFrame:
+        """Apply the wealth quintile birth weight gradient, holding the mean fixed.
+
+        Only the birth weight axis is scaled; every other axis in the frame passes
+        through untouched.
+        """
+        birth_weight = exposure[BIRTH_WEIGHT]
+        mean_exposure = birth_weight.mean()
 
         multipliers = self.birth_weight_disparities_multiplier(index)
         multipliers /= multipliers.mean()
-        scaled = exposure * multipliers
+        scaled = birth_weight * multipliers
         scale_down_factor = mean_exposure / scaled.mean()
-        return scaled * scale_down_factor
+
+        exposure = exposure.copy()
+        exposure[BIRTH_WEIGHT] = scaled * scale_down_factor
+        return exposure
 
 
 # class AdditiveRiskEffect(RiskEffect):
