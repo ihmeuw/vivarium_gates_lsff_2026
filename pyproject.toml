@@ -29,7 +29,17 @@ test = [
 # jobmon_installer_ihme behind it, and psimulate imports jobmon at module load, so a
 # plain "vivarium-cluster-tools" install yields a psimulate that dies with
 # "ModuleNotFoundError: No module named 'jobmon'".
-cluster = ["vivarium-cluster-tools[cluster]>=4.2.14"]
+# NOTE: jobmon_installer_ihme is pinned here, not in the sub-package setup.py files.
+# vivarium-cluster-tools leaves it unpinned, and a fresh resolve of '.[data]' selects
+# 10.6.5 -- whose jobmon has no 'http.gui_url' config key, so
+# cluster_tools.core.jobmon.client.get_monitoring_url raises between binding a workflow
+# and running it, and 'make_artifacts -l all' fails without submitting a task. This
+# root install (base.mk's 'uv pip install -e .[data]') is the step that resolves jobmon;
+# the sub-package install step cannot see the package on the index at all.
+cluster = [
+    "vivarium-cluster-tools[cluster]>=4.2.14",
+    "jobmon_installer_ihme>=10.12.2",
+]
 data = [
     "vivarium-inputs>=8.0.2",
     "vivarium_gates_lsff_2026[cluster]",
