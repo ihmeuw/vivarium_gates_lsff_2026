@@ -20,11 +20,6 @@ from vivarium.public_health.risks.implementations.low_birth_weight_and_short_ges
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values
 from vivarium_gates_lsff_2026_child.utilities import get_lookup_columns
 
-# LBWSG no longer exposes one birth exposure pipeline per axis. LBWSGRisk registers a
-# single attribute pipeline, named for the risk rather than the axis, whose value is a
-# frame with one column per axis -- see LBWSGRisk.birth_exposure_pipeline. Modifiers
-# therefore target this name and shift a single column, and must be registered as
-# attribute modifiers, since an attribute producer backs the pipeline.
 LBWSG_BIRTH_EXPOSURE_PIPELINE = "low_birth_weight_and_short_gestation.birth_exposure"
 
 

@@ -105,12 +105,12 @@ Six stages, in order. Each depends on the output of the one before it::
              v
     6. child simulation  ----------->  results/<n>/child/<location>/<run>/
 
-Stages 3 and 4 exist because the child model needs a population attributable
-fraction for low birth weight and short gestation that GBD does not publish. It
-is calculated by running a small, separate simulation, which needs an artifact of
-its own -- one holding a different key set from the full child artifact, since it
-omits the very PAF the calculation produces. Stages 3-4 do not depend on the
-maternal model and can run at the same time as stages 1-2.
+Stages 3 and 4 exist because the child model needs a custom population attributable
+fraction for low birth weight and short gestation. It is calculated by running a
+small, separate simulation, which needs an artifact of its own -- one holding a
+different key set from the full child artifact, since it omits the very PAF the
+calculation produces. Stages 3-4 do not depend on the maternal model and can run
+at the same time as stages 1-2.
 
 Everything the pipeline reads or writes on the shared drive lives under a single
 root, organized by kind and then by model iteration::
