@@ -122,7 +122,12 @@ def make_artifacts(
         )
 
         configure_logging_to_terminal(verbose)
-        resolved_output_dir = output_dir or str(paths.ARTIFACT_ROOT)
+        # The two child artifacts hold different key sets and must not share a path,
+        # so the default depends on which one is being built.
+        default_output_dir = (
+            paths.LBWSG_PAF_ARTIFACT_ROOT if for_lbwsg_pafs else paths.CHILD_ARTIFACT_ROOT
+        )
+        resolved_output_dir = output_dir or str(default_output_dir)
         fetch_subnationals = not build_national
         main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
         main(

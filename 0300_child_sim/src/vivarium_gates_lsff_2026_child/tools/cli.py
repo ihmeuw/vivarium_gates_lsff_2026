@@ -45,10 +45,12 @@ from vivarium_gates_lsff_2026_child.tools import (
 @click.option(
     "-o",
     "--output-dir",
-    default=str(paths.ARTIFACT_ROOT),
-    show_default=True,
+    default=None,
     type=click.Path(),
-    help="Specify an output directory. Directory must exist.",
+    help=(
+        "Specify an output directory. Defaults to the LBWSG PAF artifact root when "
+        "--for-lbwsg-pafs is given and the child artifact root otherwise."
+    ),
 )
 @click.option(
     "-a",
@@ -93,6 +95,12 @@ def make_artifacts(
     # This is a flag for national level data but we want default to be to write subnational data
     fetch_subnationals = not build_national
     configure_logging_to_terminal(verbose)
+    # The two child artifacts hold different key sets and must not share a path, so the
+    # default depends on which one is being built.
+    default_output_dir = (
+        paths.LBWSG_PAF_ARTIFACT_ROOT if for_lbwsg_pafs else paths.CHILD_ARTIFACT_ROOT
+    )
+    resolved_output_dir = output_dir or str(default_output_dir)
     main = handle_exceptions(
         build_artifacts,
         logger,
@@ -101,7 +109,7 @@ def make_artifacts(
     main(
         location,
         vehicle,
-        output_dir,
+        resolved_output_dir,
         append or replace_keys,
         replace_keys,
         verbose,

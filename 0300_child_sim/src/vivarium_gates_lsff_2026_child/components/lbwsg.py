@@ -14,14 +14,16 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from vivarium.component import Component
+from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
-from vivarium.engine.framework.lookup import LookupTable
+from vivarium.engine.framework.lookup import LookupTable, LookupTableData
 from vivarium.engine.framework.population import PopulationView, SimulantData
 from vivarium.engine.framework.time import get_time_stamp
 from vivarium.engine.framework.values import Pipeline
 from vivarium.public_health.causal_factor.utilities import get_exposure_post_processor
 from vivarium.public_health.risks.implementations.low_birth_weight_and_short_gestation import (
+    AXES,
+    BIRTH_WEIGHT,
     LBWSGRisk,
     LBWSGRiskEffect,
 )
@@ -35,127 +37,144 @@ class LBWSGLineList(LBWSGRisk):
     Component to initialize low birthweight and short gestation data for simulants based on existing line list data.
     """
 
+    LOW_BIRTH_WEIGHT_LIMIT = 2500  # grams
+
     @property
     def columns_created(self) -> List[str]:
-        return super().columns_created + [
+        # NOTE: The exposure and propensity columns are registered by LBWSGRisk's own
+        # initializers; these are the two extra columns this subclass adds.
+        return [
             self.raw_gestational_age_exposure_column_name,
             self.birth_weight_status_column_name,
         ]
-
-    @property
-    def initialization_requirements(self) -> Dict[str, List[str]]:
-        return {
-            "requires_columns": [],
-            "requires_values": [],
-            "requires_streams": [self.randomness_stream_name],
-        }
 
     def __init__(self):
         super().__init__()
         self.raw_gestational_age_exposure_column_name = "raw_gestational_age_exposure"
         self.birth_weight_status_column_name = "birth_weight_status"
+        self.new_births = None
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
         super().setup(builder)
         self.start_time = get_time_stamp(builder.configuration.time.start)
 
-    def get_birth_exposure_pipelines(self, builder: Builder) -> Dict[str, Pipeline]:
-        def get_pipeline(axis_: str):
-            return builder.value.register_value_producer(
-                self.birth_exposure_pipeline_name(axis_),
-                source=lambda index: self.get_birth_exposure(axis_, index),
-                preferred_post_processor=get_exposure_post_processor(builder, self.risk),
-            )
-
-        return {
-            self.birth_exposure_pipeline_name(axis): get_pipeline(axis) for axis in self.AXES
-        }
+        # Runs after LBWSGRisk.initialize_exposure, which is what populates the
+        # exposure columns this initializer derives its values from.
+        builder.population.register_initializer(
+            initializer=self.initialize_line_list_columns,
+            columns=self.columns_created,
+            required_resources=[self.get_exposure_name(axis) for axis in AXES],
+        )
 
     ########################
     # Event-driven methods #
     ########################
 
     # noinspection PyAttributeOutsideInit
-    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        if pop_data.creation_time < self.start_time:
-            columns = [self.exposure_column_name(axis) for axis in self.AXES] + [
-                self.raw_gestational_age_exposure_column_name,
-                self.birth_weight_status_column_name,
-            ]
-            new_simulants = pd.DataFrame(columns=columns, index=pop_data.index)
-            self.population_view.update(new_simulants)
-        else:
-            self.new_births = pop_data.user_data["new_births"]
-            self.new_births.index = pop_data.index
-            # add raw gestational age exposure to state table
-            gestational_age = pop_data.user_data["new_births"]["gestational_age"].copy()
-            gestational_age.name = self.raw_gestational_age_exposure_column_name
-            self.population_view.update(gestational_age)
+    def initialize_exposure(self, pop_data: SimulantData) -> None:
+        """Stash the line list records, then let the base class populate exposures.
 
-            super().on_initialize_simulants(pop_data)
+        The base implementation reads the birth exposure pipeline, whose source this
+        class overrides to return the line list values -- so the records have to be
+        available before that call.
+        """
+        new_births = pop_data.user_data.get("new_births")
+        if new_births is not None:
+            new_births = new_births.copy()
+            new_births.index = pop_data.index
+        self.new_births = new_births
+        super().initialize_exposure(pop_data)
 
-            # add birth weight status to state table
-            birth_weight = self.population_view.get(pop_data.index)["birth_weight_exposure"]
-            birth_weight_status = np.where(
-                birth_weight <= 2500, "low_birth_weight", "adequate_birth_weight"
+    def initialize_line_list_columns(self, pop_data: SimulantData) -> None:
+        """Add the raw gestational age and the derived birth weight status."""
+        raw_gestational_age = pd.Series(
+            np.nan, index=pop_data.index, name=self.raw_gestational_age_exposure_column_name
+        )
+        birth_weight_status = pd.Series(
+            "", index=pop_data.index, name=self.birth_weight_status_column_name
+        )
+
+        if self.new_births is not None:
+            raw_gestational_age = pd.Series(
+                self.new_births["gestational_age"].to_numpy(),
+                index=pop_data.index,
+                name=self.raw_gestational_age_exposure_column_name,
+            )
+            birth_weight = self.population_view.get(
+                pop_data.index, self.get_exposure_name(BIRTH_WEIGHT)
             )
             birth_weight_status = pd.Series(
-                birth_weight_status, name=self.birth_weight_status_column_name
+                np.where(
+                    birth_weight <= self.LOW_BIRTH_WEIGHT_LIMIT,
+                    "low_birth_weight",
+                    "adequate_birth_weight",
+                ),
+                index=pop_data.index,
+                name=self.birth_weight_status_column_name,
             )
-            self.population_view.update(birth_weight_status)
+
+        self.population_view.initialize(
+            pd.concat([raw_gestational_age, birth_weight_status], axis=1)
+        )
 
     ##################################
     # Pipeline sources and modifiers #
     ##################################
 
-    def get_birth_exposure(self, axis: str, index: pd.Index) -> pd.Series:
-        return self.new_births.loc[index, axis]
+    def _get_birth_exposure_source(self, index: pd.Index) -> pd.DataFrame:
+        """Take birth exposures from the line list instead of sampling them.
+
+        Falls back to the base implementation when there are no line list records,
+        which is the case for the (empty) initial population.
+        """
+        if self.new_births is None:
+            return super()._get_birth_exposure_source(index)
+        return self.new_births.loc[index, AXES]
 
 
 class LBWSGPAFCalculationRiskEffect(LBWSGRiskEffect):
-    """Risk effect component for calculating PAFs for LBWSG."""
+    """Risk effect component for calculating PAFs for LBWSG.
 
-    def get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        return 0, []
+    Notes
+    -----
+    This simulation is what produces the LBWSG PAF, so the artifact it runs against
+    deliberately does not contain that key. The base class would otherwise try to load
+    it, so the calibration constant is supplied as zero here instead.
+
+    The hook is ``get_calibration_constant_data``; the PAF was previously read through
+    ``get_population_attributable_fraction_source``, which no longer exists.
+    """
+
+    def get_calibration_constant_data(self, builder: Builder) -> LookupTableData:
+        return 0.0
 
 
 class LBWSGPAFCalculationExposure(LBWSGRisk):
-    @property
-    def columns_required(self) -> Optional[List[str]]:
-        return ["age", "sex"]
-
-    @property
-    def columns_created(self) -> List[str]:
-        return [self.exposure_column_name(axis) for axis in self.AXES] + [
-            "lbwsg_category",
-            "age_bin",
-        ]
+    # NOTE: The exposure columns are registered by LBWSGRisk's own initializer; these
+    # are the extra columns this subclass adds, and they must be created before
+    # LBWSGRisk.initialize_exposure runs because the birth exposure source reads them.
+    COLUMNS_CREATED = ["lbwsg_category", "age_bin"]
 
     def setup(self, builder: Builder) -> None:
-        super().setup(builder)
         self.lbwsg_categories = builder.data.load(data_keys.LBWSG.CATEGORIES)
         self.age_bins = builder.data.load(data_keys.POPULATION.AGE_BINS)
-
-    def get_birth_exposure_pipelines(self, builder: Builder) -> Dict[str, Pipeline]:
-        def get_pipeline(axis_: str):
-            return builder.value.register_value_producer(
-                self.birth_exposure_pipeline_name(axis_),
-                source=lambda index: self.get_birth_exposure(axis_, index),
-                requires_columns=["age", "sex"],
-                preferred_post_processor=get_exposure_post_processor(builder, self.risk),
-            )
-
-        return {
-            self.birth_exposure_pipeline_name(axis): get_pipeline(axis) for axis in self.AXES
-        }
+        builder.population.register_initializer(
+            initializer=self.initialize_category_assignments,
+            columns=self.COLUMNS_CREATED,
+            required_resources=["age", "sex"],
+        )
+        # Registered after the initializer above so that LBWSGRisk's exposure
+        # initializer, which depends on those columns, is ordered behind it.
+        super().setup(builder)
 
     ########################
     # Event-driven methods #
     ########################
 
-    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        pop = self.population_view.subview(["age", "sex"]).get(pop_data.index)
+    def initialize_category_assignments(self, pop_data: SimulantData) -> None:
+        """Deterministically spread simulants across every LBWSG category."""
+        pop = self.population_view.get(pop_data.index, ["age", "sex"])
         pop["age_bin"] = pd.cut(pop["age"], self.age_bins["age_start"])
         pop = pop.sort_values(["sex", "age"])
 
@@ -170,22 +189,21 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
 
         assigned_categories = list(lbwsg_categories) * (2 * num_repeats)
         pop["lbwsg_category"] = assigned_categories
-        self.population_view.update(pop[["age_bin", "lbwsg_category"]])
-
-        birth_exposures = {
-            self.exposure_column_name(axis): self.birth_exposures[
-                self.birth_exposure_pipeline_name(axis)
-            ](pop_data.index)
-            for axis in self.AXES
-        }
-        self.population_view.update(pd.DataFrame(birth_exposures))
+        self.population_view.initialize(pop[self.COLUMNS_CREATED])
 
     ##################################
     # Pipeline sources and modifiers #
     ##################################
 
-    def get_birth_exposure(self, axis: str, index: pd.Index) -> pd.DataFrame:
-        pop = self.population_view.subview(["age_bin", "sex", "lbwsg_category"]).get(index)
+    def _get_birth_exposure_source(self, index: pd.Index) -> pd.DataFrame:
+        """Spread exposures evenly over each category's birth weight / GA interval.
+
+        Notes
+        -----
+        The base class expects a single DataFrame carrying every axis, so both axes
+        are filled in one pass here (the previous per-axis hook no longer exists).
+        """
+        pop = self.population_view.get(index, ["age_bin", "sex", "lbwsg_category"])
         lbwsg_categories = self.lbwsg_categories.keys()
         num_simulants_in_category = int(
             len(pop)
@@ -193,7 +211,7 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
         )
         num_points_in_interval = int(math.sqrt(num_simulants_in_category))
 
-        exposure_values = pd.Series(name=axis, index=pop.index, dtype=float)
+        exposure_values = pd.DataFrame(index=pop.index, columns=AXES, dtype=float)
 
         for age_bin, sex, cat in itertools.product(
             pop["age_bin"].unique(), pop["sex"].unique(), lbwsg_categories
@@ -235,7 +253,7 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
                 & (pop["age_bin"] == age_bin)
                 & (pop["sex"] == sex)
             ].index
-            exposure_values.loc[subset_index] = lbwsg_exposures[axis].values
+            exposure_values.loc[subset_index, AXES] = lbwsg_exposures[AXES].values
 
         return exposure_values
 
@@ -249,10 +267,6 @@ class LBWSGPAFObserver(Component):
             }
         }
     }
-
-    @property
-    def columns_required(self) -> Optional[List[str]]:
-        return ["lbwsg_category"]
 
     def __init__(self, target: str):
         super().__init__()
@@ -268,18 +282,18 @@ class LBWSGPAFObserver(Component):
 
         builder.results.register_adding_observation(
             name=f"calculated_lbwsg_paf_on_{self.target}",
-            pop_filter='alive == "alive"',
+            pop_filter="is_alive == True",
             aggregator=self.calculate_paf,
-            requires_columns=["alive"],
+            requires_attributes=["is_alive"],
             additional_stratifications=self.config.include,
             excluded_stratifications=self.config.exclude,
             when="time_step__prepare",
         )
 
     def calculate_paf(self, x: pd.DataFrame) -> float:
-        relative_risk = self.risk_effect.target_modifier(x.index, pd.Series(1, index=x.index))
+        relative_risk = self.population_view.get(x.index, self.risk_effect.relative_risk_name)
         relative_risk.name = "relative_risk"
-        lbwsg_category = self.population_view.get(x.index)["lbwsg_category"]
+        lbwsg_category = self.population_view.get(x.index, "lbwsg_category")
         lbwsg_prevalence = self.lbwsg_exposure.rename(
             {"parameter": "lbwsg_category", "value": "prevalence"}, axis=1
         )
