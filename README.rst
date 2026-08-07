@@ -340,12 +340,13 @@ every task produced non-empty output rather than relying on the job count.
 Starting a New Model Iteration
 ------------------------------
 
-Bump ``MODEL_NUMBER`` in ``src/lsff_utils/paths.py``. That repoints every
-artifact, data, and results root at once, so the pipeline writes to fresh
-directories and the previous iteration stays intact for comparison.
+**Step 1: bump the constant.** Change ``MODEL_NUMBER`` in
+``src/lsff_utils/paths.py``. That single edit repoints every artifact, data, and
+results root at once. Both simulation packages re-export from there, so nothing
+else in the Python code needs touching.
 
-Three model specifications hardcode their artifact path, because YAML cannot read
-the constants. Update the ``artifact_path`` in each:
+**Step 2: update the three model specifications.** They hardcode their artifact
+path because YAML cannot read Python constants:
 
 - ``0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml``
 - ``0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml``
@@ -354,6 +355,29 @@ the constants. Update the ``artifact_path`` in each:
 ``tests/test_paths.py`` fails if any of these disagrees with
 ``lsff_utils.paths``, so a forgotten update is caught by the test suite rather
 than by a simulation quietly running against the previous iteration's artifact.
+
+What follows automatically, and what does not
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bumping ``MODEL_NUMBER`` moves **artifact builds** on its own. ``make_artifacts``
+resolves ``-o`` from the constants when you omit it, so with no ``-o`` each build
+writes to the new iteration's root -- the child artifact to
+``artifacts/<n>/child/``, the LBWSG PAF artifact to
+``data/<n>/lbwsg_paf_artifacts/``, and so on.
+
+It does **not** move **simulation output**. ``simulate`` and ``psimulate`` are
+vivarium's own commands and know nothing about ``lsff_utils.paths``, so their
+``-o`` is always whatever you type. ``MATERNAL_RESULTS_ROOT`` and
+``CHILD_RESULTS_ROOT`` exist as constants for code that needs them, but no
+command reads them to build a default. That is why the stage commands above
+spell the results paths out in full: after a bump, edit the ``<n>`` in those
+``-o`` arguments yourself.
+
+Overriding ``-o`` works everywhere and is the right way to test. Point it at a
+scratch directory and a trial run cannot touch the artifacts a validated set of
+results depends on::
+
+  (artifact) :~$ make_artifacts -p maternal -l nigeria -o ~/scratch/artifacts -vvv
 
 Then work through stages 1-6 above. Prefer bumping ``MODEL_NUMBER`` to deleting a
 previous iteration: it costs disk but keeps a baseline to compare against, which
