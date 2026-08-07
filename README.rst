@@ -134,7 +134,7 @@ another and can run at the same time; stage 5 needs both.
 Two environments are used, and each stage says which. Activate with
 ``source environment.sh -t artifact`` for artifact builds and
 ``source environment.sh`` for simulations, adding ``-s`` for the shared cluster
-environment. One artifact environment serves both projects.
+environment. One artifact environment serves both packages.
 
 Artifact builds are only possible on the IHME network. Without it you are limited
 to running simulations against pre-made artifacts.
