@@ -28,6 +28,15 @@ class Hemoglobin(Component):
     be used to find anemia status for simulants.
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.distribution_parameters_name = "hemoglobin.exposure_parameters"
+        """Name of the attribute pipeline giving the hemoglobin mean and stddev."""
+        self.raw_hemoglobin_name = "raw_hemoglobin.exposure"
+        """Name of the attribute pipeline giving hemoglobin before any modifiers."""
+        self.hemoglobin_name = "hemoglobin.exposure"
+        """Name of the attribute pipeline giving hemoglobin after modifiers."""
+
     @property
     def configuration_defaults(self) -> Dict[str, Dict[str, Any]]:
         return {
@@ -102,7 +111,6 @@ class Hemoglobin(Component):
             data_keys.MATERNAL_HEMORRHAGE.MODERATE_HEMORRHAGE_PROBABILITY
         ).value.values[0]
 
-        self.distribution_parameters_name = "hemoglobin.exposure_parameters"
         builder.value.register_attribute_producer(
             self.distribution_parameters_name,
             source=distribution_parameters,
@@ -110,7 +118,6 @@ class Hemoglobin(Component):
         )
 
         # Fix resource dependency cycle
-        self.raw_hemoglobin_name = "raw_hemoglobin.exposure"
         builder.value.register_attribute_producer(
             self.raw_hemoglobin_name,
             source=self.hemoglobin_source,
@@ -122,7 +129,6 @@ class Hemoglobin(Component):
         )
 
         # Sourced from the raw attribute by name: the modifiers below apply on top of it.
-        self.hemoglobin_name = "hemoglobin.exposure"
         builder.value.register_attribute_producer(
             self.hemoglobin_name,
             source=[self.raw_hemoglobin_name],
@@ -248,6 +254,11 @@ class Hemoglobin(Component):
 
 
 class Anemia(Component):
+    def __init__(self) -> None:
+        super().__init__()
+        self.hemoglobin_name = "hemoglobin.exposure"
+        """Name of the attribute pipeline this component reads hemoglobin from."""
+
     @property
     def columns_created(self):
         return ["anemia_status_at_birth"]
@@ -257,9 +268,6 @@ class Anemia(Component):
         return 4
 
     def setup(self, builder: Builder):
-        # An attribute rather than a callable pipeline; read it via the population view.
-        self.hemoglobin_name = "hemoglobin.exposure"
-
         self.anemia_thresholds_table = self.build_lookup_table(
             builder,
             "anemia_thresholds",
