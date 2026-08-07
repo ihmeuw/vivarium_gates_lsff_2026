@@ -11,7 +11,7 @@ __all__ = [
 
 __title__ = "lsff_utils"
 __summary__ = "Utilities for the LSFF by wealth quintile project."
-__uri__ = "https://github.com/ihmeuw/vivarium_gates_lsff_by_wealth_quintile"
+__uri__ = "https://github.com/ihmeuw/vivarium_gates_lsff_2026_maternal"
 
 __version__ = "0.0.1"
 

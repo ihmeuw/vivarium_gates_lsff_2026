@@ -1,8 +1,8 @@
 ===============================
-vivarium_gates_lsff_by_wealth_quintile_child
+vivarium_gates_lsff_2026_child
 ===============================
 
-Research repository for the vivarium_gates_lsff_by_wealth_quintile_child project.
+Research repository for the vivarium_gates_lsff_2026_child project.
 
 .. contents::
    :depth: 1
@@ -22,23 +22,23 @@ Once you have all three installed, you should open up your normal shell
 You'll then make an environment, clone this repository, then install
 all necessary requirements as follows::
 
-  :~$ git clone https://github.com/ihmeuw/vivarium_gates_lsff_by_wealth_quintile_child.git
+  :~$ git clone https://github.com/ihmeuw/vivarium_gates_lsff_2026_child.git
   ...git will copy the repository from github and place it in your current directory...
-  :~$ cd vivarium_gates_lsff_by_wealth_quintile_child
-  :~$ conda create --name=vivarium_gates_lsff_by_wealth_quintile_child --file conda_lock.txt
+  :~$ cd vivarium_gates_lsff_2026_child
+  :~$ conda create --name=vivarium_gates_lsff_2026_child --file conda_lock.txt
   ...conda will download python and base dependencies...
-  :~$ conda activate vivarium_gates_lsff_by_wealth_quintile_child
-  (vivarium_gates_lsff_by_wealth_quintile_child) :~$ python -m venv artifact_building
-  (vivarium_gates_lsff_by_wealth_quintile_child) :~$ source artifact_building/bin/activate
-  (vivarium_gates_lsff_by_wealth_quintile_child) (artifact_building) :~$ pip install -r artifact_building_pip_lock.txt
+  :~$ conda activate vivarium_gates_lsff_2026_child
+  (vivarium_gates_lsff_2026_child) :~$ python -m venv artifact_building
+  (vivarium_gates_lsff_2026_child) :~$ source artifact_building/bin/activate
+  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ pip install -r artifact_building_pip_lock.txt
   ...pip will install vivarium and other requirements...
-  (vivarium_gates_lsff_by_wealth_quintile_child) (artifact_building) :~$ pip install -e .
-  (vivarium_gates_lsff_by_wealth_quintile_child) (artifact_building) :~$ deactivate
-  (vivarium_gates_lsff_by_wealth_quintile_child) :~$ python -m venv simulation_running
-  (vivarium_gates_lsff_by_wealth_quintile_child) :~$ source simulation_running/bin/activate
-  (vivarium_gates_lsff_by_wealth_quintile_child) (simulation_running) :~$ pip install -r simulation_running_pip_lock.txt
+  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ pip install -e .
+  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ deactivate
+  (vivarium_gates_lsff_2026_child) :~$ python -m venv simulation_running
+  (vivarium_gates_lsff_2026_child) :~$ source simulation_running/bin/activate
+  (vivarium_gates_lsff_2026_child) (simulation_running) :~$ pip install -r simulation_running_pip_lock.txt
   ...pip will install vivarium and other requirements...
-  (vivarium_gates_lsff_by_wealth_quintile_child) (artifact_building) :~$ pip install -e .
+  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ pip install -e .
 
 
 Note the ``-e`` flag that follows pip install. This will install the python
@@ -58,9 +58,9 @@ not something that can be specified and installed with the rest of the package's
 dependencies via ``pip``. If you encounter HDF5-related errors, you should
 install hdf tooling from within your environment like so::
 
-  (vivarium_gates_lsff_by_wealth_quintile_child) :~$ conda install hdf5
+  (vivarium_gates_lsff_2026_child) :~$ conda install hdf5
 
-The ``(vivarium_gates_lsff_by_wealth_quintile_child)`` that precedes your shell prompt will probably show
+The ``(vivarium_gates_lsff_2026_child)`` that precedes your shell prompt will probably show
 up by default, though it may not.  It's just a visual reminder that you
 are installing and running things in an isolated programming environment
 so it doesn't conflict with other source code and libraries on your
@@ -71,7 +71,7 @@ Usage
 -----
 
 You'll find six directories inside the main
-``src/vivarium_gates_lsff_by_wealth_quintile_child`` package directory:
+``src/vivarium_gates_lsff_2026_child`` package directory:
 
 - ``artifacts``
 
@@ -82,7 +82,7 @@ You'll find six directories inside the main
 - ``components``
 
   This directory is for Python modules containing custom components for
-  the vivarium_gates_lsff_by_wealth_quintile_child project. You should work with the
+  the vivarium_gates_lsff_2026_child project. You should work with the
   engineering staff to help scope out what you need and get them built.
 
 - ``data``
@@ -113,7 +113,7 @@ Running Simulations
 You can run your simulation from the command line. 
 With your conda environment active, you can run with, e.g.::
 
-   (vivarium_gates_lsff_by_wealth_quintile_child) :~$ simulate run -vvv /<REPO_INSTALLATION_DIRECTORY>/vivarium_gates_lsff_by_wealth_quintile_child/src/vivarium_gates_lsff_by_wealth_quintile_child/model_specifications/model_spec.yaml -o /FILE/PATH/TO/SAVE/RESULTS -i src/vivarium_gates_lsff_by_wealth_quintile_child/artifacts/<COUNTRY_TO_RUN_IN>.hdf
+   (vivarium_gates_lsff_2026_child) :~$ simulate run -vvv /<REPO_INSTALLATION_DIRECTORY>/vivarium_gates_lsff_2026_child/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml -o /FILE/PATH/TO/SAVE/RESULTS -i src/vivarium_gates_lsff_2026_child/artifacts/<COUNTRY_TO_RUN_IN>.hdf
 
 The simulation will run in one location at a time, enter the country you wish to 
 run the simulation for in your call. Currently only Ethiopia is supported. 

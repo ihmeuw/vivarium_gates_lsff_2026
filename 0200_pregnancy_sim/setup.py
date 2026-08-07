@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     about = {}
     with open(
-        os.path.join(src_dir, "vivarium_gates_lsff_by_wealth_quintile", "__about__.py")
+        os.path.join(src_dir, "vivarium_gates_lsff_2026_maternal", "__about__.py")
     ) as f:
         exec(f.read(), about)
 
@@ -17,9 +17,9 @@ if __name__ == "__main__":
         long_description = f.read()
 
     install_requirements = [
-        "gbd_mapping>=3.1.1",
-        "vivarium>=2.0.0",
-        "vivarium_public_health>=2.1.0",
+        "vivarium-gbd-mapping>=6.0.7",
+        "vivarium-engine>=5.5.3",
+        "vivarium-public-health>=6.4.5",
         "click",
         "jinja2",
         "loguru",
@@ -31,9 +31,17 @@ if __name__ == "__main__":
     ]
 
     # use "pip install -e .[dev]" to install required components + extra components
-    data_requirements = ["vivarium_inputs[data]>=4.1.1"]
-    cluster_requirements = ["vivarium_cluster_tools>=1.3.12"]
-    test_requirements = ["pytest"]
+    data_requirements = ["vivarium-inputs>=8.0.2"]
+    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14", "drmaa"]
+    test_requirements = [
+        "vivarium-dependencies[pytest]",
+        "vivarium-testing-utils",
+        "papermill",
+        "jupyterlab",
+    ]
+    validation_requirements = ["vivarium-testing-utils[validation]"]
+    lint_requirements = ["vivarium-dependencies[lint]"]
+    interactive_requirements = ["vivarium-dependencies[interactive]", "nbdime"]
 
     setup(
         name=about["__title__"],
@@ -51,12 +59,21 @@ if __name__ == "__main__":
         extras_require={
             "test": test_requirements,
             "cluster": cluster_requirements,
-            "data": data_requirements + cluster_requirements,
-            "dev": test_requirements + cluster_requirements,
+            "data": data_requirements
+            + cluster_requirements
+            + lint_requirements
+            + test_requirements
+            + validation_requirements,
+            "interactive": interactive_requirements,
+            "dev": test_requirements
+            + cluster_requirements
+            + lint_requirements
+            + interactive_requirements,
         },
         zip_safe=False,
-        entry_points="""
-            [console_scripts]
-            make_artifacts=vivarium_gates_lsff_by_wealth_quintile.tools.cli:make_artifacts
-        """,
+        # NOTE: Deliberately no 'make_artifacts' console script. The repo-level
+        # vivarium_gates_lsff_2026 package owns that name and dispatches to this
+        # package via its '-p/--project' flag. Declaring it here too installs a
+        # second script at the same path, and because 'make build-env' installs
+        # this package after the root one, it would silently win and drop '-p'.
     )

@@ -65,7 +65,7 @@ help:
 	@echo "particularly if you need non-python packages installed via conda."
 	@echo
 	@echo "USAGE:"
-	@echo "  make build-env [type=<environment type>] [name=<environment name>] [path=<environment path>] [py=<python version>] [include_timestamp=<yes|no>] [lfs=<yes|no>] [force=<yes|no>]"
+	@echo "  make build-env [type=<environment type>] [name=<environment name>] [path=<environment path>] [p=<package profile>] [py=<python version>] [include_timestamp=<yes|no>] [lfs=<yes|no>] [force=<yes|no>]"
 	@echo
 	@echo "ARGUMENTS:"
 	@echo "  type [optional]"
@@ -74,6 +74,10 @@ help:
 	@echo "      Name of the conda environment to create (defaults to <PACKAGE_NAME>_<TYPE>)"
 	@echo "  path [optional]"
 	@echo "      Absolute path where the environment should be created (overrides name for location)"
+	@echo "  p [optional]"
+	@echo "      Package profile to install. One of 'all' (default), 'maternal', or 'child'"
+	@echo "  profile [optional]"
+	@echo "      Alias for p"
 	@echo "  include_timestamp [optional]"
 	@echo "      Whether to append a timestamp to the environment name. Either 'yes' or 'no' (default)"
 	@echo "  lfs [optional]"
@@ -118,7 +122,7 @@ endif
 
 build-env: # Create a new environment with installed packages
 #	Validate arguments - exit if unsupported arguments are passed
-	$(call validate_make_args,build-env,type name path lfs py include_timestamp force)
+	$(call validate_make_args,build-env,type name path p profile lfs py include_timestamp force)
 	
 #   Handle arguments and set defaults
 #   type
@@ -132,6 +136,12 @@ build-env: # Create a new environment with installed packages
 	@$(if $(filter yes,$(include_timestamp)),$(eval override name := $(name)_$(shell date +%Y%m%d_%H%M%S)),)
 #	path (optional - if set, use -p for conda create instead of -n)
 	@$(eval path ?=)
+#	package profile
+	@$(eval p ?=)
+	@$(eval profile ?=)
+	@$(if $(and $(strip $(p)),$(strip $(profile)),$(filter-out $(p),$(profile))),$(error Error: 'p' and 'profile' must match when both are set))
+	@$(eval package_profile := $(if $(strip $(p)),$(p),$(if $(strip $(profile)),$(profile),all)))
+	@$(call validate_arg,$(package_profile),all maternal child,package profile)
 #	lfs
 	@$(eval lfs ?= no)
 	@$(call validate_arg,$(lfs),yes no,lfs)
@@ -139,7 +149,8 @@ build-env: # Create a new environment with installed packages
 	@$(eval force ?= no)
 	@$(call validate_arg,$(force),yes no,force)
 #	python version
-	@$(eval py ?= $(shell cat python_versions.json | tr -d '[]" ' | tr ',' '\n' | sort -t. -k1,1n -k2,2n | tail -1))
+	@$(eval LATEST_SUPPORTED_PY := $(shell cat python_versions.json | tr -d '[]" ' | tr ',' '\n' | sort -t. -k1,1n -k2,2n | tail -1))
+	@$(eval py ?= $(if $(filter artifact,$(type)),3.11,$(LATEST_SUPPORTED_PY)))
 #	Determine conda create flag: -p for path, -n for name
 	@$(eval CONDA_CREATE_FLAG := $(if $(path),-p $(path),-n $(name)))
 #	Determine conda run flag: -p for path, -n for name
@@ -159,13 +170,31 @@ build-env: # Create a new environment with installed packages
 
 	conda create $(CONDA_CREATE_FLAG) python=$(py) --yes
 # 	Bootstrap vivarium_build_utils into the new environment.
-	conda run $(CONDA_RUN_FLAG) pip install "vivarium_build_utils>=4.0.0,<5.0.0"
+	conda run $(CONDA_RUN_FLAG) pip install "vivarium-build-utils>=4.4.2,<5.0.0"
 #	Install packages based on type
 	@if [ "$(type)" = "simulation" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data; \
+		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools\<81"; \
+	fi
+#	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
+#	reasons. First, both extras pull IHME-internal packages that are absent from public
+#	PyPI -- 'dev' needs jobmon_installer_ihme (via vivarium-cluster-tools[cluster]) and
+#	'data' needs vivarium-gbd-access (via vivarium-inputs) -- so the Artifactory index
+#	is required, not optional. Second, EXTRA_INDEX_FLAGS includes '--index-strategy',
+#	which plain pip rejects outright; reusing the shared variable keeps the Artifactory
+#	URL defined in one place and installs these packages with the same resolver and
+#	index strategy as the root package above. 'uv' is available here because the
+#	'make install' invoked above installs it along with setuptools, which
+#	'--no-build-isolation' requires.
+	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "maternal" ]; then \
+		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_maternal || true; \
+		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation -e ./0200_pregnancy_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
+	fi
+	@if [ "$(package_profile)" = "all" ] || [ "$(package_profile)" = "child" ]; then \
+		conda run $(CONDA_RUN_FLAG) pip uninstall -y vivarium_gates_lsff_2026_child || true; \
+		conda run $(CONDA_RUN_FLAG) uv pip install --no-build-isolation -e ./0300_child_sim[$(if $(filter simulation,$(type)),dev,data)] $(EXTRA_INDEX_FLAGS); \
 	fi
 	@if [ "$(lfs)" = "yes" ]; then \
 		conda run $(CONDA_RUN_FLAG) conda install -c conda-forge git-lfs --yes; \
@@ -176,6 +205,7 @@ build-env: # Create a new environment with installed packages
 	@echo "Finished building environment"
 	@$(if $(path),echo "  path: $(path)",echo "  name: $(name)")
 	@echo "  type: $(type)"
+	@echo "  package profile: $(package_profile)"
 	@echo "  git-lfs installed: $(lfs)"
 	@echo "  python version: $(py)"
 	@echo "  forced rebuild: $(force)"
@@ -274,3 +304,24 @@ build-shared-env: # Create a lightweight venv overlay on top of a shared conda e
 	@echo "  1. Activate it: 'source $(venv_path)/bin/activate'"
 	@echo "  2. Run 'make help' again to see all newly available targets"
 	@echo
+
+#####################################
+# Simulation package env shortcuts  #
+#####################################
+
+ENV_NAME_MATERNAL_SIM ?= $(PACKAGE_NAME)_simulation_maternal
+ENV_NAME_MATERNAL_ARTIFACT ?= $(PACKAGE_NAME)_artifact_maternal
+ENV_NAME_CHILD_SIM ?= $(PACKAGE_NAME)_simulation_child
+ENV_NAME_CHILD_ARTIFACT ?= $(PACKAGE_NAME)_artifact_child
+
+build-env-maternal-sim: # Build maternal simulation env and install maternal dev extras
+	$(MAKE) build-env type=simulation p=maternal name=$(if $(name),$(name),$(ENV_NAME_MATERNAL_SIM))
+
+build-env-maternal-artifact: # Build maternal artifact env and install maternal data extras
+	$(MAKE) build-env type=artifact p=maternal name=$(if $(name),$(name),$(ENV_NAME_MATERNAL_ARTIFACT))
+
+build-env-child-sim: # Build child simulation env and install child dev extras
+	$(MAKE) build-env type=simulation p=child name=$(if $(name),$(name),$(ENV_NAME_CHILD_SIM))
+
+build-env-child-artifact: # Build child artifact env and install child data extras
+	$(MAKE) build-env type=artifact p=child name=$(if $(name),$(name),$(ENV_NAME_CHILD_ARTIFACT))
