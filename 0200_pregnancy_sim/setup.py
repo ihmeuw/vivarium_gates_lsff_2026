@@ -74,7 +74,7 @@ if __name__ == "__main__":
         zip_safe=False,
         # NOTE: Deliberately no 'make_artifacts' console script. The repo-level
         # vivarium_gates_lsff_2026 package owns that name and dispatches to this
-        # package via its '-p/--project' flag. Declaring it here too installs a
+        # package via its '-p/--package' flag. Declaring it here too installs a
         # second script at the same path, and because 'make build-env' installs
         # this package after the root one, it would silently win and drop '-p'.
     )

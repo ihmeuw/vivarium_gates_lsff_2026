@@ -254,7 +254,7 @@ and following it to age five or death.
 Building Artifacts: Details
 ---------------------------
 
-Artifacts are built with ``make_artifacts``, whose ``-p/--project`` flag selects
+Artifacts are built with ``make_artifacts``, whose ``-p/--package`` flag selects
 which model to build for.
 
 To add a location, add it to the ``LOCATIONS`` constant in that project's
