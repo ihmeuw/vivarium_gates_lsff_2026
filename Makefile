@@ -171,12 +171,17 @@ build-env: # Create a new environment with installed packages
 	conda create $(CONDA_CREATE_FLAG) python=$(py) --yes
 # 	Bootstrap vivarium_build_utils into the new environment.
 	conda run $(CONDA_RUN_FLAG) pip install "vivarium-build-utils>=4.4.2,<5.0.0"
-#	Install packages based on type
+#	Install packages based on type.
+#	Both branches pass no UV_FLAGS, matching vivarium_gates_mncnh. The artifact branch
+#	previously pinned setuptools<81 and disabled build isolation, which constrained the
+#	resolution to jobmon 3.2.4 -- the only jobmon needing pkg_resources, and the reason
+#	the pin looked necessary. mncnh resolves jobmon 3.7.9 on the same Python 3.11 and
+#	setuptools 83, and its 'make_artifacts -l all' works, so neither flag is wanted here.
 	@if [ "$(type)" = "simulation" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
 		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
-		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data UV_FLAGS="--no-build-isolation setuptools\<81"; \
+		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data; \
 	fi
 #	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
 #	reasons. First, both extras pull IHME-internal packages that are absent from public

@@ -31,7 +31,8 @@ if __name__ == "__main__":
 
     # use "pip install -e .[dev]" to install required components + extra components
     data_requirements = ["vivarium-inputs>=8.0.2"]
-    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14", "drmaa"]
+    # NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
+    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14"]
     test_requirements = [
         "vivarium-dependencies[pytest]",
         "vivarium-testing-utils",
@@ -72,5 +73,5 @@ if __name__ == "__main__":
         zip_safe=False,
         # NOTE: Deliberately no 'make_artifacts' console script -- see the note in
         # 0200_pregnancy_sim/setup.py. The repo-level vivarium_gates_lsff_2026
-        # package owns that name and dispatches here via '-p/--project child'.
+        # package owns that name and dispatches here via '-p/--package child'.
     )

@@ -124,42 +124,156 @@ root, organized by kind and then by model iteration::
 simulation packages read it from there. See "Starting a New Model Iteration"
 below.
 
-Making Artifacts
-----------------
+Running the Pipeline
+--------------------
 
-As noted above, it is not possible to make artifacts unless you are on the IHME network.
-If you are not on the IHME network, you will be limited to running simulations from pre-made
-artifacts; see the next section for how to do this.
+The six stages below run in order. Each names what it does, what it reads, what
+it writes, and the command to run it. Stages 1-2 and 3-4 are independent of one
+another and can run at the same time; stage 5 needs both.
 
-Artifacts are built with ``make_artifacts``, which takes a ``-p/--project`` flag
-selecting which model to build for. Activate the artifact environment first
-(``source environment.sh -t artifact``, plus ``-s`` for a shared environment).
-One artifact environment serves both projects.
+Two environments are used, and each stage says which. Activate with
+``source environment.sh -t artifact`` for artifact builds and
+``source environment.sh`` for simulations, adding ``-s`` for the shared cluster
+environment. One artifact environment serves both packages.
+
+Artifact builds are only possible on the IHME network. Without it you are limited
+to running simulations against pre-made artifacts.
+
+The examples use Nigeria; substitute any location the project supports.
+
+Stage 1 -- Maternal artifact
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Assembles every input the maternal simulation needs for one location: pregnancy
+incidence, hemoglobin distributions, maternal disorder rates, and baseline
+fortification coverage.
+
+:Reads: ``0100_data_prep/results/`` CSVs, plus GBD via ``vivarium_inputs``
+:Writes: ``artifacts/<n>/maternal/<location>.hdf``
+:Environment: artifact
+
+::
+
+  (artifact) :~$ make_artifacts -p maternal -l nigeria --vehicle rice --mean -vvv
+
+Stage 2 -- Maternal simulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simulates pregnancies and their outcomes. Its central output for the rest of the
+pipeline is ``births``: one line-list record per pregnancy, carrying the
+characteristics the child model needs to create a simulant.
+
+:Reads: the stage 1 artifact
+:Writes: ``results/<n>/maternal/<location>/<run>/results/`` -- ``births``,
+         ``deaths``, ``ylds``, ``ylls``, ``person_time_*``, transition counts
+:Environment: simulation
+
+::
+
+  (simulation) :~$ psimulate run \
+      0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml \
+      0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios_small.yaml \
+      -o /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/results/<n>/maternal \
+      -P proj_simscience -m 2 -r 01:00:00 -q all.q -v
+
+Stage 3 -- LBWSG PAF artifact
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A cut-down artifact feeding the PAF calculation in stage 4. It holds a different
+key set from the full child artifact -- it omits the PAF, which is the thing
+stage 4 produces -- so the two must never share a path.
+
+:Reads: GBD via ``vivarium_inputs``
+:Writes: ``data/<n>/lbwsg_paf_artifacts/<location>.hdf``
+:Environment: artifact
+
+::
+
+  (artifact) :~$ make_artifacts -p child -l nigeria --for-lbwsg-pafs --national --mean -vvv
+
+Stage 4 -- LBWSG PAF calculation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A small, short simulation that computes the population attributable fraction of
+diarrheal disease mortality due to low birth weight and short gestation. It
+exists because GBD does not publish this PAF; the child model needs it.
+
+:Reads: the stage 3 artifact
+:Writes: ``data/<n>/lbwsg_pafs/<location>/<run>/``
+:Environment: simulation
+
+::
+
+  (simulation) :~$ psimulate run \
+      0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml \
+      0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml \
+      -o /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/data/<n>/lbwsg_pafs \
+      -P proj_simscience -m 2 -r 01:00:00 -q all.q -v
+
+Stage 5 -- Child artifact
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The one stage with upstream dependencies on both branches of the pipeline. It
+assembles the child model's inputs, folding in the maternal birth records as the
+fertility key and the PAF computed in stage 4.
+
+Name the maternal run explicitly so the artifact records which run produced it.
+The PAF results are found automatically under ``data/<n>/lbwsg_pafs/``; the build
+logs which run it used and takes the most recent, so check that line when more
+than one is present.
+
+:Reads: maternal ``births`` (stage 2), PAF results (stage 4),
+        ``0100_data_prep/results/`` CSVs, GBD
+:Writes: ``artifacts/<n>/child/<location>.hdf``
+:Environment: artifact
+
+::
+
+  (artifact) :~$ make_artifacts -p child -l nigeria --vehicle rice --national --mean -vvv \
+      --fertility-data-path /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/results/<n>/maternal/nigeria/<run>/results/births
+
+Stage 6 -- Child simulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simulates the under-five cohort, creating one simulant per maternal birth record
+and following it to age five or death.
+
+:Reads: the stage 5 artifact
+:Writes: ``results/<n>/child/<location>/<run>/results/`` -- ``person_time``,
+         ``deaths``, ``ylds``, ``ylls``, ``live_births``, ``birth_weight_sum``
+:Environment: simulation
+
+::
+
+  (simulation) :~$ psimulate run \
+      0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml \
+      0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios_small.yaml \
+      -o /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/results/<n>/child \
+      -P proj_simscience -m 2 -r 01:00:00 -q all.q -v
+
+Building Artifacts: Details
+---------------------------
+
+Artifacts are built with ``make_artifacts``, whose ``-p/--package`` flag selects
+which model to build for.
 
 To add a location, add it to the ``LOCATIONS`` constant in that project's
-``constants/metadata.py``.
+``constants/metadata.py``. The two projects do not model the same set: the child
+model runs for Ethiopia, India, and Nigeria, while the maternal model runs for
+India and Nigeria only. Ethiopia has no maternal disorders incidence disparities
+extract, and its only fortification vehicle is folate-on-salt, so there is no
+iron vehicle for the maternal intervention to act through.
 
 With no ``-o``, each build writes to the right root for the current
 ``MODEL_NUMBER``, so ``-o`` is only needed to write somewhere else.
 
-**Stage 1 -- maternal artifact**::
-
-  (artifact) :~$ make_artifacts -p maternal -l nigeria --vehicle rice -vvv
-
-**Stage 3 -- LBWSG PAF artifact** (the cut-down artifact feeding the PAF calculation)::
-
-  (artifact) :~$ make_artifacts -p child -l nigeria --for-lbwsg-pafs --national -vvv
-
-**Stage 5 -- child artifact**. This is the one with upstream dependencies: it
-reads the maternal birth records and the PAF results. Name the maternal run
-explicitly so the artifact records which run it came from::
-
-  (artifact) :~$ make_artifacts -p child -l nigeria --vehicle rice --national -vvv \
-      --fertility-data-path /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/results/legacy_1.0/maternal/nigeria/<run>/results/births
-
-The PAF results are found automatically under ``data/<n>/lbwsg_pafs/``; the build
-logs which run it used, and it takes the most recent, so check that line if more
-than one run is present.
+Passing ``-l all`` builds every location for that project at once. On a cluster
+node each location is submitted as an independent Jobmon task and they build
+concurrently; off-cluster they are built serially in a single process. The
+command logs a monitoring URL for the workflow, and raises naming the unfinished
+locations if any task fails, so a partial build is never mistaken for a complete
+one. Note that ``-l all`` writes to the same paths a single-location build would,
+so point ``-o`` somewhere disposable when testing.
 
 Flags worth knowing:
 
@@ -175,8 +289,8 @@ Flags worth knowing:
   configuration change (a new GBD release, say) should have invalidated it.
   Prefer a clean build when anything other than a single loader has changed.
 
-Running Simulations
--------------------
+Running Simulations: Details
+----------------------------
 
 Each simulation is described by a model specification, a `YAML
 <https://en.wikipedia.org/wiki/YAML>`__ file you can edit to change what runs.
@@ -184,32 +298,21 @@ See
 https://vivarium-engine.readthedocs.io/en/latest/concepts/model_specification/index.html
 
 Each specification names the artifact it runs against in its ``input_data``
-section, already pointed at the current iteration's artifact, so no ``-i`` is
-needed unless you want a different one. The specifications are:
+section, already pointed at the current iteration's artifact, so ``-i`` is only
+needed to run against a different one.
 
-Stage 2 -- maternal simulation
-  ``0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml``
-
-Stage 4 -- LBWSG PAF calculation
-  ``0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml``
-
-Stage 6 -- child simulation
-  ``0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml``
-
-With the simulation environment active (``source environment.sh``), run a single
-simulation -- one draw, one seed, one scenario -- with ``simulate run``::
+The stage commands above use ``psimulate``, which runs draws, seeds, and
+scenarios in parallel across cluster nodes. To run a single simulation instead --
+one draw, one seed, one scenario -- drop the branches file and the cluster flags
+and use ``simulate run``::
 
   (simulation) :~$ simulate run <model_spec.yaml> -o <output_dir> -vvv
 
 Add ``--pdb`` to drop into the debugger on failure. ``-vvv`` logs every time step.
+Do a single run first when testing a change; it is far cheaper to find a crash on
+one job than on thirty.
 
-**On the IHME cluster**, run draws, seeds, and scenarios in parallel with
-``psimulate`` and a branches file::
-
-  (simulation) :~$ psimulate run <model_spec.yaml> <branches.yaml> -o <output_dir> \
-      -P proj_simscience -m 2 -r 01:00:00 -q all.q -v
-
-Stages 2 and 6 each have a full-size and a small branches file, both living in
+Stages 2 and 6 each have a full-size and a small branches file, both in
 ``model_specifications/branches/`` of their package. Start with the small one:
 
 ``scenarios_small.yaml``
@@ -237,12 +340,13 @@ every task produced non-empty output rather than relying on the job count.
 Starting a New Model Iteration
 ------------------------------
 
-Bump ``MODEL_NUMBER`` in ``src/lsff_utils/paths.py``. That repoints every
-artifact, data, and results root at once, so the pipeline writes to fresh
-directories and the previous iteration stays intact for comparison.
+**Step 1: bump the constant.** Change ``MODEL_NUMBER`` in
+``src/lsff_utils/paths.py``. That single edit repoints every artifact, data, and
+results root at once. Both simulation packages re-export from there, so nothing
+else in the Python code needs touching.
 
-Three model specifications hardcode their artifact path, because YAML cannot read
-the constants. Update the ``artifact_path`` in each:
+**Step 2: update the three model specifications.** They hardcode their artifact
+path because YAML cannot read Python constants:
 
 - ``0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml``
 - ``0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml``
@@ -251,6 +355,29 @@ the constants. Update the ``artifact_path`` in each:
 ``tests/test_paths.py`` fails if any of these disagrees with
 ``lsff_utils.paths``, so a forgotten update is caught by the test suite rather
 than by a simulation quietly running against the previous iteration's artifact.
+
+What follows automatically, and what does not
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bumping ``MODEL_NUMBER`` moves **artifact builds** on its own. ``make_artifacts``
+resolves ``-o`` from the constants when you omit it, so with no ``-o`` each build
+writes to the new iteration's root -- the child artifact to
+``artifacts/<n>/child/``, the LBWSG PAF artifact to
+``data/<n>/lbwsg_paf_artifacts/``, and so on.
+
+It does **not** move **simulation output**. ``simulate`` and ``psimulate`` are
+vivarium's own commands and know nothing about ``lsff_utils.paths``, so their
+``-o`` is always whatever you type. ``MATERNAL_RESULTS_ROOT`` and
+``CHILD_RESULTS_ROOT`` exist as constants for code that needs them, but no
+command reads them to build a default. That is why the stage commands above
+spell the results paths out in full: after a bump, edit the ``<n>`` in those
+``-o`` arguments yourself.
+
+Overriding ``-o`` works everywhere and is the right way to test. Point it at a
+scratch directory and a trial run cannot touch the artifacts a validated set of
+results depends on::
+
+  (artifact) :~$ make_artifacts -p maternal -l nigeria -o ~/scratch/artifacts -vvv
 
 Then work through stages 1-6 above. Prefer bumping ``MODEL_NUMBER`` to deleting a
 previous iteration: it costs disk but keeps a baseline to compare against, which

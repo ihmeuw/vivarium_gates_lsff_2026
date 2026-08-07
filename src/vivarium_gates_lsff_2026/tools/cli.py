@@ -8,10 +8,11 @@ from vivarium.engine.framework.utilities import handle_exceptions
 @click.command()
 @click.option(
     "-p",
-    "--project",
+    "--package",
+    "package",
     required=True,
     type=click.Choice(["maternal", "child"]),
-    help="Which model to build artifacts for.",
+    help="Which simulation package to build artifacts for.",
 )
 @click.option(
     "-l",
@@ -29,7 +30,7 @@ from vivarium.engine.framework.utilities import handle_exceptions
     "--output-dir",
     default=None,
     type=click.Path(),
-    help="Specify an output directory. Defaults to the project artifact root if not provided.",
+    help="Specify an output directory. Defaults to the package's artifact root if not provided.",
 )
 @click.option(
     "-a",
@@ -80,7 +81,7 @@ from vivarium.engine.framework.utilities import handle_exceptions
     help="(child only) Location of fertility data.",
 )
 def make_artifacts(
-    project: str,
+    package: str,
     location: str,
     output_dir: Optional[str],
     append: bool,
@@ -93,9 +94,11 @@ def make_artifacts(
     for_lbwsg_pafs: bool,
     fertility_data_path: Optional[str],
 ) -> None:
-    location = location.title()
+    # Accept locations in any case, but leave the "all" sentinel lowercase:
+    # build_artifacts compares against it exactly, and "all".title() is "All".
+    location = "all" if location.lower() == "all" else location.title()
 
-    if project == "maternal":
+    if package == "maternal":
         from vivarium_gates_lsff_2026_maternal.constants import paths
         from vivarium_gates_lsff_2026_maternal.tools import (
             build_artifacts,
@@ -114,7 +117,7 @@ def make_artifacts(
             vehicle,
             verbose,
         )
-    elif project == "child":
+    elif package == "child":
         from vivarium_gates_lsff_2026_child.constants import paths
         from vivarium_gates_lsff_2026_child.tools import (
             build_artifacts,

@@ -32,7 +32,8 @@ if __name__ == "__main__":
 
     # use "pip install -e .[dev]" to install required components + extra components
     data_requirements = ["vivarium-inputs>=8.0.2"]
-    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14", "drmaa"]
+    # NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
+    cluster_requirements = ["vivarium-cluster-tools[cluster]>=4.2.14"]
     test_requirements = [
         "vivarium-dependencies[pytest]",
         "vivarium-testing-utils",
@@ -73,7 +74,7 @@ if __name__ == "__main__":
         zip_safe=False,
         # NOTE: Deliberately no 'make_artifacts' console script. The repo-level
         # vivarium_gates_lsff_2026 package owns that name and dispatches to this
-        # package via its '-p/--project' flag. Declaring it here too installs a
+        # package via its '-p/--package' flag. Declaring it here too installs a
         # second script at the same path, and because 'make build-env' installs
         # this package after the root one, it would silently win and drop '-p'.
     )

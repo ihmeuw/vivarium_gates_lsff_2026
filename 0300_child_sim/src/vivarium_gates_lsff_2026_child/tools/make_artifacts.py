@@ -7,18 +7,20 @@
 
 """
 
-import shutil
+import argparse
 import sys
-import time
+from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Union
 
 import click
 from loguru import logger
 from vivarium import cluster_tools as vct
+from vivarium.cluster_tools.core.cluster.interface import NativeSpecification
+from vivarium.cluster_tools.core.jobmon.artifact import build_artifacts_in_parallel
 
 from vivarium_gates_lsff_2026_child.constants import data_keys, metadata
-from vivarium_gates_lsff_2026_child.tools.app_logging import add_logging_sink, decode_status
+from vivarium_gates_lsff_2026_child.tools.app_logging import add_logging_sink
 from vivarium_gates_lsff_2026_child.utilities import (
     delete_if_exists,
     len_longest_location,
@@ -148,7 +150,13 @@ def build_artifacts(
         if running_from_cluster():
             # parallel build when on cluster
             build_all_artifacts(
-                output_dir, mean_draw, verbose, fetch_subnationals, for_lbwsg_pafs
+                output_dir,
+                vehicle,
+                mean_draw,
+                verbose,
+                fertility_data_path,
+                fetch_subnationals,
+                for_lbwsg_pafs,
             )
         else:
             # serial build when not on cluster
@@ -172,81 +180,90 @@ def build_artifacts(
 
 def build_all_artifacts(
     output_dir: Path,
+    vehicle: str,
     mean_draw: bool,
     verbose: int,
+    fertility_data_path: str,
     fetch_subnationals: bool,
     for_lbwsg_pafs: bool,
 ) -> None:
     """Builds artifacts for all locations in parallel.
+
+    Each location becomes an independent Jobmon task, so they build concurrently.
+
     Parameters
     ----------
     output_dir
         The directory where the artifacts will be built.
+    vehicle
+        The fortification vehicle to build for.
+    mean_draw
+        Whether to collapse draws to their mean.
     verbose
         How noisy the logger should be.
+    fertility_data_path
+        Location of the maternal simulation's birth records. Ignored when
+        building the cut-down LBWSG PAF artifact, which has no fertility key.
+    fetch_subnationals
+        Whether to pull subnational rather than national data.
+    for_lbwsg_pafs
+        Whether to build the cut-down artifact that feeds the PAF calculation.
+
     Note
     ----
         This function should not be called directly.  It is intended to be
         called by the :func:`build_artifacts` function located in the same
         module.
     """
-    from vivarium.cluster_tools.utilities import get_drmaa
+    build_commands = {}
+    for location in metadata.LOCATIONS:
+        location_cleaned = sanitize_location(location)
+        artifact_path = output_dir / f"{location_cleaned}.hdf"
+        command = (
+            f"{sys.executable} {Path(__file__).resolve()} "
+            f'--artifact-path "{artifact_path}" '
+            f'--location "{location}" '
+            f'--vehicle "{vehicle}"'
+        )
+        if mean_draw:
+            command += " --mean"
+        if fetch_subnationals:
+            command += " --fetch-subnationals"
+        if for_lbwsg_pafs:
+            command += " --for-lbwsg-pafs"
+        if fertility_data_path:
+            command += f' --fertility-data-path "{fertility_data_path}"'
+        build_commands[f"{location_cleaned}_artifact"] = command
 
-    drmaa = get_drmaa()
+    native_specification = NativeSpecification(
+        job_name="make_artifacts",
+        project=metadata.CLUSTER_PROJECT,
+        queue=metadata.CLUSTER_QUEUE,
+        peak_memory=metadata.MAKE_ARTIFACT_MEM,
+        max_runtime=metadata.MAKE_ARTIFACT_RUNTIME,
+        hardware=[],
+        cores=metadata.MAKE_ARTIFACT_CPU,
+        requires_archive_node=True,  # Need J-drive access for data
+    )
 
-    jobs = {}
-    with drmaa.Session() as session:
-        for location in metadata.LOCATIONS:
-            path = output_dir / f"{sanitize_location(location)}.hdf"
+    # SLURM will not create a missing log directory; it fails the job instead.
+    worker_logging_root = output_dir / "logs"
+    vct.mkdir(worker_logging_root, parents=True, exists_ok=True)
 
-            job_template = session.createJobTemplate()
-            job_template.remoteCommand = shutil.which("python")
-            job_template.args = [
-                __file__,
-                str(path),
-                f'"{location}"',
-                mean_draw,
-                fetch_subnationals,
-                for_lbwsg_pafs,
-            ]
-            job_template.nativeSpecification = (
-                f"-V "  # Export all environment variables
-                f"-b y "  # Command is a binary (python)
-                f"-P {metadata.CLUSTER_PROJECT} "
-                f"-q {metadata.CLUSTER_QUEUE} "
-                f"-l fmem={metadata.MAKE_ARTIFACT_MEM} "
-                f"-l fthread={metadata.MAKE_ARTIFACT_CPU} "
-                f"-l h_rt={metadata.MAKE_ARTIFACT_RUNTIME} "
-                f"-l archive=TRUE "  # Need J-drive access for data
-                f"-N {sanitize_location(location)}_artifact"
-            )  # Name of the job
-            jobs[location] = (session.runJob(job_template), drmaa.JobState.UNDETERMINED)
-            logger.info(
-                f"Submitted job {jobs[location][0]} to build artifact for {location}."
-            )
-            session.deleteJobTemplate(job_template)
-
-        if verbose:
-            logger.info("Entering monitoring loop.")
-            logger.info("-------------------------")
-            logger.info("")
-
-            while any(
-                [
-                    job[1] not in [drmaa.JobState.DONE, drmaa.JobState.FAILED]
-                    for job in jobs.values()
-                ]
-            ):
-                for location, (job_id, status) in jobs.items():
-                    jobs[location] = (job_id, session.jobStatus(job_id))
-                    logger.info(
-                        f"{location:<35}: {decode_status(drmaa, jobs[location][1]):>15}"
-                    )
-                logger.info("")
-                time.sleep(metadata.MAKE_ARTIFACT_SLEEP)
-                logger.info("Checking status again")
-                logger.info("---------------------")
-                logger.info("")
+    # A workflow name is also its resume key, so it must be unique per run:
+    # reusing one without resume=True makes Jobmon refuse to start.
+    launch_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    logger.info(f"Submitting {len(build_commands)} artifact builds to Jobmon.")
+    _, monitoring_url = build_artifacts_in_parallel(
+        workflow_name=f"build_child_artifacts_{launch_time}",
+        build_commands=build_commands,
+        native_specification=native_specification,
+        worker_logging_root=worker_logging_root,
+        env_prefix=sys.prefix,
+        max_concurrently_running=len(build_commands),
+    )
+    if monitoring_url:
+        logger.info(f"Monitor the workflow at {monitoring_url}")
 
     logger.info("**Done**")
 
@@ -324,16 +341,29 @@ def build_single_location_artifact(
 
 
 if __name__ == "__main__":
-    artifact_path = sys.argv[1]
-    artifact_location = sys.argv[2]
-    mean_draw = sys.argv[3]
-    fetch_subnationals = sys.argv[4]
-    for_lbwsg_pafs = sys.argv[5]
+    # Entry point for the per-location tasks that build_all_artifacts submits.
+    # Named flags rather than positional argv, for two reasons. Booleans passed
+    # positionally arrive as strings and every non-empty string is truthy, so
+    # 'False' would read as True. And the previous positional call was misaligned
+    # against this signature -- mean_draw landed in 'vehicle', fetch_subnationals
+    # in 'replace_keys', and for_lbwsg_pafs in 'mean_draw'.
+    parser = argparse.ArgumentParser(description="Build the artifact for a single location.")
+    parser.add_argument("--artifact-path", required=True)
+    parser.add_argument("--location", required=True)
+    parser.add_argument("--vehicle", default="rice")
+    parser.add_argument("--mean", dest="mean_draw", action="store_true")
+    parser.add_argument("--fetch-subnationals", action="store_true")
+    parser.add_argument("--for-lbwsg-pafs", action="store_true")
+    parser.add_argument("--fertility-data-path", default=None)
+    args = parser.parse_args()
+
     build_single_location_artifact(
-        artifact_path,
-        artifact_location,
-        mean_draw,
-        fetch_subnationals,
-        for_lbwsg_pafs,
+        args.artifact_path,
+        args.location,
+        args.vehicle,
+        mean_draw=args.mean_draw,
+        fertility_data_path=args.fertility_data_path,
+        fetch_subnationals=args.fetch_subnationals,
+        for_lbwsg_pafs=args.for_lbwsg_pafs,
         log_to_file=True,
     )

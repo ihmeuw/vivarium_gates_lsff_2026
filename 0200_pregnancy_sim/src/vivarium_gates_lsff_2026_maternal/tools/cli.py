@@ -68,7 +68,9 @@ def make_artifacts(
     vehicle: str,
     with_debugger: bool,
 ) -> None:
-    location = location.title()  # HACK
+    # Accept locations in any case, but leave the "all" sentinel lowercase:
+    # build_artifacts compares against it exactly, and "all".title() is "All".
+    location = "all" if location.lower() == "all" else location.title()
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
     main(
