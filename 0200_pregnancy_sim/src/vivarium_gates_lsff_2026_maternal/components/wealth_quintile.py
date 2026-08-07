@@ -11,6 +11,11 @@ from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values
 
 
 class WealthQuintile(Component):
+    def __init__(self) -> None:
+        super().__init__()
+        self.quintile_probabilities_name = "wealth_quintile.quintile_probabilities"
+        """Name of the attribute pipeline giving per-quintile membership probabilities."""
+
     @property
     def columns_created(self) -> List[str]:
         return ["wealth_quintile"]
@@ -32,8 +37,8 @@ class WealthQuintile(Component):
                 "5": 5,
             }
         )
-        # NOTE: the table name must differ from the pipeline name below -- see the note
-        # in components/children.py.
+        # NOTE: the table name must differ from the pipeline name -- see the note in
+        # components/children.py.
         quintile_probabilities_table = self.build_lookup_table(
             builder,
             "quintile_probabilities_data",
@@ -44,7 +49,6 @@ class WealthQuintile(Component):
         # The table backs a pipeline rather than being read directly, so other
         # components can register modifiers against these probabilities. Read it back
         # through the population view; register_attribute_producer returns None.
-        self.quintile_probabilities_name = "wealth_quintile.quintile_probabilities"
         builder.value.register_attribute_producer(
             self.quintile_probabilities_name,
             source=quintile_probabilities_table,

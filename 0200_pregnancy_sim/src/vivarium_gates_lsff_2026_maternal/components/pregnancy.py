@@ -24,6 +24,9 @@ class PregnantState(DiseaseState):
     def __init__(self, state_id, *args, **kwargs):
         super().__init__(state_id, *args, **kwargs)
         self.new_children = NewChildren()
+        self.birth_outcome_probabilities_name = "birth_outcome_probabilities"
+        """Name of the attribute pipeline giving live birth, partial term and stillbirth
+        probabilities."""
 
     ##############
     # Properties #
@@ -67,7 +70,6 @@ class PregnantState(DiseaseState):
             value_columns=["live_birth", "partial_term", "stillbirth"],
         )
 
-        self.birth_outcome_probabilities_name = "birth_outcome_probabilities"
         builder.value.register_attribute_producer(
             self.birth_outcome_probabilities_name,
             source=self.birth_outcome_probabilities_table,

@@ -13,6 +13,13 @@ from vivarium_gates_lsff_2026_maternal.constants import data_keys, data_values, 
 
 
 class VehicleConsumption(Component):
+    def __init__(self) -> None:
+        super().__init__()
+        self.any_consumed_name = "vehicle_consumption.any_consumed"
+        """Name of the attribute pipeline giving the probability of any consumption."""
+        self.distribution_parameters_name = "vehicle_consumption.exposure_parameters"
+        """Name of the attribute pipeline giving the consumption mean and stddev."""
+
     @property
     def columns_created(self) -> List[str]:
         return ["vehicle_consumption_grams"]
@@ -35,8 +42,6 @@ class VehicleConsumption(Component):
             .set_index(index_columns)["value"]
             .rename("any_consumed")
         )
-        # NOTE: the table name must differ from the pipeline name below -- see the note
-        # in components/children.py.
         any_consumed_table = self.build_lookup_table(
             builder,
             "any_consumed_data",
@@ -44,10 +49,6 @@ class VehicleConsumption(Component):
             value_columns=["any_consumed"],
         )
 
-        # The table backs a pipeline rather than being read directly, so other
-        # components can register modifiers against this value. Read it back through
-        # the population view; register_attribute_producer returns None.
-        self.any_consumed_name = "vehicle_consumption.any_consumed"
         builder.value.register_attribute_producer(
             self.any_consumed_name,
             source=any_consumed_table,
@@ -71,7 +72,6 @@ class VehicleConsumption(Component):
             value_columns=["mean", "stddev"],
         )
 
-        self.distribution_parameters_name = "vehicle_consumption.exposure_parameters"
         builder.value.register_attribute_producer(
             self.distribution_parameters_name,
             source=distribution_parameters,

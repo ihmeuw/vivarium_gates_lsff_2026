@@ -20,6 +20,8 @@ class NewChildren(Component):
     def __init__(self):
         super().__init__()
         self.lbwsg = LBWSGDistribution()
+        self.male_sex_percentage_name = "new_children.male_sex_percentage"
+        """Name of the attribute pipeline giving the probability a child is male."""
 
     def setup(self, builder: Builder):
         self.randomness = builder.randomness.get_stream(self.name)
@@ -36,11 +38,6 @@ class NewChildren(Component):
             data_source=builder.data.load(data_keys.POPULATION.INFANT_MALE_PERCENTAGE),
             value_columns="value",
         )
-
-        # The table backs a pipeline rather than being read directly, so other
-        # components can register modifiers against this value. Read it back through
-        # the population view; register_attribute_producer returns None.
-        self.male_sex_percentage_name = "new_children.male_sex_percentage"
         builder.value.register_attribute_producer(
             self.male_sex_percentage_name,
             source=male_sex_percentage_table,
