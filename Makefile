@@ -309,24 +309,3 @@ build-shared-env: # Create a lightweight venv overlay on top of a shared conda e
 	@echo "  1. Activate it: 'source $(venv_path)/bin/activate'"
 	@echo "  2. Run 'make help' again to see all newly available targets"
 	@echo
-
-#####################################
-# Simulation package env shortcuts  #
-#####################################
-
-ENV_NAME_MATERNAL_SIM ?= $(PACKAGE_NAME)_simulation_maternal
-ENV_NAME_MATERNAL_ARTIFACT ?= $(PACKAGE_NAME)_artifact_maternal
-ENV_NAME_CHILD_SIM ?= $(PACKAGE_NAME)_simulation_child
-ENV_NAME_CHILD_ARTIFACT ?= $(PACKAGE_NAME)_artifact_child
-
-build-env-maternal-sim: # Build maternal simulation env and install maternal dev extras
-	$(MAKE) build-env type=simulation p=maternal name=$(if $(name),$(name),$(ENV_NAME_MATERNAL_SIM))
-
-build-env-maternal-artifact: # Build maternal artifact env and install maternal data extras
-	$(MAKE) build-env type=artifact p=maternal name=$(if $(name),$(name),$(ENV_NAME_MATERNAL_ARTIFACT))
-
-build-env-child-sim: # Build child simulation env and install child dev extras
-	$(MAKE) build-env type=simulation p=child name=$(if $(name),$(name),$(ENV_NAME_CHILD_SIM))
-
-build-env-child-artifact: # Build child artifact env and install child data extras
-	$(MAKE) build-env type=artifact p=child name=$(if $(name),$(name),$(ENV_NAME_CHILD_ARTIFACT))
