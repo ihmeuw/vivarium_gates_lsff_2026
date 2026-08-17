@@ -9,10 +9,8 @@ readme = "README.rst"
 requires-python = ">=3.10"
 license = {text = "BSD-3-Clause"}
 authors = [{name = "The vivarium developers", email = "vivarium.dev@gmail.com"}]
-# NOTE: Static version, matching the sub-packages. This repo carries no git tags, so
-# setuptools_scm would only ever resolve to its fallback; the 0.0.1 below is the value
-# the (now removed) setup.py had been supplying via src/lsff_utils/__about__.py. Bump
-# it here by hand.
+# NOTE: Static, like the sub-packages. This repo carries no git tags, so setuptools_scm
+# would only ever hit its fallback. Bump by hand.
 version = "0.0.1"
 dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
@@ -50,7 +48,12 @@ data = [
 ]
 interactive = ["vivarium-dependencies[interactive]"]
 lint = ["vivarium-dependencies[lint]"]
-dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint]"]
+# NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
+# The artifact env is hard-capped to pandas<2.0 via vivarium-inputs -> vivarium-gbd-access
+# -> ihme-cc-dependencies, so a floor on either path is unresolvable. build-env installs
+# [dev] for type=simulation and [data] for type=artifact.
+simulation = ["pandas>=2.2.1"]
+dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,simulation]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"

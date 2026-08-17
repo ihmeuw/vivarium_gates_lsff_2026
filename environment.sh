@@ -30,9 +30,8 @@ Help()
    echo "options:"
    echo "h     Print this Help."
    echo "t     Type of conda environment. Either 'simulation' (default) or 'artifact'."
-   echo "      Both environments contain both simulation packages; these two are the only"
-   echo "      environments this repository uses. For a partial environment containing just"
-   echo "      one package, call 'make build-env type=<type> p=<maternal|child>' directly."
+   echo "      These are the only two environments; each contains both simulation packages."
+   echo "      For a single-package env, use 'make build-env type=<type> p=<maternal|child>'."
    echo "s     Use shared environment (venv overlay). Recommended for cluster development."
    echo "f     Force creation of a new environment."
    echo "l     Install git lfs (only applies when creating a new conda environment)."
@@ -59,10 +58,8 @@ while getopts ":hsflt:" option; do
    esac
 done
 
-# Parse environment name. This repository uses exactly two environments -- one
-# 'simulation' and one 'artifact' -- and each contains both simulation packages, so the
-# name is fully determined by the type. 'make build-env' installs both packages via its
-# default 'p=all'; use that target directly if you want a single-package environment.
+# Parse environment name. There are exactly two environments, one per type, each holding
+# both simulation packages, so the type fully determines the name.
 env_name=$(basename "`pwd`")
 env_name+="_$env_type"
 branch_name=$(git rev-parse --abbrev-ref HEAD)

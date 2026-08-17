@@ -1,9 +1,7 @@
 [build-system]
-# NOTE: setuptools only -- deliberately no setuptools_scm. 'make build-env' installs
-# this package with '--no-build-isolation' (see the repo Makefile), which means the
-# requirements listed here are NOT installed for the build; they must already exist in
-# the environment. setuptools is guaranteed present (base.mk's 'install' upgrades it),
-# setuptools_scm is not. The version below is therefore static rather than derived.
+# NOTE: No setuptools_scm -- build-env installs this with '--no-build-isolation', so these
+# requirements must already exist in the env. setuptools does; setuptools_scm does not.
+# Hence the static version below.
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
@@ -32,8 +30,7 @@ test = [
     "jupyterlab",
 ]
 # NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
-# It is pinned in the repo-root pyproject.toml instead -- that root install is the
-# step that resolves jobmon, and this sub-package install cannot see it on the index.
+# It is pinned in the root pyproject.toml, which is where it actually resolves.
 cluster = ["vivarium-cluster-tools[cluster]>=4.2.14"]
 validation = ["vivarium-testing-utils[validation]"]
 lint = ["vivarium-dependencies[lint]"]
@@ -45,7 +42,10 @@ data = [
     "vivarium-inputs>=8.0.2",
     "vivarium_gates_lsff_2026_maternal[cluster,lint,test,validation]",
 ]
-dev = ["vivarium_gates_lsff_2026_maternal[test,cluster,lint,interactive]"]
+# NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
+# See the root pyproject.toml for why.
+simulation = ["pandas>=2.2.1"]
+dev = ["vivarium_gates_lsff_2026_maternal[test,cluster,lint,interactive,simulation]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"

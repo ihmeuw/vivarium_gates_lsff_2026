@@ -40,10 +40,9 @@ machines) or a **shared environment on the cluster** with a lightweight venv wra
 To create or update an environment, use ``source environment.sh``. This will
 automatically create the environment if it doesn't exist.
 
-This repository uses exactly two environments -- one ``simulation`` and one
-``artifact`` -- and each contains **both** simulation packages, so the same
-environment serves the maternal and child models. There is no per-package
-environment.
+There are exactly two environments -- one ``simulation`` and one ``artifact`` --
+and each contains **both** simulation packages, so the same environment serves
+the maternal and child models.
 
 **Local conda environment** (default)::
 
@@ -75,9 +74,8 @@ Additional options are available; pass the ``-h`` flag to see them
 (e.g. ``-f`` to force a rebuild, ``-l`` to install git lfs).
 The underlying ``make`` targets can also be run directly: ``make build-env``
 and ``make build-shared-env``; see the ``help`` target in the ``Makefile``
-for their arguments. ``make build-env`` additionally accepts
-``p=<maternal|child>`` to install only one of the two simulation packages,
-which is occasionally useful for a faster partial environment.
+for their arguments. ``make build-env`` also accepts ``p=<maternal|child>`` to
+install only one of the two simulation packages.
 
 Supported Python versions: 3.10, 3.11, 3.12
 
