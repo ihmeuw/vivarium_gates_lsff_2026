@@ -1,3 +1,66 @@
+[build-system]
+# NOTE: setuptools only -- deliberately no setuptools_scm. 'make build-env' installs
+# this package with '--no-build-isolation' (see the repo Makefile), which means the
+# requirements listed here are NOT installed for the build; they must already exist in
+# the environment. setuptools is guaranteed present (base.mk's 'install' upgrades it),
+# setuptools_scm is not. The version below is therefore static rather than derived.
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vivarium_gates_lsff_2026_child"
+version = "0.7.0"
+description = "Child simulation package for the vivarium_gates_lsff_2026 project."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = {text = "BSD-3-Clause"}
+authors = [{name = "The vivarium developers", email = "vivarium.dev@gmail.com"}]
+dependencies = [
+    "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
+    "vivarium-gbd-mapping>=6.0.7",
+    "vivarium-engine>=5.5.3",
+    "vivarium-public-health>=6.4.5",
+    "vivarium-config-tree>=5.0.0",
+    "jinja2",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+test = [
+    "vivarium-dependencies[pytest]",
+    "vivarium-testing-utils",
+    "papermill",
+    "jupyterlab",
+]
+# NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
+# It is pinned in the repo-root pyproject.toml instead -- that root install is the
+# step that resolves jobmon, and this sub-package install cannot see it on the index.
+cluster = ["vivarium-cluster-tools[cluster]>=4.2.14"]
+validation = ["vivarium-testing-utils[validation]"]
+lint = ["vivarium-dependencies[lint]"]
+interactive = [
+    "vivarium-dependencies[interactive]",
+    "nbdime",
+]
+data = [
+    "vivarium-inputs>=8.0.2",
+    "vivarium_gates_lsff_2026_child[cluster,lint,test,validation]",
+]
+dev = ["vivarium_gates_lsff_2026_child[test,cluster,lint,interactive]"]
+
+[project.urls]
+Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
+
+# NOTE: Deliberately no 'make_artifacts' console script -- see the note in
+# 0200_pregnancy_sim/pyproject.toml. The repo-level vivarium_gates_lsff_2026 package
+# owns that name and dispatches here via '-p/--package child'.
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"vivarium_gates_lsff_2026_child" = ["**/*.yaml", "**/*.csv"]
+
 [tool.black]
 line_length = 94
 
