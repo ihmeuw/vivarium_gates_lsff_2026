@@ -409,7 +409,7 @@ Work is split into numbered stages, each a directory at the repository root::
     5000_analyze_results/            results processing
 
 The two simulation stages are installable packages, each with its own ``src/``,
-``tests/``, and ``setup.py``. ``src/`` at the repository root holds two smaller
+``tests/``, and ``pyproject.toml``. ``src/`` at the repository root holds two smaller
 packages: ``lsff_utils``, shared helpers and the path constants both simulations
 read, and ``vivarium_gates_lsff_2026``, which provides the ``make_artifacts``
 command and dispatches to whichever project ``-p`` names.
