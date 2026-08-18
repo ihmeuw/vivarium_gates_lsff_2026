@@ -59,7 +59,7 @@ if update_packages:
     # Vivarium currently requires a different version of Pandas than GBD
     # uses, which is why we need this.
     rule simulation_running_venv_from_scratch:
-        input: ["0200_pregnancy_sim/setup.py"]
+        input: ["0200_pregnancy_sim/pyproject.toml"]
         output: [directory(".simulation_running_venv/"), ".simulation_running_venv/bin/activate"]
         shell:
             f"""

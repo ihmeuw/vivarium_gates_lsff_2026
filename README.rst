@@ -40,6 +40,10 @@ machines) or a **shared environment on the cluster** with a lightweight venv wra
 To create or update an environment, use ``source environment.sh``. This will
 automatically create the environment if it doesn't exist.
 
+There are exactly two environments -- one ``simulation`` and one ``artifact`` --
+and each contains **both** simulation packages, so the same environment serves
+the maternal and child models.
+
 **Local conda environment** (default)::
 
   :~$ source environment.sh
@@ -70,7 +74,8 @@ Additional options are available; pass the ``-h`` flag to see them
 (e.g. ``-f`` to force a rebuild, ``-l`` to install git lfs).
 The underlying ``make`` targets can also be run directly: ``make build-env``
 and ``make build-shared-env``; see the ``help`` target in the ``Makefile``
-for their arguments.
+for their arguments. ``make build-env`` also accepts ``p=<maternal|child>`` to
+install only one of the two simulation packages.
 
 Supported Python versions: 3.10, 3.11, 3.12
 
@@ -409,7 +414,7 @@ Work is split into numbered stages, each a directory at the repository root::
     5000_analyze_results/            results processing
 
 The two simulation stages are installable packages, each with its own ``src/``,
-``tests/``, and ``setup.py``. ``src/`` at the repository root holds two smaller
+``tests/``, and ``pyproject.toml``. ``src/`` at the repository root holds two smaller
 packages: ``lsff_utils``, shared helpers and the path constants both simulations
 read, and ``vivarium_gates_lsff_2026``, which provides the ``make_artifacts``
 command and dispatches to whichever project ``-p`` names.

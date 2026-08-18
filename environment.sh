@@ -13,7 +13,6 @@ fi
 # Define variables
 username=$(whoami)
 env_type="simulation"
-package_profile="root"
 make_new="no"
 use_shared="no"
 install_git_lfs="no"
@@ -27,26 +26,25 @@ Help()
    echo
    echo "Script to automatically create and validate conda environments."
    echo
-  echo "Syntax: source environment.sh [-h|t|p|s|f|l]"
+  echo "Syntax: source environment.sh [-h|t|s|f|l]"
    echo "options:"
    echo "h     Print this Help."
    echo "t     Type of conda environment. Either 'simulation' (default) or 'artifact'."
-  echo "p     Package profile to install. One of 'root' (default), 'maternal', or 'child'."
+   echo "      These are the only two environments; each contains both simulation packages."
+   echo "      For a single-package env, use 'make build-env type=<type> p=<maternal|child>'."
    echo "s     Use shared environment (venv overlay). Recommended for cluster development."
    echo "f     Force creation of a new environment."
    echo "l     Install git lfs (only applies when creating a new conda environment)."
 }
 
 # Process input options
-while getopts ":hsflt:p:" option; do
+while getopts ":hsflt:" option; do
    case $option in
       h) # display help
          Help
          return;;
       t) # Type of conda environment to build
          env_type=$OPTARG;;
-    p) # Package profile to install
-      package_profile=$OPTARG;;
       s) # Use shared environment
          use_shared="yes";;
       f) # Force creation of a new environment
@@ -60,34 +58,10 @@ while getopts ":hsflt:p:" option; do
    esac
 done
 
-# Validate package profile
-if [[ "$package_profile" != "root" && "$package_profile" != "maternal" && "$package_profile" != "child" ]]; then
-  echo
-  echo "ERROR: Invalid package profile '$package_profile'. Must be one of: root, maternal, child"
-  return
-fi
-
-# Determine package path and env extra for optional profile install
-package_path=""
-package_extra=""
-if [[ "$package_profile" == "maternal" ]]; then
-  package_path="./0200_pregnancy_sim"
-elif [[ "$package_profile" == "child" ]]; then
-  package_path="./0300_child_sim"
-fi
-
-if [[ "$env_type" == "simulation" ]]; then
-  package_extra="dev"
-else
-  package_extra="data"
-fi
-
-# Parse environment name
+# Parse environment name. There are exactly two environments, one per type, each holding
+# both simulation packages, so the type fully determines the name.
 env_name=$(basename "`pwd`")
 env_name+="_$env_type"
-if [[ "$package_profile" != "root" ]]; then
-  env_name+="_$package_profile"
-fi
 branch_name=$(git rev-parse --abbrev-ref HEAD)
 
 # Pull repo to get latest changes from remote if remote exists
@@ -175,13 +149,6 @@ else
   fi
   echo "Activating conda environment '$env_name'"
   conda activate $env_name
-fi
-
-# Install selected simulation package profile extras in the active environment.
-if [[ "$package_profile" != "root" ]]; then
-  echo
-  echo "Installing package profile '$package_profile' with extra '$package_extra'"
-  pip install -e "$package_path[$package_extra]"
 fi
 
 # Clear the ERR trap to avoid affecting subsequent commands in the parent shell
