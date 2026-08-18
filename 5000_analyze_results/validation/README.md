@@ -33,7 +33,7 @@ Notebooks live in `notebooks/`. Update the status column as things land.
 | P2 | ACMR | DROP | `MaternalMortality.standard_lookup_tables` drops the all-cause rate — only maternal-disorder deaths are modelled. `CauseSpecificMortalityRate("all_causes")` would run and compare a maternal CSMR against a general-population ACMR. Adding background mortality is a model change |
 | P3 | Prevalence of anemia by severity | T3 → T2 | Sim side ready (`person_time_anemia`). Blocked on (a) no anemia artifact key at all, (b) the `RiskExposure` level-name asymmetry (see Open questions). A custom measure sidesteps (b), but (a) needs a research decision on the reference |
 | P4 | Incidence rate of maternal disorders and maternal hemorrhage | **T2** | Best first custom measure. Sim emits `transition_count_*` + susceptible person-time; artifact has `incident_probability`, which is what `ParturitionSelectionTransition` consumes. Built-in `Incidence` can't: it wants `cause.*.incidence_rate` (absent) and its weights want `cause.*.prevalence` (absent). Only row where wealth stratification is validatable |
-| P5a | CSMR of maternal disorders | **OK** | `cause.maternal_disorders.cause_specific_mortality_rate`, in `maternal_validation.ipynb` |
+| P5a | CSMR of maternal disorders | **OK** | `cause.maternal_disorders.cause_specific_mortality_rate`, in `maternal_validation.ipynb`. **Verified passing** on `legacy_1.0/maternal/nigeria/2026_08_06_16_51_40` (2026-08-18) via `vc.verify(...)`. `generate_results()` still fails — see the `weighted_average` bug below |
 | P5b | CSMR of maternal hemorrhage | DROP | Artifact key exists but the sim never attributes a death to hemorrhage. `mortality_probability` is the all-maternal-disorders case fatality, and `load_pregnant_maternal_hemorrhage_incidence` subtracts `mh_csmr` so the hemorrhage state holds survivors only. Splitting them out changes model results |
 | P6 | YLLs and YLDs for maternal disorders and hemorrhage | T2 | `ylls` / `ylds` already emitted in standard form. No YLL/YLD measure class exists |
 | P7 | Anemia YLDs | T2 | Same as P6; `DisabilityObserver` subclass already adds anemia as a cause of disability |
@@ -74,7 +74,8 @@ Notebooks live in `notebooks/`. Update the status column as things land.
 
 | Change | Status | Notes |
 | --- | --- | --- |
-| Test `maternal_validation.ipynb` on the cluster | pending | Verifies row P5a and the audit's central claim |
+| Test `maternal_validation.ipynb` on the cluster | done 2026-08-18 | P5a verifies and passes. `generate_results()` raises — cause found, see the year-bin bug below |
+| Fix the maternal `population.structure` year bin | code done 2026-08-18, **needs artifact rebuild** | `load_population_structure` hardcodes `.assign(year_start=2021, year_end=2022)` at `0200_pregnancy_sim/.../data/loader.py:155`, while every `interface.get_measure` key in the same artifact (incl. `cause.maternal_disorders.cause_specific_mortality_rate`) carries **2023/2024**. Zero year overlap, so `weighted_average` can never match data to weights and `generate_results()` / `get_frame()` / `plot_comparison()` all raise. Confirmed 2026-08-18: every other level matches (`sex` 2, `age_group` 25, `location` correctly summed away) and the weights index is dense. Invisible at runtime because the sim runs in 2025 with `interpolation.order: 0` and `extrapolate: True`, so either year bin extrapolates identically. Fix: stamp the GBD extract year instead of a literal — the maternal package has no `GBD_EXTRACT_YEAR` constant, unlike the child package. Requires an artifact rebuild |
 | Observer PR: child `PersonTimeObserver` + child `BirthObserver` → `PublicHealthObserver` | not started | Standalone PR. **Breaking:** renaming the child `person_time` dataset breaks `0100_rescale_results/child_results.ipynb`, which reads it by name in `for result in ["ylds", "ylls", "deaths", "person_time"]`. Maternal `BirthObserver` stays as-is — it is a concatenating line list and `PublicHealthObserver` has no concatenating path |
 | Child ACMR PR: enable C1 | blocked on observer PR | Uncomment the comparison, add the `stillborn` exclusion, pass `stratifications` |
 | First custom measure: P4 (maternal/hemorrhage incidence) | not started | Tier 2 |
@@ -89,6 +90,11 @@ Notebooks live in `notebooks/`. Update the status column as things land.
 
 ## Upstream issues worth filing
 
+- **Error message reports index names when the assertion is on index values.**
+  `calculations.weighted_average` raises `"Data and weights must have the same index levels.
+  Data index: [...], Weights index: [...]"` printing only `.names`, which are usually
+  identical — the failing check is `data.index.equals(weights.index)`. Cost us a wrong
+  hypothesis before the real cause showed up. Should print the diverging values.
 - `vivarium-validation` imports `matplotlib`, `seaborn` and `IPython` at module load
   (`interface.py`, `visualization/plot_utils.py`) but declares none of them. Worked around
   here by pulling `[interactive]` into the `[validation]` extra.
