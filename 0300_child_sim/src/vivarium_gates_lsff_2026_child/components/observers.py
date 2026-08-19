@@ -4,7 +4,7 @@ from typing import Any, Dict
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
 from vivarium.engine.framework.results import Observer
-from vivarium.public_health.results import COLUMNS, SimpleCause
+from vivarium.public_health.results import COLUMNS, PublicHealthObserver, SimpleCause
 from vivarium.public_health.results.disease import DiseaseObserver
 from vivarium.public_health.results.mortality import MortalityObserver as MortalityObserver_
 from vivarium.public_health.results.stratification import (
@@ -42,6 +42,13 @@ class ResultsStratifier(ResultsStratifier_):
         The base implementation is a ``staticmethod``, so this override matches it.
         The returned bins fully replace the artifact's age bins rather than refining
         them, so the base result is not consulted.
+
+        The names follow the GBD convention, where the upper bound is *inclusive*:
+        ``0_to_5_months`` spans [0, 6) months. The V&V tooling parses these strings back
+        into intervals on that assumption, so a name whose bounds are written exclusively
+        (``0_to_6_months`` for [0, 6)) parses one unit too wide, the parsed bins overlap,
+        and age reconciliation silently fails. Only the labels changed here -- the
+        ``age_start``/``age_end`` values, and therefore the binning itself, are unchanged.
         """
         data_dict = {
             "age_start": [
@@ -63,9 +70,9 @@ class ResultsStratifier(ResultsStratifier_):
                 # "6-11_months",
                 # "12_to_23_months",
                 # "2_to_4",
-                "0_to_6_months",
-                "6_to_10_months",
-                "10_to_18_months",
+                "0_to_5_months",
+                "6_to_9_months",
+                "10_to_17_months",
                 "18_to_59_months",
             ],
         }
@@ -337,14 +344,47 @@ class ChildWastingObserver(DiseaseObserver):
         return results
 
 
-class PersonTimeObserver(Observer):
+class PersonTimeObserver(PublicHealthObserver):
+    """Total population person time, emitted in the standard four-column results format.
+
+    Notes
+    -----
+    Subclassing ``PublicHealthObserver`` rather than ``Observer`` is what makes this dataset
+    usable by the automated V&V tooling, in two ways. The tooling's loader requires the
+    ``measure``/``entity_type``/``entity``/``sub_entity`` columns that ``format_results``
+    adds, and it discovers person-time datasets by the ``person_time_`` name prefix, deriving
+    the total-person-time denominator every ratio measure needs from the largest match. A
+    plain ``Observer`` writing a bare ``person_time`` dataset satisfies neither.
+
+    The observation is deliberately *not* named ``person_time_total``. The loader caches each
+    person-time dataset it reads and then caches its derived total under exactly that key, so
+    a real dataset by that name makes it raise on the duplicate.
+    """
+
     def register_observations(self, builder: Builder) -> None:
-        builder.results.register_adding_observation(
-            name="person_time",
+        self.register_adding_observation(
+            builder=builder,
+            name="person_time_population",
             pop_filter="is_alive == True",
             when="time_step__prepare",
+            requires_attributes=["is_alive"],
+            additional_stratifications=self.configuration.include,
+            excluded_stratifications=self.configuration.exclude,
             aggregator=partial(aggregate_person_time, builder.time.step_size()()),
         )
+
+    def get_measure_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        return pd.Series("person_time", index=results.index)
+
+    def get_entity_type_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        return pd.Series("population", index=results.index)
+
+    def get_entity_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        return pd.Series("population", index=results.index)
+
+    def get_sub_entity_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        # No sub-breakdown: this is whole-population person time.
+        return pd.Series("population", index=results.index)
 
 
 def aggregate_person_time(step_size, df: pd.DataFrame) -> float:

@@ -45,8 +45,28 @@ cluster = [
 data = [
     "vivarium-inputs>=8.0.2",
     "vivarium_gates_lsff_2026[cluster]",
+    # Automated V&V (5000_analyze_results/validation) runs in the artifact env, so it
+    # belongs on this path -- see the [validation] extra below.
+    "vivarium_gates_lsff_2026[validation]",
 ]
 interactive = ["vivarium-dependencies[interactive]"]
+# Automated V&V notebooks under 5000_analyze_results/validation.
+# NOTE: The [validation] extra of vivarium-validation is the one that matters -- it adds
+# vivarium-artifact, vivarium-gbd-mapping, vivarium-inputs and pandera. The base install
+# omits all four, and ValidationContext needs them to read artifacts. Its vivarium-inputs
+# pin (>=8.0.0,<9.0.0) is compatible with the [data] pin above.
+# NOTE: [interactive] is required, not a convenience. vivarium-validation imports
+# matplotlib, seaborn and IPython at module load (interface.py, visualization/plot_utils.py)
+# but declares none of them, so 'import vivarium.validation' fails without it.
+# NOTE: jupyterlab is named explicitly rather than relied on transitively. [interactive]
+# brings vivarium_dependencies[jupyter], whose 'jupyter' metapackage only started depending
+# on jupyterlab in 1.1.0 (and otherwise reaches it via notebook>=7). Both are unpinned, so
+# leaving it implicit makes 'jupyter lab' contingent on how the resolver happens to land.
+validation = [
+    "vivarium-validation[validation]>=0.2.1",
+    "vivarium_gates_lsff_2026[interactive]",
+    "jupyterlab",
+]
 lint = ["vivarium-dependencies[lint]"]
 # NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
 # The artifact env is hard-capped to pandas<2.0 via vivarium-inputs -> vivarium-gbd-access

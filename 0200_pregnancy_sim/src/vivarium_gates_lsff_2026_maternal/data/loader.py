@@ -150,9 +150,19 @@ def load_population_structure(key: str, location: str, mean_draw: bool) -> pd.Da
     total_csv = (
         paths.DATA_PREP_RESULTS_ROOT / "population" / "total" / (location.lower() + ".csv")
     )
+    # NOTE: The data prep notebook drops year_start/year_end from
+    # vivarium_inputs.get_population_structure output, so the year bin has to be restamped
+    # here. It must match GBD_EXTRACT_YEAR: this key is the rate-aggregation weight for every
+    # GBD-sourced rate, and those carry [GBD_EXTRACT_YEAR, GBD_EXTRACT_YEAR + 1). A literal
+    # 2021/2022 here left population.structure unable to join against any of them -- invisible
+    # to the simulation, which extrapolates from whatever bin exists, but it breaks the
+    # automated V&V weighting (see 5000_analyze_results/validation/README.md).
     base_population_structure = (
         pd.read_csv(total_csv)
-        .assign(year_start=2021, year_end=2022)
+        .assign(
+            year_start=metadata.GBD_EXTRACT_YEAR,
+            year_end=metadata.GBD_EXTRACT_YEAR + 1,
+        )
         .set_index(["sex", "age_start", "age_end", "year_start", "year_end"])
     )
     pregnancy_end_rate = broadcast_onto(

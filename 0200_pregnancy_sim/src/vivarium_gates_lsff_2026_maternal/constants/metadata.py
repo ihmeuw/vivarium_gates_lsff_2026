@@ -27,6 +27,12 @@ ARTIFACT_INDEX_COLUMNS = [
     "year_end",
 ]
 
+# The GBD release keys are pulled for. vivarium_inputs stamps its data with the year bin
+# [GBD_EXTRACT_YEAR, GBD_EXTRACT_YEAR + 1), so anything built outside vivarium_inputs must
+# use the same bin or it will not join against the GBD-sourced keys. Mirrors the constant of
+# the same name in the child package.
+GBD_EXTRACT_YEAR = 2023
+
 # GBD 2023 provides 250 draws (GBD 2021 provided 500). Keys sourced from GBD are
 # built with this many draw columns, so it bounds the draws a simulation can request.
 DRAW_COUNT = 250

@@ -109,3 +109,11 @@ configuration:
             - 'age_group'
             - 'sex'
             - 'wealth_quintile'
+        # Stillbirths are stamped as a cause_of_death at initialization by ChildMortality,
+        # so they land in the 'deaths' dataset alongside real deaths. All-cause measures sum
+        # over every cause_of_death, and stillbirths are not part of GBD's all-cause
+        # mortality rate, so leaving them in inflates the numerator with no matching
+        # person time in the denominator.
+        excluded_categories:
+            cause_of_death:
+                - 'stillborn'
