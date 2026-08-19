@@ -25,7 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "vivarium-dependencies[pytest]",
-    "vivarium-testing-utils",
+    "pytest-vivarium",
 ]
 # NOTE: The [cluster] extra is required, not optional. vivarium-cluster-tools gates
 # jobmon_installer_ihme behind it, and psimulate imports jobmon at module load, so a
