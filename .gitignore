@@ -130,6 +130,7 @@ dmypy.json
 .conda_env/
 .venv/
 .simulation_running_venv/
+.snakemake_envs/
 
 .snakemake/
 *.rdb

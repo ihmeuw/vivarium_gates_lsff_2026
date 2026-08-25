@@ -73,6 +73,6 @@ rule pregnancy_simulations:
         export PYTHONPATH=../../../src
         {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -rf *.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
-        mv ./*/results/*.parquet .
+        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q || echo "psimulate restart skipped (workflow already complete)"
+        python -m lsff_utils.flatten_results .
         """

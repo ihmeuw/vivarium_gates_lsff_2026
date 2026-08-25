@@ -177,9 +177,13 @@ build-env: # Create a new environment with installed packages
 #	resolution to jobmon 3.2.4 -- the only jobmon needing pkg_resources, and the reason
 #	the pin looked necessary. mncnh resolves jobmon 3.7.9 on the same Python 3.11 and
 #	setuptools 83, and its 'make_artifacts -l all' works, so neither flag is wanted here.
+#	NOTE: mncnh installs `redis -c anaconda` here, but with a strict-priority
+#	conda-forge .condarc that solve conflicts with the conda-forge-built env
+#	and spins for the better part of an hour; conda-forge's redis-server
+#	provides the same server binary psimulate needs.
 	@if [ "$(type)" = "simulation" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
-		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
+		conda install $(CONDA_RUN_FLAG) redis-server -c conda-forge -y; \
 	elif [ "$(type)" = "artifact" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data; \
 	fi

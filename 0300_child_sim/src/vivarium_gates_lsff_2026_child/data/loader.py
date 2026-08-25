@@ -13,6 +13,7 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 
+import os
 import pickle
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -1481,14 +1482,20 @@ def _resolve_lbwsg_paf_path(location: str) -> Path:
     picked up silently.
     """
     measure = paths.LBWSG_PAF_MEASURE_NAME
-    location_dir = paths.LBWSG_PAF_RESULTS_ROOT / location.lower().replace(" ", "_")
+    # The snakemake workflow keeps PAF results repo-local rather than on the shared
+    # drive, and points here via this environment variable.
+    results_root = Path(
+        os.environ.get("LSFF_LBWSG_PAF_RESULTS_ROOT", paths.LBWSG_PAF_RESULTS_ROOT)
+    )
+    location_dir = results_root / location.lower().replace(" ", "_")
 
     if not location_dir.exists():
         raise FileNotFoundError(
             f"No LBWSG PAF results found at '{location_dir}'. These are produced by "
             f"running the PAF calculation simulation ('data/lbwsg_paf.yaml') against "
             f"the artifact built with --for-lbwsg-pafs, and are required before the "
-            f"full child artifact can be built."
+            f"full child artifact can be built. Set LSFF_LBWSG_PAF_RESULTS_ROOT to "
+            f"read them from a non-default location."
         )
 
     # Prefer a flat file, then a metric directory, then the newest nested run. Run

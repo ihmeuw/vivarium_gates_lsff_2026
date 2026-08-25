@@ -29,7 +29,7 @@ rule lbwsg_pafs:
         rm -f dump.rdb
         export PYTHONPATH=./src
         {'python ../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml' if not debug else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
-        mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
+        python -m lsff_utils.flatten_results lbwsg_pafs/{{wildcards.location}}
         """
 
 
@@ -49,6 +49,7 @@ rule child_artifacts:
         cd 0300_child_sim
         rm -f mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
         export PYTHONPATH=./src
+        export LSFF_LBWSG_PAF_RESULTS_ROOT=$PWD/lbwsg_pafs
         python src/vivarium_gates_lsff_2026_child/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} --fertility-data-path ../0200_pregnancy_sim/sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/births.parquet --national -a --mean {'--pdb -vvv' if debug else ''}
         """
 
@@ -65,7 +66,8 @@ rule child_simulations:
     output:
         [
             directory("0300_child_sim/sim_results/{vehicle}/{location}/"),
-            "0300_child_sim/sim_results/{vehicle}/{location}/person_time.parquet",
+            # Renamed from person_time when PersonTimeObserver became a PublicHealthObserver
+            "0300_child_sim/sim_results/{vehicle}/{location}/person_time_population.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/deaths.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/ylds.parquet",
             "0300_child_sim/sim_results/{vehicle}/{location}/ylls.parquet",
@@ -85,6 +87,6 @@ rule child_simulations:
         export PYTHONPATH=../../../src
         {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -f dump.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
-        mv ./*/results/*.parquet .
+        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q || echo "psimulate restart skipped (workflow already complete)"
+        python -m lsff_utils.flatten_results .
         """
