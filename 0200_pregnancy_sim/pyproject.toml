@@ -32,7 +32,7 @@ test = [
 # NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
 # It is pinned in the root pyproject.toml, which is where it actually resolves.
 cluster = ["vivarium-cluster-tools[cluster]>=4.2.14"]
-validation = ["vivarium-validation[validation]"]
+validation = ["vivarium-validation[gbd]>=0.3.1"]
 lint = ["vivarium-dependencies[lint]"]
 interactive = [
     "vivarium-dependencies[interactive]",
