@@ -127,11 +127,34 @@ dmypy.json
 .idea/
 .vscode/
 
+# Editor and OS leavings
+.DS_Store
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------------
+# Virtual environments
+#
+# .snakemake_envs/ holds the two conda envs the snakemake workflow builds via
+# `make build-env` (see the root Snakefile). The others are historical: .venv and
+# .simulation_running_venv are the pre-monorepo generation, .venv_modern and
+# .test_venv were interim modern-suite environments from the migration.
+# ---------------------------------------------------------------------------
 .conda_env/
+.snakemake_envs/
 .venv/
 .simulation_running_venv/
-.snakemake_envs/
+.test_venv/
+.venv_modern/
 
+# FuzzyChecker per-run diagnostics. tests/reference/ is deliberately NOT ignored:
+# it is the committed baseline the regression harness compares against.
+tests/.diagnostics/
+
+# ---------------------------------------------------------------------------
+# Pipeline byproducts
+# ---------------------------------------------------------------------------
 .snakemake/
 *.rdb
 *.hdf
@@ -139,3 +162,41 @@ dmypy.json
 *.tmp
 .cachedir
 model_spec_int.yaml
+
+# Simulation output, including the tens of gigabytes of duplicate psimulate worker
+# logs, is already covered by the sub-gitignores: 0200_pregnancy_sim/.gitignore and
+# 0300_child_sim/.gitignore both ignore `sim_results/`, and 0300 also ignores
+# `lbwsg_pafs/`, `artifacts/` and `lbwsg_paf_artifacts/`. Deliberately not repeated
+# here -- two places to update is how rules drift apart.
+
+# ---------------------------------------------------------------------------
+# Local scratch, by convention dot-prefixed at the repo root
+#
+# Globs rather than one line per directory: this section had been growing an entry
+# every time a run needed its output preserved, which is how it twice ended up
+# corrupted by careless appends. Follow the convention and new scratch is covered
+# automatically.
+#
+# Preserved pipeline output matters more than it sounds. The simulation rules
+# `rm -rf` their results directory, and Snakemake deletes the outputs of a failed
+# job, so anything not copied aside is unrecoverable -- the April-2025 parquet was
+# lost exactly that way and exists nowhere. Preserve both sims, not just 0200.
+#
+# It is also deliberately NOT committed: the tracked CSVs are the 200-seed published
+# GBD-2021 baseline that the whole regression harness compares against, and a rerun's
+# output is neither that vintage nor that seed count.
+# ---------------------------------------------------------------------------
+.artifacts_*/
+.sim_results_*/
+.child_results_*/
+.results_*/
+.lbwsg_pafs_*/
+
+# Local stand-in for the shared team model directory, via LSFF_MODEL_ROOT. Only
+# created on branches carrying the paths.py override; harmless to ignore here.
+.model_root*/
+
+# Throwaway analysis scripts and run wrappers kept out of the way with a dot prefix.
+.run_*.sh
+.compare_*.py
+.scratch_*

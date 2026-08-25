@@ -2,6 +2,8 @@ from snakemake.io import directory
 
 import glob
 
+from lsff_utils.snakemake_utils import tolerant_psimulate_restart
+
 debug = config["debug"]
 local = config["local"]
 full_scale = config["full_scale"]
@@ -30,7 +32,10 @@ data_inputs = [
 ] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
-    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py"] + data_inputs
+    # loader.get_hemoglobin_below_70 integrates lsff_utils.hemoglobin_distribution, so a
+    # change there changes the artifact. That dependency was undeclared until
+    # 2026-08-04, which meant fixing the distribution left every artifact silently stale.
+    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py", "src/lsff_utils/hemoglobin_distribution.py"] + data_inputs
     output: ["0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
     shell:
         f"""
@@ -73,6 +78,6 @@ rule pregnancy_simulations:
         export PYTHONPATH=../../../src
         {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -rf *.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q || echo "psimulate restart skipped (workflow already complete)"
-        python -m lsff_utils.flatten_results .
+        {'' if debug or local else tolerant_psimulate_restart('-P proj_simscience -m 2 -r 01:00:00 -q all.q')}
+        python -m lsff_utils.collect_results . .
         """
