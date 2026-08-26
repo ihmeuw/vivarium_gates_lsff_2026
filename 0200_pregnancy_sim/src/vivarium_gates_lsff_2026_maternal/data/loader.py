@@ -111,6 +111,12 @@ def get_data(
         data_keys.MATERNAL_DISORDERS.INCIDENT_PROBABILITY: load_pregnant_maternal_disorders_incidence_probability,
         data_keys.MATERNAL_DISORDERS.YLDS: load_maternal_disorders_ylds,
         data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN: load_hemoglobin_maternal_disorders_rr,
+        # WARNING: joblib invalidates this cache on changes to the decorated
+        # function's own source only. Editing a callee -- _hemoglobin_paf or
+        # lsff_utils.hemoglobin_distribution -- silently serves the stale frame;
+        # delete .cachedir/joblib/*/data/loader/generate_hemoglobin_maternal_disorders_paf
+        # after touching either. tests/test_artifact_sanity.py's PAF-consistency
+        # check catches a stale build after the fact.
         data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN: memory.cache(
             generate_hemoglobin_maternal_disorders_paf
         ),
@@ -725,8 +731,15 @@ def _hemoglobin_paf(mean: float, sd: float, rr: float) -> float:
     pdf = hemoglobin_distribution.hemoglobin_pdf_from_mean_sd(mean, sd)
 
     with np.errstate(under="ignore"):
+        # The RR applies per unit of hemoglobin DEFICIT below the TMREL, matching
+        # Hemoglobin.adjust_maternal_disorder_probability, which exponentiates
+        # (tmrel - hemoglobin).clip(lower=0). This integral previously used
+        # max(x - tmrel, 0) -- the excess above the TMREL -- which weighted the
+        # burden by the (nearly empty) high-hemoglobin tail and returned PAFs of
+        # ~0.01 where ~0.3 is correct, leaving population maternal-disorders
+        # incidence and mortality inflated ~1.3-1.4x after risk deletion.
         weighted_burden = integrate.quad(
-            lambda x: (pdf(x) * rr ** (max(x - tmrel, 0) / risk.relative_risk_scalar)),
+            lambda x: (pdf(x) * rr ** (max(tmrel - x, 0) / risk.relative_risk_scalar)),
             0,
             hemoglobin_distribution.XMAX,
             epsabs=0.0001,

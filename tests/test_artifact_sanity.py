@@ -278,3 +278,112 @@ def test_key_magnitude_is_comparable_to_reference(
         "worth a look before it reaches a production run. If the revision is real, "
         "widen RATIO_THRESHOLD or record the key here."
     )
+
+
+# --- PAF/RR internal consistency (V&V strategy check P5) -------------------------
+#
+# The stored hemoglobin-on-maternal-disorders PAF must equal the risk-deletion
+# integral implied by the artifact's own hemoglobin distribution and RR:
+#
+#     weighted_burden = E[ RR ** (max(TMREL - hgb, 0) / RR_SCALAR) ]
+#     PAF = (weighted_burden - 1) / weighted_burden
+#
+# with the exponent on the hemoglobin DEFICIT, because that is how the simulation
+# applies the RR to individuals (Hemoglobin.adjust_maternal_disorder_probability
+# exponentiates (tmrel - hemoglobin).clip(lower=0)). If the two disagree, risk
+# deletion does not cancel the per-simulant RRs and every population
+# maternal-disorders rate the sim produces is scaled by ~E[RR**deficit].
+#
+# This is the check that would have caught the inverted max(x - tmrel, 0) in
+# _hemoglobin_paf, which produced stored PAFs of ~0.01 where ~0.3 is correct
+# (found via LSFF_model0 V&V, 2026-08-26). A ratio or saturation check cannot see
+# it: the wrong values are small, positive, and unsaturated.
+#
+# Constants mirror the maternal package (constants/data_values.py); they are
+# duplicated here so the test does not need the simulation package importable.
+PAF_TMREL_G_PER_L = 120.0
+PAF_RR_SCALAR_G_PER_L_PER_G_PER_DL = 10.0
+PAF_CONSISTENCY_ROW_CAP = 40
+
+
+def test_hemoglobin_maternal_disorders_paf_consistent_with_rr(artifact) -> None:
+    integrate = pytest.importorskip("scipy.integrate")
+    hemoglobin_distribution = pytest.importorskip("lsff_utils.hemoglobin_distribution")
+
+    keys = {
+        "paf": "risk_factor.hemoglobin_on_maternal_disorder.paf",
+        "mean": "risk_factor.hemoglobin.mean",
+        "sd": "risk_factor.hemoglobin.standard_deviation",
+        "rr": "risk_factor.hemoglobin_on_maternal_disorder.relative_risk",
+    }
+    missing = [key for key in keys.values() if key not in artifact.keys]
+    if missing:
+        pytest.skip(f"artifact lacks {missing}")
+
+    def first_draw(key: str, name: str) -> pd.DataFrame:
+        frame = artifact.load(key)
+        draw_column = frame.filter(like="draw").columns[0]
+        return frame[[draw_column]].rename(columns={draw_column: name}).reset_index()
+
+    paf = first_draw(keys["paf"], "paf")
+    mean = first_draw(keys["mean"], "mean")
+    sd = first_draw(keys["sd"], "sd")
+    # The RR is a biological constant carried at whatever GBD year it was pulled
+    # for, which need not match the demography year on the other keys; the PAF
+    # generator drops the RR's year levels before its lookup, and so does this.
+    rr = first_draw(keys["rr"], "rr").drop(
+        columns=["year_start", "year_end"], errors="ignore"
+    )
+
+    merged = paf.merge(mean, on=[c for c in paf.columns if c in mean.columns and c != "paf"])
+    merged = merged.merge(sd, on=[c for c in merged.columns if c in sd.columns and c not in ("paf", "mean")])
+    merged = merged.merge(rr, on=[c for c in merged.columns if c in rr.columns and c not in ("paf", "mean", "sd")])
+    merged = merged[merged["mean"] > 0]
+    # The generator computes the PAF only for the WRA window (_among_wra: ages
+    # 15-55) and stores 0.0 elsewhere. NOTE the sim still applies the RR to
+    # simulants aged 10-14 (via order-0 extrapolation of the RR table), so that
+    # band's maternal-disorders rates carry an uncompensated ~E[RR**deficit]
+    # inflation even with a correct PAF -- a known modeling gap, not a build
+    # defect, so it is out of scope here.
+    merged = merged[
+        (merged["age_start"] >= 15) & (merged["age_end"] <= 55)
+    ]
+    if merged.empty:
+        pytest.skip("no rows with a positive hemoglobin mean to check")
+
+    # Deterministic thinning: enough rows to cover ages and quintiles without
+    # paying for an integral per demographic cell.
+    step = max(1, len(merged) // PAF_CONSISTENCY_ROW_CAP)
+    rows = merged.iloc[::step]
+
+    def expected_paf(mean: float, sd: float, rr: float) -> float:
+        pdf = hemoglobin_distribution.hemoglobin_pdf_from_mean_sd(mean, sd)
+        with np.errstate(under="ignore"):
+            weighted_burden = integrate.quad(
+                lambda x: pdf(x)
+                * rr
+                ** (
+                    max(PAF_TMREL_G_PER_L - x, 0)
+                    / PAF_RR_SCALAR_G_PER_L_PER_G_PER_DL
+                ),
+                0,
+                hemoglobin_distribution.XMAX,
+                epsabs=0.0001,
+            )[0]
+        return (weighted_burden - 1) / weighted_burden
+
+    expected = rows.apply(lambda r: expected_paf(r["mean"], r["sd"], r["rr"]), axis=1)
+    # Loose on purpose: distribution and integration wiggle is percent-level, the
+    # defect this exists for is thirty-fold.
+    mismatched = ~np.isclose(rows["paf"], expected, atol=0.02, rtol=0.10)
+    detail = rows.assign(expected=expected)[mismatched][
+        [c for c in rows.columns if c not in ("mean", "sd", "rr")] + ["expected"]
+    ]
+    assert not mismatched.any(), (
+        f"stored PAF disagrees with the deficit-direction RR integral for "
+        f"{int(mismatched.sum())} of {len(rows)} sampled rows. If the stored values are "
+        f"~0.01 and the expected ~0.3, the artifact was built with the inverted "
+        f"max(x - tmrel, 0) exponent in loader._hemoglobin_paf and every "
+        f"maternal-disorders rate downstream is inflated by ~E[RR**deficit].\n"
+        f"{detail.head(10).to_string(index=False)}"
+    )
