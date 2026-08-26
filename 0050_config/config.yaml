@@ -4,3 +4,11 @@ custom_intervention_scenarios:
   ethiopia:
     - intervention_25_nrv
     - intervention_100_nrv
+# Folate-only (location, vehicle) pairs whose program also contributes a
+# folate-deficiency-anemia pathway, via 0400's non_pregnant_anemia_folate
+# notebook. Iron combos always carry an anemia pathway, so they are not listed.
+# A folate-only pair NOT listed here produces NTD results only -- the intended
+# shape for nigeria/salt unless the team decides otherwise; see
+# docs/adding_nigeria_salt_folate_checklist.md.
+folate_anemia_vehicles:
+  ethiopia: [salt]

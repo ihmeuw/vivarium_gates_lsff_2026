@@ -44,18 +44,46 @@ rule rescale_child_results:
         papermill child_results.ipynb ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/child_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
 
+def combo_fortificants(wildcards):
+    """Fortificants configured for this (location, vehicle) pair.
+
+    Filtering on the pair, not the location, matters: a location can mix
+    vehicles with different fortificant sets (nigeria: rice and bouillon carry
+    iron and folate, a future salt program is folate-only). Gating on location
+    alone would demand pregnancy/child simulation results for a vehicle that
+    has no iron program, and no way to produce them.
+    """
+    combos = config_utils.get_location_fortificant_vehicle_intervention_scenarios()
+    return combos[
+        (combos.location == wildcards.location) & (combos.vehicle == wildcards.vehicle)
+    ].fortificant.unique()
+
+
+def combo_has_anemia_model(wildcards, fortificants):
+    """Whether this (location, vehicle) pair produces 0400 anemia results.
+
+    Every iron combo does. A folate-only combo does only if it is listed in
+    config.yaml's folate_anemia_vehicles (ethiopia/salt models folate-deficiency
+    anemia; other folate-only combos are NTD-only unless the team opts in).
+    The downstream notebooks substitute zero-valued frames for missing anemia
+    inputs, so leaving a combo out is a modeling choice, not a wiring hazard.
+    """
+    if "iron" in fortificants:
+        return True
+    folate_anemia_vehicles = config_utils.get_config().get("folate_anemia_vehicles", {})
+    return wildcards.vehicle in folate_anemia_vehicles.get(wildcards.location, [])
+
+
 def dalys_by_scenario_inputs(wildcards):
-    fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    fortificants = combo_fortificants(wildcards)
     result = config["env_input"] + ["5000_analyze_results/dalys_by_scenario.ipynb"]
     if "folate" in fortificants:
         result += [
             "0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv",
         ]
     if "iron" in fortificants:
-        result += rescaled_pregnancy_results + rescaled_child_results + [
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
-        ]
-    else:
+        result += rescaled_pregnancy_results + rescaled_child_results
+    if combo_has_anemia_model(wildcards, fortificants):
         result += [
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
         ]
@@ -74,19 +102,15 @@ rule dalys_by_scenario:
         """
 
 def cases_by_scenario_inputs(wildcards):
-    fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    fortificants = combo_fortificants(wildcards)
     result = config["env_input"] + ["5000_analyze_results/cases_by_scenario.ipynb"]
     if "folate" in fortificants:
         result += [
             "0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv",
         ]
-    iron_paths = rescaled_pregnancy_results + rescaled_child_results + [
-        "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
-        "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
-    ]
     if "iron" in fortificants:
-        result += iron_paths
-    else:
+        result += rescaled_pregnancy_results + rescaled_child_results
+    if combo_has_anemia_model(wildcards, fortificants):
         result += [
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
