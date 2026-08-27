@@ -726,9 +726,7 @@ def _hemoglobin_paf(mean: float, sd: float, rr: float) -> float:
 
     with np.errstate(under="ignore"):
         # Hemoglobin is an inverted risk (``risk.tmred.inverted``): the exposed tail is
-        # *below* the TMREL, not above it. Clipping this the other way around left the PAF
-        # near zero while the simulation still applied the per-simulant relative risk, which
-        # inflated maternal disorders. Matches ``(tmrel - hemoglobin_level).clip(lower=0)``
+        # *below* the TMREL, not above it. This code matches ``(tmrel - hemoglobin_level).clip(lower=0)``
         # in ``components/hemoglobin.py``.
         weighted_burden = integrate.quad(
             lambda x: (pdf(x) * rr ** (max(tmrel - x, 0) / risk.relative_risk_scalar)),
