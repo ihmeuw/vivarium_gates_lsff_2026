@@ -753,9 +753,16 @@ def _only_mean(df):
 
 
 def _among_wra(df):
+    # Lower bound 10, not 15: the simulation enrolls women from age 10 and applies
+    # the hemoglobin RRs to them, so the risk-deletion PAFs (maternal disorders via
+    # generate_hemoglobin_maternal_disorders_paf, hemorrhage via
+    # get_hemoglobin_below_70) must cover 10-14 too. With the old floor those rows
+    # got PAF = 0 while still receiving per-simulant RRs, leaving 10-14 maternal
+    # rates inflated by ~E[RR**deficit] (the residual spike Syl's V&V plot shows
+    # at 10_to_14).
     return df[
         (df.index.get_level_values("sex") == "Female")
-        & (df.index.get_level_values("age_start") >= 15)
+        & (df.index.get_level_values("age_start") >= 10)
         & (df.index.get_level_values("age_end") <= 55)
     ]
 

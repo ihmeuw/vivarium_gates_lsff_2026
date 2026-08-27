@@ -339,14 +339,13 @@ def test_hemoglobin_maternal_disorders_paf_consistent_with_rr(artifact) -> None:
     merged = merged.merge(sd, on=[c for c in merged.columns if c in sd.columns and c not in ("paf", "mean")])
     merged = merged.merge(rr, on=[c for c in merged.columns if c in rr.columns and c not in ("paf", "mean", "sd")])
     merged = merged[merged["mean"] > 0]
-    # The generator computes the PAF only for the WRA window (_among_wra: ages
-    # 15-55) and stores 0.0 elsewhere. NOTE the sim still applies the RR to
-    # simulants aged 10-14 (via order-0 extrapolation of the RR table), so that
-    # band's maternal-disorders rates carry an uncompensated ~E[RR**deficit]
-    # inflation even with a correct PAF -- a known modeling gap, not a build
-    # defect, so it is out of scope here.
+    # The generator computes the PAF for the window the simulation enrolls
+    # (_among_wra: ages 10-55) and stores 0.0 elsewhere. The floor was 15 until
+    # 2026-08-27, which left 10-14 with RR applied but nothing deleted -- the
+    # residual 10_to_14 spike in maternal V&V. Artifacts built before the
+    # widening fail here on their zero-valued 10-14 rows, correctly: rebuild them.
     merged = merged[
-        (merged["age_start"] >= 15) & (merged["age_end"] <= 55)
+        (merged["age_start"] >= 10) & (merged["age_end"] <= 55)
     ]
     if merged.empty:
         pytest.skip("no rows with a positive hemoglobin mean to check")
