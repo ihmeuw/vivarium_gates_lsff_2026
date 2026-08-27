@@ -58,7 +58,10 @@ from tests.baseline import REPO_ROOT
 # not an accepted fact: see the module docstring. Recorded rather than left to
 # fail so the suite stays green while the defect is tracked -- remove an entry
 # when it is fixed and the live check below will confirm.
-KNOWN_MIXING_LOADERS = frozenset({"load_maternal_disorders_ylds"})
+# (load_maternal_disorders_ylds was the founding member; fixed 2026-08-27 by
+# fetching csmr through load_maternal_csmr directly, so every term carries the
+# full draw set and the collapse happens once, in the outer get_data.)
+KNOWN_MIXING_LOADERS = frozenset()
 
 # get_data collapses to this many columns when mean_draw=True.
 COLLAPSED_DRAW_COUNT = 1
