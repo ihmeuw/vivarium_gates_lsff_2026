@@ -49,12 +49,7 @@ VEHICLE = __Vehicle()
 
 class __Pregnancy(NamedTuple):
     ASFR: str = "covariate.age_specific_fertility_rate.estimate"
-    # NOTE: Reverted to the GBD 2021 covariate name so the simulation can run against the
-    # legacy_1.0 artifacts, which were built before the rename. GBD 2023 calls this
-    # 'stillbirth_28_weeks_to_live_birth_ratio' and gbd_mapping no longer carries the name
-    # below, so 'make_artifacts' cannot resolve it -- restore the 2023 name before
-    # rebuilding the maternal artifact.
-    SBR: str = "covariate.stillbirth_to_live_birth_ratio.estimate"
+    SBR: str = "covariate.stillbirth_28_weeks_to_live_birth_ratio.estimate"
     RAW_INCIDENCE_RATE_MISCARRIAGE: str = (
         "cause.maternal_abortion_and_miscarriage.raw_incidence_rate"
     )
