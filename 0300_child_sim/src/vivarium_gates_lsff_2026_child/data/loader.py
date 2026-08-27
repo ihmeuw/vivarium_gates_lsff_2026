@@ -1403,6 +1403,22 @@ def load_lbwsg_interpolated_rr(key: str, location: str, mean_draw: bool) -> pd.D
     gestational_age_midpoints = get_category_midpoints("short_gestation")
     birth_weight_midpoints = get_category_midpoints("low_birth_weight")
 
+    # griddata below consumes the midpoints and the log RRs POSITIONALLY, with no
+    # index alignment. The midpoint Series arrive in categories-dict order while
+    # the log-RR rows are in lexicographic category order (the Categorical
+    # sort_values + unstack above), so without this reindex each category's
+    # midpoint was paired with a different category's RR -- scrambling the whole
+    # RR surface (off by ~2.9x on average and up to ~66x at its own knots, and
+    # destroying the birth-weight/gestational-age mortality gradient).
+    # tests/test_artifact_sanity.py's interpolator-consistency check guards this.
+    gestational_age_midpoints = gestational_age_midpoints.reindex(rr.columns)
+    birth_weight_midpoints = birth_weight_midpoints.reindex(rr.columns)
+    assert not gestational_age_midpoints.isnull().any(), (
+        "RR categories missing from the LBWSG categories key: "
+        f"{[c for c in rr.columns if c not in get_category_midpoints('short_gestation').index]}"
+    )
+    assert not birth_weight_midpoints.isnull().any()
+
     # build grid of gestational age and birth weight
     def get_grid(midpoints: pd.Series, endpoints: Tuple[float, float]) -> np.array:
         grid = np.append(np.unique(midpoints), endpoints)

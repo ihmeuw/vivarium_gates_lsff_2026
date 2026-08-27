@@ -387,3 +387,80 @@ def test_hemoglobin_maternal_disorders_paf_consistent_with_rr(artifact) -> None:
         f"maternal-disorders rate downstream is inflated by ~E[RR**deficit].\n"
         f"{detail.head(10).to_string(index=False)}"
     )
+
+
+# --- LBWSG interpolator/RR internal consistency ----------------------------------
+#
+# The stored relative-risk interpolator is a kx=1/ky=1 spline whose grid contains
+# every category midpoint, so an aligned build reproduces log(stored RR) exactly at
+# each category's own (gestational age, birth weight) midpoint. The defect this
+# guards: loader.load_lbwsg_interpolated_rr feeds scipy griddata positionally, and
+# the midpoint Series (categories-dict order) and log-RR rows (lexicographic order)
+# used to disagree on ordering -- pairing each category's midpoint with a different
+# category's RR. That scrambles the whole RR surface (mean ~2.9x, max ~66x at its
+# own knots) while leaving every marginal-distribution check green, because the
+# same set of RR values is present -- just at the wrong coordinates. Only an
+# evaluate-at-the-knots check can see it.
+LBWSG_KEYS = {
+    "rr": "risk_factor.low_birth_weight_and_short_gestation.relative_risk",
+    "interp": "risk_factor.low_birth_weight_and_short_gestation.relative_risk_interpolator",
+    "categories": "risk_factor.low_birth_weight_and_short_gestation.categories",
+}
+# Aligned knots are exact to float precision; the scramble produces mean ~1.0 in
+# log space. Anything in between means a new construction bug worth a human look.
+LBWSG_KNOT_TOLERANCE_LOG_SPACE = 0.05
+
+
+def test_lbwsg_interpolator_matches_relative_risk_at_category_midpoints(artifact) -> None:
+    import pickle
+    import re
+
+    missing = [key for key in LBWSG_KEYS.values() if key not in artifact.keys]
+    if missing:
+        pytest.skip(f"artifact lacks {missing}")
+
+    categories = artifact.load(LBWSG_KEYS["categories"])
+    rr = artifact.load(LBWSG_KEYS["rr"]).reset_index()
+    interp = artifact.load(LBWSG_KEYS["interp"]).reset_index()
+
+    draw_column = [c for c in rr.columns if c.startswith("draw")][0]
+
+    def midpoints(description: str):
+        intervals = re.findall(r"\[([\d.]+), ([\d.]+)\)", description)
+        if len(intervals) != 2:
+            return None
+        (ga_lo, ga_hi), (bw_lo, bw_hi) = intervals
+        return (
+            (float(ga_lo) + float(ga_hi)) / 2,
+            (float(bw_lo) + float(bw_hi)) / 2,
+        )
+
+    checked, failures = 0, []
+    for _, interp_row in interp.iterrows():
+        spline = pickle.loads(bytes.fromhex(interp_row[draw_column]))
+        stratum = rr[
+            (rr.sex == interp_row.sex) & (rr.age_start == interp_row.age_start)
+        ]
+        for _, rr_row in stratum.iterrows():
+            point = midpoints(categories.get(rr_row.parameter, ""))
+            if point is None or rr_row[draw_column] <= 0:
+                continue
+            gestational_age, birth_weight = point
+            error = abs(
+                float(spline(gestational_age, birth_weight, grid=False))
+                - np.log(rr_row[draw_column])
+            )
+            checked += 1
+            if error > LBWSG_KNOT_TOLERANCE_LOG_SPACE:
+                failures.append(
+                    (interp_row.sex, interp_row.age_start, rr_row.parameter, round(error, 3))
+                )
+    assert checked > 0, "no evaluable (interpolator, RR, category) triples found"
+    assert not failures, (
+        f"the stored LBWSG RR interpolator disagrees with the stored RR at "
+        f"{len(failures)} of {checked} category midpoints (|log error| > "
+        f"{LBWSG_KNOT_TOLERANCE_LOG_SPACE}). If mean errors are ~1 in log space, the "
+        f"artifact was built with the pre-fix positional midpoint/RR pairing in "
+        f"load_lbwsg_interpolated_rr and must be rebuilt (and the LBWSG PAF "
+        f"simulation rerun).\nWorst: {sorted(failures, key=lambda f: -f[3])[:8]}"
+    )
