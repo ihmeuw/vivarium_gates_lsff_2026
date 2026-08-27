@@ -123,9 +123,6 @@ Notebooks live in `notebooks/`. Update the status column as things land.
   Data index: [...], Weights index: [...]"` printing only `.names`, which are usually
   identical — the failing check is `data.index.equals(weights.index)`. Cost us a wrong
   hypothesis before the real cause showed up. Should print the diverging values.
-- `vivarium-validation` imports `matplotlib`, `seaborn` and `IPython` at module load
-  (`interface.py`, `visualization/plot_utils.py`) but declares none of them. Worked around
-  here by pulling `[interactive]` into the `[validation]` extra.
 - `RiskExposure` level-name asymmetry (see Open questions), if confirmed.
 - `PopulationStructure.rate_aggregation_weights` — MIC-6804.
 - Custom reference data is unusable: `upload_custom_data` exists, but
