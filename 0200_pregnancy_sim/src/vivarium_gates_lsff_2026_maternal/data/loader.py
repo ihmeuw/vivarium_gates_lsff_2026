@@ -23,12 +23,10 @@ from joblib import Memory
 from scipy import integrate, stats
 from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
-from vivarium_gbd_access import gbd
 from vivarium_inputs import core as vi_core
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import interface
 from vivarium_inputs import utilities as vi_utils
-from vivarium_inputs import utility_data
 
 from lsff_utils import data_processing, hemoglobin_distribution
 from vivarium_gates_lsff_2026_maternal.constants import (
@@ -813,41 +811,32 @@ def load_background_morbidity(key: str, location: str) -> pd.DataFrame:
 
 
 def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
-    me_id = {
-        data_keys.HEMOGLOBIN.MEAN: 10487,
-        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: 10488,
-    }[key]
-    correction_factors = data_values.PREGNANCY_CORRECTION_FACTORS[key]
-    if mean_draw:
-        correction_factors = pd.Series([correction_factors.mean()], index=["draw_0"])
+    hemoglobin_data = extra_gbd.get_hemoglobin_exposure_data(key, location)
+    hemoglobin_data = reshape_to_vivarium_format(hemoglobin_data, location)
 
-    location_id = utility_data.get_location_id(location)
-    hemoglobin_data = gbd.get_modelable_entity_draws(
-        me_id=me_id,
-        location_id=location_id,
-        year_id=None,
-        data_type="draws",
-    )
-
-    existing_draw_cols = [col for col in hemoglobin_data if col.startswith("draw_")]
-    extra_draw_cols = [
-        col for col in existing_draw_cols if col not in vi_globals.DRAW_COLUMNS
+    levels_to_drop = [
+        "measure_id",
+        "metric_id",
+        "model_version_id",
+        "modelable_entity_id",
+        "rei_id",
     ]
-    hemoglobin_data = reshape_to_vivarium_format(
-        hemoglobin_data.drop(columns=extra_draw_cols, errors="ignore"), location
-    )
-    if mean_draw:
-        hemoglobin_data = hemoglobin_data.mean(axis=1).rename("draw_0").to_frame()
+    if key == data_keys.HEMOGLOBIN.MEAN:
+        levels_to_drop.append("parameter")
+    hemoglobin_data = hemoglobin_data.droplevel(levels_to_drop)
 
-    hemoglobin_data = hemoglobin_data.droplevel(
-        ["measure_id", "metric_id", "model_version_id", "modelable_entity_id"]
-    )
     hemoglobin_data = hemoglobin_data[
         (hemoglobin_data.index.get_level_values("sex") == "Female")
         & (hemoglobin_data.index.get_level_values("age_start") >= 10)
         & (hemoglobin_data.index.get_level_values("age_end") <= 55)
     ]
-    adjusted = hemoglobin_data * correction_factors
+    # Average the draws GBD actually returned rather than the tiled ones, which would
+    # weight the repeated draws twice.
+    adjusted = (
+        hemoglobin_data.mean(axis=1).rename("draw_0").to_frame()
+        if mean_draw
+        else _tile_draws_to_artifact_columns(hemoglobin_data)
+    )
 
     disparity_path = {
         data_keys.HEMOGLOBIN.MEAN: "hemoglobin/mean_disparities",
@@ -988,3 +977,19 @@ def reshape_to_vivarium_format(df, location):
     df = vi_utils.sort_hierarchical_data(df)
     df.index = df.index.droplevel("location")
     return df
+
+
+def _tile_draws_to_artifact_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Repeat the draws GBD returned until there are DRAW_COUNT of them.
+
+    Release 33 hemoglobin returns 100 draws; the artifact carries 250. Matches how NO
+    and MNCNH expand the same pull.
+    """
+    source_columns = [c for c in df.columns if c.startswith("draw_")]
+    if not source_columns:
+        raise ValueError("No draw columns to tile.")
+    if len(source_columns) >= metadata.DRAW_COUNT:
+        return df[metadata.ARTIFACT_COLUMNS]
+    tiled = df[[source_columns[i % len(source_columns)] for i in range(metadata.DRAW_COUNT)]]
+    tiled.columns = metadata.ARTIFACT_COLUMNS
+    return tiled

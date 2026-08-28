@@ -5,7 +5,7 @@ from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
 
-from vivarium_gates_lsff_2026_maternal.constants import data_keys
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
 from vivarium_gates_lsff_2026_maternal.data import utilities
 
 
@@ -92,6 +92,27 @@ def get_anemia_yld_rate(location: str):
         release_id=gbd_constants.RELEASE_IDS.GBD_2023,
         measure_id=vi_globals.MEASURES["YLDs"],
         metric_id=3,
+    )
+    return data
+
+
+@cache
+def get_hemoglobin_exposure_data(key: str, location: str):
+    source = {
+        data_keys.HEMOGLOBIN.MEAN: gbd_constants.SOURCES.EXPOSURE,
+        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: gbd_constants.SOURCES.EXPOSURE_SD,
+    }[key]
+    location_id = utility_data.get_location_id(location)
+    data = get_draws(
+        gbd_id_type="rei_id",
+        gbd_id=376,
+        source=source,
+        location_id=location_id,
+        year_id=metadata.GBD_EXTRACT_YEAR,
+        sex_id=gbd_constants.SEX.FEMALE,
+        # Release 33 estimates are already for the pregnant population, so no
+        # pregnancy correction factor is applied downstream.
+        release_id=metadata.GBD_2023_SPECIAL_PUBLICATIONS_RELEASE_ID,
     )
     return data
 
