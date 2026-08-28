@@ -38,7 +38,7 @@ from pathlib import Path
 MODEL_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
 
 # Bump this to start a new model iteration. See the module docstring.
-MODEL_NUMBER = "legacy_1.0"
+MODEL_NUMBER = "model1.1"
 
 ARTIFACT_ROOT = MODEL_ROOT / "artifacts" / MODEL_NUMBER
 DATA_ROOT = MODEL_ROOT / "data" / MODEL_NUMBER
