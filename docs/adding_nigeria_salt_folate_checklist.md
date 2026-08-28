@@ -33,35 +33,40 @@ keyed by (Country, Vehicle[, Fortificant, Scenario]). The Ethiopia/Salt rows
 are the template; `prep_extracted.ipynb` turns the sheet into every CSV the
 pipeline needs and its `check_totals` guards the arithmetic.
 
-- [ ] **"Country-Vehicle Extraction" sheet — Nigeria, Salt:**
-  - Vehicle consumption by WRA — any (proportion consuming)
-  - Vehicle consumption by WRA — amount (g/day; mean and SD)
-  - Vehicle "fortifiability" (share industrially produced)
-  - By wealth quintile and, where the source supports it, age/sex. Candidate
-    sources: Nigeria Living Standards Survey, the consumption literature used
-    for the Ethiopia salt extraction, GFDx for the industrial share.
-- [ ] **"Country-Vehicle-Fort Extraction" sheet — Nigeria, Salt, Folate:**
-  - Baseline fortification: any/full coverage, partial-coverage amount
-    (mean, SD), effectiveness, concentration (µg folic acid per g salt).
-    Nigeria mandates salt *iodization*, not folic acid, so baseline FA
-    coverage is plausibly zero — record that as data, not by omission.
-  - Intervention fortification per scenario: coverage, effectiveness,
-    concentration (from the proposed standard).
-- [ ] Done when: rerunning `prep_extracted.ipynb` (or the pipeline, step 5)
-  materializes, with plausible values:
-  - `0100_data_prep/results/salt/vehicle_consumption/{any,fortifiability,amount/mean,amount/sd}/nigeria.csv`
-  - `0100_data_prep/results/folate/salt/baseline_fortification/{any_coverage,full_coverage,partial_coverage_amount/mean,partial_coverage_amount/sd,effectiveness,concentration}/nigeria.csv`
-  - `0100_data_prep/results/folate/salt/<scenario>/intervention_fortification/{any_coverage,effectiveness,concentration}/nigeria.csv`
+**2026-08-28: extracted**, from the GF "Input data to IHME models" workbook
+(2026-04-16), which lists Nigeria salt FA @ 25%/100% NRV as net-new scenarios
+(#5/#6 in its grid). Three inputs remain assumptions pending GF confirmation
+— see the sheet's Notes cells:
+
+- [x] **"Country-Vehicle Extraction" sheet — Nigeria, Salt:** WRA any-coverage
+  0.993 and intake 3.9 g/day (by quintile), U5 0.99 / 2.6 g/day, industry
+  consolidation 0.95 (all GF workbook, NFCMS 2021). *Assumption:* intake SDs
+  via the Ethiopia salt CV (~0.31) — no salt SD in the GF workbook.
+- [x] **"Country-Vehicle-Fort Extraction" sheet — Nigeria, Salt, Folate:**
+  baseline FA any/full coverage and concentration = 0 (Nigeria mandates
+  iodization, not FA — recorded as data), effectiveness 0.8 (moot at zero
+  baseline coverage, matching the sibling rows' convention).
+- [x] **"Scenario Definition Extraction" sheet** — two scenarios,
+  `Intervention - 25% NRV` and `Intervention - 100% NRV`: concentration
+  25.64 / 102.56 µg/g (*assumption:* "NRV per average intake" convention as
+  for Ethiopia, at 3.9 g/day); reach 0.9 × effectiveness 1.0 (*assumption:*
+  GF's Nigeria-salt FA compliance cells are literally "XX"; the GAIN
+  compliance-targets tab's 90% for Nigeria salt used as proxy).
+- [x] Verified by a dry run of the `prep_extracted` machinery redirected to a
+  scratch directory: all 12 data needs parse, U5 amounts rescale to the sheet
+  totals, and every expected CSV materializes with the intended values. Repo
+  result CSVs are untouched until step 5 runs for real.
 
 ## 2. Decide the scenario set (research)
 
 - [ ] Default is a single `intervention` scenario, which needs no config
-  change. If the team wants dose scenarios like Ethiopia's
-  (`intervention_25_nrv`, `intervention_100_nrv`): note that
-  `custom_intervention_scenarios` in `0050_config/config.yaml` is
-  **location-level**, so listing nigeria there would apply the custom
-  scenarios to nigeria's iron vehicles too. Giving that knob a vehicle
-  dimension is a small engineering change that must land first.
+  change. **GF's grid asks for two dose scenarios** (25% and 100% NRV, like
+  Ethiopia's), and the extraction rows are entered under those names — so
+  this knob decision is now live: `custom_intervention_scenarios` in
+  `0050_config/config.yaml` is **location-level**, and listing nigeria there
+  would apply the custom scenarios to nigeria's iron vehicles too. Giving
+  that knob a vehicle dimension is a small engineering change that must land
+  before step 4.
 
 ## 3. Anemia pathway — decision parked, deliberately
 
