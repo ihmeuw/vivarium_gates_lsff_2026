@@ -4,6 +4,10 @@ custom_intervention_scenarios:
   ethiopia:
     - intervention_25_nrv
     - intervention_100_nrv
+    # GF Apr-2026: preliminary Ethiopian DFS-IoFA standard, 45 +/- 5 ppm folic acid.
+    # GF's scenario grid replaces the two NRV scenarios with this one; they are kept
+    # until the team decides to retire them.
+    - intervention_45_ppm
 # Folate-only (location, vehicle) pairs whose program also contributes a
 # folate-deficiency-anemia pathway, via 0400's non_pregnant_anemia_folate
 # notebook. Iron combos always carry an anemia pathway, so they are not listed.
