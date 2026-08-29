@@ -391,7 +391,14 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
     anemia_ylds = anemia_ylds.groupby(groupby_cols)[draw_cols].sum().reset_index()
     anemia_ylds = reshape_to_vivarium_format(anemia_ylds, location)
 
-    csmr = get_data(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw)
+    # Call the csmr loader directly, NOT through get_data: under --mean the nested
+    # get_data collapses csmr to a single draw_0 column while all_md_ylds,
+    # anemia_ylds and incidence carry the full draw set. The arithmetic below then
+    # aligns on column names, NaNs the other 249 columns, the fillna turns them
+    # into zeros, and the outer get_data collapse averages one real value with
+    # 249 zeros -- storing this key 250x too small (issue B). Every term must use
+    # the same draw convention; the outer collapse happens once, at the end.
+    csmr = load_maternal_csmr(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw)
     incidence = load_raw_incidence_data(
         data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw
     )
@@ -408,7 +415,11 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
         .sort_index()
     )
     ylds = (all_md_ylds - anemia_ylds) / (incidence - csmr)
-    return ylds.fillna(0)
+    # A zero denominator (a stratum with no surviving cases -- ages 60+ here)
+    # produces inf, which fillna does NOT catch; those rows carried literal inf
+    # into every artifact ever built. The simulation never draws cases in those
+    # strata, so YLDs-per-case of 0 is the right value for them.
+    return ylds.replace([np.inf, -np.inf], np.nan).fillna(0)
 
 
 def load_pregnant_maternal_disorders_incidence_probability(
