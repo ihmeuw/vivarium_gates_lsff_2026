@@ -109,6 +109,14 @@ def get_data(
         data_keys.MATERNAL_DISORDERS.INCIDENT_PROBABILITY: load_pregnant_maternal_disorders_incidence_probability,
         data_keys.MATERNAL_DISORDERS.YLDS: load_maternal_disorders_ylds,
         data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN: load_hemoglobin_maternal_disorders_rr,
+        # WARNING: joblib invalidates this cache on changes to the decorated
+        # function's own source only. Editing a callee -- _hemoglobin_paf,
+        # lsff_utils.hemoglobin_distribution, or the hemoglobin data pull it
+        # consumes -- silently serves the stale frame; delete
+        # .cachedir/joblib/*/data/loader/generate_hemoglobin_maternal_disorders_paf
+        # after touching any of them. The release-33 hemoglobin re-sourcing is
+        # exactly such a change: a warm cache would build model1.1 PAFs from the
+        # old hemoglobin distributions.
         data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN: memory.cache(
             generate_hemoglobin_maternal_disorders_paf
         ),
