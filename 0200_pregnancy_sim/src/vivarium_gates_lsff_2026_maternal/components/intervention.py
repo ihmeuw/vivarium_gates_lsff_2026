@@ -242,28 +242,20 @@ class IronFortification(Component):
             value_columns=["value"],
         )
 
-        # RESEARCH FLAG (dose-response assumption): this is the fixed trial-mean
-        # hemoglobin shift for the vehicle (rice 3.25, bouillon 4.2, salt 4.4 g/L),
-        # granted in full to any simulant with ANY fortificant iron intake -- the gate
-        # in update_hemoglobin_exposure is `> 0`; despite this attribute's name, no
-        # intake threshold is defined anywhere in the package. Dorbu et al. 2026
-        # (Matern Child Nutr 22:e13801), the source of the rice value, also fits a
-        # linear dose-response -- 0.194 g/L per mg/day iron (95% CrI 0.009-0.446),
-        # which Luo et al. 2026 (doi:10.1111/mcn.70181) use instead. At our combos'
-        # delivered doses the two parameterizations disagree materially (trials behind
-        # the fixed shifts averaged ~17 mg/day):
-        #   nigeria rice     ~2.4 mg/day -> 0.5 g/L dose-response vs 3.25 fixed (~7x)
-        #   india rice       ~7.3 mg/day -> 1.4 g/L vs 3.25 (~2.3x)
-        #   nigeria bouillon ~8.3 mg/day -> 1.6 g/L vs 4.2 (~2.6x)
-        # Note the in-model asymmetry: the birthweight pathway (child sim,
-        # maternal_characteristics) IS per-mg dose-response. The 0400 anemia notebook
-        # applies the same fixed shift via the same CSV. Decide fixed-shift vs
-        # dose-response before shipping low-dose combos (india wheat, DFS); see the
-        # Vehicle Extraction sheet notes for the sources.
-        self.hemoglobin_effect_size_above_intake_threshold = (
-            builder.data.load(data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE)
-            .set_index("vehicle_name")
-            .value.loc[vehicle]
+        # Iron -> hemoglobin is a linear dose-response: 0.194 g/L per mg/day of
+        # fortificant iron (Dorbu et al. 2026, Matern Child Nutr 22:e13801, 95% CrI
+        # 0.009-0.446), applied to each simulant's own delivered dose -- consistent
+        # with the birthweight pathway in the child sim. This replaced the fixed
+        # per-vehicle trial-mean shifts (rice 3.25, bouillon 4.2, salt 4.4 g/L,
+        # granted in full for any positive dose), which overstated the effect 2-7x
+        # at our combos' delivered doses relative to the same meta-analysis's
+        # dose-response (the trials averaged ~17 mg/day). Linearity is assumed over
+        # 0-17 mg/day; every current combo delivers 2.4-8.3 mg/day. The retired
+        # per-vehicle values remain in the Vehicle Extraction sheet for reference.
+        self.hemoglobin_effect_per_mg_daily_intake = float(
+            builder.data.load(
+                data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_PER_MG
+            ).value.iloc[0]
         )
 
         self.baseline_fortification_mcg_per_gram = self.build_lookup_table(
@@ -466,18 +458,19 @@ class IronFortification(Component):
             ],
         )
 
-        baseline_2021_benefit = (
-            pop["baseline_2021_iron_consumption_from_fortification_mcg"] > 0
+        # Delete the baseline effects of fortification that were baked into the GBD
+        # hemoglobin distribution, at the dose baseline actually delivered.
+        exposure -= (
+            pop["baseline_2021_iron_consumption_from_fortification_mcg"]
+            / 1_000
+            * self.hemoglobin_effect_per_mg_daily_intake
         )
 
-        # Delete the baseline effects of fortification that were baked into the GBD 2021
-        # hemoglobin distribution
-        exposure -= baseline_2021_benefit * self.hemoglobin_effect_size_above_intake_threshold
-
-        # Any positive dose earns the full fixed shift -- see the dose-response
-        # RESEARCH FLAG at the attribute definition in setup().
-        benefit = pop.iron_consumption_from_fortification_mcg > 0
-        exposure += benefit * self.hemoglobin_effect_size_above_intake_threshold
+        exposure += (
+            pop.iron_consumption_from_fortification_mcg
+            / 1_000
+            * self.hemoglobin_effect_per_mg_daily_intake
+        )
 
         return exposure.clip(lower=0)
 

@@ -61,7 +61,7 @@ CSV_DATA_NAMES = {
     data_keys.IRON_FORTIFICATION.INTERVENTION_COVERAGE: "iron/{vehicle}/intervention/intervention_fortification/any_coverage",
     data_keys.IRON_FORTIFICATION.INTERVENTION_EFFECTIVENESS: "iron/{vehicle}/intervention/intervention_fortification/effectiveness",
     data_keys.IRON_FORTIFICATION.INTERVENTION_CONCENTRATION: "iron/{vehicle}/intervention/intervention_fortification/concentration",
-    data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_SIZE: "iron/fortification_hemoglobin_effects.csv",
+    data_keys.IRON_FORTIFICATION.HEMOGLOBIN_EFFECT_PER_MG: "iron/fortification_hemoglobin_effect_per_mg.csv",
 }
 
 

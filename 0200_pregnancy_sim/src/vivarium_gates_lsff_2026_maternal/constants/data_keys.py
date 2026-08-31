@@ -188,7 +188,9 @@ class __IronFortification(NamedTuple):
     INTERVENTION_COVERAGE: str = "iron_fortification.intervention_coverage"
     INTERVENTION_EFFECTIVENESS: str = "iron_fortification.intervention_effectiveness"
     INTERVENTION_CONCENTRATION: str = "iron_fortification.intervention_concentration"
-    HEMOGLOBIN_EFFECT_SIZE: str = "iron_fortification.hemoglobin_effect_size"
+    HEMOGLOBIN_EFFECT_PER_MG: str = (
+        "iron_fortification.hemoglobin_effect_per_mg_daily_intake"
+    )
 
     @property
     def name(self):

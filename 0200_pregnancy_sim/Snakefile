@@ -27,7 +27,7 @@ data_inputs = [
         "wealth_quintile_probabilities",
         "pregnancy/incidence",
     ]
-] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
+] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effect_per_mg.csv"]
 
 rule pregnancy_artifacts:
     input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py"] + data_inputs
