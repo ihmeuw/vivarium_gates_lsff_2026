@@ -4,7 +4,7 @@ def non_pregnant_anemia_inputs(wildcards):
     return (
         config["env_input"] + [
             "0400_non_pregnant_anemia_model/non_pregnant_anemia.ipynb",
-            "0100_data_prep/results/iron/fortification_hemoglobin_effects.csv",
+            "0100_data_prep/results/iron/fortification_hemoglobin_effect_per_mg.csv",
             "0100_data_prep/results/iron/{vehicle}/baseline_fortification/effective_coverage/{location}.csv",
             "0100_data_prep/results/population/stratified/{location}.csv",
             "0100_data_prep/results/hemoglobin/mean_disparities/{location}.csv",
@@ -36,7 +36,7 @@ rule non_pregnant_anemia:
 from snakemake.io import Wildcards
 
 def non_pregnant_anemia_ethiopia_folate_inputs(wildcards):
-    return [x.replace('{location}', 'ethiopia').replace('iron', 'folate').replace('.ipynb', '_folate.ipynb') for x in non_pregnant_anemia_inputs(Wildcards(fromdict={**wildcards, 'location': 'ethiopia'})) if 'fortification_hemoglobin_effects' not in x]
+    return [x.replace('{location}', 'ethiopia').replace('iron', 'folate').replace('.ipynb', '_folate.ipynb') for x in non_pregnant_anemia_inputs(Wildcards(fromdict={**wildcards, 'location': 'ethiopia'})) if 'fortification_hemoglobin_effect' not in x]
 
 rule non_pregnant_anemia_ethiopia_folate:
     input: non_pregnant_anemia_ethiopia_folate_inputs
