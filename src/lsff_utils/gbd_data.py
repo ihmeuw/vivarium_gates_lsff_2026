@@ -267,7 +267,25 @@ def quiet_gbd_logs(verbosity=None):
 
 
 @cache
-def most_recent_year() -> int:
+def _most_recent_year() -> int:
+    """Memoized inner half of :func:`most_recent_year`.
+
+    Kept separate so that ``verbosity`` -- which affects only what is displayed,
+    never the result -- stays out of the cache key. Folding the two together
+    would store one entry per distinct verbosity for a single value, and
+    ``most_recent_year()`` and ``most_recent_year(None)`` would hash
+    differently, so even the default path could occupy two entries.
+
+    Either way the underlying GBD call happens once, so only the first call
+    logs anything -- a later call at ``Verbosity.ALL`` is silent because there
+    is no call left to report, not because it was suppressed. Folding the two
+    together would in fact log *more*: a not-yet-seen verbosity is a cache
+    miss, so it would re-run and re-log a value it already had.
+    """
+    return utility_data.get_most_recent_year()
+
+
+def most_recent_year(verbosity=None) -> int:
     """The most recent estimation year in the current GBD release.
 
     2023 for release 16. Note that 2021 is *not* a GBD 2023 estimation year --
@@ -277,9 +295,16 @@ def most_recent_year() -> int:
     itself a cached GBD call: doing it at import time would make ``import
     gbd_data`` reach for the database and emit three lines of log before any
     caller has a chance to silence them. Memoized, so repeat calls are free.
+
+    Parameters
+    ----------
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
+        when already inside a :func:`quiet_gbd_logs` block -- the outermost
+        block governs.
     """
-    with quiet_gbd_logs():
-        return utility_data.get_most_recent_year()
+    with quiet_gbd_logs(verbosity):
+        return _most_recent_year()
 
 
 def patch_population_validation_ceiling(ceiling: int = 1_000_000_000) -> int:
@@ -306,15 +331,26 @@ def patch_population_validation_ceiling(ceiling: int = 1_000_000_000) -> int:
     return previous
 
 
-def reshape_to_vivarium_format(df, location):
+def reshape_to_vivarium_format(df, location, verbosity=None):
     """Normalize a raw GBD draw frame to the Vivarium index convention.
 
     Quiet despite doing no fetching of its own: ``scrub_gbd_conventions`` looks
     up location IDs and age bins, each a cached GBD call worth several lines of
     log. Nesting is harmless -- :func:`quiet_gbd_logs` is re-entrant, so the
     call from :func:`pull_modelable_entity_draws` is a no-op.
+
+    Parameters
+    ----------
+    df
+        A raw GBD draw frame.
+    location
+        Location name, used to scrub GBD conventions.
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
+        when already inside a :func:`quiet_gbd_logs` block -- the outermost
+        block governs.
     """
-    with quiet_gbd_logs():
+    with quiet_gbd_logs(verbosity):
         df = vi_utils.reshape(df, value_cols=[c for c in df.columns if "draw_" in c])
         df = vi_utils.scrub_gbd_conventions(df, location)
         df = vi_utils.split_interval(df, interval_column="age", split_column_prefix="age")
@@ -324,7 +360,7 @@ def reshape_to_vivarium_format(df, location):
         return df
 
 
-def pull_modelable_entity_draws(me_id, location, year=None, draws=None):
+def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosity=None):
     """Pull draws for a modelable entity, reshaped to the Vivarium convention.
 
     Named to match :func:`pull_sequelae_prevalence` rather than the
@@ -346,8 +382,18 @@ def pull_modelable_entity_draws(me_id, location, year=None, draws=None):
         entities return 1,000 raw draws, so this truncates to the first 250 --
         matching what ``vivarium_inputs`` returns for the measures these get
         combined with.
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
+        when already inside a :func:`quiet_gbd_logs` block -- the outermost
+        block governs.
     """
-    with quiet_gbd_logs():
+    # This block is the one that matters, and it cannot be replaced by passing
+    # verbosity down to the calls below: resolve_location and
+    # gbd.get_modelable_entity_draws are ~7 log lines each and sit outside both
+    # helpers. Those helpers take a verbosity of their own for when they are
+    # called directly, but here they inherit this block by re-entrancy, so
+    # passing it again would be redundant.
+    with quiet_gbd_logs(verbosity):
         # NOTE: resolved inside the context manager -- get_most_recent_year is itself
         # a cached GBD call, so defaulting it outside leaks its logs.
         if year is None:
