@@ -29,12 +29,13 @@ from enum import IntEnum
 from functools import cache
 
 import loguru
+import vivarium_gbd_access.utilities as vgu
 from joblib import Memory
 from vivarium_gbd_access import gbd
-import vivarium_gbd_access.utilities as vgu
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
+
 
 class Verbosity(IntEnum):
     """How much of a GBD pull's own output to let through.
