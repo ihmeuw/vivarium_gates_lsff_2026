@@ -5,7 +5,7 @@ from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
 
-from vivarium_gates_lsff_2026_maternal.constants import data_keys
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
 from vivarium_gates_lsff_2026_maternal.data import utilities
 
 
@@ -18,10 +18,10 @@ def load_lbwsg_exposure(location: str):
         gbd_id=entity.gbd_id,
         source=gbd_constants.SOURCES.EXPOSURE,
         location_id=location_id,
-        year_id=2021,  # LBWSG birth prevalence only estimated through 2021 in GBD 2023
+        year_id=2022,
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=164,  # Birth prevalence
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
     )
     return data
 
@@ -97,11 +97,31 @@ def get_anemia_yld_rate(location: str):
 
 
 @cache
+def get_hemoglobin_exposure_data(key: str, location: str):
+    source = {
+        data_keys.HEMOGLOBIN.MEAN: gbd_constants.SOURCES.EXPOSURE,
+        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: gbd_constants.SOURCES.EXPOSURE_SD,
+    }[key]
+    location_id = utility_data.get_location_id(location)
+    data = get_draws(
+        gbd_id_type="rei_id",
+        gbd_id=376,
+        source=source,
+        location_id=location_id,
+        year_id=metadata.GBD_EXTRACT_YEAR,
+        sex_id=gbd_constants.SEX.FEMALE,
+        # Release 33 estimates are already for the pregnant population, so no
+        # pregnancy correction factor is applied downstream.
+        release_id=metadata.GBD_2023_SPECIAL_PUBLICATIONS_RELEASE_ID,
+    )
+    return data
+
+
+@cache
 def get_hemoglobin_maternal_disorders_rr():
     """Relative risk associated with one g/dL decrease in hemoglobin concentration below 12 g/dL"""
-    # NOTE: GBD 2023 (release_id=16) does not appear to have rei_id=95 RR data available
-    # at the location hierarchy level needed. Keeping GBD 2021 until this is investigated.
-    # See: https://github.com/ihmeuw/vivarium_gates_lsff_2026/issues/TODO
+    # Left on GBD 2021: the 2023 RRs changed enough to require model updates we do not
+    # plan to make. NO does the same.
     data = get_draws(
         gbd_id_type="rei_id",
         gbd_id=95,

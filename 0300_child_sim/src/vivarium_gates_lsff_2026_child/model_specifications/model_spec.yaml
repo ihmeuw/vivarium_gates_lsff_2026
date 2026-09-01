@@ -49,7 +49,7 @@ configuration:
     input_data:
         input_draw_number: 0
         # Artifact can also be defined at runtime using -i flag
-        artifact_path: '/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/artifacts/legacy_1.0/child/nigeria.hdf'
+        artifact_path: '/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/artifacts/model1.1/child/nigeria.hdf'
     interpolation:
         order: 0
         extrapolate: True

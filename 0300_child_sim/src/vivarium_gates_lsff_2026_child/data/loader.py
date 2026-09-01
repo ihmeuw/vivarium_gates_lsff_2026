@@ -399,46 +399,11 @@ def load_standard_data(
     key = EntityKey(key)
     entity = utilities.get_entity(key)
 
-    use_2019_data_keys = [
-        # data_keys.MEASLES.PREVALENCE,
-        # data_keys.MEASLES.INCIDENCE_RATE,
-        # data_keys.MEASLES.DISABILITY_WEIGHT,
-        # data_keys.MEASLES.EMR,
-        # data_keys.MEASLES.CSMR,
-        # data_keys.LRI.CSMR,
-    ]
-
-    neonatal_deleted_keys = [
-        # data_keys.DIARRHEA.INCIDENCE_RATE,
-        # data_keys.DIARRHEA.DISABILITY_WEIGHT,
-        # data_keys.MALARIA.INCIDENCE_RATE,
-        # data_keys.MALARIA.DISABILITY_WEIGHT,
-    ]
-
-    both_2019_and_neonatal_deleted = [
-        # data_keys.LRI.INCIDENCE_RATE,
-        # data_keys.LRI.DISABILITY_WEIGHT,
-    ]
-
     no_age = [
         data_keys.POPULATION.CRUDE_BIRTH_RATE,
     ]
 
-    if key in use_2019_data_keys:
-        data = interface.get_measure(entity, key.measure, location, 2019)
-        data = data.query("year_start == 2019")
-
-    elif key in neonatal_deleted_keys:
-        data = interface.get_measure(entity, key.measure, location, metadata.GBD_EXTRACT_YEAR)
-        data.loc[data.reset_index()["age_start"] < metadata.NEONATAL_END_AGE, :] = 0
-
-    elif key in both_2019_and_neonatal_deleted:
-        data = interface.get_measure(entity, key.measure, location, 2019)
-        data = data.query("year_start == 2019")
-        data.loc[data.reset_index()["age_start"] < metadata.NEONATAL_END_AGE, :] = 0
-
-    else:
-        data = interface.get_measure(entity, key.measure, location, metadata.GBD_EXTRACT_YEAR)
+    data = interface.get_measure(entity, key.measure, location, metadata.GBD_EXTRACT_YEAR)
 
     if key not in no_age:
         data = data.query("age_start < 5")
@@ -893,7 +858,7 @@ def load_emr_from_csmr_and_prevalence(
 def load_neonatal_deleted_csmr(
     key: str, location: Union[str, List[int]], mean_draw: bool
 ) -> pd.DataFrame:
-    """Get GBD 2019 CSMR data with 2021 age groups and zero out neonatal age groups."""
+    """Get CSMR data and zero out the neonatal age groups."""
     allowed_keys = [data_keys.DIARRHEA.CSMR, data_keys.LRI.CSMR, data_keys.MALARIA.CSMR]
     if key not in allowed_keys:
         raise ValueError(f"Unrecognized key {key}")
@@ -1452,15 +1417,24 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     age_end_dict = {"early_neonatal": 0.01917808, "late_neonatal": 0.07671233}
     df["age_start"] = df["age_group"].replace(age_start_dict)
     df["age_end"] = df["age_group"].replace(age_end_dict)
-    df["year_start"] = 2021
-    df["year_end"] = 2022
+    df["year_start"] = metadata.GBD_EXTRACT_YEAR
+    df["year_end"] = metadata.GBD_EXTRACT_YEAR + 1
     df = df.drop("age_group", axis=1)
     index_columns = ["sex", "age_start", "age_end", "year_start", "year_end"]
     df = df.set_index(index_columns)
     unaffected_age_groups = [(0.07671233, 1.0), (1.0, 5.0)]
     for age_start, age_end in unaffected_age_groups:
         for sex in ["Male", "Female"]:
-            df.loc[(sex, age_start, age_end, 2021, 2022), :] = 0
+            df.loc[
+                (
+                    sex,
+                    age_start,
+                    age_end,
+                    metadata.GBD_EXTRACT_YEAR,
+                    metadata.GBD_EXTRACT_YEAR + 1,
+                ),
+                :,
+            ] = 0
 
     return df.sort_index()
 

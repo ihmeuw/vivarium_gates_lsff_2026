@@ -29,6 +29,7 @@ from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUN
     AGE_GROUP,
     ARTIFACT_COLUMNS,
     ARTIFACT_INDEX_COLUMNS,
+    GBD_EXTRACT_YEAR,
     LOCATIONS,
     NEONATAL_END_AGE,
 )
@@ -571,10 +572,12 @@ def load_lbwsg_exposure(location: str):
         location_id=location_id,
         sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
         age_group_id=[2, 3],
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
         # This data set is big, so let's reduce it by a factor of ~40
-        year_id=2019,
+        year_id=2022,
     )
+    # Restamp onto the artifact's year bin so this joins the LBWSG relative risk.
+    data["year_id"] = GBD_EXTRACT_YEAR
 
     return data
 

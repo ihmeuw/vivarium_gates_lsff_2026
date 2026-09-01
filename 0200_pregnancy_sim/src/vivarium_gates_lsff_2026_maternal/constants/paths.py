@@ -16,7 +16,3 @@ RESULTS_ROOT = shared_paths.MATERNAL_RESULTS_ROOT
 MODEL_SPEC_DIR = BASE_DIR / "model_specifications"
 CSV_RAW_DATA_ROOT = BASE_DIR / "data" / "raw_data"
 DATA_PREP_RESULTS_ROOT = BASE_DIR / ".." / ".." / ".." / "0100_data_prep" / "results"
-
-HEMOGLOBIN_PREGNANCY_ADJUSTMENT_FACTORS_CSV = (
-    CSV_RAW_DATA_ROOT / "mean_pregnancy_adjustment_factor_draws.csv"
-)
