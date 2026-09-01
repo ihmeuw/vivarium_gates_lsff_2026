@@ -147,7 +147,7 @@ def get_data(
         data_keys.DIARRHEA.REMISSION_RATE: load_neonatal_deleted_remission_from_duration,
         data_keys.DIARRHEA.DISABILITY_WEIGHT: load_standard_data,
         data_keys.DIARRHEA.EMR: load_emr_from_csmr_and_prevalence,
-        data_keys.DIARRHEA.CSMR: load_neonatal_csmr,
+        data_keys.DIARRHEA.CSMR: load_neonatal_deleted_csmr,
         data_keys.DIARRHEA.RESTRICTIONS: load_metadata,
         data_keys.DIARRHEA.BIRTH_PREVALENCE: load_post_neonatal_birth_prevalence,
         # data_keys.MEASLES.PREVALENCE: load_standard_data,
@@ -162,7 +162,7 @@ def get_data(
         # data_keys.LRI.REMISSION_RATE: load_neonatal_deleted_remission_from_duration,
         # data_keys.LRI.DISABILITY_WEIGHT: load_standard_data,
         # data_keys.LRI.EMR: load_emr_from_csmr_and_prevalence,
-        # data_keys.LRI.CSMR: load_neonatal_csmr,
+        # data_keys.LRI.CSMR: load_neonatal_deleted_csmr,
         # data_keys.LRI.RESTRICTIONS: load_metadata,
         # data_keys.MALARIA.DURATION: load_duration,
         # data_keys.MALARIA.PREVALENCE: load_prevalence_from_incidence_and_duration,
@@ -170,7 +170,7 @@ def get_data(
         # data_keys.MALARIA.REMISSION_RATE: load_neonatal_deleted_malaria_remission_from_duration,
         # data_keys.MALARIA.DISABILITY_WEIGHT: load_standard_data,
         # data_keys.MALARIA.EMR: load_emr_from_csmr_and_prevalence,
-        # data_keys.MALARIA.CSMR: load_neonatal_csmr,
+        # data_keys.MALARIA.CSMR: load_neonatal_deleted_csmr,
         # data_keys.MALARIA.RESTRICTIONS: load_metadata,
         # data_keys.MALARIA.BIRTH_PREVALENCE: load_post_neonatal_birth_prevalence,
         # data_keys.WASTING.DISTRIBUTION: load_metadata,
@@ -855,7 +855,7 @@ def load_emr_from_csmr_and_prevalence(
     return data
 
 
-def load_neonatal_csmr(
+def load_neonatal_deleted_csmr(
     key: str, location: Union[str, List[int]], mean_draw: bool
 ) -> pd.DataFrame:
     """Get CSMR data and zero out the neonatal age groups."""
