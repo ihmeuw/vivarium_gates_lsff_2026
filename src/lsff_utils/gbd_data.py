@@ -20,8 +20,12 @@ carried verbatim copies of everything here, which is how they drifted apart.
    ``__init__.py``: it would break every simulation import.
 """
 
+import collections
+import importlib
+import sys
 import warnings
 from contextlib import contextmanager
+from enum import IntEnum
 from functools import cache
 
 import loguru
@@ -32,13 +36,57 @@ from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 
-# Loggers that emit once (or many times) per cached GBD call. Disabled together
-# by :func:`quiet_gbd_logs`.
-NOISY_LOGGERS = ["vivarium_inputs.validation.raw", "vivarium_gbd_access"]
 
-# Warnings dropped by :func:`quiet_gbd_logs`, matched as substrings. Kept narrow
-# on purpose -- this suppresses by message text, not by category, so a broad
-# entry here would hide unrelated warnings.
+class Verbosity(IntEnum):
+    """How much of a GBD pull's own output to let through.
+
+    The two things a pull emits are not the same kind of thing, so they get
+    separate treatment rather than a single on/off:
+
+    - *bookkeeping* -- ``vivarium_gbd_access`` config dumps and cache-hit
+      notices, plus joblib's cache banners. Pure volume; nothing is ever lost
+      by dropping it, and it is dropped at every level below ``ALL``.
+    - *data quality* -- ``vivarium_inputs`` warnings about missing age groups,
+      unexpected columns, absent disability weights and the like. These can
+      matter, especially across a GBD round change, so they are recorded even
+      when they are not displayed.
+    """
+
+    QUIET = 0
+    """Suppress everything and say nothing."""
+
+    SUMMARY = 1
+    """Suppress, then report the distinct data-quality warnings on exit."""
+
+    WARNINGS = 2
+    """Let data-quality warnings print as they happen; bookkeeping stays off."""
+
+    ALL = 3
+    """Suppress nothing."""
+
+
+DEFAULT_VERBOSITY = Verbosity.SUMMARY
+"""Used by :func:`quiet_gbd_logs` when no verbosity is passed. Set this once at
+the top of a notebook to change every pull below it."""
+
+# Bookkeeping-only loguru trees: 26 info + 3 debug records, no warnings or
+# errors anywhere in the package, so disabling loses no information.
+BOOKKEEPING_LOGGERS = ["vivarium_gbd_access"]
+
+# Modules whose loguru warnings are data quality, not bookkeeping. Their
+# module-level ``logger`` is swapped for a collector rather than disabled --
+# loguru's disable() drops records before any sink sees them, so a disabled
+# logger cannot be recorded. Every one of these does `from loguru import
+# logger` at module scope, which is what makes the swap possible.
+WARNING_SOURCE_MODULES = [
+    "vivarium_inputs.validation.raw",
+    "vivarium_inputs.validation.shared",
+    "vivarium_inputs.core",
+]
+
+# Python warnings dropped by :func:`quiet_gbd_logs`, matched as substrings and
+# counted so the summary can report them. Kept narrow on purpose -- this matches
+# on message text, not category, so a broad entry would hide unrelated warnings.
 SUPPRESSED_WARNINGS = ["No version_id was specified"]
 
 # Nesting depth for quiet_gbd_logs; only the outermost block installs/restores.
@@ -53,6 +101,59 @@ _quiet_depth = 0
 # resolve it at call time.
 DRAWS = vi_globals.DRAW_COLUMNS
 
+
+class _WarningCollector:
+    """Stands in for a module's ``loguru.logger``, recording warnings instead of
+    emitting them. Anything other than ``warning`` falls through to the real
+    logger, so a module that also logs at another level is unaffected."""
+
+    def __init__(self, real):
+        self._real = real
+        self.messages = []
+
+    def warning(self, message, *args, **kwargs):
+        text = str(message)
+        if args or kwargs:
+            try:
+                text = text.format(*args, **kwargs)
+            except (IndexError, KeyError):
+                pass
+        self.messages.append(text)
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+
+def _import_or_none(name):
+    try:
+        return importlib.import_module(name)
+    except ImportError:
+        return None
+
+
+def _report_suppressed(collectors, warning_counts):
+    """Print what a SUMMARY-level block swallowed, deduplicated."""
+    messages = collections.Counter()
+    for collector in collectors.values():
+        messages.update(collector.messages)
+    if not messages and not warning_counts:
+        return
+
+    lines = []
+    if messages:
+        lines.append(
+            f"{sum(messages.values())} data-quality warning(s) from vivarium_inputs, "
+            f"{len(messages)} distinct:"
+        )
+        lines += [f"    {n}x  {text}" for text, n in messages.most_common()]
+    lines += [f"{n}x  {pattern!r}" for pattern, n in warning_counts.items()]
+    lines.append(
+        "Set gbd_data.DEFAULT_VERBOSITY = gbd_data.Verbosity.WARNINGS to see these live, "
+        "or Verbosity.QUIET to stop reporting them."
+    )
+    print("quiet_gbd_logs: " + "\n  ".join(lines), file=sys.stderr)
+
+
 # Columns dropped from a modelable-entity pull -- present in the raw GBD frame,
 # meaningless once it is reshaped to the Vivarium convention.
 _ME_METADATA_LEVELS = [
@@ -66,16 +167,15 @@ _ME_METADATA_LEVELS = [
 
 
 @contextmanager
-def quiet_gbd_logs():
+def quiet_gbd_logs(verbosity=None):
     """Silence the per-call chatter from a bulk GBD pull.
 
     A single ``get_measure`` call emits roughly 161 lines of log. At 66 sequelae
     per :func:`pull_sequelae_prevalence` call that buries the notebook, so this
-    turns off four separate sources at once:
+    turns off several sources at once:
 
     - ``vivarium_gbd_access`` re-emits a multi-line config dump on *every*
       cached call, plus an INFO line per cache hit.
-    - ``vivarium_inputs.validation.raw`` warns about data we knowingly tolerate.
     - ``vivarium_gbd_access.utilities.get_memory`` hardcodes
       ``joblib.Memory(verbose=1)``, so it is swapped for one that builds the
       same cache in the same location, quietly. It has to be replaced rather
@@ -89,18 +189,28 @@ def quiet_gbd_logs():
       here is immediately outranked. Overriding ``showwarning`` works because
       filters decide whether a warning is emitted, while ``showwarning``
       decides how it is displayed -- and nothing upstream touches that.
+    - ``vivarium_inputs`` data-quality warnings, which are *recorded* rather
+      than dropped -- see :class:`Verbosity`.
+
+    Parameters
+    ----------
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`.
 
     Everything is restored in a ``finally``, so an exception part-way through a
     pull cannot leave logging off for the rest of the session.
 
-    Re-entrant: only the outermost block installs and restores. That matters
-    because ``loguru.logger.enable()`` re-enables unconditionally rather than
-    restoring the previous state, so a naive nested use would switch logging
-    back on for the remainder of the enclosing block.
+    Re-entrant: only the outermost block installs and restores, and only it
+    reports. That matters because ``loguru.logger.enable()`` re-enables
+    unconditionally rather than restoring the previous state, so a naive nested
+    use would switch logging back on for the remainder of the enclosing block.
+    A nested block's ``verbosity`` is ignored; the outermost one governs.
     """
     global _quiet_depth
 
-    if _quiet_depth:
+    verbosity = Verbosity(DEFAULT_VERBOSITY if verbosity is None else verbosity)
+
+    if verbosity is Verbosity.ALL or _quiet_depth:
         _quiet_depth += 1
         try:
             yield
@@ -116,7 +226,18 @@ def quiet_gbd_logs():
             return original_get_memory()
         return Memory(location=vgu.get_cache_directory(config), verbose=0)
 
-    for name in NOISY_LOGGERS:
+    # Data-quality warnings are collected only when they are not being shown.
+    collectors = {}
+    if verbosity <= Verbosity.SUMMARY:
+        for name in WARNING_SOURCE_MODULES:
+            module = _import_or_none(name)
+            if module is None:
+                continue
+            collectors[name] = _WarningCollector(module.logger)
+            module.logger = collectors[name]
+
+    warning_counts = collections.Counter()
+    for name in BOOKKEEPING_LOGGERS:
         loguru.logger.disable(name)
     vgu.get_memory = _quiet_get_memory
     _quiet_depth += 1
@@ -126,8 +247,11 @@ def quiet_gbd_logs():
             shown = warnings.showwarning
 
             def _drop_suppressed(message, category, filename, lineno, file=None, line=None):
-                if any(text in str(message) for text in SUPPRESSED_WARNINGS):
-                    return
+                text = str(message)
+                for pattern in SUPPRESSED_WARNINGS:
+                    if pattern in text:
+                        warning_counts[pattern] += 1
+                        return
                 shown(message, category, filename, lineno, file, line)
 
             warnings.showwarning = _drop_suppressed
@@ -135,12 +259,34 @@ def quiet_gbd_logs():
     finally:
         _quiet_depth -= 1
         vgu.get_memory = original_get_memory
-        for name in NOISY_LOGGERS:
+        for name in BOOKKEEPING_LOGGERS:
             loguru.logger.enable(name)
+        for name, collector in collectors.items():
+            _import_or_none(name).logger = collector._real
+        if verbosity is Verbosity.SUMMARY:
+            _report_suppressed(collectors, warning_counts)
 
 
 @cache
-def most_recent_year() -> int:
+def _most_recent_year() -> int:
+    """Memoized inner half of :func:`most_recent_year`.
+
+    Kept separate so that ``verbosity`` -- which affects only what is displayed,
+    never the result -- stays out of the cache key. Folding the two together
+    would store one entry per distinct verbosity for a single value, and
+    ``most_recent_year()`` and ``most_recent_year(None)`` would hash
+    differently, so even the default path could occupy two entries.
+
+    Either way the underlying GBD call happens once, so only the first call
+    logs anything -- a later call at ``Verbosity.ALL`` is silent because there
+    is no call left to report, not because it was suppressed. Folding the two
+    together would in fact log *more*: a not-yet-seen verbosity is a cache
+    miss, so it would re-run and re-log a value it already had.
+    """
+    return utility_data.get_most_recent_year()
+
+
+def most_recent_year(verbosity=None) -> int:
     """The most recent estimation year in the current GBD release.
 
     2023 for release 16. Note that 2021 is *not* a GBD 2023 estimation year --
@@ -150,9 +296,16 @@ def most_recent_year() -> int:
     itself a cached GBD call: doing it at import time would make ``import
     gbd_data`` reach for the database and emit three lines of log before any
     caller has a chance to silence them. Memoized, so repeat calls are free.
+
+    Parameters
+    ----------
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
+        when already inside a :func:`quiet_gbd_logs` block -- the outermost
+        block governs.
     """
-    with quiet_gbd_logs():
-        return utility_data.get_most_recent_year()
+    with quiet_gbd_logs(verbosity):
+        return _most_recent_year()
 
 
 def patch_population_validation_ceiling(ceiling: int = 1_000_000_000) -> int:
@@ -179,18 +332,36 @@ def patch_population_validation_ceiling(ceiling: int = 1_000_000_000) -> int:
     return previous
 
 
-def reshape_to_vivarium_format(df, location):
-    """Normalize a raw GBD draw frame to the Vivarium index convention."""
-    df = vi_utils.reshape(df, value_cols=[c for c in df.columns if "draw_" in c])
-    df = vi_utils.scrub_gbd_conventions(df, location)
-    df = vi_utils.split_interval(df, interval_column="age", split_column_prefix="age")
-    df = vi_utils.split_interval(df, interval_column="year", split_column_prefix="year")
-    df = vi_utils.sort_hierarchical_data(df)
-    df.index = df.index.droplevel("location")
-    return df
+def reshape_to_vivarium_format(df, location, verbosity=None):
+    """Normalize a raw GBD draw frame to the Vivarium index convention.
+
+    Quiet despite doing no fetching of its own: ``scrub_gbd_conventions`` looks
+    up location IDs and age bins, each a cached GBD call worth several lines of
+    log. Nesting is harmless -- :func:`quiet_gbd_logs` is re-entrant, so the
+    call from :func:`pull_modelable_entity_draws` is a no-op.
+
+    Parameters
+    ----------
+    df
+        A raw GBD draw frame.
+    location
+        Location name, used to scrub GBD conventions.
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
+        when already inside a :func:`quiet_gbd_logs` block -- the outermost
+        block governs.
+    """
+    with quiet_gbd_logs(verbosity):
+        df = vi_utils.reshape(df, value_cols=[c for c in df.columns if "draw_" in c])
+        df = vi_utils.scrub_gbd_conventions(df, location)
+        df = vi_utils.split_interval(df, interval_column="age", split_column_prefix="age")
+        df = vi_utils.split_interval(df, interval_column="year", split_column_prefix="year")
+        df = vi_utils.sort_hierarchical_data(df)
+        df.index = df.index.droplevel("location")
+        return df
 
 
-def pull_modelable_entity_draws(me_id, location, year=None, draws=None):
+def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosity=None):
     """Pull draws for a modelable entity, reshaped to the Vivarium convention.
 
     Named to match :func:`pull_sequelae_prevalence` rather than the
@@ -212,8 +383,18 @@ def pull_modelable_entity_draws(me_id, location, year=None, draws=None):
         entities return 1,000 raw draws, so this truncates to the first 250 --
         matching what ``vivarium_inputs`` returns for the measures these get
         combined with.
+    verbosity
+        A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
+        when already inside a :func:`quiet_gbd_logs` block -- the outermost
+        block governs.
     """
-    with quiet_gbd_logs():
+    # This block is the one that matters, and it cannot be replaced by passing
+    # verbosity down to the calls below: resolve_location and
+    # gbd.get_modelable_entity_draws are ~7 log lines each and sit outside both
+    # helpers. Those helpers take a verbosity of their own for when they are
+    # called directly, but here they inherit this block by re-entrancy, so
+    # passing it again would be redundant.
+    with quiet_gbd_logs(verbosity):
         # NOTE: resolved inside the context manager -- get_most_recent_year is itself
         # a cached GBD call, so defaulting it outside leaks its logs.
         if year is None:
