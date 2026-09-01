@@ -49,11 +49,11 @@ def check_for_existing(
         ]
     )
     locations = set([sanitize_location(loc) for loc in metadata.LOCATIONS])
-    existing = locations.intersection(existing_artifacts)
     if location != "all":
-        # Narrow before testing: another location's artifact sitting in the same
-        # directory is not a reason to prompt about this one.
-        existing &= {sanitize_location(location)}
+        # Another location's artifact in the same directory is not a reason to
+        # prompt about this one.
+        locations = {sanitize_location(location)}
+    existing = locations.intersection(existing_artifacts)
 
     if existing:
         if not append:
