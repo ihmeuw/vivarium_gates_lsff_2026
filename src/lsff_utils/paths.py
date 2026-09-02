@@ -3,56 +3,172 @@
 Paths
 =====
 
-Shared filesystem locations for the LSFF modeling pipeline.
+Filesystem locations for the LSFF modeling pipeline.
 
-Data too large to live in the repository lives on the team's shared drive, laid
-out first by kind -- ``data`` for pipeline inputs and intermediates, ``artifacts``
-for the artifacts simulations run against, ``results`` for simulation output --
-and then by model iteration::
+The pipeline reads and writes inside the repository, beside the package that
+produces each thing::
+
+    0200_pregnancy_sim/mean_draw_artifacts/<vehicle>/<location>.hdf
+    0200_pregnancy_sim/sim_results/<vehicle>/<location>/<run>/
+    0300_child_sim/mean_draw_artifacts/<vehicle>/<location>.hdf
+    0300_child_sim/sim_results/<vehicle>/<location>/<run>/
+    0300_child_sim/lbwsg_paf_mean_draw_artifacts/<location>.hdf
+    0300_child_sim/lbwsg_pafs/<location>/<run>/
+
+All six are gitignored: they hold large binaries and psimulate's per-run
+metadata, none of which belongs in version control.
+
+Nothing here carries a model iteration number. The repository holds the run you
+are working on; ``archive_last_run.sh`` publishes it to the team drive under
+:data:`MODEL_NUMBER`, and that archive is the versioned record::
 
     /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/
-    |-- artifacts/<MODEL_NUMBER>/
-    |   |-- maternal/
-    |   `-- child/
-    |-- data/<MODEL_NUMBER>/
-    |   |-- lbwsg_paf_artifacts/
-    |   `-- lbwsg_pafs/
-    `-- results/<MODEL_NUMBER>/
-        |-- maternal/
-        `-- child/
+    |-- artifacts/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>.hdf
+    |-- data/<MODEL_NUMBER>/{lbwsg_paf_artifacts,lbwsg_pafs}/
+    `-- results/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>/<run>/
 
-Starting a new model iteration means bumping :data:`MODEL_NUMBER` here. That
-moves every root below at once; see the "Starting a New Model Iteration" section
-of the repository README for the two other places that need updating.
+Because the in-repo paths do not move between iterations, Snakemake no longer
+rebuilds a stage just because a number was bumped -- it reruns on changed inputs
+or changed recipe code, which is what its staleness tracking is for. Starting a
+new iteration therefore means: archive what you have, bump MODEL_NUMBER, then
+clear the in-repo roots (or ``--forcerun`` the stages you want rebuilt). See the
+"Starting a New Model Iteration" section of the README.
 
 These constants live in ``lsff_utils`` rather than in either simulation package
 because the two packages have to agree on them. The child model's population
 comes from the maternal model's birth records, so the child artifact build reads
-out of the same iteration's ``results/`` directory that the maternal simulation
-wrote to. Defining the roots twice invites the two halves of the pipeline to
-disagree about which iteration they are part of.
+out of the same ``results/`` directory the maternal simulation wrote to.
 """
 
 from pathlib import Path
 
-MODEL_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
+#: Repository root, derived from this file's location: <repo>/src/lsff_utils/paths.py.
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Bump this to start a new model iteration. See the module docstring.
-MODEL_NUMBER = "model1.1"
+MATERNAL_PKG_ROOT = REPO_ROOT / "0200_pregnancy_sim"
+CHILD_PKG_ROOT = REPO_ROOT / "0300_child_sim"
 
-ARTIFACT_ROOT = MODEL_ROOT / "artifacts" / MODEL_NUMBER
-DATA_ROOT = MODEL_ROOT / "data" / MODEL_NUMBER
-RESULTS_ROOT = MODEL_ROOT / "results" / MODEL_NUMBER
+MATERNAL_ARTIFACT_ROOT = MATERNAL_PKG_ROOT / "mean_draw_artifacts"
+CHILD_ARTIFACT_ROOT = CHILD_PKG_ROOT / "mean_draw_artifacts"
 
-MATERNAL_ARTIFACT_ROOT = ARTIFACT_ROOT / "maternal"
-CHILD_ARTIFACT_ROOT = ARTIFACT_ROOT / "child"
+MATERNAL_RESULTS_ROOT = MATERNAL_PKG_ROOT / "sim_results"
+CHILD_RESULTS_ROOT = CHILD_PKG_ROOT / "sim_results"
 
-MATERNAL_RESULTS_ROOT = RESULTS_ROOT / "maternal"
-CHILD_RESULTS_ROOT = RESULTS_ROOT / "child"
+# The PAF calculation runs as its own simulation between the two artifact builds.
+# Its cut-down artifact omits the PAF that the calculation produces, so it must
+# never share a path with the full child artifact.
+LBWSG_PAF_ARTIFACT_ROOT = CHILD_PKG_ROOT / "lbwsg_paf_mean_draw_artifacts"
+LBWSG_PAF_RESULTS_ROOT = CHILD_PKG_ROOT / "lbwsg_pafs"
 
-# Intermediates of the LBWSG PAF calculation, which runs as its own simulation
-# between the two artifact builds. The cut-down artifact that feeds it holds a
-# different key set from the full child artifact -- it omits the PAF, which is
-# what the calculation produces -- so the two must never share a path.
-LBWSG_PAF_ARTIFACT_ROOT = DATA_ROOT / "lbwsg_paf_artifacts"
-LBWSG_PAF_RESULTS_ROOT = DATA_ROOT / "lbwsg_pafs"
+
+# ---------------------------------------------------------------------------
+# Archive
+# ---------------------------------------------------------------------------
+
+#: Label the archive files this iteration under. Bump it to start a new one.
+MODEL_NUMBER = "model1.1.1"
+
+#: Team-drive root that ``archive_last_run.sh`` publishes to.
+TEAM_ARCHIVE_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
+
+#: Records the commit a run was produced on. Written into each run directory by
+#: the simulation rules, so it travels with the run when it is archived.
+GIT_COMMIT_FILE_NAME = "git_commit.txt"
+
+# Where each in-repo root lands in the archive. The repository groups outputs by
+# the package that produced them; the archive groups them by kind and iteration,
+# so the two layouts do not correspond and the mapping has to be written down.
+# Destination is <team>/<kind>/<MODEL_NUMBER>/<subpath>/<the rest of the path>.
+ARCHIVE_DESTINATIONS = {
+    MATERNAL_ARTIFACT_ROOT: ("artifacts", "maternal"),
+    CHILD_ARTIFACT_ROOT: ("artifacts", "child"),
+    LBWSG_PAF_ARTIFACT_ROOT: ("data", "lbwsg_paf_artifacts"),
+    LBWSG_PAF_RESULTS_ROOT: ("data", "lbwsg_pafs"),
+    MATERNAL_RESULTS_ROOT: ("results", "maternal"),
+    CHILD_RESULTS_ROOT: ("results", "child"),
+}
+
+#: Roots holding timestamped simulation runs, archived one run at a time.
+RUN_ROOTS = (MATERNAL_RESULTS_ROOT, CHILD_RESULTS_ROOT, LBWSG_PAF_RESULTS_ROOT)
+
+
+# ---------------------------------------------------------------------------
+# Run directories
+# ---------------------------------------------------------------------------
+#
+# vivarium names each simulation run after the artifact it ran against and the
+# moment it was launched: `<results_dir>/<artifact stem>/<timestamp>/results/`.
+# Because artifacts are named `<location>.hdf` and are passed with `-o` pointed
+# at the vehicle directory, a run lands at
+#
+#     <root>/<vehicle>/<location>/<timestamp>/results/
+#
+# Snakemake cannot name that timestamp in advance, and a rule needs an output
+# path it can name. Each simulation rule therefore writes RUN_MARKER_NAME next
+# to the run directories once the run succeeds, holding the name of the run it
+# just produced. The marker is what Snakemake tracks, what `latest_run` reads,
+# and what the archive script uses to pick the run to publish.
+
+RUN_MARKER_NAME = "latest_run.txt"
+
+
+def run_root(results_root: Path, location: str, vehicle: str | None = None) -> Path:
+    """The directory holding every run for one location (and vehicle, if any)."""
+    root = results_root if vehicle is None else results_root / vehicle
+    return root / location.lower().replace(" ", "_")
+
+
+def run_marker(results_root: Path, location: str, vehicle: str | None = None) -> Path:
+    """Path of the marker naming the most recent successful run."""
+    return run_root(results_root, location, vehicle) / RUN_MARKER_NAME
+
+
+def latest_run(results_root: Path, location: str, vehicle: str | None = None) -> Path:
+    """The run directory named by the marker, falling back to the newest run.
+
+    The fallback matters because runs launched by hand -- outside Snakemake, which
+    is how a single location usually gets rerun -- leave no marker. Run
+    directories are timestamp-named, so the newest sorts last.
+    """
+    root = run_root(results_root, location, vehicle)
+    marker = root / RUN_MARKER_NAME
+    if marker.exists():
+        run = root / marker.read_text().strip()
+        if run.exists():
+            return run
+
+    runs = sorted(p for p in root.glob("*") if p.is_dir())
+    if not runs:
+        raise FileNotFoundError(
+            f"No simulation runs found under '{root}'. Expected at least one "
+            f"timestamped run directory, produced by 'psimulate run -o {root.parent}'."
+        )
+    return runs[-1]
+
+
+def latest_results(results_root: Path, location: str, vehicle: str | None = None) -> Path:
+    """The ``results`` directory of the run :func:`latest_run` resolves to."""
+    return latest_run(results_root, location, vehicle) / "results"
+
+
+def measure_path(results_dir: Path, measure: str) -> Path:
+    """Locate one observer's output within a run's ``results`` directory.
+
+    Two layouts are in circulation and both are readable by ``pd.read_parquet``:
+    ``simulate run`` writes a single ``<measure>.parquet``, while ``psimulate``
+    writes a ``<measure>/`` directory of one parquet file per task. Which one a
+    given set of results uses depends on how it was produced, so callers ask for
+    the measure by name and let this sort it out.
+    """
+    flat = results_dir / f"{measure}.parquet"
+    if flat.exists():
+        return flat
+
+    sharded = results_dir / measure
+    if sharded.is_dir():
+        return sharded
+
+    raise FileNotFoundError(
+        f"No '{measure}' output under '{results_dir}'. Expected either "
+        f"'{measure}.parquet' or a '{measure}/' directory of parquet files."
+    )

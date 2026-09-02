@@ -1,10 +1,45 @@
-from snakemake.io import directory
-
 import glob
+
+from lsff_utils import paths, snakemake_utils
 
 debug = config["debug"]
 local = config["local"]
 full_scale = config["full_scale"]
+
+# Recipes are plain strings and Snakemake does the interpolation -- never
+# f-strings. See "Recipes are not f-strings" in the root Snakefile. Anything a
+# recipe needs that has to be computed in Python is named here instead, so the
+# recipe can reference it as `{name}`; anything that has to be computed from the
+# wildcards goes in the rule's `params`, which is the only interpolation
+# Snakemake resolves per job.
+artifact_setup = config["artifact_env_setup"]
+simulation_setup = config["simulation_env_setup"]
+artifact_debug = "--pdb -vvv" if debug else ""
+psimulate_debug = "--pdb -vvv" if debug and not local else ""
+cluster_args = "" if debug or local else "-P proj_simscience -m 2 -r 01:00:00 -q all.q"
+# `simulate` in debug (one process, in the foreground), `psimulate` otherwise,
+# and `local_psimulate.py` when a run is kept off the cluster entirely.
+simulate_command = (
+    ("python ../local_" if local else "")
+    + ("p" if not debug else "")
+    + "simulate"
+    + (".py" if local else " run")
+)
+# debug runs a single branch, so it takes no branch configuration at all.
+branches_file = (
+    "src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios"
+    + ("_small" if not full_scale else "")
+    + ".yaml"
+)
+branches_arg = "" if debug else branches_file
+
+# Artifacts and simulation output live on the team drive under the current model
+# iteration, not in the repository -- see lsff_utils.paths. Both are named here
+# from the constants so that bumping MODEL_NUMBER repoints these rules too.
+MATERNAL_ARTIFACT = str(paths.MATERNAL_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
+MATERNAL_RUN_MARKER = snakemake_utils.run_marker(
+    paths.MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"
+)
 
 data_inputs = [
     f"0100_data_prep/results/{item}/{{location}}.csv"
@@ -30,49 +65,43 @@ data_inputs = [
 ] + [f"0100_data_prep/results/iron/fortification_hemoglobin_effects.csv"]
 
 rule pregnancy_artifacts:
-    input: config["env_input"] + ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py"] + data_inputs
-    output: ["0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
+    input: ["0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/data/loader.py"] + data_inputs
+    output: [MATERNAL_ARTIFACT]
     shell:
-        f"""
-        {config["env_setup"]}
-        cd 0200_pregnancy_sim
-        rm -f artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
-        export PYTHONPATH=./src
-        python src/vivarium_gates_lsff_2026_maternal/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} -a --mean {'--pdb -vvv' if debug else ''}
+        """
+        {artifact_setup}
+        rm -f {output}
+        make_artifacts -p maternal -o {paths.MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} -a --mean {artifact_debug}
         """
 
-code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/**/*.py")
+code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/**/*.py", recursive=True)
 
+# No `psimulate restart` after a run. It predates jobmon, which retries each task
+# itself (max_attempts) and refuses to resume a finished workflow --
+# WorkflowAlreadyComplete -- so an unconditional restart fails every successful run.
 rule pregnancy_simulations:
     input:
-        config["simulation_running_env_input"] + [
-            "0200_pregnancy_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml",
-            "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios" + ('_small' if not full_scale else '') + ".yaml",
-        ] + code_inputs + data_inputs
-    output:
         [
-            directory("0200_pregnancy_sim/sim_results/{vehicle}/{location}/"),
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/births.parquet",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/deaths.parquet",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/pregnancy_outcome_count.parquet",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/transition_count_maternal_disorders.parquet",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylds.parquet",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/ylls.parquet",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/person_time_anemia.parquet",
-        ]
+            MATERNAL_ARTIFACT,
+            "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml",
+            "0200_pregnancy_sim/" + branches_file,
+        ] + code_inputs + data_inputs
+    # psimulate names its own output directory after the artifact and the launch
+    # time, so the rule is tracked by the marker naming the run it produced
+    # rather than by parquet paths Snakemake cannot predict. Previous runs are
+    # left in place; a rerun adds a run instead of overwriting the one a set of
+    # validated results was built from.
+    output: [MATERNAL_RUN_MARKER]
+    params:
+        write_marker=lambda wildcards: snakemake_utils.write_run_marker(
+            paths.MATERNAL_RESULTS_ROOT, wildcards.location, wildcards.vehicle
+        ),
     shell:
-        f"""
-        {config["simulation_running_env_setup"]}
+        """
+        {simulation_setup}
         cd 0200_pregnancy_sim
-        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}} || true
-        sleep 5
-        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
-        mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
-        cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
-        export PYTHONPATH=../../../src
-        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
-        rm -rf *.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
-        mv ./*/results/*.parquet .
+        rm -f dump.rdb
+        {simulate_command} src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {branches_arg} -i {paths.MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {paths.MATERNAL_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
+        rm -f dump.rdb
+        {params.write_marker}
         """

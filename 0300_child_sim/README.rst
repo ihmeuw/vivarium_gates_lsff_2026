@@ -19,30 +19,26 @@ your operating system at the following places:
 
 Once you have all three installed, you should open up your normal shell
 (if you're on linux or OSX) or the ``git bash`` shell if you're on windows.
-You'll then make an environment, clone this repository, then install
-all necessary requirements as follows::
+You'll then clone this repository and build an environment for it. The two
+environments the pipeline uses are built by ``environment.sh`` at the root of
+the repository, not from this sub-package: ``artifact`` for anything that reads
+GBD, and ``simulation`` for anything that runs vivarium. Each contains both
+simulation packages, so there is nothing further to install here::
 
-  :~$ git clone https://github.com/ihmeuw/vivarium_gates_lsff_2026_child.git
+  :~$ git clone https://github.com/ihmeuw/vivarium_gates_lsff_2026.git
   ...git will copy the repository from github and place it in your current directory...
-  :~$ cd vivarium_gates_lsff_2026_child
-  :~$ conda create --name=vivarium_gates_lsff_2026_child --file conda_lock.txt
-  ...conda will download python and base dependencies...
-  :~$ conda activate vivarium_gates_lsff_2026_child
-  (vivarium_gates_lsff_2026_child) :~$ python -m venv artifact_building
-  (vivarium_gates_lsff_2026_child) :~$ source artifact_building/bin/activate
-  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ pip install -r artifact_building_pip_lock.txt
-  ...pip will install vivarium and other requirements...
-  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ pip install -e .
-  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ deactivate
-  (vivarium_gates_lsff_2026_child) :~$ python -m venv simulation_running
-  (vivarium_gates_lsff_2026_child) :~$ source simulation_running/bin/activate
-  (vivarium_gates_lsff_2026_child) (simulation_running) :~$ pip install -r simulation_running_pip_lock.txt
-  ...pip will install vivarium and other requirements...
-  (vivarium_gates_lsff_2026_child) (artifact_building) :~$ pip install -e .
+  :~$ cd vivarium_gates_lsff_2026
+  :~$ source environment.sh -t artifact
+  ...conda will build and activate the artifact environment...
+  :~$ source environment.sh
+  ...and likewise for the simulation environment, which is the default...
 
+Add ``-s`` to build a lightweight venv overlay on the shared conda environment,
+which is the recommended form for cluster development, and ``-f`` to force a
+rebuild. See the root README for what each environment is used for.
 
-Note the ``-e`` flag that follows pip install. This will install the python
-package in-place, which is important for making the model specifications later.
+``environment.sh`` installs both simulation packages in editable mode, which is
+important for making the model specifications later.
 
 Cloning the repository should take a fair bit of time as git must fetch
 the data artifact associated with the demo (several GB of data) from the

@@ -28,7 +28,10 @@ components:
 configuration:
     input_data:
         input_draw_number: 0
-        artifact_path: /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/artifacts/model1.1/maternal/nigeria.hdf
+        # No artifact_path here. The pipeline always passes -i, and any value
+        # written here would be an absolute path into one working tree -- wrong
+        # for every other clone, and stale the moment the layout moves. Pass
+        # -i <artifact> when running this specification by hand.
     interpolation:
         order: 0
         extrapolate: True

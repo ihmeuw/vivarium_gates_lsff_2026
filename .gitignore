@@ -129,7 +129,6 @@ dmypy.json
 
 .conda_env/
 .venv/
-.simulation_running_venv/
 
 .snakemake/
 *.rdb
@@ -138,3 +137,18 @@ dmypy.json
 *.tmp
 .cachedir
 model_spec_int.yaml
+
+# Pipeline output. Written beside the package that produces it (see
+# src/lsff_utils/paths.py) and published to the team drive by archive_last_run.sh.
+# Directory-level ignores, not just *.hdf and *.parquet: psimulate writes
+# model_specification.yaml, branches.yaml, keyspace.yaml, requirements.txt,
+# git_commit.txt and logs/ into every run.
+0200_pregnancy_sim/mean_draw_artifacts/
+0200_pregnancy_sim/sim_results/
+0300_child_sim/mean_draw_artifacts/
+0300_child_sim/sim_results/
+0300_child_sim/lbwsg_paf_mean_draw_artifacts/
+0300_child_sim/lbwsg_pafs/
+
+# Local Claude Code session config.
+.claude/

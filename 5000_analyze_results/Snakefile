@@ -1,6 +1,23 @@
-from lsff_utils import config_utils
+from lsff_utils import config_utils, paths, snakemake_utils
 
 debug = config["debug"]
+
+# Recipes are plain strings and Snakemake does the interpolation -- never
+# f-strings. See "Recipes are not f-strings" in the root Snakefile.
+artifact_setup = config["artifact_env_setup"]
+papermill_engine = "--engine debug" if debug else ""
+
+# Simulation output lives on the team drive in per-run, timestamp-named
+# directories, so these rules depend on the markers naming the runs rather than
+# on parquet paths. The notebooks resolve the same runs through
+# lsff_utils.paths.latest_results, which keeps the Snakefile and the notebooks
+# from having to agree on a layout twice over.
+MATERNAL_RUN_MARKER = snakemake_utils.run_marker(
+    paths.MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"
+)
+CHILD_RUN_MARKER = snakemake_utils.run_marker(
+    paths.CHILD_RESULTS_ROOT, "{location}", "{vehicle}"
+)
 
 pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls", "person_time_anemia", "transition_count_maternal_disorders"]
 rescaled_pregnancy_results = [
@@ -10,17 +27,19 @@ rescaled_pregnancy_results = [
 
 rule rescale_pregnancy_results:
     input:
-        config["env_input"] + ["5000_analyze_results/0100_rescale_results/pregnancy_results.ipynb"] +
-        [f"0200_pregnancy_sim/sim_results/{{vehicle}}/{{location}}/{result}.parquet" for result in pregnancy_results_of_interest]
+        [
+            "5000_analyze_results/0100_rescale_results/pregnancy_results.ipynb",
+            MATERNAL_RUN_MARKER,
+        ]
     output:
         rescaled_pregnancy_results
     log: "5000_analyze_results/executed/{location}/{vehicle}/0100_rescale_results/pregnancy_results.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {artifact_setup}
         cd 5000_analyze_results/0100_rescale_results
-        mkdir -p ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/
-        papermill pregnancy_results.ipynb ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/pregnancy_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
+        mkdir -p ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/
+        papermill pregnancy_results.ipynb ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/pregnancy_results.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
         """
 
 child_results_of_interest = ["deaths", "ylds", "ylls"]
@@ -31,22 +50,39 @@ rescaled_child_results = [
 
 rule rescale_child_results:
     input:
-        config["env_input"] + ["5000_analyze_results/0100_rescale_results/child_results.ipynb"] +
-        [f"0300_child_sim/sim_results/{{vehicle}}/{{location}}/{result}.parquet" for result in child_results_of_interest]
+        # The child rescaling divides through by pregnancy outcome counts, so it
+        # reads the maternal run as well as the child one.
+        [
+            "5000_analyze_results/0100_rescale_results/child_results.ipynb",
+            CHILD_RUN_MARKER,
+            MATERNAL_RUN_MARKER,
+        ]
     output:
         rescaled_child_results
     log: "5000_analyze_results/executed/{location}/{vehicle}/0100_rescale_results/child_results.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
-        cd 5000_analyze_results/0100_rescale_results
-        mkdir -p ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/
-        papermill child_results.ipynb ../executed/{{wildcards.location}}/{{wildcards.vehicle}}/0100_rescale_results/child_results.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
         """
+        {artifact_setup}
+        cd 5000_analyze_results/0100_rescale_results
+        mkdir -p ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/
+        papermill child_results.ipynb ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/child_results.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
+        """
+
+# An arm with no iron pathway of its own (ethiopia/salt) has no rescaled results,
+# so cases_by_scenario and dalys_by_scenario read rice/india's as an all-zero
+# template. Declared here because that dependency is invisible to Snakemake:
+# without it a forced rebuild can run the folate-only arm before rice/india's
+# rescaling has finished, and the notebook fails on the missing template.
+TEMPLATE_WILDCARDS = {"location": "india", "vehicle": "rice"}
+template_rescaled_results = [
+    path.format(**TEMPLATE_WILDCARDS)
+    for path in rescaled_pregnancy_results + rescaled_child_results
+]
+
 
 def dalys_by_scenario_inputs(wildcards):
     fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
-    result = config["env_input"] + ["5000_analyze_results/dalys_by_scenario.ipynb"]
+    result = ["5000_analyze_results/dalys_by_scenario.ipynb"]
     if "folate" in fortificants:
         result += [
             "0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv",
@@ -58,7 +94,7 @@ def dalys_by_scenario_inputs(wildcards):
     else:
         result += [
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
-        ]
+        ] + template_rescaled_results
     return result
 
 rule dalys_by_scenario:
@@ -66,16 +102,16 @@ rule dalys_by_scenario:
     output: "5000_analyze_results/results/{location}/{vehicle}/dalys_by_scenario.csv"
     log: "5000_analyze_results/executed/{location}/{vehicle}/dalys_by_scenario.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {artifact_setup}
         cd 5000_analyze_results
-        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}
-        papermill dalys_by_scenario.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/dalys_by_scenario.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
+        mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}
+        papermill dalys_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/dalys_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
         """
 
 def cases_by_scenario_inputs(wildcards):
     fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
-    result = config["env_input"] + ["5000_analyze_results/cases_by_scenario.ipynb"]
+    result = ["5000_analyze_results/cases_by_scenario.ipynb"]
     if "folate" in fortificants:
         result += [
             "0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv",
@@ -90,7 +126,7 @@ def cases_by_scenario_inputs(wildcards):
         result += [
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
-        ]
+        ] + template_rescaled_results
     return result
 
 cases_by_scenario_outputs = [
@@ -106,11 +142,11 @@ rule cases_by_scenario:
     output: [f"5000_analyze_results/results/{{location}}/{{vehicle}}/{output}" for output in cases_by_scenario_outputs]
     log: "5000_analyze_results/executed/{location}/{vehicle}/cases_by_scenario.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {artifact_setup}
         cd 5000_analyze_results
-        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
-        papermill cases_by_scenario.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/cases_by_scenario.ipynb -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} -k python3 {'--engine debug' if debug else ''}
+        mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}/
+        papermill cases_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/cases_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
         """
 
 dalys_by_scenario_resolved = []
@@ -124,31 +160,33 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
 
 rule results_spreadsheet:
     input:
-        config["env_input"] +
         ["5000_analyze_results/results_spreadsheet.ipynb"] +
         dalys_by_scenario_resolved +
         cases_by_scenario_resolved
     output: "5000_analyze_results/results_spreadsheet.xlsx"
     log: "5000_analyze_results/executed/results_spreadsheet.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {artifact_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/
-        papermill results_spreadsheet.ipynb ./executed/results_spreadsheet.ipynb -k python3 {'--engine debug' if debug else ''}
+        papermill results_spreadsheet.ipynb ./executed/results_spreadsheet.ipynb -k python3 {papermill_engine}
         """
 
 rule results_plots:
     input:
-        config["env_input"] +
         ["5000_analyze_results/results_plots.ipynb"] +
         dalys_by_scenario_resolved +
         cases_by_scenario_resolved
-    log: "5000_analyze_results/executed/results_plots.ipynb"
+    # The executed notebook is this rule's product, not a log of it -- the plots
+    # live in its output cells and nothing else is written. Declaring it as an
+    # output is what lets `rule all` ask for it; as a `log:` it was a file no
+    # rule claimed to produce, so the end-to-end target could not be built.
+    output: "5000_analyze_results/executed/results_plots.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {artifact_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/
-        papermill results_plots.ipynb ./executed/results_plots.ipynb -k python3 {'--engine debug' if debug else ''}
+        papermill results_plots.ipynb ./executed/results_plots.ipynb -k python3 {papermill_engine}
         """

@@ -1,8 +1,13 @@
 debug = config["debug"]
 
+# Recipes are plain strings and Snakemake does the interpolation -- never
+# f-strings. See "Recipes are not f-strings" in the root Snakefile.
+artifact_setup = config["artifact_env_setup"]
+papermill_engine = "--engine debug" if debug else ""
+
 def neural_tube_defects_model_inputs(wildcards):
     return (
-        config["env_input"] + [
+        [
             "0500_neural_tube_defects_model/model.ipynb",
             "0100_data_prep/results/folate/{vehicle}/baseline_fortification/effective_coverage/{location}.csv",
             "0100_data_prep/results/folate/{vehicle}/baseline_fortification/concentration/{location}.csv",
@@ -26,9 +31,9 @@ rule neural_tube_defects_model:
         ]
     log: "0500_neural_tube_defects_model/executed/{location}/{vehicle}/model.ipynb"
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {artifact_setup}
         cd 0500_neural_tube_defects_model
-        mkdir -p ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/
-        papermill model.ipynb ./executed/{{wildcards.location}}/{{wildcards.vehicle}}/model.ipynb -k python3 -p location {{wildcards.location}} -p vehicle {{wildcards.vehicle}} {'--engine debug' if debug else ''}
+        mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}/
+        papermill model.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/model.ipynb -k python3 -p location {wildcards.location} -p vehicle {wildcards.vehicle} {papermill_engine}
         """

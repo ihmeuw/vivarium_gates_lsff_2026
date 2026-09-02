@@ -1,17 +1,26 @@
-from lsff_utils import config_utils
+from lsff_utils import config_utils, snakemake_utils
 from snakemake.io import directory
 
 debug = config["debug"]
-common_setup = f"""
-{config["env_setup"]}
-cd 0100_data_prep
-"""
+
+# Recipes are plain strings and Snakemake does the interpolation -- never
+# f-strings. See "Recipes are not f-strings" in the root Snakefile. Anything a
+# recipe needs that has to be computed in Python is named here instead, so the
+# recipe can reference it as `{name}`.
+artifact_setup = config["artifact_env_setup"]
+papermill_engine = "--engine debug" if debug else ""
+
+# When a run opts out of data prep, every input here is marked `ancient()` so
+# that nothing in this stage reruns over a timestamp. Outputs that are actually
+# missing are still built. See `snakemake_utils.freeze`.
+frozen = config["skip_data_prep"]
+common_setup = artifact_setup + "\ncd 0100_data_prep"
 
 rule dhs_common:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/dhs/common.ipynb",
-        ]
+        ], frozen)
     log: "0100_data_prep/executed/dhs/{location}/common.ipynb"
     output: 
         [
@@ -21,37 +30,37 @@ rule dhs_common:
             "0100_data_prep/results/birth_weight_disparities/{location}.csv",
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd dhs
-        mkdir -p ../executed/dhs/{{wildcards.location}}/
-        papermill common.ipynb ../executed/dhs/{{wildcards.location}}/common.ipynb -k python3 -p location {{wildcards.location}} {'--engine debug' if debug else ''}
+        mkdir -p ../executed/dhs/{wildcards.location}/
+        papermill common.ipynb ../executed/dhs/{wildcards.location}/common.ipynb -k python3 -p location {wildcards.location} {papermill_engine}
         """
 
 rule dhs_mm:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/dhs/maternal_mortality_{location}.ipynb",
-        ]
+        ], frozen)
     log: "0100_data_prep/executed/dhs/{location}/maternal_mortality_{location}.ipynb"
     output: 
         [
             "0100_data_prep/results/maternal_disorders_incidence_disparities/{location}.csv",
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd dhs
-        mkdir -p ../executed/dhs/{{wildcards.location}}/
-        papermill maternal_mortality_{{wildcards.location}}.ipynb ../executed/dhs/{{wildcards.location}}/maternal_mortality_{{wildcards.location}}.ipynb -k python3 {'--engine debug' if debug else ''}
+        mkdir -p ../executed/dhs/{wildcards.location}/
+        papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3 {papermill_engine}
         """
 
 rule prep_vehicle:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_vehicle.ipynb",
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
-        ]
+        ], frozen)
     log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
     output: 
         [
@@ -59,11 +68,11 @@ rule prep_vehicle:
             "0100_data_prep/results/iron/fortification_birthweight_effects.csv",
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd extraction
         mkdir -p ../executed/extraction/
-        papermill prep_vehicle.ipynb ../executed/extraction/prep_vehicle.ipynb -k python3 {'--engine debug' if debug else ''}
+        papermill prep_vehicle.ipynb ../executed/extraction/prep_vehicle.ipynb -k python3 {papermill_engine}
         """
 
 vehicle_specific_data_needs = [
@@ -117,37 +126,37 @@ for (location, vehicle, fortificant, intervention_scenario) in config_utils.get_
 
 rule prep_hces:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/hces/01_extract_hces.ipynb",
-        ]
+        ], frozen)
     log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
     output: 
         hces_output_files + ['0100_data_prep/hces/india_rice_fortifiability_disparities.csv', '0100_data_prep/hces/india_proportion_government_rice.csv']
     shell:
-        f"""
+        """
         {common_setup}
         cd hces
         mkdir -p ../executed/hces/
-        papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3 {'--engine debug' if debug else ''}
+        papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3 {papermill_engine}
         """
 
 rule prep_extracted:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_extracted.ipynb",
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
             '0100_data_prep/hces/india_rice_fortifiability_disparities.csv',
             '0100_data_prep/hces/india_proportion_government_rice.csv',
-        ]
+        ], frozen)
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 
         extracted_output_files
     shell:
-        f"""
+        """
         {common_setup}
         cd extraction
         mkdir -p ../executed/extraction/
-        papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3 {'--engine debug' if debug else ''}
+        papermill prep_extracted.ipynb ../executed/extraction/prep_extracted.ipynb -k python3 {papermill_engine}
         """
 
 # for location in locations:
@@ -161,10 +170,10 @@ rule prep_extracted:
 # NOTE: I tried to define these three in a for loop, but: https://github.com/snakemake/snakemake/issues/2178
 rule calculate_effective_coverage_nigeria:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
             "0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv",
-        ] + hces_output_files + extracted_output_files
+        ] + hces_output_files + extracted_output_files, frozen)
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
     output:
         [
@@ -174,19 +183,19 @@ rule calculate_effective_coverage_nigeria:
             for intervention_scenario in config["custom_intervention_scenarios"].get("nigeria", ["intervention"])
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd coverage_calculation
-        mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/{{wildcards.vehicle}}/nigeria/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/{{wildcards.vehicle}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {{wildcards.fortificant}} -p vehicle {{wildcards.vehicle}} {'--engine debug' if debug else ''}
+        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/nigeria/
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
         """
 
 rule calculate_effective_coverage_india:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
             "0100_data_prep/results/wealth_quintile_probabilities/india.csv",
-        ] + hces_output_files + extracted_output_files
+        ] + hces_output_files + extracted_output_files, frozen)
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
     output:
         [
@@ -196,19 +205,19 @@ rule calculate_effective_coverage_india:
             for intervention_scenario in config["custom_intervention_scenarios"].get("india", ["intervention"])
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd coverage_calculation
-        mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/{{wildcards.vehicle}}/india/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/{{wildcards.vehicle}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {{wildcards.fortificant}} -p vehicle {{wildcards.vehicle}} {'--engine debug' if debug else ''}
+        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/india/
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
         """
 
 rule calculate_effective_coverage_ethiopia:
     input:
-        config["env_input"] + [
+        snakemake_utils.freeze([
             "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
             "0100_data_prep/results/wealth_quintile_probabilities/ethiopia.csv",
-        ] + hces_output_files + extracted_output_files
+        ] + hces_output_files + extracted_output_files, frozen)
     log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
     output:
         [
@@ -218,15 +227,15 @@ rule calculate_effective_coverage_ethiopia:
             for intervention_scenario in config["custom_intervention_scenarios"].get("ethiopia", ["intervention"])
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd coverage_calculation
-        mkdir -p ../executed/coverage_calculation/{{wildcards.fortificant}}/ethiopia/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{{wildcards.fortificant}}/{{wildcards.vehicle}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {{wildcards.fortificant}} -p vehicle {{wildcards.vehicle}} {'--engine debug' if debug else ''}
+        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/ethiopia/
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
         """
 
 rule population_with_pregnancy_status:
-    input: config["env_input"] + ["0100_data_prep/population/population_with_pregnancy_status.ipynb", "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv"]
+    input: snakemake_utils.freeze(["0100_data_prep/population/population_with_pregnancy_status.ipynb", "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv"], frozen)
     log: f"0100_data_prep/executed/population/{{location}}/population_with_pregnancy_status.ipynb"
     output:
         [
@@ -236,9 +245,9 @@ rule population_with_pregnancy_status:
             "0100_data_prep/results/pregnancy/prevalence/{location}.csv",
         ]
     shell:
-        f"""
+        """
         {common_setup}
         cd population
-        mkdir -p ../executed/population/{{wildcards.location}}/
-        papermill population_with_pregnancy_status.ipynb ../executed/population/{{wildcards.location}}/population_with_pregnancy_status.ipynb -k python3 -p location {{wildcards.location}} {'--engine debug' if debug else ''}
+        mkdir -p ../executed/population/{wildcards.location}/
+        papermill population_with_pregnancy_status.ipynb ../executed/population/{wildcards.location}/population_with_pregnancy_status.ipynb -k python3 -p location {wildcards.location} {papermill_engine}
         """

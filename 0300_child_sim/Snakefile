@@ -1,90 +1,139 @@
-from snakemake.io import directory
+import glob
+
+from snakemake.io import ancient
+
+from lsff_utils import paths, snakemake_utils
 
 debug = config["debug"]
 local = config["local"]
 full_scale = config["full_scale"]
 
+# Recipes are plain strings and Snakemake does the interpolation -- never
+# f-strings. See "Recipes are not f-strings" in the root Snakefile. Anything a
+# recipe needs that has to be computed in Python is named here instead, so the
+# recipe can reference it as `{name}`; anything that has to be computed from the
+# wildcards goes in the rule's `params`, which is the only interpolation
+# Snakemake resolves per job.
+artifact_setup = config["artifact_env_setup"]
+simulation_setup = config["simulation_env_setup"]
+artifact_debug = "--pdb -vvv" if debug else ""
+psimulate_debug = "--pdb -vvv" if debug and not local else ""
+cluster_args = "" if debug or local else "-P proj_simscience -m 2 -r 01:00:00 -q all.q"
+# `simulate` in debug (one process, in the foreground), `psimulate` otherwise,
+# and `local_psimulate.py` when a run is kept off the cluster entirely.
+simulate_command = (
+    ("python ../local_" if local else "")
+    + ("p" if not debug else "")
+    + "simulate"
+    + (".py" if local else " run")
+)
+# debug runs a single branch, so it takes no branch configuration at all.
+lbwsg_paf_branches_file = "src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml"
+lbwsg_paf_branches_arg = "" if debug else lbwsg_paf_branches_file
+child_branches_file = (
+    "src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios"
+    + ("_small" if not full_scale else "")
+    + ".yaml"
+)
+child_branches_arg = "" if debug else child_branches_file
+
+# See lsff_utils.paths. The child artifact and its simulation output are keyed on
+# MODEL_NUMBER; the two LBWSG PAF steps are keyed on PAF_MODEL_NUMBER instead.
+CHILD_ARTIFACT = str(paths.CHILD_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
+CHILD_RUN_MARKER = snakemake_utils.run_marker(
+    paths.CHILD_RESULTS_ROOT, "{location}", "{vehicle}"
+)
+
+LBWSG_PAF_ARTIFACT = str(paths.LBWSG_PAF_ARTIFACT_ROOT / "{location}.hdf")
+LBWSG_PAF_RUN_MARKER = snakemake_utils.run_marker(paths.LBWSG_PAF_RESULTS_ROOT, "{location}")
+
+# The PAF calculation is the most expensive step in the pipeline and its inputs
+# move far less often than the model does, so it is rerun only when
+# PAF_MODEL_NUMBER is bumped -- which repoints these outputs at a directory that
+# does not exist yet, and so schedules the work. Everything the two PAF rules
+# read is therefore marked `ancient()`: Snakemake stops comparing those mtimes
+# against the outputs, and editing the child package no longer drags the PAFs
+# along with it. Bump PAF_MODEL_NUMBER when a change *should* recompute them.
 rule artifact_for_lbwsg_pafs:
-    input: config["env_input"] + ["0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py"]
-    output: ["0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf"]
+    input: ancient("0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py")
+    output: [LBWSG_PAF_ARTIFACT]
     shell:
-        f"""
-        {config["env_setup"]}
-        cd 0300_child_sim
-        rm -f lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf
-        export PYTHONPATH=./src
-        python src/vivarium_gates_lsff_2026_child/tools/cli.py -o ./lbwsg_paf_mean_draw_artifacts -l {{wildcards.location}} --for-lbwsg-pafs --national -a --mean {'--pdb -vvv' if debug else ''}
+        """
+        {artifact_setup}
+        rm -f {output}
+        make_artifacts -p child -o {paths.LBWSG_PAF_ARTIFACT_ROOT} -l {wildcards.location} --for-lbwsg-pafs --national -a --mean {artifact_debug}
         """
 
 rule lbwsg_pafs:
-    input: config["simulation_running_env_input"] + ["0300_child_sim/lbwsg_paf_mean_draw_artifacts/{location}.hdf", "0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml", "0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml"]
-    output: ["0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet"]
-    shell:
-        f"""
-        {config["simulation_running_env_setup"]}
-        cd 0300_child_sim
-        rm -rf lbwsg_pafs/{{wildcards.location}} || true
-        sleep 5
-        rm -rf lbwsg_pafs/{{wildcards.location}}
-        rm -f dump.rdb
-        export PYTHONPATH=./src
-        {'python ../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {'src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml' if not debug else ''} -i lbwsg_paf_mean_draw_artifacts/{{wildcards.location}}.hdf -o lbwsg_pafs/ {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
-        mv lbwsg_pafs/{{wildcards.location}}/*/results/*.parquet lbwsg_pafs/{{wildcards.location}}
-        """
-
-
-rule child_artifacts:
-    input: 
-        config["env_input"] + [
-            "0300_child_sim/lbwsg_pafs/{location}/calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate.parquet",
-            "0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py",
-            "0200_pregnancy_sim/sim_results/{vehicle}/{location}/births.parquet",
-            "0100_data_prep/results/birth_weight_disparities/{location}.csv",
-            "0100_data_prep/results/iron/fortification_birthweight_effects.csv"
+    input:
+        [
+            ancient(LBWSG_PAF_ARTIFACT),
+            ancient("0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml"),
+            ancient("0300_child_sim/" + lbwsg_paf_branches_file),
         ]
-    output: ["0300_child_sim/mean_draw_artifacts/{vehicle}/{location}.hdf"]
+    output: [LBWSG_PAF_RUN_MARKER]
+    params:
+        write_marker=lambda wildcards: snakemake_utils.write_run_marker(
+            paths.LBWSG_PAF_RESULTS_ROOT, wildcards.location
+        ),
     shell:
-        f"""
-        {config["env_setup"]}
+        """
+        {simulation_setup}
         cd 0300_child_sim
-        rm -f mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf
-        export PYTHONPATH=./src
-        python src/vivarium_gates_lsff_2026_child/tools/cli.py -o ./mean_draw_artifacts/{{wildcards.vehicle}} -l {{wildcards.location}} --vehicle {{wildcards.vehicle}} --fertility-data-path ../0200_pregnancy_sim/sim_results/{{wildcards.vehicle}}/{{wildcards.location}}/births.parquet --national -a --mean {'--pdb -vvv' if debug else ''}
+        rm -f dump.rdb
+        {simulate_command} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {lbwsg_paf_branches_arg} -i {paths.LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf -o {paths.LBWSG_PAF_RESULTS_ROOT} {cluster_args} {psimulate_debug}
+        rm -f dump.rdb
+        {params.write_marker}
         """
 
-import glob
-code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_2026_child/**/*.py")
+# The child model's population comes from the maternal simulation's birth
+# records, so this reads the maternal run the marker names. `--fertility-data-path`
+# accepts the run root and finds the births data under it, and the loader
+# resolves the PAF results out of LBWSG_PAF_RESULTS_ROOT on its own.
+rule child_artifacts:
+    input:
+        [
+            LBWSG_PAF_RUN_MARKER,
+            "0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py",
+            snakemake_utils.run_marker(paths.MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"),
+            "0100_data_prep/results/birth_weight_disparities/{location}.csv",
+            "0100_data_prep/results/iron/fortification_birthweight_effects.csv",
+        ]
+    output: [CHILD_ARTIFACT]
+    params:
+        maternal_run=lambda wildcards: snakemake_utils.read_run_marker(
+            paths.MATERNAL_RESULTS_ROOT, wildcards.location, wildcards.vehicle
+        ),
+    shell:
+        """
+        {artifact_setup}
+        rm -f {output}
+        make_artifacts -p child -o {paths.CHILD_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} --fertility-data-path {params.maternal_run}/results --national -a --mean {artifact_debug}
+        """
 
+code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_2026_child/**/*.py", recursive=True)
+
+# No `psimulate restart` after a run. It predates jobmon, which retries each task
+# itself (max_attempts) and refuses to resume a finished workflow --
+# WorkflowAlreadyComplete -- so an unconditional restart fails every successful run.
 rule child_simulations:
     input:
-        config["simulation_running_env_input"] + [
-            "0300_child_sim/mean_draw_artifacts/{vehicle}/{location}.hdf",
-            "0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml",
-            "0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios" + ('_small' if not full_scale else '') + ".yaml",
-        ] + code_inputs
-    output:
         [
-            directory("0300_child_sim/sim_results/{vehicle}/{location}/"),
-            "0300_child_sim/sim_results/{vehicle}/{location}/person_time.parquet",
-            "0300_child_sim/sim_results/{vehicle}/{location}/deaths.parquet",
-            "0300_child_sim/sim_results/{vehicle}/{location}/ylds.parquet",
-            "0300_child_sim/sim_results/{vehicle}/{location}/ylls.parquet",
-            "0300_child_sim/sim_results/{vehicle}/{location}/birth_weight_sum.parquet",
-            "0300_child_sim/sim_results/{vehicle}/{location}/live_births.parquet",
-        ]
+            CHILD_ARTIFACT,
+            "0300_child_sim/src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml",
+            "0300_child_sim/" + child_branches_file,
+        ] + code_inputs
+    output: [CHILD_RUN_MARKER]
+    params:
+        write_marker=lambda wildcards: snakemake_utils.write_run_marker(
+            paths.CHILD_RESULTS_ROOT, wildcards.location, wildcards.vehicle
+        ),
     shell:
-        f"""
-        {config["simulation_running_env_setup"]}
+        """
+        {simulation_setup}
         cd 0300_child_sim
-        # NFS sometimes doesn't delete right away
-        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}} || true
-        sleep 5
-        rm -rf sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
-        mkdir -p sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
-        cd sim_results/{{wildcards.vehicle}}/{{wildcards.location}}
-        export PYTHONPATH=../../../src
-        {'python ../../../../local_' if local else ''}{'p' if not debug else ''}simulate{'.py' if local else ' run'} ../../../src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {'../../../src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios' + ('_small' if not full_scale else '') + '.yaml' if not debug else ''} -i ../../../mean_draw_artifacts/{{wildcards.vehicle}}/{{wildcards.location}}.hdf -o .. {'-P proj_simscience -m 2 -r 01:00:00 -q all.q' if not debug and not local else ''} {'--pdb -vvv' if debug and not local else ''}
         rm -f dump.rdb
-        {'# ' if debug or local else ''}psimulate restart * -P proj_simscience -m 2 -r 01:00:00 -q all.q
-        mv ./*/results/*.parquet .
+        {simulate_command} src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {child_branches_arg} -i {paths.CHILD_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {paths.CHILD_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
+        rm -f dump.rdb
+        {params.write_marker}
         """
