@@ -99,7 +99,13 @@ workflow = ["snakemake>=8.16,<9"]
 # The artifact env is hard-capped to pandas<2.0 via vivarium-inputs -> vivarium-gbd-access
 # -> ihme-cc-dependencies, so a floor on either path is unresolvable. build-env installs
 # [dev] for type=simulation and [data] for type=artifact.
-simulation = ["pandas>=2.2.1"]
+simulation = [
+    "pandas>=2.2.1",
+    # Live-sim V&V (5000_analyze_results/validation/child_model/child_lbwsg.ipynb) runs
+    # FuzzyChecker inside the simulation env; the full vivarium-validation stack stays on
+    # the artifact path.
+    "vivarium-fuzzy-checker>=0.3.0",
+]
 dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,simulation,notebooks,workflow]"]
 
 [project.urls]
