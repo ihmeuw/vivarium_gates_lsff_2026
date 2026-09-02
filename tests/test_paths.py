@@ -11,14 +11,34 @@ that to work, and neither is obvious from reading a single file:
   psimulate's per-run metadata.
 """
 
+import importlib.util
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from lsff_utils import paths
+import lsff_utils.paths
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _load_paths_from_checkout():
+    """Load ``paths`` from this checkout rather than from wherever it is installed.
+
+    These invariants are properties of the source layout, and ``paths.REPO_ROOT``
+    is derived from ``__file__``. Under an editable install that is the checkout,
+    but CI installs a copy into site-packages, where ``REPO_ROOT`` resolves to
+    ``<env>/lib/pythonX.Y`` and every in-repo root becomes meaningless. Loading
+    the file by path makes these tests independent of the install mode.
+    """
+    source = REPO_ROOT / "src" / "lsff_utils" / "paths.py"
+    spec = importlib.util.spec_from_file_location("_lsff_paths_under_test", source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+paths = _load_paths_from_checkout()
 
 # Every root the pipeline writes to, and whether runs land in timestamped
 # subdirectories underneath it.
@@ -33,7 +53,22 @@ IN_REPO_ROOTS = {
 
 
 def test_repo_root_is_this_repository() -> None:
-    assert paths.REPO_ROOT == REPO_ROOT, (
+    """``REPO_ROOT`` must resolve to the checkout the module was loaded from.
+
+    Checked against the *installed* ``lsff_utils`` when that is this checkout --
+    i.e. an editable install. A non-editable install puts a copy in
+    site-packages, where ``REPO_ROOT`` cannot resolve to a repository at all;
+    that is an environment property rather than a defect in the layout, so it
+    skips instead of failing.
+    """
+    installed = Path(lsff_utils.paths.__file__).resolve()
+    if REPO_ROOT not in installed.parents:
+        pytest.skip(
+            f"lsff_utils is imported from {installed.parent}, not this checkout, "
+            f"so REPO_ROOT cannot resolve to a repository. Install editable to "
+            f"exercise this."
+        )
+    assert lsff_utils.paths.REPO_ROOT == REPO_ROOT, (
         "paths.REPO_ROOT is derived from __file__; it has drifted from the "
         "repository this test lives in, which usually means the module moved."
     )
