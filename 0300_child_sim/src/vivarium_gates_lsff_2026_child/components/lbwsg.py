@@ -128,6 +128,10 @@ class LBWSGLineList(LBWSGRisk):
         Falls back to the base implementation when there are no line list records,
         which is the case for the (empty) initial population.
         """
+        # LBWSGRisk._single_axis_ppf is not empty-index safe: empty Series.apply
+        # keeps the string dtype, so it subtracts two empty string arrays.
+        if index.empty:
+            return pd.DataFrame(columns=AXES, dtype=float, index=index)
         if self.new_births is None:
             return super()._get_birth_exposure_source(index)
         return self.new_births.loc[index, AXES]

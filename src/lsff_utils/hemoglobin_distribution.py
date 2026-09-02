@@ -32,6 +32,9 @@ def hemoglobin_cdf_from_mean_sd(mean, sd):
 
     def cdf(x):
         gamma_cdf = hemoglobin_distribution_gamma_part.cdf(x)
+        # No `1 -` here: the reversed mirror-gumbel CDF (risk_distributions#62) is
+        # fixed as of vivarium.risk_distributions 3.1.8, so compensating would invert
+        # a correct value. 0400's test_pdfs_cdfs_consistency catches a regression.
         mgumbel_cdf = hemoglobin_distribution_mgumbel_part.cdf(x)
         return (
             GAMMA_DISTRIBUTION_WEIGHT * gamma_cdf

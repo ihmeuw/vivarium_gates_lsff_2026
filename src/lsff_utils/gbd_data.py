@@ -31,7 +31,10 @@ from functools import cache
 import loguru
 import vivarium_gbd_access.utilities as vgu
 from joblib import Memory
+from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
+from vivarium_gbd_access.gbd import base_data as gbd_base_data
+from vivarium_gbd_access.gbd import demographics as gbd_demographics
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
@@ -361,7 +364,9 @@ def reshape_to_vivarium_format(df, location, verbosity=None):
         return df
 
 
-def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosity=None):
+def pull_modelable_entity_draws(
+    me_id, location, year=None, draws=None, version_id=None, verbosity=None
+):
     """Pull draws for a modelable entity, reshaped to the Vivarium convention.
 
     Named to match :func:`pull_sequelae_prevalence` rather than the
@@ -383,6 +388,12 @@ def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosit
         entities return 1,000 raw draws, so this truncates to the first 250 --
         matching what ``vivarium_inputs`` returns for the measures these get
         combined with.
+    version_id
+        Model version to pull, pinned. Omit to let ``vivarium_gbd_access``
+        resolve the best version itself -- which is the normal path, and cached.
+        Pass one to skip that resolution: it goes through rotisserie, which has
+        no rotation context for custom modelable entities and raises
+        ``RotisserieNotFoundError``. See the NOTE at the call below.
     verbosity
         A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
         when already inside a :func:`quiet_gbd_logs` block -- the outermost
@@ -403,9 +414,30 @@ def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosit
             draws = DRAWS
 
         location_id = utility_data.resolve_location(location.title())
-        result = gbd.get_modelable_entity_draws(
-            me_id=me_id, location_id=location_id, year_id=year, data_type="draws"
-        )
+        if version_id is None:
+            result = gbd.get_modelable_entity_draws(
+                me_id=me_id, location_id=location_id, year_id=year, data_type="draws"
+            )
+        else:
+            # NOTE: gbd.get_modelable_entity_draws takes no version_id, so pinning one
+            # means calling get_draws the way that function does and adding the pin.
+            # Two consequences: this path is not joblib-cached (that decorator is on the
+            # function being bypassed), and the argument list is duplicated from
+            # vivarium_gbd_access.gbd.base_data.get_modelable_entity_draws -- check it
+            # still matches if a pull starts returning something unexpected.
+            # TODO: drop this branch once get_modelable_entity_draws accepts version_id,
+            # or once rotisserie resolves custom modelable entities.
+            result = gbd_base_data.get_draws(
+                gbd_id_type="modelable_entity_id",
+                gbd_id=me_id,
+                source=gbd_constants.SOURCES.EPI,
+                location_id=location_id,
+                sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+                age_group_id=gbd_demographics.get_age_group_id(),
+                release_id=gbd_constants.CURRENT_RELEASE_ID,
+                year_id=year,
+                version_id=version_id,
+            )
         return (
             reshape_to_vivarium_format(result, location.title())
             .droplevel(_ME_METADATA_LEVELS)[draws]
