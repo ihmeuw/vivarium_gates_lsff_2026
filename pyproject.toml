@@ -6,7 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "vivarium_gates_lsff_2026"
 description = "Vivarium simulation model for the vivarium_gates_lsff_2026 project."
 readme = "README.rst"
-requires-python = ">=3.10"
+# 3.11 floor, not 3.10: the `workflow` extra needs snakemake>=8.16, which requires
+# 3.11. The two environments `environment.sh` builds are 3.11 and 3.12 anyway.
+requires-python = ">=3.11"
 license = {text = "BSD-3-Clause"}
 authors = [{name = "The vivarium developers", email = "vivarium.dev@gmail.com"}]
 # NOTE: Static, like the sub-packages. This repo carries no git tags, so setuptools_scm
@@ -48,6 +50,27 @@ data = [
     # Automated V&V (5000_analyze_results/validation) runs in the artifact env, so it
     # belongs on this path -- see the [validation] extra below.
     "vivarium_gates_lsff_2026[validation]",
+    # Every papermill-driven stage of the Snakemake pipeline runs in the artifact
+    # environment, so the notebook dependencies belong on this path too.
+    "vivarium_gates_lsff_2026[notebooks]",
+    # IHME-internal, and only resolvable from the IHME package index. Confined to
+    # this extra because it is reachable only on the artifact path; the data-prep
+    # notebooks import it directly rather than through vivarium_inputs.
+    "db_queries",
+]
+# Dependencies of the notebooks Snakemake runs through papermill (0100_data_prep,
+# 0400, 0500 and 5000_analyze_results). These were previously listed in
+# requirements.txt and installed into a Snakemake-built venv; the pipeline now runs
+# in the environments environment.sh builds, so they have to be declared here to be
+# installed at all.
+notebooks = [
+    "papermill",
+    "ploomber-engine",  # Provides papermill's `--engine debug`, used by the debug profile.
+    "openpyxl",  # Reads the extraction workbook.
+    "xlsxwriter",  # Writes results_spreadsheet.xlsx.
+    "statsmodels",
+    "scikit-learn",
+    "vivarium_gates_lsff_2026[interactive]",
 ]
 interactive = ["vivarium-dependencies[interactive]"]
 # Automated V&V notebooks under 5000_analyze_results/validation.
@@ -62,6 +85,16 @@ validation = [
     "jupyterlab",
 ]
 lint = ["vivarium-dependencies[lint]"]
+# Snakemake drives the pipeline. It lives in the simulation environment rather
+# than one of its own because it does not need one: a rule's recipe activates the
+# environment that stage needs in its own subshell, so the environment Snakemake
+# is launched from is never inherited by a stage. Snakemake itself imports only
+# lsff_utils, to resolve paths and read 0050_config.
+# NOTE: The <9 cap is load-bearing, not caution. Snakemake 9 removed `Wildcards`
+# from `snakemake.io`, which 0400_non_pregnant_anemia_model/Snakefile imports to
+# synthesize the wildcards for its Ethiopia-folate variant, so the workflow fails
+# to parse on 9.x. Lifting the cap means rewriting that rule first.
+workflow = ["snakemake>=8.16,<9"]
 # NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
 # The artifact env is hard-capped to pandas<2.0 via vivarium-inputs -> vivarium-gbd-access
 # -> ihme-cc-dependencies, so a floor on either path is unresolvable. build-env installs
@@ -73,7 +106,7 @@ simulation = [
     # the artifact path.
     "vivarium-fuzzy-checker>=0.3.0",
 ]
-dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,simulation]"]
+dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,simulation,notebooks,workflow]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"

@@ -1,68 +1,167 @@
-"""Guard the shared-drive path layout against drift.
+"""Guard the path layout against drift.
 
-The model specifications hardcode the artifact they run against, because YAML
-cannot read :mod:`lsff_utils.paths`. That makes the ``artifact_path`` values a
-second, independent statement of where the current iteration's artifacts live --
-and a stale one points a simulation at a previous iteration's data, which
-produces a successful-looking run against the wrong inputs rather than an error.
+The pipeline writes inside the repository and ``archive_last_run.sh`` publishes a
+run to the team drive under ``MODEL_NUMBER``. Two things have to stay true for
+that to work, and neither is obvious from reading a single file:
 
-These tests fail when a specification and the constants disagree, so bumping
-``MODEL_NUMBER`` without updating the specifications cannot pass silently.
+* the in-repo roots must stay inside the repository, and must *not* carry a model
+  iteration number -- the archive supplies the versioning, and a number in the
+  repo path would put the specifications back in the business of tracking it;
+* the in-repo roots must stay gitignored, because they hold large binaries and
+  psimulate's per-run metadata.
 """
 
+import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
-import yaml
 
-from lsff_utils import paths
+import lsff_utils.paths
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-MATERNAL_PKG = REPO_ROOT / "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal"
-CHILD_PKG = REPO_ROOT / "0300_child_sim/src/vivarium_gates_lsff_2026_child"
 
-# Each specification and the root its artifact is expected to sit in.
-SPEC_ARTIFACT_ROOTS = {
-    MATERNAL_PKG / "model_specifications/model_spec.yaml": paths.MATERNAL_ARTIFACT_ROOT,
-    CHILD_PKG / "model_specifications/model_spec.yaml": paths.CHILD_ARTIFACT_ROOT,
-    CHILD_PKG / "data/lbwsg_paf.yaml": paths.LBWSG_PAF_ARTIFACT_ROOT,
+
+def _load_paths_from_checkout():
+    """Load ``paths`` from this checkout rather than from wherever it is installed.
+
+    These invariants are properties of the source layout, and ``paths.REPO_ROOT``
+    is derived from ``__file__``. Under an editable install that is the checkout,
+    but CI installs a copy into site-packages, where ``REPO_ROOT`` resolves to
+    ``<env>/lib/pythonX.Y`` and every in-repo root becomes meaningless. Loading
+    the file by path makes these tests independent of the install mode.
+    """
+    source = REPO_ROOT / "src" / "lsff_utils" / "paths.py"
+    spec = importlib.util.spec_from_file_location("_lsff_paths_under_test", source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+paths = _load_paths_from_checkout()
+
+# Every root the pipeline writes to, and whether runs land in timestamped
+# subdirectories underneath it.
+IN_REPO_ROOTS = {
+    "MATERNAL_ARTIFACT_ROOT": paths.MATERNAL_ARTIFACT_ROOT,
+    "CHILD_ARTIFACT_ROOT": paths.CHILD_ARTIFACT_ROOT,
+    "MATERNAL_RESULTS_ROOT": paths.MATERNAL_RESULTS_ROOT,
+    "CHILD_RESULTS_ROOT": paths.CHILD_RESULTS_ROOT,
+    "LBWSG_PAF_ARTIFACT_ROOT": paths.LBWSG_PAF_ARTIFACT_ROOT,
+    "LBWSG_PAF_RESULTS_ROOT": paths.LBWSG_PAF_RESULTS_ROOT,
 }
 
 
-def _artifact_path(spec_path: Path) -> Path:
-    with spec_path.open() as f:
-        spec = yaml.safe_load(f)
-    return Path(spec["configuration"]["input_data"]["artifact_path"])
+def test_repo_root_is_this_repository() -> None:
+    """``REPO_ROOT`` must resolve to the checkout the module was loaded from.
 
-
-@pytest.mark.parametrize(
-    "spec_path, expected_root",
-    SPEC_ARTIFACT_ROOTS.items(),
-    ids=lambda p: p.name if isinstance(p, Path) and p.suffix == ".yaml" else None,
-)
-def test_spec_artifact_path_matches_constants(spec_path: Path, expected_root: Path) -> None:
-    rel = spec_path.relative_to(REPO_ROOT)
-    assert spec_path.exists(), f"specification has moved: {rel}"
-    assert _artifact_path(spec_path).parent == expected_root, (
-        f"{rel} points at a different artifact root than lsff_utils.paths expects. "
-        f"If MODEL_NUMBER was just bumped, update the artifact_path in this file."
+    Checked against the *installed* ``lsff_utils`` when that is this checkout --
+    i.e. an editable install. A non-editable install puts a copy in
+    site-packages, where ``REPO_ROOT`` cannot resolve to a repository at all;
+    that is an environment property rather than a defect in the layout, so it
+    skips instead of failing.
+    """
+    installed = Path(lsff_utils.paths.__file__).resolve()
+    if REPO_ROOT not in installed.parents:
+        pytest.skip(
+            f"lsff_utils is imported from {installed.parent}, not this checkout, "
+            f"so REPO_ROOT cannot resolve to a repository. Install editable to "
+            f"exercise this."
+        )
+    assert lsff_utils.paths.REPO_ROOT == REPO_ROOT, (
+        "paths.REPO_ROOT is derived from __file__; it has drifted from the "
+        "repository this test lives in, which usually means the module moved."
     )
 
 
-def test_model_number_appears_in_every_root() -> None:
-    """A root that does not carry MODEL_NUMBER will not move between iterations."""
-    iteration_roots = {
-        "MATERNAL_ARTIFACT_ROOT": paths.MATERNAL_ARTIFACT_ROOT,
-        "CHILD_ARTIFACT_ROOT": paths.CHILD_ARTIFACT_ROOT,
-        "MATERNAL_RESULTS_ROOT": paths.MATERNAL_RESULTS_ROOT,
-        "CHILD_RESULTS_ROOT": paths.CHILD_RESULTS_ROOT,
-        "LBWSG_PAF_ARTIFACT_ROOT": paths.LBWSG_PAF_ARTIFACT_ROOT,
-        "LBWSG_PAF_RESULTS_ROOT": paths.LBWSG_PAF_RESULTS_ROOT,
-    }
-    for name, root in iteration_roots.items():
-        assert paths.MODEL_NUMBER in root.parts, f"{name} is not iteration-specific"
+@pytest.mark.parametrize("name, root", IN_REPO_ROOTS.items())
+def test_roots_are_inside_the_repository(name: str, root: Path) -> None:
+    assert paths.REPO_ROOT in root.parents, f"{name} is not inside the repository"
+
+
+@pytest.mark.parametrize("name, root", IN_REPO_ROOTS.items())
+def test_roots_do_not_carry_the_model_number(name: str, root: Path) -> None:
+    """A number in an in-repo path would make every iteration move these roots.
+
+    That is the archive's job. It also drags the model specifications along, since
+    YAML cannot read these constants and has to restate the artifact path.
+    """
+    assert paths.MODEL_NUMBER not in root.parts, (
+        f"{name} carries MODEL_NUMBER. The in-repo layout is iteration-agnostic; "
+        f"MODEL_NUMBER labels the archive only."
+    )
+
+
+@pytest.mark.parametrize("name, root", IN_REPO_ROOTS.items())
+def test_roots_are_gitignored(name: str, root: Path) -> None:
+    """Pipeline output must never be committable.
+
+    ``git check-ignore`` is the authority here rather than reading .gitignore,
+    because the patterns are directory-anchored and precedence matters.
+    """
+    probe = root / "probe.parquet"
+    result = subprocess.run(
+        ["git", "check-ignore", "-q", str(probe)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    assert result.returncode == 0, (
+        f"{name} is not gitignored ({probe.relative_to(REPO_ROOT)}). Pipeline "
+        f"output would be committable."
+    )
 
 
 def test_lbwsg_paf_inputs_and_child_artifact_are_distinct() -> None:
     """The PAF calculation's artifact holds a different key set from the child's."""
     assert paths.LBWSG_PAF_ARTIFACT_ROOT != paths.CHILD_ARTIFACT_ROOT
+
+
+def test_archive_target_is_the_team_drive() -> None:
+    """The archive is the versioned, shared record; it does not live in the repo."""
+    assert paths.TEAM_ARCHIVE_ROOT.is_absolute()
+    assert paths.REPO_ROOT not in paths.TEAM_ARCHIVE_ROOT.parents
+    assert paths.MODEL_NUMBER, "MODEL_NUMBER labels the archive and cannot be empty"
+
+
+def test_run_marker_sits_beside_the_run_directories() -> None:
+    """`latest_run` and the archive script both rely on this arrangement."""
+    root = paths.run_root(paths.MATERNAL_RESULTS_ROOT, "Nigeria", "rice")
+    marker = paths.run_marker(paths.MATERNAL_RESULTS_ROOT, "Nigeria", "rice")
+
+    assert marker.parent == root
+    assert marker.name == paths.RUN_MARKER_NAME
+    # Locations are lowercased and de-spaced so a wildcard and a display name
+    # resolve to the same directory.
+    assert root.name == "nigeria"
+
+
+MATERNAL_PKG = REPO_ROOT / "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal"
+CHILD_PKG = REPO_ROOT / "0300_child_sim/src/vivarium_gates_lsff_2026_child"
+
+SPECS = [
+    MATERNAL_PKG / "model_specifications/model_spec.yaml",
+    CHILD_PKG / "model_specifications/model_spec.yaml",
+    CHILD_PKG / "data/lbwsg_paf.yaml",
+]
+
+
+@pytest.mark.parametrize("spec_path", SPECS, ids=lambda p: str(p.parent.name))
+def test_specs_do_not_hardcode_an_artifact(spec_path: Path) -> None:
+    """The artifact comes from -i, never from the specification.
+
+    Any value written here is an absolute path into one working tree: wrong for
+    every other clone, and silently stale once the layout moves -- which produces
+    a successful-looking run against the wrong inputs rather than an error. The
+    Snakemake rules always pass -i, and a run's own model_specification.yaml
+    records what it actually used.
+    """
+    import yaml
+
+    assert spec_path.exists(), f"specification has moved: {spec_path.relative_to(REPO_ROOT)}"
+    with spec_path.open() as f:
+        spec = yaml.safe_load(f)
+
+    assert "artifact_path" not in spec["configuration"]["input_data"], (
+        f"{spec_path.relative_to(REPO_ROOT)} hardcodes an artifact_path. Pass the "
+        f"artifact with -i instead."
+    )

@@ -10,12 +10,9 @@ MODEL_SPEC_DIR = BASE_DIR / "model_specifications"
 RAW_DATA_DIR = BASE_DIR / "data/raw_data"
 DATA_PREP_RESULTS_ROOT = BASE_DIR / ".." / ".." / ".." / "0100_data_prep" / "results"
 
-# Shared-drive locations for the current model iteration, re-exported from
-# lsff_utils.paths so this package and the maternal package cannot drift apart.
-# NOTE: model_specifications/model_spec.yaml hardcodes CHILD_ARTIFACT_ROOT and
-# data/lbwsg_paf.yaml hardcodes LBWSG_PAF_ARTIFACT_ROOT; YAML cannot read these
-# constants, so both need updating when MODEL_NUMBER changes. tests/test_paths.py
-# fails if they drift.
+# In-repo locations, re-exported from lsff_utils.paths so this package and the
+# maternal package cannot drift apart. The specifications no longer name an
+# artifact: it is always supplied with -i.
 CHILD_ARTIFACT_ROOT = shared_paths.CHILD_ARTIFACT_ROOT
 CHILD_RESULTS_ROOT = shared_paths.CHILD_RESULTS_ROOT
 LBWSG_PAF_ARTIFACT_ROOT = shared_paths.LBWSG_PAF_ARTIFACT_ROOT
