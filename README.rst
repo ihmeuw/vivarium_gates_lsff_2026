@@ -181,6 +181,34 @@ or remove the destination by hand, deliberately.
 
 ``-n`` shows what would be copied without changing anything.
 
+Reading an archived iteration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Anything reading a published iteration -- the V&V notebooks under
+``5000_analyze_results/validation/`` -- names the in-repo root it wants and lets
+``lsff_utils.paths.archive_root`` supply the rest, rather than restating the
+archive layout::
+
+    from lsff_utils import paths
+
+    location, vehicle = "nigeria", "bouillon"
+    model_number = paths.MODEL_NUMBER  # or an older label, to read a previous iteration
+
+    artifact = paths.artifact_path(
+        paths.archive_root(paths.CHILD_ARTIFACT_ROOT, model_number), location, vehicle
+    )
+    results = paths.latest_results(
+        paths.archive_root(paths.CHILD_RESULTS_ROOT, model_number), location, vehicle
+    )
+
+The archive keeps the layout below each root, and the archive script copies
+``latest_run.txt`` across, so ``latest_run`` and ``latest_results`` resolve the
+published run on the archive exactly as they do in the repository -- no run
+timestamp has to be pasted into a notebook, and none has to be updated after a
+rerun. Bumping ``MODEL_NUMBER`` for the next iteration repoints every notebook
+along with the pipeline; ``paths.archived_model_numbers()`` lists what has been
+published.
+
 Knowing what produced a run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
