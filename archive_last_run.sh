@@ -6,10 +6,18 @@
 # makes a run visible to everyone else and keeps it as the versioned record. What
 # gets copied:
 #
-#   <repo>/artifacts/...                 -> <team>/artifacts/<MODEL_NUMBER>/...
-#   <repo>/data/lbwsg_paf_artifacts/...  -> <team>/data/<MODEL_NUMBER>/lbwsg_paf_artifacts/...
-#   <repo>/results/<..>/<run>/           -> <team>/results/<MODEL_NUMBER>/<..>/<run>/
-#   <repo>/data/lbwsg_pafs/<..>/<run>/   -> <team>/data/<MODEL_NUMBER>/lbwsg_pafs/<..>/<run>/
+#   0200_pregnancy_sim/mean_draw_artifacts/         -> artifacts/<M>/maternal/
+#   0300_child_sim/mean_draw_artifacts/             -> artifacts/<M>/child/
+#   0300_child_sim/lbwsg_paf_mean_draw_artifacts/   -> data/<M>/lbwsg_paf_artifacts/
+#   0300_child_sim/lbwsg_pafs/<..>/<run>/           -> data/<M>/lbwsg_pafs/<..>/<run>/
+#   0200_pregnancy_sim/sim_results/<..>/<run>/      -> results/<M>/maternal/<..>/<run>/
+#   0300_child_sim/sim_results/<..>/<run>/          -> results/<M>/child/<..>/<run>/
+#
+# -- relative to the repository on the left and to TEAM_ARCHIVE_ROOT on the
+# right, with <M> standing in for MODEL_NUMBER. The mapping is not derived from
+# the path: the repository groups outputs by producing package, the archive by
+# kind and iteration, so paths.ARCHIVE_DESTINATIONS declares it and this script
+# reads it from there.
 #
 # Simulation output is copied one run at a time: only the run each latest_run.txt
 # names, which is the run Snakemake considers current and the one the downstream
