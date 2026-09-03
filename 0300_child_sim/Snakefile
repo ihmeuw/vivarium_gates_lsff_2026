@@ -112,9 +112,6 @@ rule child_artifacts:
 
 code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_2026_child/**/*.py", recursive=True)
 
-# No `psimulate restart` after a run. It predates jobmon, which retries each task
-# itself (max_attempts) and refuses to resume a finished workflow --
-# WorkflowAlreadyComplete -- so an unconditional restart fails every successful run.
 rule child_simulations:
     input:
         [
