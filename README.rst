@@ -316,9 +316,9 @@ assembles the child model's inputs, folding in the maternal birth records as the
 fertility key and the PAF computed in stage 4.
 
 Name the maternal run explicitly so the artifact records which run produced it.
-The PAF results are found automatically under ``data/lbwsg_pafs/``; the build
-logs which run it used and takes the most recent, so check that line when more
-than one is present.
+The PAF results are found automatically under ``0300_child_sim/lbwsg_pafs/``;
+the build logs which run it used and takes the most recent, so check that line
+when more than one is present.
 
 :Reads: maternal ``births`` (stage 2), PAF results (stage 4),
         ``0100_data_prep/results/`` CSVs, GBD
@@ -404,8 +404,9 @@ has ``snakemake``::
 
 **Always dry-run first.** ``-n`` prints the stages it would run without running
 any of them, which is the cheapest way to confirm it agrees with you about what
-is already done. It is also how you check that a bumped ``MODEL_NUMBER`` picked
-up the PAFs from the previous iteration instead of scheduling them again.
+is already done -- in particular that the expensive PAF stages are not about to
+be scheduled again. See "Starting a New Model Iteration" for what does and does
+not trigger a rebuild.
 
 Build one thing, and only its prerequisites, by naming the file you want::
 

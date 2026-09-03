@@ -37,8 +37,8 @@ child_branches_file = (
 )
 child_branches_arg = "" if debug else child_branches_file
 
-# See lsff_utils.paths. The child artifact and its simulation output are keyed on
-# MODEL_NUMBER; the two LBWSG PAF steps are keyed on PAF_MODEL_NUMBER instead.
+# See lsff_utils.paths for the layout these four resolve against. None of them
+# carries a model iteration number: the archive supplies the versioning.
 CHILD_ARTIFACT = str(paths.CHILD_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
 CHILD_RUN_MARKER = snakemake_utils.run_marker(
     paths.CHILD_RESULTS_ROOT, "{location}", "{vehicle}"
@@ -48,12 +48,11 @@ LBWSG_PAF_ARTIFACT = str(paths.LBWSG_PAF_ARTIFACT_ROOT / "{location}.hdf")
 LBWSG_PAF_RUN_MARKER = snakemake_utils.run_marker(paths.LBWSG_PAF_RESULTS_ROOT, "{location}")
 
 # The PAF calculation is the most expensive step in the pipeline and its inputs
-# move far less often than the model does, so it is rerun only when
-# PAF_MODEL_NUMBER is bumped -- which repoints these outputs at a directory that
-# does not exist yet, and so schedules the work. Everything the two PAF rules
-# read is therefore marked `ancient()`: Snakemake stops comparing those mtimes
-# against the outputs, and editing the child package no longer drags the PAFs
-# along with it. Bump PAF_MODEL_NUMBER when a change *should* recompute them.
+# move far less often than the model does, so everything the two PAF rules read
+# is marked `ancient()`: Snakemake stops comparing those mtimes against the
+# outputs, and editing the child package no longer drags the PAFs along with it.
+# To recompute them deliberately, `--forcerun` these rules or clear their roots;
+# see "Starting a New Model Iteration" in the README.
 rule artifact_for_lbwsg_pafs:
     input: ancient("0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py")
     output: [LBWSG_PAF_ARTIFACT]
