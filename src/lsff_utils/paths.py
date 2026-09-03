@@ -27,6 +27,12 @@ are working on; ``archive_last_run.sh`` publishes it to the team drive under
     |-- data/<MODEL_NUMBER>/{lbwsg_paf_artifacts,lbwsg_pafs}/
     `-- results/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>/<run>/
 
+:func:`archive_root` maps an in-repo root to its archived counterpart, so a
+reader of a published iteration -- the V&V notebooks -- names the root it wants
+and lets :data:`MODEL_NUMBER` supply the rest::
+
+    results = latest_results(archive_root(CHILD_RESULTS_ROOT), location, vehicle)
+
 Because the in-repo paths do not move between iterations, Snakemake no longer
 rebuilds a stage just because a number was bumped -- it reruns on changed inputs
 or changed recipe code, which is what its staleness tracking is for. Starting a
@@ -92,6 +98,37 @@ ARCHIVE_DESTINATIONS = {
 RUN_ROOTS = (MATERNAL_RESULTS_ROOT, CHILD_RESULTS_ROOT, LBWSG_PAF_RESULTS_ROOT)
 
 
+def archive_root(in_repo_root: Path, model_number: str = MODEL_NUMBER) -> Path:
+    """Where ``archive_last_run.sh`` publishes what ``in_repo_root`` holds.
+
+    The inverse of the copy the archive script performs, so anything reading a
+    published iteration -- the V&V notebooks -- names the in-repo root it wants
+    and gets the archived counterpart, rather than restating the archive layout.
+    Everything below the root keeps its shape, so :func:`artifact_path`,
+    :func:`latest_run` and :func:`latest_results` work against either side.
+    """
+    try:
+        kind, subpath = ARCHIVE_DESTINATIONS[in_repo_root]
+    except KeyError:
+        raise KeyError(
+            f"'{in_repo_root}' is not archived. Pass one of the roots in "
+            f"ARCHIVE_DESTINATIONS: {[str(root) for root in ARCHIVE_DESTINATIONS]}."
+        ) from None
+    return TEAM_ARCHIVE_ROOT / kind / model_number / subpath
+
+
+def archived_model_numbers(kind: str = "results") -> list[str]:
+    """Iterations published under one archive kind, oldest label first."""
+    root = TEAM_ARCHIVE_ROOT / kind
+    return sorted(p.name for p in root.glob("*") if p.is_dir())
+
+
+def artifact_path(artifact_root: Path, location: str, vehicle: str | None = None) -> Path:
+    """The artifact for one location (and vehicle, if the root is keyed by one)."""
+    root = artifact_root if vehicle is None else artifact_root / vehicle
+    return root / f"{location.lower().replace(' ', '_')}.hdf"
+
+
 # ---------------------------------------------------------------------------
 # Run directories
 # ---------------------------------------------------------------------------
@@ -141,7 +178,9 @@ def latest_run(results_root: Path, location: str, vehicle: str | None = None) ->
     if not runs:
         raise FileNotFoundError(
             f"No simulation runs found under '{root}'. Expected at least one "
-            f"timestamped run directory, produced by 'psimulate run -o {root.parent}'."
+            f"timestamped run directory, produced by 'psimulate run -o "
+            f"{root.parent}' -- or, under the archive, published there by "
+            f"archive_last_run.sh."
         )
     return runs[-1]
 
