@@ -117,15 +117,23 @@ not a data-prep one.
 
 ## Related: survey landscape as of Sept 2026
 
-Context that motivated this pass, for the other two locations:
+Context that motivated this pass. Full detail, with source-confidence labels, is in
+`0100_data_prep/DATA_SOURCE_SCAN_2026-09.md`.
 
 - **India** — HCES 2023-24 (Aug 2023–Jul 2024, ~262k households) is released; unit-level data
   on microdata.gov.in (catalog 237). NFHS-6 fieldwork ran May 2023–Dec 2024; fact sheets
   released May/Aug 2026, but unit-level recode availability via the DHS Program is unconfirmed.
-- **Nigeria** — NFCMS 2021 remains the newest; no successor survey. Microdata is now catalogued
-  on GHDx, a possible route to reproducing the unpublished Intake tabulations in-house. A
-  *voluntary* multiple-micronutrient bouillon standard was adopted Sept 2024, which complicates
-  the current assumption of zero effective baseline coverage.
+- **Nigeria** — NFCMS 2021 remains the newest nutrition survey and its **microdata does not
+  appear to be publicly obtainable**; the route is a formal request to IITA / FMoH / Intake.
+  (An earlier version of this file said the microdata was catalogued on GHDx and downloadable
+  from there — that was wrong, and is withdrawn.) More promising: **NLSS 2023** (NBS microdata
+  catalog 168) is an LSMS-type survey whose food module captures 7-day *quantities* for ~99
+  items, which would let the wealth-index approach in this notebook transfer to Nigeria —
+  contingent on bouillon appearing in the item list, which is unconfirmed. A *voluntary*
+  multiple-micronutrient bouillon standard was adopted Sept 2024, which complicates the current
+  assumption of zero effective baseline coverage.
 - **Ethiopia** — the salt + folic acid scenario is now an actual national programme rather than
   hypothetical. Two 2025 Tesfaye papers bear on the serum→RBC folate step. The FNS baseline
-  final report still appears unpublished; EPHI is the place to ask.
+  final report still appears unpublished, but the BMJ Open 2023 protocol paper confirms the
+  survey was fielded Jul 2021–Dec 2023 and is the same survey as the FNS baseline — so EPHI is
+  the place to ask, and the data does exist.
