@@ -1346,7 +1346,13 @@ def load_lbwsg_interpolated_rr(key: str, location: str, mean_draw: bool) -> pd.D
         raise ValueError(f"Unrecognized key {key}")
 
     rr = get_data(data_keys.LBWSG.RELATIVE_RISK, location, mean_draw).reset_index()
-    rr["parameter"] = pd.Categorical(rr["parameter"])
+    # The explicit category order is load-bearing: griddata below pairs rr's columns
+    # positionally with the midpoint Series, which is in gbd_mapping's numeric order.
+    # Bare pd.Categorical orders lexicographically ("cat10" < "cat2"), which silently
+    # scrambles every RR onto the wrong birth-weight/gestational-age cell.
+    rr["parameter"] = pd.Categorical(
+        rr["parameter"], [f"cat{i}" for i in range(metadata.DRAW_COUNT)]
+    )
     rr = (
         rr.sort_values("parameter")
         .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ["parameter"])
@@ -1366,6 +1372,15 @@ def load_lbwsg_interpolated_rr(key: str, location: str, mean_draw: bool) -> pd.D
 
     gestational_age_midpoints = get_category_midpoints("short_gestation")
     birth_weight_midpoints = get_category_midpoints("low_birth_weight")
+
+    # Align coordinates to the RR columns rather than trusting two orderings to agree.
+    if set(rr.columns) != set(gestational_age_midpoints.index):
+        raise ValueError(
+            "LBWSG relative risk categories do not match the category metadata: "
+            f"{set(rr.columns) ^ set(gestational_age_midpoints.index)}"
+        )
+    gestational_age_midpoints = gestational_age_midpoints.reindex(rr.columns)
+    birth_weight_midpoints = birth_weight_midpoints.reindex(rr.columns)
 
     # build grid of gestational age and birth weight
     def get_grid(midpoints: pd.Series, endpoints: Tuple[float, float]) -> np.array:

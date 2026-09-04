@@ -72,7 +72,7 @@ LBWSG_PAF_RESULTS_ROOT = CHILD_PKG_ROOT / "lbwsg_pafs"
 # ---------------------------------------------------------------------------
 
 #: Label the archive files this iteration under. Bump it to start a new one.
-MODEL_NUMBER = "model1.1.1"
+MODEL_NUMBER = "model1.1.2"
 
 #: Team-drive root that ``archive_last_run.sh`` publishes to.
 TEAM_ARCHIVE_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
