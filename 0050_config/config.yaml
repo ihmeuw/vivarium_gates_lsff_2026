@@ -4,3 +4,5 @@ custom_intervention_scenarios:
   ethiopia:
     - intervention_25_nrv
     - intervention_100_nrv
+    # GF Apr-2026: preliminary Ethiopian DFS-IoFA standard, 45 +/- 5 ppm
+    - intervention_45_ppm
