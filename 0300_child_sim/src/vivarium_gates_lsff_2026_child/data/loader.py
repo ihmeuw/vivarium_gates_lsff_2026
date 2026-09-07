@@ -1465,18 +1465,41 @@ def _resolve_lbwsg_paf_path(location: str) -> Path:
             f"full child artifact can be built."
         )
 
-    # Prefer a flat file, then a metric directory, then the newest nested run. Run
-    # directories are timestamp-named, so reverse-sorting puts the latest first.
-    candidates = [
-        location_dir / f"{measure}.parquet",
-        location_dir / measure,
-        *sorted(location_dir.glob(f"**/{measure}.parquet"), reverse=True),
-        *sorted((p for p in location_dir.glob(f"**/{measure}") if p.is_dir()), reverse=True),
+    def has_results(path: Path) -> bool:
+        return path.is_file() or (path.is_dir() and any(path.glob("*.parquet")))
+
+    # Outputs written directly at the location level (`simulate run`, or the flattening
+    # the old Snakefile did) ...
+    flat_candidates = [
+        p
+        for p in (location_dir / f"{measure}.parquet", location_dir / measure)
+        if has_results(p)
     ]
-    for candidate in candidates:
-        if candidate.is_file() or (candidate.is_dir() and any(candidate.glob("*.parquet"))):
-            logger.info(f"Using LBWSG PAF results from '{candidate}'.")
-            return candidate
+    # ... and per-run psimulate outputs, newest first (run directories are
+    # timestamp-named, so reverse-sorting puts the latest first).
+    nested_candidates = [
+        p
+        for p in (
+            *sorted(location_dir.glob(f"*/**/{measure}.parquet"), reverse=True),
+            *sorted((q for q in location_dir.glob(f"*/**/{measure}") if q.is_dir()), reverse=True),
+        )
+        if has_results(p)
+    ]
+    if flat_candidates and nested_candidates:
+        # A flat file next to run directories is usually a stale leftover from the
+        # pre-run-directory layout, and silently preferring either layout can serve
+        # outdated PAFs into a rebuilt artifact (it served scramble-era PAFs once).
+        # Refuse to guess.
+        raise RuntimeError(
+            f"Ambiguous LBWSG PAF results for '{location}': both flat outputs "
+            f"({', '.join(str(p) for p in flat_candidates)}) and run-directory outputs "
+            f"(newest: '{nested_candidates[0]}') exist under '{location_dir}'. Delete or "
+            f"move one layout -- flat files there usually predate the run-directory "
+            f"layout and carry stale values."
+        )
+    for candidate in flat_candidates + nested_candidates:
+        logger.info(f"Using LBWSG PAF results from '{candidate}'.")
+        return candidate
 
     raise FileNotFoundError(
         f"Found '{location_dir}' but no '{measure}' results inside it. Expected either "
