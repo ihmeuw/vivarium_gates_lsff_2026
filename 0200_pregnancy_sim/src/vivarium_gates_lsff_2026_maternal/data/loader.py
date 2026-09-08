@@ -396,13 +396,10 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
     anemia_ylds = anemia_ylds.groupby(groupby_cols)[draw_cols].sum().reset_index()
     anemia_ylds = reshape_to_vivarium_format(anemia_ylds, location)
 
-    # mean_draw=False deliberately: every other term here carries all DRAW_COLUMNS, and
-    # get_data would collapse this one to a lone draw_0. Subtracting a one-column frame
-    # from a 250-column one aligns on column *name*, leaving 249 NaN that the fillna(0)
-    # below turns into zeros -- which the mean_draw collapse in get_data then averages
-    # in, dividing the stored YLDs by the draw count. The collapse happens once, on the
-    # value this function returns.
-    csmr = get_data(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw=False)
+    # Loaders return full draws; the collapse happens once, in get_data, on the value
+    # this function returns. Routing either term through get_data instead would collapse
+    # it early and misalign the arithmetic below.
+    csmr = load_maternal_csmr(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw)
     incidence = load_raw_incidence_data(
         data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw
     )
@@ -424,16 +421,38 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
         incidence=incidence,
         csmr=csmr,
     )
-    ylds = (all_md_ylds - anemia_ylds) / (incidence - csmr)
-    # Rows outside the childbearing ages have a zero denominator and are genuinely zero.
-    return ylds.fillna(0)
+    denominator = incidence - csmr
+    # COMO returns maternal YLDs only for the demographics GBD estimates them for, so
+    # reindexing is what supplies the rows the incidence data has and the YLDs do not.
+    numerator = (all_md_ylds - anemia_ylds).reindex(denominator.index)
+    extra_rows = (all_md_ylds - anemia_ylds).index.difference(denominator.index)
+    if not extra_rows.empty:
+        raise ValueError(
+            f"Maternal YLDs cover {len(extra_rows)} rows the incidence data does not, "
+            f"e.g. {extra_rows[0]}."
+        )
+
+    ylds = numerator / denominator
+    # A YLD-per-case rate is undefined with no cases. GBD still reports sequela YLDs
+    # past menopause, so these rows are x/0 (inf) as often as 0/0 (NaN); the simulation
+    # models maternal disorders in neither.
+    ylds.loc[(denominator == 0).all(axis=1)] = 0.0
+
+    not_finite = ~np.isfinite(ylds.to_numpy()).all(axis=1)
+    if not_finite.any():
+        bad = ylds.index[not_finite]
+        raise ValueError(
+            f"Maternal YLDs are not finite for {len(bad)} rows with a non-zero "
+            f"denominator, e.g. {bad[0]}."
+        )
+    return ylds
 
 
 def _assert_same_draw_columns(**frames: pd.DataFrame) -> None:
     """Fail if operands mix draw conventions.
 
     Combining a collapsed single-draw frame with a full-draw one aligns on column name,
-    and any downstream fillna turns the resulting NaN into zeros instead of an error.
+    leaving the non-shared draws NaN rather than raising.
     """
     columns = {
         name: frozenset(df.filter(like="draw_").columns) for name, df in frames.items()
