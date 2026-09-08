@@ -1,7 +1,33 @@
 # Automated V&V — status tracker
 
 Tracks the research V&V list against what the validation lib can actually check.
-Notebooks live in `notebooks/`. Update the status column as things land.
+Notebooks live in `notebooks/` (this tracker's automated V&V), with the hand-written
+checks in `child_model/` and `pregnancy_model_NO/`. Update the status column as things
+land.
+
+**What every notebook here reads.** The archived iteration named by
+`lsff_utils.paths.MODEL_NUMBER` — resolved through `paths.archive_root`, so no path or
+run timestamp is pasted into a notebook and none has to be updated after a rerun. Set
+`location` / `vehicle` in the first cell for the arm you want, and `model_number` to read
+a previous iteration; see "Reading an archived iteration" in the root `README.rst`. This
+means a notebook checks what `archive_last_run.sh` published, so **archive before
+validating** — a run still only in the working tree is not what these read.
+
+**Commit executions with their cell outputs.** These notebooks carry version-free
+filenames and are rerun in place each iteration (`77aafea`), so the run-over-run diff is
+the git history. Which run an execution used was pinned by the literal path in its first
+cell; now that no path is written down, the pin is that cell's printed output —
+
+```
+model1.1.1 bouillon/nigeria
+  results:  /mnt/team/.../results/model1.1.1/child/bouillon/nigeria/2026_08_28_20_20_09
+  artifact: /mnt/team/.../artifacts/model1.1.1/child/bouillon/nigeria.hdf
+```
+
+— together with `MODEL_NUMBER` at that commit. Strip the outputs and the record of what
+was validated goes with them. `LSFF_model0_phase2_version_mat_dis_anemia.ipynb` is the
+exception to all of this: a frozen record of the model-0 comparison, pointed at the
+legacy `vivarium_gates_lsff_by_wealth_quintile` archive, and not rerun.
 
 **Status key**
 
@@ -75,6 +101,7 @@ Notebooks live in `notebooks/`. Update the status column as things land.
 | 2026-08-19 | Excluded `stillborn` from the `cause_of_death` stratification | `0300_child_sim/.../model_specifications/model_spec.yaml` |
 | 2026-08-19 | Updated for the dataset rename (breaking change from the observer edit) | `5000_analyze_results/0100_rescale_results/child_results.ipynb` |
 | 2026-08-19 | Enabled the child ACMR comparison | `notebooks/child_validation.ipynb` |
+| 2026-09-02 | Added `paths.archive_root` / `paths.artifact_path`, and repointed every V&V notebook at the archived iteration `MODEL_NUMBER` names instead of a pasted-in path and run timestamp | `src/lsff_utils/paths.py`, all notebooks here except `pregnancy_model_NO/LSFF_model0_phase2_version_mat_dis_anemia.ipynb`, which reads the legacy `vivarium_gates_lsff_by_wealth_quintile` archive on purpose |
 
 ## Planned changes
 

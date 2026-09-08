@@ -135,6 +135,67 @@ def test_run_marker_sits_beside_the_run_directories() -> None:
     assert root.name == "nigeria"
 
 
+@pytest.mark.parametrize(
+    "root", list(lsff_utils.paths.ARCHIVE_DESTINATIONS), ids=lambda p: p.name
+)
+def test_archive_root_mirrors_the_archive_script(root: Path) -> None:
+    """``archive_root`` is the read side of the copy the script performs.
+
+    The V&V notebooks resolve their inputs through it, so it has to land on the
+    same directory ``archive_last_run.sh`` wrote to. Checked against
+    ``archive_utils``, which is what the script itself calls -- so both sides come
+    from the installed package rather than the checkout copy loaded above.
+    """
+    from lsff_utils import archive_utils
+
+    installed = lsff_utils.paths
+    probe = root / "vehicle" / "location.hdf"
+    expected = archive_utils.archived_artifact_path(
+        probe, installed.REPO_ROOT, installed.TEAM_ARCHIVE_ROOT, installed.MODEL_NUMBER
+    )
+    assert installed.archive_root(root) / "vehicle" / "location.hdf" == expected
+
+
+def test_archive_root_is_keyed_on_the_model_number() -> None:
+    """The iteration is the archive's versioning, and it is the only thing to bump."""
+    archived = paths.archive_root(paths.CHILD_RESULTS_ROOT, "model9.9")
+    assert "model9.9" in archived.parts
+    assert paths.TEAM_ARCHIVE_ROOT in archived.parents
+    assert paths.archive_root(paths.CHILD_RESULTS_ROOT) == paths.archive_root(
+        paths.CHILD_RESULTS_ROOT, paths.MODEL_NUMBER
+    )
+
+
+def test_archive_root_rejects_an_unarchived_root() -> None:
+    with pytest.raises(KeyError, match="is not archived"):
+        paths.archive_root(paths.REPO_ROOT / "not_a_pipeline_output")
+
+
+def test_run_lookup_works_against_the_archive(tmp_path: Path) -> None:
+    """The notebooks call ``latest_run`` on an archived root, not an in-repo one.
+
+    That works because the archive keeps the layout below the root and the script
+    copies the marker across; this pins both halves of that arrangement.
+    """
+    archived = tmp_path / paths.archive_root(paths.CHILD_RESULTS_ROOT).relative_to("/")
+    run = archived / "bouillon" / "nigeria" / "2026_08_28_20_20_09"
+    (run / "results").mkdir(parents=True)
+    (run.parent / paths.RUN_MARKER_NAME).write_text(f"{run.name}\n")
+
+    assert paths.latest_run(archived, "Nigeria", "bouillon") == run
+    assert paths.latest_results(archived, "Nigeria", "bouillon") == run / "results"
+
+
+def test_artifact_path_normalizes_the_location() -> None:
+    """Locations reach these helpers as wildcards and as display names alike."""
+    root = paths.archive_root(paths.CHILD_ARTIFACT_ROOT)
+    assert paths.artifact_path(root, "Nigeria", "bouillon") == root / "bouillon/nigeria.hdf"
+    assert paths.artifact_path(root, "South Africa", "rice").name == "south_africa.hdf"
+    # The PAF artifacts are not keyed by vehicle.
+    paf_root = paths.archive_root(paths.LBWSG_PAF_ARTIFACT_ROOT)
+    assert paths.artifact_path(paf_root, "nigeria") == paf_root / "nigeria.hdf"
+
+
 MATERNAL_PKG = REPO_ROOT / "0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal"
 CHILD_PKG = REPO_ROOT / "0300_child_sim/src/vivarium_gates_lsff_2026_child"
 
