@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from vivarium.engine import Component
 from vivarium.engine.framework.engine import Builder
+from vivarium.engine.framework.event import Event
 from vivarium.engine.framework.lookup import LookupTable, LookupTableData
 from vivarium.engine.framework.population import PopulationView, SimulantData
 from vivarium.engine.framework.time import get_time_stamp
@@ -263,6 +264,23 @@ class LBWSGPAFCalculationExposure(LBWSGRisk):
 
 
 class LBWSGPAFObserver(Component):
+    """Observe the LBWSG PAF of one birth cohort as it ages through the neonatal period.
+
+    The simulation this runs in is a single cohort, initialized at birth and stepped
+    once per neonatal age group, so the age group being observed is a property of the
+    time step rather than of the simulant:
+
+    - Early neonatal is the first time step. Nobody has died yet, so the exposure
+      distribution is GBD's birth prevalence exactly.
+    - Late neonatal is the second time step. The cohort has lived through early
+      neonatal mortality, so the exposure distribution is birth prevalence depleted by
+      the survival this simulation itself produced, per LBWSG category.
+
+    ``results_updater`` keeps each age group's PAF from the time step the cohort spent
+    in it. Neither the exposure nor the PAF is ever pooled over age or sex: the
+    aggregator refuses to run on a stratum holding both sexes.
+    """
+
     CONFIGURATION_DEFAULTS = {
         "stratification": {
             "lbwsg_paf": {
@@ -272,38 +290,86 @@ class LBWSGPAFObserver(Component):
         }
     }
 
+    EARLY_NEONATAL = "early_neonatal"
+    LATE_NEONATAL = "late_neonatal"
+
     def __init__(self, target: str):
         super().__init__()
         self.target = TargetString(target)
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
-        self.lbwsg_exposure = builder.data.load(data_keys.LBWSG.EXPOSURE)
+        self.birth_exposure = builder.data.load(data_keys.LBWSG.BIRTH_EXPOSURE)
         self.risk_effect = builder.components.get_component(
             f"risk_effect.low_birth_weight_and_short_gestation_on_{self.target}"
         )
         self.config = builder.configuration.stratification.lbwsg_paf
+        self.pop_size = builder.configuration.population.population_size
+        self.step_number = 1
 
-        builder.results.register_adding_observation(
+        builder.results.register_stratified_observation(
             name=f"calculated_lbwsg_paf_on_{self.target}",
             pop_filter="is_alive == True",
             aggregator=self.calculate_paf,
+            results_updater=self.results_updater,
             requires_attributes=["is_alive"],
             additional_stratifications=self.config.include,
             excluded_stratifications=self.config.exclude,
+            # Before the population ages and before mortality, so the first step sees
+            # the cohort at birth and the second sees the early neonatal survivors.
             when="time_step__prepare",
+        )
+
+    ########################
+    # Event-driven methods #
+    ########################
+
+    def on_time_step_cleanup(self, event: Event) -> None:
+        """Increment step number at the end of each time step."""
+        self.step_number += 1
+
+    ##################
+    # Helper methods #
+    ##################
+
+    def results_updater(self, old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
+        if self.step_number == 1:  # early neonatal time step
+            return new
+        # Use the PAF from the first time step for early neonatal and from the second
+        # for late neonatal -- the steps in which the cohort occupied each age group.
+        return pd.concat(
+            [
+                old.query(f"age_group == '{self.EARLY_NEONATAL}'"),
+                new.query(f"age_group == '{self.LATE_NEONATAL}'"),
+            ],
         )
 
     def calculate_paf(self, x: pd.DataFrame) -> float:
         relative_risk = self.population_view.get(x.index, self.risk_effect.relative_risk_name)
         relative_risk.name = "relative_risk"
         lbwsg_category = self.population_view.get(x.index, "lbwsg_category")
-        lbwsg_prevalence = self.lbwsg_exposure.rename(
+        sexes = self.population_view.get(x.index, "sex").unique()
+        if len(sexes) != 1:
+            raise ValueError(
+                "Stratified data contains more than one sex, but this observer "
+                "(LBWSGPAFObserver) needs sex-stratified data."
+            )
+        sex = sexes[0]
+
+        lbwsg_prevalence = self.birth_exposure.rename(
             {"parameter": "lbwsg_category", "value": "prevalence"}, axis=1
         )
-        lbwsg_prevalence = lbwsg_prevalence.groupby("lbwsg_category", as_index=False)[
-            "prevalence"
-        ].sum()
+        lbwsg_prevalence = lbwsg_prevalence.loc[lbwsg_prevalence["sex"] == sex]
+
+        # Weight birth prevalence by the fraction of the category that is still alive.
+        # That fraction is 1 on the first time step, because nobody has died yet, which
+        # is what we want: early neonatal PAFs are calculated on the birth cohort.
+        weights = calculate_mortality_weights(self, sex)
+        lbwsg_prevalence = lbwsg_prevalence.merge(weights)
+        lbwsg_prevalence["prevalence"] = (
+            lbwsg_prevalence["prevalence"] * lbwsg_prevalence["proportion_alive"]
+        )
+        lbwsg_prevalence = lbwsg_prevalence.drop(columns=["proportion_alive"])
 
         mean_rrs = (
             pd.concat([lbwsg_category, relative_risk], axis=1)
@@ -316,3 +382,27 @@ class LBWSGPAFObserver(Component):
         paf = (mean_rr - 1) / mean_rr
 
         return paf
+
+
+#####################
+# Utility functions #
+#####################
+
+
+def calculate_mortality_weights(component: Component, sex: str) -> pd.DataFrame:
+    """Calculate the fraction of each LBWSG category still alive, for one sex.
+
+    The whole cohort is read, not just the simulants under observation, so the
+    denominator is everyone born into the category.
+    """
+    full_index = pd.Index(range(component.pop_size))
+    pop_data = component.population_view.get(
+        full_index, ["lbwsg_category", "is_alive", "sex"]
+    )
+    pop_data = pop_data.loc[pop_data["sex"] == sex]
+    weights = (
+        pop_data.groupby(["lbwsg_category", "sex"])["is_alive"]
+        .agg(proportion_alive=lambda x: x.mean())
+        .reset_index()
+    )
+    return weights

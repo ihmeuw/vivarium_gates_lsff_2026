@@ -320,8 +320,14 @@ Stage 4 -- LBWSG PAF calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A small, short simulation that computes the population attributable fraction of
-diarrheal disease mortality due to low birth weight and short gestation. It
-exists because GBD does not publish this PAF; the child model needs it.
+neonatal mortality due to low birth weight and short gestation. It exists because
+GBD does not publish this PAF; the child model needs it.
+
+It runs one birth cohort for two time steps, one per neonatal age group. The
+early neonatal PAF is calculated on GBD's birth prevalence, and the late neonatal
+one on that prevalence depleted by the early neonatal mortality the cohort just
+lived through -- each PAF taken from the step the cohort spent in that age group,
+per sex, with no pooling over either.
 
 :Reads: the stage 3 artifact
 :Writes: ``0300_child_sim/lbwsg_pafs/<location>/<run>/``

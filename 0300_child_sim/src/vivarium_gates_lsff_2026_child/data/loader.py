@@ -51,7 +51,6 @@ NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.POPULATION.DEMOGRAPHY,
     data_keys.POPULATION.TMRLE,
     data_keys.POPULATION.FERTILITY_DATA,
-    # NOTE: Diarrhea is necessary for calculating LBWSG PAFs!
     data_keys.DIARRHEA.DURATION,
     data_keys.DIARRHEA.REMISSION_RATE,
     data_keys.DIARRHEA.RESTRICTIONS,
@@ -79,6 +78,7 @@ NATIONAL_LEVEL_DATA_KEYS = [
     data_keys.LBWSG.DISTRIBUTION,
     data_keys.LBWSG.CATEGORIES,
     data_keys.LBWSG.EXPOSURE,
+    data_keys.LBWSG.BIRTH_EXPOSURE,
     data_keys.LBWSG.RELATIVE_RISK,
     data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR,
     data_keys.LBWSG.PAF,
@@ -206,6 +206,7 @@ def get_data(
         data_keys.LBWSG.DISTRIBUTION: load_metadata,
         data_keys.LBWSG.CATEGORIES: load_metadata,
         data_keys.LBWSG.EXPOSURE: load_lbwsg_exposure,  ## Still 2019 age bins, but doesn't have effect past NN
+        data_keys.LBWSG.BIRTH_EXPOSURE: load_lbwsg_birth_exposure,
         data_keys.LBWSG.RELATIVE_RISK: load_lbwsg_rr,  ## Still 2019 age bins, but doesn't have effect past NN
         data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR: load_lbwsg_interpolated_rr,  ## Still 2019 age bins, but doesn't have effect past NN
         data_keys.LBWSG.PAF: load_lbwsg_paf,  ## Still 2019 age bins, but doesn't have effect past NN
@@ -1321,6 +1322,31 @@ def load_lbwsg_exposure(key: str, location: str, mean_draw: bool) -> pd.DataFram
     return data
 
 
+def load_lbwsg_birth_exposure(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
+    if key != data_keys.LBWSG.BIRTH_EXPOSURE:
+        raise ValueError(f"Unrecognized key {key}")
+
+    entity = utilities.get_entity(data_keys.LBWSG.EXPOSURE)
+    data = utilities.load_lbwsg_birth_exposure(location)
+    # This category was a mistake in GBD 2019, so drop.
+    extra_residual_category = vi_globals.EXTRA_RESIDUAL_CATEGORY[entity.name]
+    data = data.loc[data["parameter"] != extra_residual_category]
+    idx_cols = ["location_id", "age_group_id", "year_id", "sex_id", "parameter"]
+    data = data.set_index(idx_cols)[vi_globals.DRAW_COLUMNS]
+
+    # Sometimes there are data values on the order of 10e-300 that cause
+    # floating point headaches, so clip everything to reasonable values
+    data = data.clip(lower=vi_globals.MINIMUM_EXPOSURE_VALUE)
+
+    # normalize so all categories sum to 1
+    total_exposure = data.groupby(["location_id", "age_group_id", "sex_id"]).transform("sum")
+    # The birth age group is not one vivarium_inputs knows how to scrub onto an age
+    # bin, and this key carries no age dimension anyway, so drop it before reshaping.
+    data = (data / total_exposure).reset_index().drop(columns=["age_group_id"])
+    data = reshape_to_vivarium_format(data, location)
+    return data
+
+
 def load_lbwsg_rr(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     if key != data_keys.LBWSG.RELATIVE_RISK:
         raise ValueError(f"Unrecognized key {key}")
@@ -1430,6 +1456,23 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
 
     age_start_dict = {"early_neonatal": 0.0, "late_neonatal": 0.01917808}
     age_end_dict = {"early_neonatal": 0.01917808, "late_neonatal": 0.07671233}
+    # Each neonatal age group's PAF comes from the time step the PAF simulation's cohort
+    # spends in it, so a run that stopped after the first step yields a file with a zero
+    # late neonatal PAF rather than a missing one.
+    draw_columns = [c for c in df.columns if c.startswith("draw_")]
+    neonatal = df[df["age_group"].isin(age_start_dict)]
+    has_paf = neonatal[draw_columns].ne(0).any(axis=1)
+    zero_paf_groups = sorted(set(age_start_dict) - set(neonatal.loc[has_paf, "age_group"]))
+    if zero_paf_groups:
+        raise ValueError(
+            f"The LBWSG PAF results at '{_resolve_lbwsg_paf_path(location)}' have no "
+            f"nonzero PAF for {zero_paf_groups}. Check that the PAF simulation ran "
+            "every neonatal time step; see data/lbwsg_paf.yaml."
+        )
+
+    # Only the neonatal age groups carry a PAF; the rest are the empty strata the
+    # results system expands the index with, and their names do not map to an age.
+    df = neonatal.copy()
     df["age_start"] = df["age_group"].replace(age_start_dict)
     df["age_end"] = df["age_group"].replace(age_end_dict)
     df["year_start"] = metadata.GBD_EXTRACT_YEAR
