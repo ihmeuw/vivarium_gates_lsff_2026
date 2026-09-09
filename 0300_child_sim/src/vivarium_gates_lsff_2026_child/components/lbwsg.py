@@ -312,7 +312,16 @@ class LBWSGPAFObserver(Component):
             pop_filter="is_alive == True",
             aggregator=self.calculate_paf,
             results_updater=self.results_updater,
-            requires_attributes=["is_alive"],
+            # Everything the aggregator reads, so that it reads it off the frame the
+            # results system hands over rather than looking it up by index in the
+            # state table. Sex is assigned by index parity here, so any index the
+            # aggregator does not own resolves to a mix of sexes.
+            requires_attributes=[
+                "is_alive",
+                "sex",
+                "lbwsg_category",
+                self.risk_effect.relative_risk_name,
+            ],
             additional_stratifications=self.config.include,
             excluded_stratifications=self.config.exclude,
             # Before the population ages and before mortality, so the first step sees
@@ -345,14 +354,22 @@ class LBWSGPAFObserver(Component):
         )
 
     def calculate_paf(self, x: pd.DataFrame) -> float:
-        relative_risk = self.population_view.get(x.index, self.risk_effect.relative_risk_name)
-        relative_risk.name = "relative_risk"
-        lbwsg_category = self.population_view.get(x.index, "lbwsg_category")
-        sexes = self.population_view.get(x.index, "sex").unique()
+        if x.empty:
+            # A stratum with no simulants in it -- on any given time step the cohort
+            # occupies one age group, so every other age group is handed over empty.
+            # Zero is what the results system fills unobserved strata with anyway, and
+            # results_updater keeps only the age group each step is for, so this value
+            # is never read.
+            return 0.0
+
+        relative_risk = x[self.risk_effect.relative_risk_name].rename("relative_risk")
+        lbwsg_category = x["lbwsg_category"]
+        sexes = x["sex"].unique()
         if len(sexes) != 1:
             raise ValueError(
-                "Stratified data contains more than one sex, but this observer "
-                "(LBWSGPAFObserver) needs sex-stratified data."
+                f"Stratified data contains {sorted(sexes)}, but this observer "
+                "(LBWSGPAFObserver) needs sex-stratified data. Check that 'sex' is "
+                "among the simulation's stratifications."
             )
         sex = sexes[0]
 
@@ -397,7 +414,7 @@ def calculate_mortality_weights(component: Component, sex: str) -> pd.DataFrame:
     """
     full_index = pd.Index(range(component.pop_size))
     pop_data = component.population_view.get(
-        full_index, ["lbwsg_category", "is_alive", "sex"]
+        full_index, ["lbwsg_category", "is_alive", "sex"], include_untracked=True
     )
     pop_data = pop_data.loc[pop_data["sex"] == sex]
     weights = (

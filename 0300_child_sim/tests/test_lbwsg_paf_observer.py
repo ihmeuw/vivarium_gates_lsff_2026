@@ -43,6 +43,17 @@ class FakePopulationView:
         return subset[list(attributes)]
 
 
+class IndexIgnoringView(FakePopulationView):
+    """A view that returns the whole population whatever index it is given.
+
+    Stands in for the state-table lookup going wrong: the aggregator must not
+    depend on it for anything about the stratum it was handed.
+    """
+
+    def get(self, index, attributes, **kwargs):
+        return super().get(self.population.index, attributes, **kwargs)
+
+
 class FakeRiskEffect:
     relative_risk_name = "lbwsg_relative_risk"
 
@@ -144,8 +155,39 @@ def test_paf_refuses_to_pool_sexes():
     population = make_population()
     observer = make_observer(population)
 
-    with pytest.raises(ValueError, match="more than one sex"):
+    with pytest.raises(ValueError, match=r"\['Female', 'Male'\]"):
         observer.calculate_paf(population)
+
+
+def test_paf_of_an_empty_stratum_is_zero():
+    """The aggregator is handed every stratification combination, including empty ones.
+
+    The cohort occupies one age group per time step, so the other age groups arrive
+    with no rows. Weighting a PAF over nothing raises, and the sex guard reads an
+    empty stratum as a pooled one, so the empty case has to be answered first.
+    """
+    population = make_population()
+    observer = make_observer(population)
+
+    assert observer.calculate_paf(population.iloc[:0]) == 0.0
+
+
+def test_paf_reads_the_stratum_it_is_handed():
+    """Sex, category and relative risk come from the stratum, not an index lookup.
+
+    Looking them up in the state table by ``x.index`` made the PAF depend on the
+    index the results system happened to hand over, and this population assigns
+    sex by index parity -- so a wrong index silently mixes the sexes. Only the
+    mortality weights read the wider population, and those read the whole cohort
+    by design.
+    """
+    population = make_population()
+    observer = make_observer(population)
+    observer._population_view = IndexIgnoringView(population)
+
+    paf = observer.calculate_paf(population[population["sex"] == "Female"])
+
+    assert paf == pytest.approx(paf_from({"cat1": 0.2, "cat2": 0.8}))
 
 
 def test_results_updater_keeps_each_age_group_from_its_own_time_step():
