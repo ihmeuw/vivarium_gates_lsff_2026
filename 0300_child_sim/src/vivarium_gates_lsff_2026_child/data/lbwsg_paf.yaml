@@ -44,6 +44,14 @@ configuration:
         child_scenario: 'baseline'
         maternal_scenario: 'baseline'
 
+    lbwsg_paf_calibration:
+        # Set by run_lbwsg_paf_two_pass.py for its second pass: the per-sex early
+        # neonatal PAF extracted from pass 1, which deflates this simulation's
+        # mortality to the level the main simulation actually applies. Empty means
+        # pass 1 -- no deflation, so only the early neonatal PAF of such a run is
+        # usable; its late neonatal PAF comes from an over-depleted cohort.
+        enn_paf_path: ''
+
     mortality:
         unmodeled_causes:
             - "lower_respiratory_infections"

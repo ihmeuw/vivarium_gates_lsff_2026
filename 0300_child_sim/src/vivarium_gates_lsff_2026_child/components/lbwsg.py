@@ -145,14 +145,51 @@ class LBWSGPAFCalculationRiskEffect(LBWSGRiskEffect):
     -----
     This simulation is what produces the LBWSG PAF, so the artifact it runs against
     deliberately does not contain that key. The base class would otherwise try to load
-    it, so the calibration constant is supplied as zero here instead.
+    it, so the calibration constant comes from configuration instead
+    (``lbwsg_paf_calibration.enn_paf_path``), and the PAF simulation runs twice
+    (see ``data/run_lbwsg_paf_two_pass.py``):
+
+    - **Pass 1** (``enn_paf_path`` empty): the calibration constant is zero, so the
+      cohort dies at ``rate x RR`` with no ``(1 - PAF)`` deflation -- roughly
+      ``E[RR]`` (about 7x) too much mortality. The early neonatal PAF it observes is
+      still exact, because that observation happens on the first time step, before
+      anyone has died. The late neonatal PAF it observes is garbage: the inflated
+      early neonatal mortality over-depletes the high-RR categories, so the survivor
+      weights are far too skewed toward the healthy categories.
+    - **Pass 2** (``enn_paf_path`` set): the per-sex early neonatal PAF from pass 1
+      deflates mortality to the level the main simulation will actually apply, so the
+      late neonatal observation sees the true early-neonatal-survivor frame. Both age
+      groups' PAFs are taken from this pass (its early neonatal value reproduces pass
+      1 exactly, since mortality still hasn't acted when it is observed).
+
+    The calibration file carries one PAF per sex, applied at every age: only mortality
+    that precedes an observation can matter, and the last observation happens before
+    any late neonatal death is drawn, so the value applied beyond early neonatal ages
+    never affects output.
 
     The hook is ``get_calibration_constant_data``; the PAF was previously read through
     ``get_population_attributable_fraction_source``, which no longer exists.
     """
 
+    @property
+    def configuration_defaults(self) -> Dict[str, Any]:
+        config = super().configuration_defaults
+        config["lbwsg_paf_calibration"] = {"enn_paf_path": ""}
+        return config
+
     def get_calibration_constant_data(self, builder: Builder) -> LookupTableData:
-        return 0.0
+        path = builder.configuration.lbwsg_paf_calibration.enn_paf_path
+        if not path:
+            return 0.0
+        paf = pd.read_parquet(path)
+        expected = {"sex", "age_start", "age_end", "year_start", "year_end", "value"}
+        if set(paf.columns) != expected:
+            raise ValueError(
+                f"Calibration PAF file '{path}' has columns {sorted(paf.columns)}; "
+                f"expected exactly {sorted(expected)}. It should be the file "
+                "run_lbwsg_paf_two_pass.py writes between its two passes."
+            )
+        return paf
 
 
 class LBWSGPAFCalculationExposure(LBWSGRisk):

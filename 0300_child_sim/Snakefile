@@ -63,11 +63,16 @@ rule artifact_for_lbwsg_pafs:
         make_artifacts -p child -o {paths.LBWSG_PAF_ARTIFACT_ROOT} -l {wildcards.location} --for-lbwsg-pafs --national -a --mean {artifact_debug}
         """
 
+# The PAF simulation runs twice: an uncalibrated pass whose early neonatal PAF is
+# exact, then a pass whose mortality that PAF deflates, so the late neonatal PAF is
+# observed on the survivor frame the main simulation actually produces. The runner
+# owns that choreography; see its module docstring.
 rule lbwsg_pafs:
     input:
         [
             ancient(LBWSG_PAF_ARTIFACT),
             ancient("0300_child_sim/src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml"),
+            ancient("0300_child_sim/src/vivarium_gates_lsff_2026_child/data/run_lbwsg_paf_two_pass.py"),
             ancient("0300_child_sim/" + lbwsg_paf_branches_file),
         ]
     output: [LBWSG_PAF_RUN_MARKER]
@@ -80,7 +85,7 @@ rule lbwsg_pafs:
         {simulation_setup}
         cd 0300_child_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {lbwsg_paf_branches_arg} -i {paths.LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf -o {paths.LBWSG_PAF_RESULTS_ROOT} {cluster_args} {psimulate_debug}
+        python src/vivarium_gates_lsff_2026_child/data/run_lbwsg_paf_two_pass.py --spec src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml --branches "{lbwsg_paf_branches_arg}" --artifact {paths.LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf --output-root {paths.LBWSG_PAF_RESULTS_ROOT} --location {wildcards.location} --simulate-command "{simulate_command}" --extra-args "{cluster_args} {psimulate_debug}"
         rm -f dump.rdb
         {params.write_marker}
         """
