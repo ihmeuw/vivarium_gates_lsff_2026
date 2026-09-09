@@ -147,6 +147,7 @@ rule prep_extracted:
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
             '0100_data_prep/hces/india_rice_fortifiability_disparities.csv',
             '0100_data_prep/hces/india_proportion_government_rice.csv',
+            '0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv',
         ], frozen)
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 
