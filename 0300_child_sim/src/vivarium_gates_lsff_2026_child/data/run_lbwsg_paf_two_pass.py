@@ -58,21 +58,30 @@ def run_simulation(
     subprocess.run(command, check=True)
 
 
-def find_paf_output(root: Path, exclude: Path | None = None) -> Path:
-    """The newest PAF measure output under ``root``, whatever produced it.
+def find_paf_output(root: Path, location: str, exclude: Path | None = None) -> Path:
+    """The newest PAF measure output for ``location`` under ``root``.
 
     ``psimulate`` writes ``<location>/<timestamp>/results/<measure>/*.parquet`` and
     ``simulate run`` writes ``.../<measure>.parquet``; globbing for the measure name
-    and taking the newest tolerates both.
+    and taking the newest tolerates both. The search is scoped to the location's own
+    subdirectory whenever one exists: Snakemake runs one of these workflows per
+    location concurrently against shared roots, and an unscoped newest-file search
+    races them into reading each other's output -- which the pass-2 reproducibility
+    check then flags.
     """
+    scope = root / location
+    if not scope.exists():
+        # `simulate run` layouts don't create a location subdirectory; they also only
+        # occur in single-location debug runs, where there is nothing to race.
+        scope = root
     candidates = [
         p
-        for p in root.rglob(child_paths.LBWSG_PAF_MEASURE_NAME + "*")
+        for p in scope.rglob(child_paths.LBWSG_PAF_MEASURE_NAME + "*")
         if exclude is None or exclude.resolve() not in p.resolve().parents
     ]
     if not candidates:
         raise FileNotFoundError(
-            f"No '{child_paths.LBWSG_PAF_MEASURE_NAME}' output found under '{root}'."
+            f"No '{child_paths.LBWSG_PAF_MEASURE_NAME}' output found under '{scope}'."
         )
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
@@ -129,7 +138,7 @@ def main() -> None:
     run_simulation(
         args.simulate_command, args.spec, args.branches, args.artifact, pass1_root, args.extra_args
     )
-    pass1_paf = read_paf(find_paf_output(pass1_root))
+    pass1_paf = read_paf(find_paf_output(pass1_root, args.location))
     print(f"Pass 1 PAFs:\n{pass1_paf}", flush=True)
 
     calibration_path = pass1_root / f"{args.location}_enn_paf_calibration.parquet"
@@ -146,7 +155,7 @@ def main() -> None:
         args.output_root,
         args.extra_args,
     )
-    pass2_paf = read_paf(find_paf_output(args.output_root, exclude=pass1_root))
+    pass2_paf = read_paf(find_paf_output(args.output_root, args.location, exclude=pass1_root))
     print(f"Pass 2 PAFs:\n{pass2_paf}", flush=True)
 
     # Mortality precedes no early neonatal observation, so calibration cannot move it:

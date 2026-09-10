@@ -79,3 +79,26 @@ def test_pass2_spec_is_the_spec_plus_the_calibration_path(tmp_path):
     # Everything else survives untouched.
     generated["configuration"]["lbwsg_paf_calibration"]["enn_paf_path"] = ""
     assert generated == yaml.safe_load(spec.read_text())
+
+
+def test_paf_output_search_is_scoped_to_the_location(tmp_path):
+    """Concurrent per-location workflows share these roots; the newest file across
+    the whole root can belong to the other location's run."""
+    import os
+    import time
+
+    from vivarium_gates_lsff_2026_child.constants import paths as child_paths
+    from vivarium_gates_lsff_2026_child.data.run_lbwsg_paf_two_pass import find_paf_output
+
+    def write(rel: str, mtime: float):
+        p = tmp_path / rel / (child_paths.LBWSG_PAF_MEASURE_NAME + ".parquet")
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.touch()
+        os.utime(p, (mtime, mtime))
+        return p
+
+    now = time.time()
+    ours = write("nigeria/run_1/results", now - 60)
+    write("india/run_2/results", now)  # newer, but the other location's
+
+    assert find_paf_output(tmp_path, "nigeria") == ours
