@@ -4,11 +4,19 @@ baseline,anemia,2,4035954.606842727
 baseline,anemia,3,3976980.031309527
 baseline,anemia,4,3667321.6019535707
 baseline,anemia,5,3263564.217112749
+<<<<<<< HEAD
 baseline,lbwsg,1,17883488.550565682
 baseline,lbwsg,2,14898223.425178863
 baseline,lbwsg,3,13204814.077829754
 baseline,lbwsg,4,12340680.067550475
 baseline,lbwsg,5,11824217.940917622
+=======
+baseline,lbwsg,1,17521395.24838859
+baseline,lbwsg,2,14618759.236490265
+baseline,lbwsg,3,12951388.211097235
+baseline,lbwsg,4,12100872.859447915
+baseline,lbwsg,5,11625414.463951193
+>>>>>>> main
 baseline,maternal_disorders,1,480995.1516029616
 baseline,maternal_disorders,2,278174.41811728594
 baseline,maternal_disorders,3,354929.9287855448
@@ -24,11 +32,19 @@ intervention,anemia,2,4035954.606842727
 intervention,anemia,3,3976980.031309527
 intervention,anemia,4,3667321.6019535707
 intervention,anemia,5,3263564.217112749
+<<<<<<< HEAD
 intervention,lbwsg,1,17883488.550565682
 intervention,lbwsg,2,14898223.425178863
 intervention,lbwsg,3,13204814.077829754
 intervention,lbwsg,4,12340680.067550475
 intervention,lbwsg,5,11824217.940917622
+=======
+intervention,lbwsg,1,17521395.24838859
+intervention,lbwsg,2,14618759.236490265
+intervention,lbwsg,3,12951388.211097235
+intervention,lbwsg,4,12100872.859447915
+intervention,lbwsg,5,11625414.463951193
+>>>>>>> main
 intervention,maternal_disorders,1,480995.1516029616
 intervention,maternal_disorders,2,278174.41811728594
 intervention,maternal_disorders,3,354929.9287855448
@@ -44,11 +60,19 @@ zero,anemia,2,4315488.605002881
 zero,anemia,3,4219911.362271462
 zero,anemia,4,3866404.723234419
 zero,anemia,5,3364404.8215543935
+<<<<<<< HEAD
 zero,lbwsg,1,17935279.954209544
 zero,lbwsg,2,14938094.621813705
 zero,lbwsg,3,13234929.971760936
 zero,lbwsg,4,12362346.931639638
 zero,lbwsg,5,11834184.189728135
+=======
+zero,lbwsg,1,17573826.51946129
+zero,lbwsg,2,14652125.350537302
+zero,lbwsg,3,12980217.008382976
+zero,lbwsg,4,12127306.611149335
+zero,lbwsg,5,11639067.445547093
+>>>>>>> main
 zero,maternal_disorders,1,495942.03928233014
 zero,maternal_disorders,2,286458.8253328343
 zero,maternal_disorders,3,362010.61495425046
