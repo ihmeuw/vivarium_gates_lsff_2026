@@ -6,9 +6,8 @@ components:
         components:
             - EvenlyDistributedPopulation()
             - LBWSGPAFCalculationExposure()
-            - SIS_with_birth_prevalence('diarrheal_diseases')
-            - LBWSGPAFCalculationRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
-            - LBWSGPAFObserver('cause.diarrheal_diseases.excess_mortality_rate')
+            - LBWSGPAFCalculationRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
+            - LBWSGPAFObserver('cause.affected_unmodeled.cause_specific_mortality_rate')
 
 
 configuration:
@@ -33,17 +32,33 @@ configuration:
         end:
             year: 2022
             month: 1
-            day: 2
-        step_size: 3 # Days
+            day: 10
+        step_size: 7 # Days
     population:
-        population_size: 122_728
+        population_size: 61_364
         initialization_age_min: 0
-        initialization_age_max: 0.03835616 # 14 days
+        initialization_age_max: 0.005
         untracking_age: 0.03835616 # 14 days
 
     intervention:
         child_scenario: 'baseline'
         maternal_scenario: 'baseline'
+
+    mortality:
+        unmodeled_causes:
+            - "lower_respiratory_infections"
+            - "malaria"
+            - "measles"
+            - "upper_respiratory_infections"
+            - "otitis_media"
+            - "meningitis"
+            - "encephalitis"
+            - "neonatal_preterm_birth"
+            - "neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma"
+            - "neonatal_sepsis_and_other_neonatal_infections"
+            - "hemolytic_disease_and_other_neonatal_jaundice"
+            - "other_neonatal_disorders"
+            - "sudden_infant_death_syndrome"
 
     stratification:
         default:

@@ -168,6 +168,19 @@ class EvenlyDistributedPopulation(BasePopulation):
     # NOTE: 'is_alive' is created by the Mortality sub-component, not here.
     COLUMNS_CREATED = ["age", "sex", "location", "entrance_time", "exit_time"]
 
+    @property
+    def time_step_priority(self) -> int:
+        """Age simulants after mortality has been applied, rather than before it.
+
+        BasePopulation ages at priority 0, which would move the cohort into the next
+        age group before Mortality (priority 2) draws deaths, so that the early
+        neonatal deaths would be taken at late neonatal rates. This population is only
+        used by the LBWSG PAF calculation, whose late neonatal exposure weights are
+        exactly the early neonatal survivors, so the deaths have to be drawn at the age
+        the cohort is actually living through.
+        """
+        return 3
+
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         super().setup(builder)

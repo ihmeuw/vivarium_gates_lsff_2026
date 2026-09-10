@@ -1,4 +1,21 @@
 scenario,entity,wealth_quintile,value
+<<<<<<< HEAD
+baseline,anemia,1,1006030.5089182905
+baseline,anemia,2,964635.3829774463
+baseline,anemia,3,794033.2832090369
+baseline,anemia,4,721690.617016712
+baseline,anemia,5,613501.0816140716
+baseline,lbwsg,1,15508353.218607469
+baseline,lbwsg,2,16011099.741049092
+baseline,lbwsg,3,14053455.283412393
+baseline,lbwsg,4,12426670.38256435
+baseline,lbwsg,5,9448065.592686806
+baseline,maternal_disorders,1,490476.78942590865
+baseline,maternal_disorders,2,445522.8835589704
+baseline,maternal_disorders,3,423262.64850837586
+baseline,maternal_disorders,4,386749.9979717133
+baseline,maternal_disorders,5,287606.4386127327
+=======
 baseline,anemia,1,1108055.7165852622
 baseline,anemia,2,949118.3167773121
 baseline,anemia,3,812839.9148483488
@@ -14,11 +31,29 @@ baseline,maternal_disorders,2,546745.5795701167
 baseline,maternal_disorders,3,368675.53022314754
 baseline,maternal_disorders,4,322335.2502269547
 baseline,maternal_disorders,5,226666.87527524756
+>>>>>>> main
 baseline,ntd,1,414148.3857332581
 baseline,ntd,2,423492.5012827377
 baseline,ntd,3,383377.2465961786
 baseline,ntd,4,339825.07584544306
 baseline,ntd,5,298474.67944832065
+<<<<<<< HEAD
+intervention,anemia,1,994344.4328601268
+intervention,anemia,2,949095.7203065081
+intervention,anemia,3,776559.270048604
+intervention,anemia,4,702702.7068887446
+intervention,anemia,5,595096.4226822641
+intervention,lbwsg,1,15507178.085348947
+intervention,lbwsg,2,16009318.387439556
+intervention,lbwsg,3,14051111.057290528
+intervention,lbwsg,4,12424179.661658706
+intervention,lbwsg,5,9446305.015215283
+intervention,maternal_disorders,1,489151.85306718695
+intervention,maternal_disorders,2,443509.3652025012
+intervention,maternal_disorders,3,420960.4884146
+intervention,maternal_disorders,4,383547.8791821675
+intervention,maternal_disorders,5,284655.05522995803
+=======
 intervention,anemia,1,1095087.2941989817
 intervention,anemia,2,933283.9218038042
 intervention,anemia,3,795605.3164691125
@@ -34,11 +69,29 @@ intervention,maternal_disorders,2,544582.1500720796
 intervention,maternal_disorders,3,366748.2475228871
 intervention,maternal_disorders,4,320032.2166143721
 intervention,maternal_disorders,5,225192.2438450037
+>>>>>>> main
 intervention,ntd,1,396815.2020618687
 intervention,ntd,2,389996.3720616061
 intervention,ntd,3,341467.3913316737
 intervention,ntd,4,290669.1932640035
 intervention,ntd,5,250632.46620610912
+<<<<<<< HEAD
+zero,anemia,1,1006030.5089182905
+zero,anemia,2,964635.3829774463
+zero,anemia,3,794033.2832090369
+zero,anemia,4,721690.617016712
+zero,anemia,5,613501.0816140716
+zero,lbwsg,1,15508353.218607469
+zero,lbwsg,2,16011099.741049092
+zero,lbwsg,3,14053455.283412393
+zero,lbwsg,4,12426670.38256435
+zero,lbwsg,5,9448065.592686806
+zero,maternal_disorders,1,490476.78942590865
+zero,maternal_disorders,2,445522.8835589704
+zero,maternal_disorders,3,423262.64850837586
+zero,maternal_disorders,4,386749.9979717133
+zero,maternal_disorders,5,287606.4386127327
+=======
 zero,anemia,1,1108055.7165852622
 zero,anemia,2,949118.3167773121
 zero,anemia,3,812839.9148483488
@@ -54,6 +107,7 @@ zero,maternal_disorders,2,546745.5795701167
 zero,maternal_disorders,3,368675.53022314754
 zero,maternal_disorders,4,322335.2502269547
 zero,maternal_disorders,5,226666.87527524756
+>>>>>>> main
 zero,ntd,1,414148.3857332581
 zero,ntd,2,423492.5012827377
 zero,ntd,3,383377.2465961786
