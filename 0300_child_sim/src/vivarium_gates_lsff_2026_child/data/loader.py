@@ -1346,10 +1346,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str, mean_draw: bool) -> pd.D
         raise ValueError(f"Unrecognized key {key}")
 
     rr = get_data(data_keys.LBWSG.RELATIVE_RISK, location, mean_draw).reset_index()
-    # The explicit category order is load-bearing: griddata below pairs rr's columns
-    # positionally with the midpoint Series, which is in gbd_mapping's numeric order.
-    # Bare pd.Categorical orders lexicographically ("cat10" < "cat2"), which silently
-    # scrambles every RR onto the wrong birth-weight/gestational-age cell.
+    # We must order categories numerically, not lexicographically (e.g. "cat10" < "cat2")
     rr["parameter"] = pd.Categorical(
         rr["parameter"], [f"cat{i}" for i in range(metadata.DRAW_COUNT)]
     )
