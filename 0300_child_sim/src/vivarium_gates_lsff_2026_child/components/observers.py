@@ -33,6 +33,21 @@ class ResultsStratifier(ResultsStratifier_):
     final column labels for the subgroups.
     """
 
+    CONFIGURATION_DEFAULTS = {
+        # V&V diagnostic mode: stratify results by the GBD age bins (early/late
+        # neonatal, 1-5 months, ...) instead of the production bins. The pooled
+        # 0_to_5_months bin cannot be validated against a continuous-time cohort
+        # expectation: with 4-day steps the sim attributes 8 days of person-time
+        # to early neonatal (ages 0 and 4d) and 24 to late neonatal, so the pooled
+        # observed rate is composition-shifted relative to any closed-form mixture
+        # -- by ~+7% for India, whose ENN-to-postneonatal mortality contrast is
+        # ~25x. At GBD bins the discretization affects observed deaths and person-
+        # time identically, so observed/expected is interpretable per bin.
+        # Downstream stages consume the production bin labels, so runs made with
+        # this flag are for validation only, not for the results pipeline.
+        "stratification": {"fine_neonatal_age_bins": False}
+    }
+
     @staticmethod
     def get_age_bins(builder: Builder) -> pd.DataFrame:
         """Define final age groups for production runs.
@@ -50,6 +65,22 @@ class ResultsStratifier(ResultsStratifier_):
         and age reconciliation silently fails. Only the labels changed here -- the
         ``age_start``/``age_end`` values, and therefore the binning itself, are unchanged.
         """
+        if builder.configuration.stratification.fine_neonatal_age_bins:
+            # GBD bins, for V&V only -- see CONFIGURATION_DEFAULTS above.
+            data_dict = {
+                "age_start": [0.0, 0.019178, 0.076712, 0.5, 1.0, 2.0],
+                "age_end": [0.019178, 0.076712, 0.5, 1.0, 2.0, 5.0],
+                "age_group_name": [
+                    "early_neonatal",
+                    "late_neonatal",
+                    "1-5_months",
+                    "6-11_months",
+                    "12_to_23_months",
+                    "2_to_4",
+                ],
+            }
+            return pd.DataFrame(data_dict)
+
         data_dict = {
             "age_start": [
                 0.0,
@@ -64,12 +95,6 @@ class ResultsStratifier(ResultsStratifier_):
                 5,
             ],  # [0.019178, 0.076712, 0.5, 1.0, 2.0, 5.0],
             "age_group_name": [
-                # "early_neonatal",
-                # "late_neonatal",
-                # "1-5_months",
-                # "6-11_months",
-                # "12_to_23_months",
-                # "2_to_4",
                 "0_to_5_months",
                 "6_to_9_months",
                 "10_to_17_months",
