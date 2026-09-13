@@ -131,7 +131,7 @@ rule prep_hces:
         ], frozen)
     log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
     output: 
-        hces_output_files + ['0100_data_prep/hces/india_rice_fortifiability_disparities.csv', '0100_data_prep/hces/india_proportion_government_rice.csv']
+        hces_output_files + ['0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv', '0100_data_prep/hces/india_proportion_government_rice.csv']
     shell:
         """
         {common_setup}
@@ -145,7 +145,7 @@ rule prep_extracted:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_extracted.ipynb",
             "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
-            '0100_data_prep/hces/india_rice_fortifiability_disparities.csv',
+            '0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv',
             '0100_data_prep/hces/india_proportion_government_rice.csv',
         ], frozen)
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"

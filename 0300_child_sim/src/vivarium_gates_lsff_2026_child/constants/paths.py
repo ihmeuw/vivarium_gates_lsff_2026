@@ -18,8 +18,10 @@ CHILD_RESULTS_ROOT = shared_paths.CHILD_RESULTS_ROOT
 LBWSG_PAF_ARTIFACT_ROOT = shared_paths.LBWSG_PAF_ARTIFACT_ROOT
 LBWSG_PAF_RESULTS_ROOT = shared_paths.LBWSG_PAF_RESULTS_ROOT
 
+# Named after the target of the risk effect in data/lbwsg_paf.yaml; the observer names
+# its output file after that target, so the two move together.
 LBWSG_PAF_MEASURE_NAME = (
-    "calculated_lbwsg_paf_on_cause.diarrheal_diseases.excess_mortality_rate"
+    "calculated_lbwsg_paf_on_cause.affected_unmodeled.cause_specific_mortality_rate"
 )
 
 # The child model's population comes from the maternal simulation's birth records:
