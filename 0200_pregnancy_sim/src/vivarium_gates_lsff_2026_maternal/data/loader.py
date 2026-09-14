@@ -694,7 +694,7 @@ def load_hemoglobin_maternal_disorders_rr(
 
     groupby_cols = ["age_group_id", "sex_id", "year_id"]
     draw_cols = vi_globals.DRAW_COLUMNS
-    rr = extra_gbd.get_hemoglobin_maternal_disorders_rr()
+    rr = extra_gbd.get_hemoglobin_maternal_disorders_rr(location)
     rr = rr.groupby(groupby_cols)[draw_cols].sum().reset_index()
     rr = reshape_to_vivarium_format(rr, location)
     return rr
@@ -867,13 +867,13 @@ def load_background_morbidity(key: str, location: str) -> pd.DataFrame:
     ]
     all_anemia_yld_rate = reshape_to_vivarium_format(all_anemia_yld_rate, location)
 
-    all_md_yld_rate = extra_gbd.get_maternal_disorder_ylds(location, metric_id=3)
+    all_md_yld_rate = extra_gbd.get_maternal_disorder_ylds(location)
     all_md_yld_rate = all_md_yld_rate[
         vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS
     ]
     all_md_yld_rate = reshape_to_vivarium_format(all_md_yld_rate, location)
 
-    anemia_sequelae_yld_rate = extra_gbd.get_anemia_ylds(location, metric_id=3)
+    anemia_sequelae_yld_rate = extra_gbd.get_anemia_ylds(location)
     anemia_sequelae_yld_rate = (
         anemia_sequelae_yld_rate.groupby(vi_globals.DEMOGRAPHIC_COLUMNS)[
             vi_globals.DRAW_COLUMNS
