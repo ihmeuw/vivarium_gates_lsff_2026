@@ -338,6 +338,12 @@ DIARRHEA = __DiarrhealDiseases()
 class __LowBirthWeightShortGestation(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
     EXPOSURE: TargetString = "risk_factor.low_birth_weight_and_short_gestation.exposure"
+    # GBD birth prevalence (age group 164), as opposed to EXPOSURE, which is the
+    # survivor prevalence of the neonatal age groups. The PAF calculation weights by
+    # this and depletes it with simulated mortality; see components/lbwsg.py.
+    BIRTH_EXPOSURE: TargetString = (
+        "risk_factor.low_birth_weight_and_short_gestation.birth_exposure"
+    )
     DISTRIBUTION: TargetString = (
         "risk_factor.low_birth_weight_and_short_gestation.distribution"
     )

@@ -44,6 +44,11 @@ from vivarium_gates_lsff_2026_maternal.utilities import get_random_variable_draw
 
 memory = Memory("./.cachedir", verbose=0)
 
+# Women of reproductive age. Must agree with the age filter in get_hemoglobin_data and
+# with the age groups carrying a non-zero pregnancy end rate in the data prep results.
+WRA_AGE_START = 10
+WRA_AGE_END = 55
+
 CSV_DATA_NAMES = {
     data_keys.POPULATION.WEALTH_QUINTILE_PROBABILITIES: "wealth_quintile_probabilities",
     data_keys.VEHICLE_CONSUMPTION.ANY_CONSUMED: "{vehicle}/vehicle_consumption/any",
@@ -391,7 +396,10 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
     anemia_ylds = anemia_ylds.groupby(groupby_cols)[draw_cols].sum().reset_index()
     anemia_ylds = reshape_to_vivarium_format(anemia_ylds, location)
 
-    csmr = get_data(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw)
+    # Loaders return full draws; the collapse happens once, in get_data, on the value
+    # this function returns. Routing either term through get_data instead would collapse
+    # it early and misalign the arithmetic below.
+    csmr = load_maternal_csmr(data_keys.MATERNAL_DISORDERS.CSMR, location, mean_draw)
     incidence = load_raw_incidence_data(
         data_keys.MATERNAL_DISORDERS.RAW_INCIDENCE_RATE, location, mean_draw
     )
@@ -407,8 +415,51 @@ def load_maternal_disorders_ylds(key: str, location: str, mean_draw: bool) -> pd
         .set_index(idx_cols)
         .sort_index()
     )
-    ylds = (all_md_ylds - anemia_ylds) / (incidence - csmr)
-    return ylds.fillna(0)
+    _assert_same_draw_columns(
+        all_md_ylds=all_md_ylds,
+        anemia_ylds=anemia_ylds,
+        incidence=incidence,
+        csmr=csmr,
+    )
+    denominator = incidence - csmr
+    # COMO returns maternal YLDs only for the demographics GBD estimates them for, so
+    # reindexing is what supplies the rows the incidence data has and the YLDs do not.
+    numerator = (all_md_ylds - anemia_ylds).reindex(denominator.index)
+    extra_rows = (all_md_ylds - anemia_ylds).index.difference(denominator.index)
+    if not extra_rows.empty:
+        raise ValueError(
+            f"Maternal YLDs cover {len(extra_rows)} rows the incidence data does not, "
+            f"e.g. {extra_rows[0]}."
+        )
+
+    ylds = numerator / denominator
+    # A YLD-per-case rate is undefined with no cases. GBD still reports sequela YLDs
+    # past menopause, so these rows are x/0 (inf) as often as 0/0 (NaN); the simulation
+    # models maternal disorders in neither.
+    ylds.loc[(denominator == 0).all(axis=1)] = 0.0
+
+    not_finite = ~np.isfinite(ylds.to_numpy()).all(axis=1)
+    if not_finite.any():
+        bad = ylds.index[not_finite]
+        raise ValueError(
+            f"Maternal YLDs are not finite for {len(bad)} rows with a non-zero "
+            f"denominator, e.g. {bad[0]}."
+        )
+    return ylds
+
+
+def _assert_same_draw_columns(**frames: pd.DataFrame) -> None:
+    """Fail if operands mix draw conventions.
+
+    Combining a collapsed single-draw frame with a full-draw one aligns on column name,
+    leaving the non-shared draws NaN rather than raising.
+    """
+    columns = {
+        name: frozenset(df.filter(like="draw_").columns) for name, df in frames.items()
+    }
+    if len(set(columns.values())) > 1:
+        sizes = {name: len(cols) for name, cols in columns.items()}
+        raise ValueError(f"Operands carry different draw columns: {sizes}")
 
 
 def load_pregnant_maternal_disorders_incidence_probability(
@@ -696,7 +747,13 @@ def generate_hemoglobin_maternal_disorders_paf(
             index_without_wealth = index[:-1]
             rr_index = (loc, sex, age_start, age_end)
             assert (index in hemoglobin_mean_plw.index) == (index in hemoglobin_std_plw.index)
-            assert (index in hemoglobin_mean_plw.index) == (rr_index in hemoglobin_rr.index)
+            assert (index in hemoglobin_mean_plw.index) == (
+                rr_index in hemoglobin_rr.index
+            ), (
+                f"Hemoglobin exposure and relative risk disagree about {rr_index}. "
+                "Both are filtered by _among_wra, so this means one of the two GBD "
+                f"sources does not cover an age group in [{WRA_AGE_START}, {WRA_AGE_END})."
+            )
             if index in hemoglobin_mean_plw.index:
                 mean = hemoglobin_mean_plw.loc[index][draw]
                 sd = hemoglobin_std_plw.loc[index][draw]
@@ -709,7 +766,29 @@ def generate_hemoglobin_maternal_disorders_paf(
         assert pafs[draw].notnull().all()
         print(f"{draw} done")
 
+    _assert_covers_childbearing_ages(pafs, "hemoglobin-on-maternal-disorders PAF")
     return pafs
+
+
+def _assert_covers_childbearing_ages(data: pd.DataFrame, name: str) -> None:
+    """Fail the build if a key is zero-filled over an age group that bears children.
+
+    The zero-fill branches in this module are for demographic cells the simulation never
+    visits (males, children, post-menopausal ages). A zero landing on a childbearing-age
+    cell means an upstream filter dropped data the simulation does use, which is silent
+    at build time and shows up only as an uncorrected relative risk in the results.
+    """
+    childbearing = data[
+        (data.index.get_level_values("sex") == "Female")
+        & (data.index.get_level_values("age_start") >= WRA_AGE_START)
+        & (data.index.get_level_values("age_end") <= WRA_AGE_END)
+    ]
+    all_zero = childbearing.index[(childbearing == 0).all(axis=1)]
+    if not all_zero.empty:
+        raise ValueError(
+            f"{name} is zero for {len(all_zero)} childbearing-age rows, e.g. "
+            f"{all_zero[0]}. Check the age filters feeding it."
+        )
 
 
 @cache
@@ -741,10 +820,14 @@ def _only_mean(df):
 
 
 def _among_wra(df):
+    # 10, not 15: the 10-14 group has a non-zero pregnancy end rate, gets hemoglobin
+    # exposure from get_hemoglobin_data (age_start >= 10), and GBD estimates maternal
+    # disorders from age_group_id 7 onward. Excluding it here wrote a 0.0 PAF and a 0.0
+    # proportion-below-70 into the artifact for an age group the simulation does model.
     return df[
         (df.index.get_level_values("sex") == "Female")
-        & (df.index.get_level_values("age_start") >= 15)
-        & (df.index.get_level_values("age_end") <= 55)
+        & (df.index.get_level_values("age_start") >= WRA_AGE_START)
+        & (df.index.get_level_values("age_end") <= WRA_AGE_END)
     ]
 
 
@@ -827,8 +910,8 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
 
     hemoglobin_data = hemoglobin_data[
         (hemoglobin_data.index.get_level_values("sex") == "Female")
-        & (hemoglobin_data.index.get_level_values("age_start") >= 10)
-        & (hemoglobin_data.index.get_level_values("age_end") <= 55)
+        & (hemoglobin_data.index.get_level_values("age_start") >= WRA_AGE_START)
+        & (hemoglobin_data.index.get_level_values("age_end") <= WRA_AGE_END)
     ]
     # Average the draws GBD actually returned rather than the tiled ones, which would
     # weight the repeated draws twice.
@@ -899,6 +982,7 @@ def get_hemoglobin_below_70(key: str, location: str, mean_draw: bool):
 
         assert result[draw].notnull().all()
 
+    _assert_covers_childbearing_ages(result, "pregnant proportion below 70 g/L")
     return result
 
 

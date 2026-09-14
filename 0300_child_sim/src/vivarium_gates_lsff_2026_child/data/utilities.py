@@ -582,6 +582,35 @@ def load_lbwsg_exposure(location: str):
     return data
 
 
+@cache
+def load_lbwsg_birth_exposure(location: str):
+    """Pull the LBWSG exposure of the birth age group (164).
+
+    This is the exposure distribution of the whole birth cohort, before any
+    neonatal deaths. ``load_lbwsg_exposure`` pulls age groups 2 and 3 instead,
+    whose distributions are already depleted by mortality.
+    """
+    entity = get_entity(data_keys.LBWSG.BIRTH_EXPOSURE)
+    if type(location) == int:
+        location_id = location
+    else:
+        location_id = utility_data.get_location_id(location)
+    data = get_draws(
+        gbd_id_type="rei_id",
+        gbd_id=entity.gbd_id,
+        source=gbd_constants.SOURCES.EXPOSURE,
+        location_id=location_id,
+        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+        age_group_id=164,  # Birth prevalence
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
+        year_id=2022,
+    )
+    # Restamp onto the artifact's year bin so this joins the LBWSG relative risk.
+    data["year_id"] = GBD_EXTRACT_YEAR
+
+    return data
+
+
 def get_gbd_2021_entity(key: str) -> ModelableEntity:
     # from load_standard_data
     entity = get_entity(key)
