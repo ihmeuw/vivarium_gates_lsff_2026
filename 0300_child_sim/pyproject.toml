@@ -39,7 +39,7 @@ interactive = [
     "nbdime",
 ]
 data = [
-    "vivarium-inputs>=8.0.2",
+    "vivarium_gates_lsff_2026[data]",
     "vivarium_gates_lsff_2026_child[cluster,lint,test,validation]",
 ]
 # NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].

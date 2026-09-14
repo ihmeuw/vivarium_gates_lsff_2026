@@ -45,7 +45,7 @@ cluster = [
     "jobmon_installer_ihme>=10.12.2",
 ]
 data = [
-    "vivarium-inputs>=8.0.2",
+    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@pnast/feature/mic-6303-drop-get-draws",
     "vivarium_gates_lsff_2026[cluster]",
     # Automated V&V (5000_analyze_results/validation) runs in the artifact env, so it
     # belongs on this path -- see the [validation] extra below.
@@ -113,6 +113,9 @@ Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
 
 [project.scripts]
 make_artifacts = "vivarium_gates_lsff_2026.tools.cli:make_artifacts"
+
+[tool.uv]
+override-dependencies = ["pandas<2.2.0", "numpy<2.0.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
