@@ -38,7 +38,7 @@ interactive = [
     "nbdime",
 ]
 data = [
-    "vivarium_gates_lsff_2026[data]",
+    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@pnast/feature/mic-6303-drop-get-draws",
     "vivarium_gates_lsff_2026_maternal[cluster,lint,test,validation]",
 ]
 # NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
