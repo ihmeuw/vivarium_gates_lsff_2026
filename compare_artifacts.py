@@ -9,6 +9,7 @@ Usage::
 """
 
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,12 @@ RTOL = 1e-9
 
 
 def main(old_path: str, new_path: str) -> None:
+    # Artifact() builds a new empty file rather than failing when the path is wrong,
+    # so a typo or an unset variable would otherwise compare against nothing.
+    for path in (old_path, new_path):
+        if not Path(path).is_file():
+            sys.exit(f"No artifact at '{path}'")
+
     old, new = Artifact(old_path), Artifact(new_path)
     old_keys, new_keys = set(old.keys), set(new.keys)
     identical, changed, errors = [], [], []
