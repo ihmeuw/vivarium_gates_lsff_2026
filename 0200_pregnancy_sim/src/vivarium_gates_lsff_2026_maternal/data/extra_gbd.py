@@ -3,11 +3,8 @@ from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_gbd_access.gbd import measures
-# TODO (MIC-7476): get_draws no longer exists. Still used by get_anemia_yld_rate;
-# this module cannot import until that is migrated too.
-from vivarium_gbd_access.gbd.base_data import get_draws, get_machinery_estimates
+from vivarium_gbd_access.gbd.base_data import get_machinery_estimates
 from vivarium_gbd_access.utilities import cache
-from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
 
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
@@ -97,14 +94,20 @@ def get_anemia_ylds(location: str):
 @cache
 def get_anemia_yld_rate(location: str):
     location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        "rei_id",
-        192,
-        source=gbd_constants.SOURCES.COMO,
+    release_id = gbd_constants.RELEASE_IDS.GBD_2023
+    # The impairment-cause pair restricts to cause 294 in the query, so callers no
+    # longer filter on cause_id themselves.
+    data = get_machinery_estimates(
+        entity="impairment-cause",
+        entity_id=[192, 294],
+        release_id=release_id,
+        estimates="draws",
+        measure_id=[Measures.YLD],
+        metric_id=Metrics.RATE,
         location_id=location_id,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        measure_id=vi_globals.MEASURES["YLDs"],
-        metric_id=3,
+        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+        age_group_id=gbd.get_age_group_id(release_id),
+        year_id=metadata.GBD_EXTRACT_YEAR,
     )
     return data
 
@@ -151,7 +154,7 @@ def get_hemoglobin_maternal_disorders_rr(location: str):
         data_type="draws",
         release_id=gbd_constants.RELEASE_IDS.GBD_2021,
     )
-    # Subset to a single sub-cause as the get_draws call returns values for 10 sub-causes within the
+    # Subset to a single sub-cause as the call returns values for 10 sub-causes within the
     # maternal disorders parent cause
     # The RRs are all the same
     assert (
