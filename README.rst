@@ -130,11 +130,17 @@ Add these only when they apply:
 ``rm -rf 0300_child_sim/lbwsg_paf*``
   Recomputes the LBWSG PAFs (stages 3 and 4). Hours of work -- only if the PAFs
   themselves must change.
-``rm -rf .cachedir``
-  Clears a cache the maternal artifact build keeps. Needed if the hemoglobin PAF
-  loader changed, because editing it does not invalidate the cache.
 
-Two things to know here:
+Three things to know here:
+
+* **Deleting an artifact does not clear the GBD cache.** ``vivarium_gbd_access``
+  keys its cache on function name and arguments, so editing a cached function's
+  body -- the hemoglobin PAF, say -- rebuilds the artifact from the old cached
+  value and changes nothing. Clear that one function; the cache is shared with
+  every other model repo, so do not delete the whole thing::
+
+    :~$ find /share/scratch/users/$USER/cache/joblib -type d \
+          -name generate_hemoglobin_maternal_disorders_paf -exec rm -rf {} +
 
 * **Delete both ``sim_results`` directories together**, not just the child's. The
   child model matches its population to the maternal results by scenario and
