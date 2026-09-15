@@ -903,7 +903,9 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
     ]
     if key == data_keys.HEMOGLOBIN.MEAN:
         levels_to_drop.append("parameter")
-    hemoglobin_data = hemoglobin_data.droplevel(levels_to_drop)
+    hemoglobin_data = hemoglobin_data.droplevel(
+        [level for level in levels_to_drop if level in hemoglobin_data.index.names]
+    )
 
     hemoglobin_data = hemoglobin_data[
         (hemoglobin_data.index.get_level_values("sex") == "Female")
