@@ -23,6 +23,9 @@ components:
             - MaternalMortalityObserver()
             - DisabilityObserver()
             - AnemiaObserver()
+            - PersonTimeObserver()
+            - HemoglobinObserver()
+            - IronFortificationObserver()
             - WealthQuintile()
 
 configuration:

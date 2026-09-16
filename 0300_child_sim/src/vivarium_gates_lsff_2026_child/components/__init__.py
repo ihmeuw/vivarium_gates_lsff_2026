@@ -16,7 +16,7 @@ from vivarium_gates_lsff_2026_child.components.maternal_characteristics import (
     MaternalIronConsumptionFromFortification,
     WealthQuintile,
 )
-from vivarium_gates_lsff_2026_child.components.observers import (  # BirthObserver,; MortalityHazardRateObserver,; ChildWastingObserver,
+from vivarium_gates_lsff_2026_child.components.observers import (  # MortalityHazardRateObserver,; ChildWastingObserver,
     BirthObserver,
     MortalityObserver,
     PersonTimeObserver,
