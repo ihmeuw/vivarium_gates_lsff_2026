@@ -245,7 +245,6 @@ class PersonTimeObserver(PublicHealthObserver):
             name="person_time_population",
             pop_filter="is_alive == True",
             when="time_step__prepare",
-            requires_attributes=["is_alive"],
             additional_stratifications=self.configuration.include,
             excluded_stratifications=self.configuration.exclude,
             aggregator=partial(aggregate_state_person_time, builder.time.step_size()()),
@@ -270,30 +269,38 @@ class HemoglobinObserver(PublicHealthObserver):
 
     SEVERE_ANEMIA_THRESHOLD = 70  # g/L, pregnant, age 15+
 
-    OBSERVATIONS = {
-        "hemoglobin_exposure_sum": "exposure",
-        "raw_hemoglobin_exposure_sum": "raw_exposure",
-        "hemoglobin_below_70_count": "below_70",
-    }
-
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         super().setup(builder)
         self.hemoglobin_name = "hemoglobin.exposure"
         self.raw_hemoglobin_name = "raw_hemoglobin.exposure"
 
+    # noinspection PyAttributeOutsideInit
     def register_observations(self, builder: Builder) -> None:
-        for name, pipeline, aggregator in (
-            ("hemoglobin_exposure_sum", self.hemoglobin_name, self.sum_exposure),
-            ("raw_hemoglobin_exposure_sum", self.raw_hemoglobin_name, self.sum_exposure),
-            ("hemoglobin_below_70_count", self.hemoglobin_name, self.count_below_threshold),
-        ):
+        observations = (
+            # (observation name, sub_entity, pipeline, aggregator)
+            ("hemoglobin_exposure_sum", "exposure", self.hemoglobin_name, self.sum_exposure),
+            (
+                "raw_hemoglobin_exposure_sum",
+                "raw_exposure",
+                self.raw_hemoglobin_name,
+                self.sum_exposure,
+            ),
+            (
+                "hemoglobin_below_70_count",
+                "below_70",
+                self.hemoglobin_name,
+                self.count_below_threshold,
+            ),
+        )
+        self.sub_entities = {name: sub_entity for name, sub_entity, _, _ in observations}
+        for name, _, pipeline, aggregator in observations:
             self.register_adding_observation(
                 builder=builder,
                 name=name,
                 pop_filter="is_alive == True",
                 when="time_step__prepare",
-                requires_attributes=["is_alive", pipeline],
+                requires_attributes=[pipeline],
                 additional_stratifications=self.configuration.include,
                 excluded_stratifications=self.configuration.exclude,
                 aggregator=partial(aggregator, pipeline),
@@ -320,19 +327,11 @@ class HemoglobinObserver(PublicHealthObserver):
         return pd.Series("hemoglobin", index=results.index)
 
     def get_sub_entity_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
-        return pd.Series(self.OBSERVATIONS[measure], index=results.index)
+        return pd.Series(self.sub_entities[measure], index=results.index)
 
 
 class IronFortificationObserver(PublicHealthObserver):
     """Vehicle consumption and iron fortification, summed over the pregnancy cohort."""
-
-    OBSERVATIONS = {
-        "any_vehicle_consumption_count": "any_vehicle_consumption",
-        "vehicle_consumption_grams_sum": "vehicle_consumption_grams",
-        "effective_iron_fortification_count": "effective_iron_fortification",
-        "iron_consumption_from_fortification_mcg_sum": "iron_consumption_from_fortification_mcg",
-        "baseline_2021_iron_consumption_from_fortification_mcg_sum": "baseline_2021_iron_consumption_from_fortification_mcg",
-    }
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
@@ -340,38 +339,46 @@ class IronFortificationObserver(PublicHealthObserver):
         self.clock = builder.time.clock()
         self.start_date = get_time_stamp(builder.configuration.time.start)
 
+    # noinspection PyAttributeOutsideInit
     def register_observations(self, builder: Builder) -> None:
-        for name, column, aggregator in (
+        observations = (
+            # (observation name, sub_entity, column, aggregator)
             (
                 "any_vehicle_consumption_count",
+                "any_vehicle_consumption",
                 "vehicle_consumption_grams",
                 self.count_positive_at_initialization,
             ),
             (
                 "vehicle_consumption_grams_sum",
                 "vehicle_consumption_grams",
+                "vehicle_consumption_grams",
                 self.sum_at_initialization,
             ),
             (
                 "effective_iron_fortification_count",
+                "effective_iron_fortification",
                 "iron_fortification",
                 self.count_positive_at_initialization,
             ),
             (
                 "iron_consumption_from_fortification_mcg_sum",
                 "iron_consumption_from_fortification_mcg",
+                "iron_consumption_from_fortification_mcg",
                 self.sum_at_initialization,
             ),
             (
                 "baseline_2021_iron_consumption_from_fortification_mcg_sum",
                 "baseline_2021_iron_consumption_from_fortification_mcg",
+                "baseline_2021_iron_consumption_from_fortification_mcg",
                 self.sum_at_initialization,
             ),
-        ):
+        )
+        self.sub_entities = {name: sub_entity for name, sub_entity, _, _ in observations}
+        for name, _, column, aggregator in observations:
             self.register_adding_observation(
                 builder=builder,
                 name=name,
-                pop_filter="",
                 requires_attributes=[column],
                 additional_stratifications=self.configuration.include,
                 excluded_stratifications=self.configuration.exclude,
@@ -403,7 +410,7 @@ class IronFortificationObserver(PublicHealthObserver):
         return pd.Series("iron_fortification", index=results.index)
 
     def get_sub_entity_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
-        return pd.Series(self.OBSERVATIONS[measure], index=results.index)
+        return pd.Series(self.sub_entities[measure], index=results.index)
 
 
 def aggregate_state_person_time(step_size, df: pd.DataFrame) -> float:

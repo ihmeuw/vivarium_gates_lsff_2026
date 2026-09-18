@@ -280,7 +280,6 @@ class BirthObserver(PublicHealthObserver):
                 builder=builder,
                 name=name,
                 pop_filter="is_alive == True",
-                when="collect_metrics",
                 aggregator=aggregator,
                 requires_attributes=["entrance_time"] + columns,
                 additional_stratifications=self.configuration.include,
