@@ -97,10 +97,10 @@ help:
 	@echo
 	@echo "This is the RECOMMENDED approach for development on the cluster. It creates a virtual"
 	@echo "environment that inherits packages from a Jenkins-built shared conda environment,"
-	@echo "while allowing you to install the local package in editable mode."
+	@echo "while allowing you to install the repo's packages in editable mode."
 	@echo
 	@echo "USAGE:"
-	@echo "  make build-shared-env [type=<environment type>] [venv_dir=<directory>] [venv_name=<name>] [shared_env_dir=<path>] [force=<yes|no>]"
+	@echo "  make build-shared-env [type=<environment type>] [venv_dir=<directory>] [venv_name=<name>] [shared_env_dir=<path>] [shared_env_name=<name>] [force=<yes|no>]"
 	@echo
 	@echo "ARGUMENTS:"
 	@echo "  type [optional]"
@@ -111,6 +111,10 @@ help:
 	@echo "      Name of the venv to create (defaults to '<PACKAGE_NAME>_<TYPE>')"
 	@echo "  shared_env_dir [optional]"
 	@echo "      Base directory for shared environments (defaults to Jenkins shared env location)"
+	@echo "  shared_env_name [optional]"
+	@echo "      Name of the shared environment to build on (defaults to <PACKAGE_NAME>_<TYPE>_current)."
+	@echo "      Pass this from a git worktree or renamed clone, whose directory name differs"
+	@echo "      from the repo name the Jenkins environments are named for."
 	@echo "  force [optional]"
 	@echo "      Whether to remove and recreate an existing venv. Either 'yes' or 'no' (default)"
 	@echo
@@ -225,7 +229,7 @@ SHARED_ENV_DIR ?= /mnt/team/simulation_science/priv/engineering/jenkins/shared_e
 
 build-shared-env: # Create a lightweight venv overlay on top of a shared conda environment
 #	Validate arguments - exit if unsupported arguments are passed
-	$(call validate_make_args,build-shared-env,type venv_dir venv_name shared_env_dir force)
+	$(call validate_make_args,build-shared-env,type venv_dir venv_name shared_env_dir shared_env_name force)
 
 #	Handle arguments and set defaults
 #	type
@@ -243,8 +247,11 @@ build-shared-env: # Create a lightweight venv overlay on top of a shared conda e
 	@$(eval force ?= no)
 	@$(call validate_arg,$(force),yes no,force)
 #	Construct shared environment path
-	@$(eval SHARED_ENV_NAME := $(PACKAGE_NAME)_$(type)_current)
-	@$(eval SHARED_ENV_PATH := $(shared_env_dir)/$(SHARED_ENV_NAME))
+#	shared_env_name -- overridable because PACKAGE_NAME comes from the directory
+#	name, which differs from the canonical repo name in git worktrees and renamed
+#	clones, while the Jenkins shared environments are always named for the repo.
+	@$(eval shared_env_name ?= $(PACKAGE_NAME)_$(type)_current)
+	@$(eval SHARED_ENV_PATH := $(shared_env_dir)/$(shared_env_name))
 
 #	Verify shared environment exists
 	@if [ ! -d "$(SHARED_ENV_PATH)" ]; then \
@@ -293,9 +300,13 @@ build-shared-env: # Create a lightweight venv overlay on top of a shared conda e
 		echo 'setenv PATH "$$VIRTUAL_ENV/bin:$(SHARED_ENV_PATH)/bin:$$_OLD_VIRTUAL_PATH"' >> $(venv_path)/bin/activate.csh; \
 	fi
 
-#	Install local package in editable mode (no-deps since shared env has dependencies)
-	@echo "Installing local package in editable mode (--no-deps)"
-	$(venv_path)/bin/pip install -e . --no-deps
+#	Install the repo's packages in editable mode (no-deps since the shared env has
+#	the dependencies). All three must be installed here: the shared environment
+#	carries the maternal and child packages as editable installs pointing into the
+#	Jenkins build workspace, a path that does not exist outside the builder, so any
+#	package not shadowed by a local editable install fails to import at runtime.
+	@echo "Installing local packages in editable mode (--no-deps)"
+	$(venv_path)/bin/pip install --no-deps -e . -e ./0200_pregnancy_sim -e ./0300_child_sim
 
 	@echo
 	@echo "Finished creating venv"
