@@ -5,6 +5,13 @@ of what it takes; each step names who does it and how to know it's done. The
 same sequence works for any future folate-only (location, vehicle) pair — only
 the data sources change.
 
+**Ported 2026-09-23** from `snakemake-monorepo-port` (d2dda7a + 851813b) onto
+current main. Every extracted value was re-checked against the CURRENT
+('Updated 22 Jan 2026') tabs of the GF Apr-2026 workbook — the plain-named
+tabs are current, the "(2)" tabs are stale 7-Jan copies — and all intake,
+coverage, and consolidation values confirm. The scenario compliance encoding
+was updated to the 2035 equal-split convention (see step 1).
+
 **Shape of the addition:** folic acid never enters the Vivarium simulations
 (those model iron → hemoglobin only), so this triple touches only the
 deterministic stages: data prep (0100), the NTD model (0500), and results
@@ -33,35 +40,45 @@ keyed by (Country, Vehicle[, Fortificant, Scenario]). The Ethiopia/Salt rows
 are the template; `prep_extracted.ipynb` turns the sheet into every CSV the
 pipeline needs and its `check_totals` guards the arithmetic.
 
-- [ ] **"Country-Vehicle Extraction" sheet — Nigeria, Salt:**
-  - Vehicle consumption by WRA — any (proportion consuming)
-  - Vehicle consumption by WRA — amount (g/day; mean and SD)
-  - Vehicle "fortifiability" (share industrially produced)
-  - By wealth quintile and, where the source supports it, age/sex. Candidate
-    sources: Nigeria Living Standards Survey, the consumption literature used
-    for the Ethiopia salt extraction, GFDx for the industrial share.
-- [ ] **"Country-Vehicle-Fort Extraction" sheet — Nigeria, Salt, Folate:**
-  - Baseline fortification: any/full coverage, partial-coverage amount
-    (mean, SD), effectiveness, concentration (µg folic acid per g salt).
-    Nigeria mandates salt *iodization*, not folic acid, so baseline FA
-    coverage is plausibly zero — record that as data, not by omission.
-  - Intervention fortification per scenario: coverage, effectiveness,
-    concentration (from the proposed standard).
-- [ ] Done when: rerunning `prep_extracted.ipynb` (or the pipeline, step 5)
-  materializes, with plausible values:
-  - `0100_data_prep/results/salt/vehicle_consumption/{any,fortifiability,amount/mean,amount/sd}/nigeria.csv`
-  - `0100_data_prep/results/folate/salt/baseline_fortification/{any_coverage,full_coverage,partial_coverage_amount/mean,partial_coverage_amount/sd,effectiveness,concentration}/nigeria.csv`
-  - `0100_data_prep/results/folate/salt/<scenario>/intervention_fortification/{any_coverage,effectiveness,concentration}/nigeria.csv`
+**2026-08-28: extracted**, from the GF "Input data to IHME models" workbook
+(2026-04-16), which lists Nigeria salt FA @ 25%/100% NRV as net-new scenarios
+(#5/#6 in its grid). Three inputs remain assumptions pending GF confirmation
+— see the sheet's Notes cells:
+
+- [x] **"Country-Vehicle Extraction" sheet — Nigeria, Salt:** WRA any-coverage
+  0.993 and intake 3.9 g/day (by quintile), U5 0.99 / 2.6 g/day, industry
+  consolidation 0.95 (all GF workbook, NFCMS 2021). *Assumption:* intake SDs
+  via the Ethiopia salt CV (~0.31) — no salt SD in the GF workbook.
+- [x] **"Country-Vehicle-Fort Extraction" sheet — Nigeria, Salt, Folate:**
+  baseline FA any/full coverage and concentration = 0 (Nigeria mandates
+  iodization, not FA — recorded as data), effectiveness 0.8 (moot at zero
+  baseline coverage, matching the sibling rows' convention).
+- [x] **"Scenario Definition Extraction" sheet** — two scenarios,
+  `Intervention - 25% NRV` and `Intervention - 100% NRV`: concentration
+  25.64 / 102.56 µg/g (*assumption:* "NRV per average intake" convention as
+  for Ethiopia, at 3.9 g/day); coverage = effectiveness = √0.90 ≈ 0.95
+  (*assumption:* GF's Nigeria-salt FA compliance cells are blank on the
+  current tabs, so the GAIN compliance-targets tab's new-compliance 90% is
+  the proxy, encoded per the 2035 equal-split convention adopted 2026-09-09
+  — same as Ethiopia salt. Alternative pending GF confirmation: Alem's
+  projections on the workbook's "Notes for Discussion" tab recommend Nigeria
+  salt compliance 100% for both 2030 and 2035, which would encode as
+  1.0 × 1.0).
+- [x] Verified by a dry run of the `prep_extracted` machinery redirected to a
+  scratch directory: all 12 data needs parse, U5 amounts rescale to the sheet
+  totals, and every expected CSV materializes with the intended values. Repo
+  result CSVs are untouched until step 5 runs for real.
 
 ## 2. Decide the scenario set (research)
 
 - [ ] Default is a single `intervention` scenario, which needs no config
-  change. If the team wants dose scenarios like Ethiopia's
-  (`intervention_25_nrv`, `intervention_100_nrv`): note that
-  `custom_intervention_scenarios` in `0050_config/config.yaml` is
-  **location-level**, so listing nigeria there would apply the custom
-  scenarios to nigeria's iron vehicles too. Giving that knob a vehicle
-  dimension is a small engineering change that must land first.
+  change. **GF's grid asks for two dose scenarios** (25% and 100% NRV, like
+  Ethiopia's), and the extraction rows are entered under those names — so
+  this knob decision is now live: `custom_intervention_scenarios` in
+  `0050_config/config.yaml` is **location-level**, and listing nigeria there
+  would apply the custom scenarios to nigeria's iron vehicles too. Giving
+  that knob a vehicle dimension is a small engineering change that must land
+  before step 4.
 
 ## 3. Anemia pathway — decision parked, deliberately
 
@@ -120,9 +137,17 @@ same mechanism ethiopia uses for its absent simulation inputs).
   note in `0500_neural_tube_defects_model/model.ipynb`) — it scales the NTD
   stillbirth/YLL accounting. Needs a research decision before partner-facing
   numbers ship.
-- **Sequencing with the maternal-disorders PAF fix:** the pending PAF fix
-  changes iron-combo DALYs ~20%, so plan one results-spreadsheet regeneration
-  that includes both changes rather than shipping numbers twice.
+- **Sequencing with pending engine changes:** the two-pass LBWSG PAF
+  correction (held for engineering review) moves iron-combo levels 3–6%, so
+  if it lands near the same time, plan one results-spreadsheet regeneration
+  that includes both changes rather than shipping numbers twice. (The
+  maternal-disorders PAF fix this caveat originally named landed in the
+  1.1.x series.)
+- **U5 disaggregation vintage:** the U5 quintile rows carry the WRA pattern
+  "rescaled by check_totals(fix=True)" note from August; PR #27 has since
+  moved Nigeria U5 consumption disaggregation to the variance-space
+  machinery. Re-verify at arming time (step 4) that the salt rows flow the
+  intended path in prep_extracted.
 - The combos CSV previously lacked a trailing newline, which silently corrupts
   a naive `echo >>` append (fixed alongside this checklist — but check your
   editor didn't strip it again).
