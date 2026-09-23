@@ -23,3 +23,6 @@ Nigeria,Rice,Folate,All (assumed same),Vehicle fortification at baseline -- any,
 Nigeria,Rice,Iron,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Does not matter, no baseline fortification"
 Nigeria,Rice,Iron,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,"Jonathan Gorstein, 8/30"
 Nigeria,Rice,Iron,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,"Jonathan Gorstein, 8/30"
+Nigeria,Salt,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Does not matter, no baseline fortification"
+Nigeria,Salt,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,
+Nigeria,Salt,Folate,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,"Nigeria mandates salt iodization, not folic acid; zero baseline FA recorded as data per the checklist."
