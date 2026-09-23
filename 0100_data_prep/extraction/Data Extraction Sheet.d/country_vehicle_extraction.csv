@@ -84,3 +84,37 @@ Nigeria,Rice,Second,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAK
 Nigeria,Rice,Middle,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.546,,,
 Nigeria,Rice,Fourth,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.633,,,
 Nigeria,Rice,Highest,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.676,,,
+Nigeria,Salt,All (assumed same),All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2026,"GF 'Input data to IHME models' workbook (2026-04-16), Vehicles - WRA",0.95,,,Industry consolidation 95%; consistent with GAIN's 93% coverage / 90% compliance for the iodization program.
+Nigeria,Salt,Total,Total,Vehicle consumption by U5 children -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - preschool",2.6,,,
+Nigeria,Salt,Total,Female,Vehicle consumption by U5 children -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - preschool",2.5,,,
+Nigeria,Salt,Total,Male,Vehicle consumption by U5 children -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - preschool",2.7,,,
+Nigeria,Salt,Lowest,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,2021,GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021),4.2,,,"Wealth pattern not available for children; WRA quintile pattern, rescaled to the U5 totals by check_totals(fix=True), as for bouillon/rice."
+Nigeria,Salt,Second,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,2021,GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021),4,,,
+Nigeria,Salt,Middle,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,2021,GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021),3.8,,,
+Nigeria,Salt,Fourth,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,2021,GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021),3.7,,,
+Nigeria,Salt,Highest,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,2021,GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021),3.8,,,
+Nigeria,Salt,Total,Total,Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Assumption,0.81,,,Assumption: no salt-consumption SD in the GF workbook; CV~0.31 borrowed from the Ethiopia salt extraction (Addis survey SD 2.2 / mean 7.1).
+Nigeria,Salt,Lowest,All (assumed same),Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Assumption,1.21,,,"Wealth pattern not available for children; WRA quintile pattern, rescaled to the U5 totals by check_totals(fix=True), as for bouillon/rice."
+Nigeria,Salt,Second,All (assumed same),Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Middle,All (assumed same),Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Fourth,All (assumed same),Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Highest,All (assumed same),Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Total,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - preschool",0.99,,,
+Nigeria,Salt,Total,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",3.9,,,Mean per capita salt intake; at 99.3% coverage the among-consumers vs population-mean distinction is immaterial.
+Nigeria,Salt,Lowest,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",4.2,,,
+Nigeria,Salt,Second,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",4,,,
+Nigeria,Salt,Middle,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",3.8,,,
+Nigeria,Salt,Fourth,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",3.7,,,
+Nigeria,Salt,Highest,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",3.8,,,
+Nigeria,Salt,Total,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Assumption,1.21,,,Assumption: no salt-consumption SD in the GF workbook; CV~0.31 borrowed from the Ethiopia salt extraction (Addis survey SD 2.2 / mean 7.1).
+Nigeria,Salt,Lowest,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Second,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Middle,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Fourth,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Highest,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Assumption,1.21,,,
+Nigeria,Salt,Total,Female,Vehicle consumption by WRA -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",0.993,,,Coverage 99.3
+Nigeria,Salt,Lowest,Female,Vehicle consumption by WRA -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",0.995,,,
+Nigeria,Salt,Second,Female,Vehicle consumption by WRA -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",0.997,,,
+Nigeria,Salt,Middle,Female,Vehicle consumption by WRA -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",0.995,,,
+Nigeria,Salt,Fourth,Female,Vehicle consumption by WRA -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",0.994,,,
+Nigeria,Salt,Highest,Female,Vehicle consumption by WRA -- any,percentage,%,2021,"GF 'Input data to IHME models' workbook (2026-04-16) (NFCMS 2021), Vehicles - WRA",0.985,,,
