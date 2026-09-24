@@ -235,21 +235,9 @@ def build_single_location_artifact(
     logger.info(f"Building artifact for {location} at {str(path)}.")
     artifact = builder.open_artifact(path, location)
 
-    # TEMPORARY (MIC-7476): hemoglobin SD has no best model version for release 33,
-    # so get_model_estimates raises. These are the SD key and the three that load it.
-    skip_keys = {
-        data_keys.HEMOGLOBIN.STANDARD_DEVIATION,
-        data_keys.HEMOGLOBIN.PREGNANT_PROPORTION_WITH_HEMOGLOBIN_BELOW_70,
-        data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN,
-        data_keys.MATERNAL_HEMORRHAGE.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN,
-    }
-
     for key_group in data_keys.MAKE_ARTIFACT_KEY_GROUPS:
         logger.info(f"Loading and writing {key_group.log_name} data")
         for key in key_group:
-            if key in skip_keys:
-                logger.warning(f"   - SKIPPING {key} (MIC-7476)")
-                continue
             logger.info(f"   - Loading and writing {key} data")
             builder.load_and_write_data(
                 artifact, key, location, mean_draw, vehicle, key in replace_keys

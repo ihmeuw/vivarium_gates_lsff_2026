@@ -1,4 +1,6 @@
+import pandas as pd
 from gbd.enums import Measures, Metrics
+from loguru import logger
 from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
@@ -7,7 +9,7 @@ from vivarium_gbd_access.gbd.base_data import get_machinery_estimates
 from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import utility_data
 
-from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata, paths
 from vivarium_gates_lsff_2026_maternal.data import utilities
 
 
@@ -114,30 +116,22 @@ def get_anemia_yld_rate(location: str):
 
 @cache
 def get_hemoglobin_exposure_data(key: str, location: str):
-    location_id = utility_data.get_location_id(location)
     # Release 33 estimates are already for the pregnant population, so no
-    # pregnancy correction factor is applied downstream.
-    release_id = metadata.GBD_2023_SPECIAL_PUBLICATIONS_RELEASE_ID
-    if key == data_keys.HEMOGLOBIN.MEAN:
-        data = measures.get_exposure(
-            entity_id=376,
-            location_id=location_id,
-            year_id=metadata.GBD_EXTRACT_YEAR,
-            data_type="draws",
-            sex_id=gbd_constants.SEX.FEMALE,
-            release_id=release_id,
+    # pregnancy correction factor is applied downstream. The SD model version was
+    # never published, so both mean and SD are read from the stored get_draws
+    # capture (rei 376, females, 2023) that MNCNH also uses.
+    dataset = {
+        data_keys.HEMOGLOBIN.MEAN: "hemoglobin_exposure",
+        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: "hemoglobin_exposure_sd",
+    }[key]
+    path = paths.HEMOGLOBIN_RELEASE_33_DATA_DIR / f"{dataset}_{location.lower()}.parquet"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} is missing. Release-33 hemoglobin data can't be pulled live; "
+            "see the README in HEMOGLOBIN_RELEASE_33_DATA_DIR."
         )
-    else:
-        # NOTE: no sex_id argument, so the female subset is taken below instead.
-        data = measures.get_exposure_standard_deviation(
-            risk_id=376,
-            location_id=location_id,
-            year_id=metadata.GBD_EXTRACT_YEAR,
-            data_type="draws",
-            release_id=release_id,
-        )
-        data = data[data["sex_id"] == gbd_constants.SEX.FEMALE]
-    return data
+    logger.warning(f"Reading {key} from stored release-33 capture at {path}.")
+    return pd.read_parquet(path)
 
 
 @cache
