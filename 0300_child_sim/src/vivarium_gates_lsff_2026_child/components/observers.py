@@ -3,7 +3,6 @@ from typing import Any, Dict
 
 import pandas as pd
 from vivarium.engine.framework.engine import Builder
-from vivarium.engine.framework.results import Observer
 from vivarium.public_health.results import COLUMNS, PublicHealthObserver, SimpleCause
 from vivarium.public_health.results.disease import DiseaseObserver
 from vivarium.public_health.results.mortality import MortalityObserver as MortalityObserver_
@@ -207,7 +206,40 @@ class ResultsStratifier(ResultsStratifier_):
         return age_group
 
 
-class BirthObserver(Observer):
+MATERNAL_IRON_COLUMN = "maternal_iron_consumption_from_fortification_mcg"
+BASELINE_2021_MATERNAL_IRON_COLUMN = (
+    "baseline_2021_maternal_iron_consumption_from_fortification_mcg"
+)
+
+
+class BirthObserver(PublicHealthObserver):
+    """Quantities measured over each birth cohort, denominated by ``live_births``."""
+
+    ENTITY_COLUMNS = {
+        "live_births": ("population", "population", "live_births"),
+        "low_weight_births": ("population", "population", "low_weight_births"),
+        "birth_weight_sum": (
+            "risk_factor",
+            "low_birth_weight_and_short_gestation",
+            "birth_weight",
+        ),
+        "gestational_age_sum": (
+            "risk_factor",
+            "low_birth_weight_and_short_gestation",
+            "gestational_age",
+        ),
+        "maternal_iron_consumption_sum": (
+            "intervention",
+            "iron_fortification",
+            MATERNAL_IRON_COLUMN,
+        ),
+        "baseline_2021_maternal_iron_consumption_sum": (
+            "intervention",
+            "iron_fortification",
+            BASELINE_2021_MATERNAL_IRON_COLUMN,
+        ),
+    }
+
     def __init__(self):
         super().__init__()
         # Derive these from LBWSGRisk rather than spelling them out: the exposure
@@ -222,34 +254,50 @@ class BirthObserver(Observer):
         self.clock = builder.time.clock()
 
     def register_observations(self, builder: Builder) -> None:
-        builder.results.register_adding_observation(
-            name="live_births",
-            pop_filter="is_alive == True",
-            when="collect_metrics",
-            aggregator=self.count_live_births,
-            requires_attributes=["entrance_time"],
-        )
-        builder.results.register_adding_observation(
-            name="birth_weight_sum",
-            pop_filter="is_alive == True",
-            when="collect_metrics",
-            aggregator=self.sum_birth_weights,
-            requires_attributes=["entrance_time", self.birth_weight_column_name],
-        )
-        builder.results.register_adding_observation(
-            name="gestational_age_sum",
-            pop_filter="is_alive == True",
-            when="collect_metrics",
-            aggregator=self.sum_gestational_ages,
-            requires_attributes=["entrance_time", self.gestational_age_column_name],
-        )
-        builder.results.register_adding_observation(
-            name="low_weight_births",
-            pop_filter="is_alive == True",
-            when="collect_metrics",
-            aggregator=self.count_low_weight_births,
-            requires_attributes=["entrance_time", self.birth_weight_column_name],
-        )
+        birth_weight = self.birth_weight_column_name
+        gestational_age = self.gestational_age_column_name
+        for name, columns, aggregator in (
+            ("live_births", [], self.count_live_births),
+            ("low_weight_births", [birth_weight], self.count_low_weight_births),
+            ("birth_weight_sum", [birth_weight], partial(self.sum_over_births, birth_weight)),
+            (
+                "gestational_age_sum",
+                [gestational_age],
+                partial(self.sum_over_births, gestational_age),
+            ),
+            (
+                "maternal_iron_consumption_sum",
+                [MATERNAL_IRON_COLUMN],
+                partial(self.sum_over_births, MATERNAL_IRON_COLUMN),
+            ),
+            (
+                "baseline_2021_maternal_iron_consumption_sum",
+                [BASELINE_2021_MATERNAL_IRON_COLUMN],
+                partial(self.sum_over_births, BASELINE_2021_MATERNAL_IRON_COLUMN),
+            ),
+        ):
+            self.register_adding_observation(
+                builder=builder,
+                name=name,
+                pop_filter="is_alive == True",
+                aggregator=aggregator,
+                requires_attributes=["entrance_time"] + columns,
+                additional_stratifications=self.configuration.include,
+                excluded_stratifications=self.configuration.exclude,
+            )
+
+    ##############################
+    # Results formatting methods #
+    ##############################
+
+    def get_entity_type_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        return pd.Series(self.ENTITY_COLUMNS[measure][0], index=results.index)
+
+    def get_entity_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        return pd.Series(self.ENTITY_COLUMNS[measure][1], index=results.index)
+
+    def get_sub_entity_column(self, measure: str, results: pd.DataFrame) -> pd.Series:
+        return pd.Series(self.ENTITY_COLUMNS[measure][2], index=results.index)
 
     ########################
     # Event-driven methods #
@@ -258,13 +306,9 @@ class BirthObserver(Observer):
         born_this_step = x["entrance_time"] == self.clock()
         return sum(born_this_step)
 
-    def sum_birth_weights(self, x: pd.DataFrame) -> float:
+    def sum_over_births(self, column: str, x: pd.DataFrame) -> float:
         born_this_step = x["entrance_time"] == self.clock()
-        return x.loc[born_this_step, self.birth_weight_column_name].sum()
-
-    def sum_gestational_ages(self, x: pd.DataFrame) -> float:
-        born_this_step = x["entrance_time"] == self.clock()
-        return x.loc[born_this_step, self.gestational_age_column_name].sum()
+        return x.loc[born_this_step, column].sum()
 
     def count_low_weight_births(self, x: pd.DataFrame) -> float:
         born_this_step = x["entrance_time"] == self.clock()
@@ -345,21 +389,7 @@ class ChildWastingObserver(DiseaseObserver):
 
 
 class PersonTimeObserver(PublicHealthObserver):
-    """Total population person time, emitted in the standard four-column results format.
-
-    Notes
-    -----
-    Subclassing ``PublicHealthObserver`` rather than ``Observer`` is what makes this dataset
-    usable by the automated V&V tooling, in two ways. The tooling's loader requires the
-    ``measure``/``entity_type``/``entity``/``sub_entity`` columns that ``format_results``
-    adds, and it discovers person-time datasets by the ``person_time_`` name prefix, deriving
-    the total-person-time denominator every ratio measure needs from the largest match. A
-    plain ``Observer`` writing a bare ``person_time`` dataset satisfies neither.
-
-    The observation is deliberately *not* named ``person_time_total``. The loader caches each
-    person-time dataset it reads and then caches its derived total under exactly that key, so
-    a real dataset by that name makes it raise on the duplicate.
-    """
+    """Total population person time, emitted in the standard four-column results format."""
 
     def register_observations(self, builder: Builder) -> None:
         self.register_adding_observation(
