@@ -95,6 +95,10 @@ Flag                                            Effect
 ``-n``                                          Dry run: show what would run.
 ``--quiet rules``                               Only print the job table (use with ``-n``).
 ``-k``                                          Keep going when one job fails.
+``--rerun-triggers mtime``                      Decide what to rerun from file timestamps only. Use it when
+                                                the dry run lists data prep jobs, such as
+                                                ``calculate_effective_coverage_*``, after a combination was
+                                                added to the config.
 ``--forcerun <rule>``                           Redo one stage, e.g. ``--forcerun dalys_by_scenario``.
 ``--forceall``                                  Redo everything, data prep included.
 ``--until <rule>``                              Stop after one stage, e.g. ``--until pregnancy_simulations``.
@@ -138,7 +142,8 @@ If something goes wrong
   Delete both ``sim_results`` directories and rerun.
 * **"Directory is locked".** Run ``snakemake --unlock``, then your command again.
 * **It wants to rerun something you expected it to keep.** Add
-  ``--config skip_data_prep=true``. If that doesn't fix it, ask an engineer before
+  ``--config skip_data_prep=true``. If the dry run still lists data prep jobs, also
+  add ``--rerun-triggers mtime``. If that doesn't fix it, ask an engineer before
   starting a long run.
 
 Tests
