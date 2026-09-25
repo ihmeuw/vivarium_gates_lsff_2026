@@ -71,14 +71,16 @@ pipeline needs and its `check_totals` guards the arithmetic.
 
 ## 2. Decide the scenario set (research)
 
-- [ ] Default is a single `intervention` scenario, which needs no config
-  change. **GF's grid asks for two dose scenarios** (25% and 100% NRV, like
-  Ethiopia's), and the extraction rows are entered under those names — so
-  this knob decision is now live: `custom_intervention_scenarios` in
-  `0050_config/config.yaml` is **location-level**, and listing nigeria there
-  would apply the custom scenarios to nigeria's iron vehicles too. Giving
-  that knob a vehicle dimension is a small engineering change that must land
-  before step 4.
+- [x] **Decided: two dose scenarios**, `intervention_25_nrv` and
+  `intervention_100_nrv`, matching GF's grid and the extraction rows.
+  `custom_intervention_scenarios` in `0050_config/config.yaml` is now keyed
+  by (location, vehicle) (`config_utils.get_intervention_scenarios`), so
+  `nigeria: {salt: [...]}` leaves nigeria's rice and bouillon on the default
+  `intervention` scenario. Because a rule's outputs can't depend on the
+  `{vehicle}` wildcard, nigeria/salt effective coverage has its own rule,
+  `calculate_effective_coverage_nigeria_salt`. Both comparisons (vs baseline)
+  are listed in `0050_config/location_vehicle_scenario_comparisons.csv`,
+  which the spreadsheet and plots rules now declare as an input.
 
 ## 3. Anemia pathway — decision parked, deliberately
 
