@@ -3,11 +3,13 @@ import pathlib
 import pandas as pd
 import yaml
 
+# The repository's config directory. Module-level so tests can point it at a
+# scratch directory.
+CONFIG_DIR = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
+
 
 def get_config():
-    config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
-
-    with open(config_dir / "config.yaml") as stream:
+    with open(CONFIG_DIR / "config.yaml") as stream:
         config = yaml.safe_load(stream)
 
     return config
@@ -57,12 +59,10 @@ def get_intervention_scenarios(location, vehicle, config=None):
 
 
 def get_location_fortificant_vehicle_intervention_scenarios():
-    config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
-
     config = get_config()
 
     location_fortificant_vehicles = pd.read_csv(
-        str(config_dir / "location_fortificant_vehicles.csv")
+        str(CONFIG_DIR / "location_fortificant_vehicles.csv")
     )
 
     # Expand "all" fortificants
