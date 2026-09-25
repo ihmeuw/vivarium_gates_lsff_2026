@@ -168,6 +168,32 @@ rule prep_extracted:
 #         for scenario in scenarios[location]
 #     ]
 
+# Intervention scenarios are configured per (location, vehicle), but a rule's
+# output list can't depend on a wildcard. So each rule below covers a set of
+# vehicles that share one scenario list, and a vehicle with a different list
+# gets its own rule (see calculate_effective_coverage_nigeria_salt).
+def shared_intervention_scenarios(location, vehicles):
+    scenario_lists = {
+        tuple(config_utils.get_intervention_scenarios(location, vehicle, config))
+        for vehicle in vehicles
+    }
+    if len(scenario_lists) > 1:
+        raise ValueError(
+            f"{location} vehicles {sorted(vehicles)} have different intervention scenarios "
+            f"({sorted(scenario_lists)}); give the odd one out its own "
+            "calculate_effective_coverage rule, like calculate_effective_coverage_nigeria_salt."
+        )
+    return list(scenario_lists.pop()) if scenario_lists else ["intervention"]
+
+def configured_vehicles(location, exclude=()):
+    return sorted({
+        vehicle
+        for (combo_location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"])
+        if combo_location == location and vehicle not in exclude
+    })
+
+nigeria_default_vehicles = configured_vehicles("nigeria", exclude=["salt"])
+
 # NOTE: I tried to define these three in a for loop, but: https://github.com/snakemake/snakemake/issues/2178
 rule calculate_effective_coverage_nigeria:
     input:
@@ -181,14 +207,41 @@ rule calculate_effective_coverage_nigeria:
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/nigeria.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/nigeria.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get("nigeria", ["intervention"])
+            for intervention_scenario in shared_intervention_scenarios("nigeria", nigeria_default_vehicles)
         ]
+    # salt is handled by calculate_effective_coverage_nigeria_salt
+    wildcard_constraints:
+        vehicle="|".join(nigeria_default_vehicles),
     shell:
         """
         {common_setup}
         cd coverage_calculation
         mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/nigeria/
         papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
+        """
+
+# Nigeria salt has its own dose scenarios (25%/100% NRV), unlike nigeria's
+# rice and bouillon, so it can't share the rule above.
+rule calculate_effective_coverage_nigeria_salt:
+    input:
+        snakemake_utils.freeze([
+            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+            "0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv",
+        ] + hces_output_files + extracted_output_files, frozen)
+    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/salt/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
+    output:
+        [
+            f"0100_data_prep/results/{{fortificant}}/salt/baseline_fortification/effective_coverage/nigeria.csv",
+        ] + [
+            f"0100_data_prep/results/{{fortificant}}/salt/{intervention_scenario}/intervention_fortification/effective_coverage/nigeria.csv"
+            for intervention_scenario in config_utils.get_intervention_scenarios("nigeria", "salt", config)
+        ]
+    shell:
+        """
+        {common_setup}
+        cd coverage_calculation
+        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/salt/nigeria/
+        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/salt/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {wildcards.fortificant} -p vehicle salt {papermill_engine}
         """
 
 rule calculate_effective_coverage_india:
@@ -203,7 +256,7 @@ rule calculate_effective_coverage_india:
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/india.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/india.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get("india", ["intervention"])
+            for intervention_scenario in shared_intervention_scenarios("india", configured_vehicles("india"))
         ]
     shell:
         """
@@ -225,7 +278,7 @@ rule calculate_effective_coverage_ethiopia:
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/ethiopia.csv",
         ] + [
             f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/ethiopia.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get("ethiopia", ["intervention"])
+            for intervention_scenario in shared_intervention_scenarios("ethiopia", configured_vehicles("ethiopia"))
         ]
     shell:
         """
