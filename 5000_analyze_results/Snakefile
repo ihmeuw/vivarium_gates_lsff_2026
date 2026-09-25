@@ -80,8 +80,15 @@ template_rescaled_results = [
 ]
 
 
+# Per arm, not per location: Nigeria's wheat arm carries no folate even though
+# its rice and bouillon arms do.
+def configured_fortificants(wildcards):
+    return config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(
+        lambda df: df[(df.location == wildcards.location) & (df.vehicle == wildcards.vehicle)]
+    ).fortificant.unique()
+
 def dalys_by_scenario_inputs(wildcards):
-    fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    fortificants = configured_fortificants(wildcards)
     result = ["5000_analyze_results/dalys_by_scenario.ipynb"]
     if "folate" in fortificants:
         result += [
@@ -110,7 +117,7 @@ rule dalys_by_scenario:
         """
 
 def cases_by_scenario_inputs(wildcards):
-    fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    fortificants = configured_fortificants(wildcards)
     result = ["5000_analyze_results/cases_by_scenario.ipynb"]
     if "folate" in fortificants:
         result += [
