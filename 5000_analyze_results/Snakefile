@@ -186,9 +186,13 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
         f"5000_analyze_results/results/{location}/{vehicle}/{output}" for output in cases_by_scenario_outputs
     ]
 
+# Both summary notebooks iterate over this file to decide which comparisons to
+# report, so an edit to it alone has to rerun them.
+scenario_comparisons = "0050_config/location_vehicle_scenario_comparisons.csv"
+
 rule results_spreadsheet:
     input:
-        ["5000_analyze_results/results_spreadsheet.ipynb"] +
+        ["5000_analyze_results/results_spreadsheet.ipynb", scenario_comparisons] +
         dalys_by_scenario_resolved +
         cases_by_scenario_resolved
     output: "5000_analyze_results/results_spreadsheet.xlsx"
@@ -203,7 +207,7 @@ rule results_spreadsheet:
 
 rule results_plots:
     input:
-        ["5000_analyze_results/results_plots.ipynb"] +
+        ["5000_analyze_results/results_plots.ipynb", scenario_comparisons] +
         dalys_by_scenario_resolved +
         cases_by_scenario_resolved
     # The executed notebook is this rule's product, not a log of it -- the plots
