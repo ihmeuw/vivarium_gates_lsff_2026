@@ -145,11 +145,21 @@ same mechanism ethiopia uses for its absent simulation inputs).
   that includes both changes rather than shipping numbers twice. (The
   maternal-disorders PAF fix this caveat originally named landed in the
   1.1.x series.)
-- **U5 disaggregation vintage:** the U5 quintile rows carry the WRA pattern
-  "rescaled by check_totals(fix=True)" note from August; PR #27 has since
-  moved Nigeria U5 consumption disaggregation to the variance-space
-  machinery. Re-verify at arming time (step 4) that the salt rows flow the
-  intended path in prep_extracted.
+- **U5 disaggregation vintage (resolved 2026-09-25):** the salt extraction
+  originally carried U5 quintile rows copied from the WRA pattern (noted as
+  "rescaled by check_totals(fix=True)", but never actually rescaled: mean
+  ~3.9 g/day vs the 2.6 g/day U5 total), plus a single Total/Total U5 SD
+  row. Since PR #27, `interpolate_extrapolate_consumption_amount` in
+  prep_extracted derives Nigeria U5 quintiles itself from the WRA gradient
+  (means directly, SDs in variance space) and expects U5 rows at the
+  national and by-sex level only, so the old rows failed
+  `check_totals_reasonable`. The 10 U5 salt quintile rows were deleted and
+  the U5 SD row (0.81) was set to Sex `All (assumed same)`. The salt rows
+  now match the rice/bouillon layout and prep_extracted runs end to end,
+  leaving all existing CSVs unchanged. Open choice: this gives girls and
+  boys the same U5 SD. Applying the borrowed CV (~0.31) to each sex's mean
+  would give ≈0.78 (F) / ≈0.84 (M), like the sex-specific SDs rice and
+  bouillon carry.
 - The combos CSV previously lacked a trailing newline, which silently corrupts
   a naive `echo >>` append (fixed alongside this checklist — but check your
   editor didn't strip it again).
