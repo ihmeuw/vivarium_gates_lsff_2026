@@ -226,3 +226,43 @@ def test_specs_do_not_hardcode_an_artifact(spec_path: Path) -> None:
         f"{spec_path.relative_to(REPO_ROOT)} hardcodes an artifact_path. Pass the "
         f"artifact with -i instead."
     )
+
+
+def test_latest_run_ignores_non_timestamped_directories(tmp_path: Path) -> None:
+    """An old folder left in the run root must not be taken as the newest run.
+
+    Letters sort after digits, so a leftover `ylls/` would otherwise win the
+    "newest sorts last" fallback over every real, timestamp-named run.
+    """
+    root = paths.run_root(tmp_path, "India", "rice")
+    run = root / "2026_09_24_19_45_57"
+    (run / "results").mkdir(parents=True)
+    (root / "2026_08_01_10_00_00" / "results").mkdir(parents=True)
+    (root / "ylls").mkdir()
+    (root / "_old").mkdir()
+
+    assert paths.run_dirs(root)[-1] == run
+    assert paths.latest_run(tmp_path, "India", "rice") == run
+
+
+def test_write_run_marker_ignores_non_timestamped_directories(tmp_path: Path) -> None:
+    """The recipe the simulation rules run must pick the same run `latest_run` does."""
+    from lsff_utils import snakemake_utils
+
+    root = lsff_utils.paths.run_root(tmp_path, "India", "rice")
+    run = root / "2026_09_24_19_45_57"
+    (run / "results").mkdir(parents=True)
+    (run / "results" / "births.parquet").touch()
+    (root / "ylls").mkdir()
+    # The recipe records the commit it ran from, so it needs a repository with one.
+    git = ["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "init"], check=True)
+
+    script = "set -eo pipefail\n" + snakemake_utils.write_run_marker(
+        tmp_path, "India", "rice"
+    )
+    subprocess.run(["bash", "-c", script], cwd=tmp_path, check=True, capture_output=True)
+
+    marker = lsff_utils.paths.run_marker(tmp_path, "India", "rice")
+    assert marker.read_text().strip() == run.name

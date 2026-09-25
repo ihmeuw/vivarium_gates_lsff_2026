@@ -46,6 +46,7 @@ comes from the maternal model's birth records, so the child artifact build reads
 out of the same ``results/`` directory the maternal simulation wrote to.
 """
 
+import fnmatch
 from pathlib import Path
 
 #: Repository root, derived from this file's location: <repo>/src/lsff_utils/paths.py.
@@ -148,6 +149,24 @@ def artifact_path(artifact_root: Path, location: str, vehicle: str | None = None
 
 RUN_MARKER_NAME = "latest_run.txt"
 
+#: Shell/fnmatch pattern for a psimulate run directory, `YYYY_MM_DD_HH_MM_SS`.
+#: "Newest run sorts last" only holds among names of this shape: anything else
+#: sharing the run root -- an old flat results folder like `ylls/`, a hand-made
+#: `old/` -- sorts after every digit-led timestamp and would be taken as the
+#: latest run. Every lookup of the newest run filters on this first; it is a
+#: glob rather than a regex so the shell recipe in snakemake_utils can use it too.
+RUN_DIR_GLOB = "[0-9][0-9][0-9][0-9]" + "_[0-9][0-9]" * 5
+
+
+def is_run_dir(path: Path) -> bool:
+    """Whether `path` is a timestamp-named psimulate run directory."""
+    return path.is_dir() and fnmatch.fnmatchcase(path.name, RUN_DIR_GLOB)
+
+
+def run_dirs(root: Path) -> list[Path]:
+    """Timestamped run directories directly under `root`, oldest first."""
+    return sorted(p for p in root.glob("*") if is_run_dir(p))
+
 
 def run_root(results_root: Path, location: str, vehicle: str | None = None) -> Path:
     """The directory holding every run for one location (and vehicle, if any)."""
@@ -165,7 +184,8 @@ def latest_run(results_root: Path, location: str, vehicle: str | None = None) ->
 
     The fallback matters because runs launched by hand -- outside Snakemake, which
     is how a single location usually gets rerun -- leave no marker. Run
-    directories are timestamp-named, so the newest sorts last.
+    directories are timestamp-named, so the newest sorts last -- among the
+    directories that match :data:`RUN_DIR_GLOB`; anything else is ignored.
     """
     root = run_root(results_root, location, vehicle)
     marker = root / RUN_MARKER_NAME
@@ -174,7 +194,7 @@ def latest_run(results_root: Path, location: str, vehicle: str | None = None) ->
         if run.exists():
             return run
 
-    runs = sorted(p for p in root.glob("*") if p.is_dir())
+    runs = run_dirs(root)
     if not runs:
         raise FileNotFoundError(
             f"No simulation runs found under '{root}'. Expected at least one "

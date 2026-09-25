@@ -13,6 +13,7 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 
+import fnmatch
 import pickle
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -35,6 +36,8 @@ from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 from vivarium_inputs.globals import DEMOGRAPHIC_COLUMNS, DRAW_COLUMNS
 from vivarium_inputs.mapping_extension import AlternativeRiskFactor
+
+from lsff_utils import paths as shared_paths
 
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, metadata, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import ARTIFACT_INDEX_COLUMNS
@@ -1524,12 +1527,22 @@ def _resolve_lbwsg_paf_path(location: str) -> Path:
         )
 
     # Prefer a flat file, then a metric directory, then the newest nested run. Run
-    # directories are timestamp-named, so reverse-sorting puts the latest first.
+    # directories are timestamp-named, so reverse-sorting puts the latest first --
+    # but only among timestamped runs: a non-timestamped folder beside them (an old
+    # `ylls/`, say) sorts ahead of every timestamp in reverse and would win.
+    def in_run(p: Path) -> bool:
+        return fnmatch.fnmatchcase(
+            p.relative_to(location_dir).parts[0], shared_paths.RUN_DIR_GLOB
+        )
+
     candidates = [
         location_dir / f"{measure}.parquet",
         location_dir / measure,
-        *sorted(location_dir.glob(f"**/{measure}.parquet"), reverse=True),
-        *sorted((p for p in location_dir.glob(f"**/{measure}") if p.is_dir()), reverse=True),
+        *sorted(filter(in_run, location_dir.glob(f"**/{measure}.parquet")), reverse=True),
+        *sorted(
+            (p for p in location_dir.glob(f"**/{measure}") if p.is_dir() and in_run(p)),
+            reverse=True,
+        ),
     ]
     for candidate in candidates:
         if candidate.is_file() or (candidate.is_dir() and any(candidate.glob("*.parquet"))):
