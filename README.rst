@@ -106,6 +106,24 @@ Flag                                            Effect
 ``true`` can also be written ``t``, ``yes`` or ``y``. ``full_scale=1`` gives you the
 small run.
 
+Example commands
+~~~~~~~~~~~~~~~~
+
+When you are ready to run, do a dry run first. It prints a table of how many jobs
+each stage will run, and nothing is run::
+
+  snakemake -n --quiet rules -c1 --config full_scale=true skip_data_prep=true
+
+Check that the stages you deleted appear in the table and that nothing you meant to
+keep does. If the table looks right, run the same command without ``-n --quiet
+rules``::
+
+  snakemake -c1 -k --config full_scale=true skip_data_prep=true
+
+To test one arm before a full run, give the file you want built, for example::
+
+  snakemake -c1 --config skip_data_prep=true -- 0200_pregnancy_sim/mean_draw_artifacts/wheat/nigeria.hdf
+
 If something goes wrong
 -----------------------
 
