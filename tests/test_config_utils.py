@@ -164,6 +164,55 @@ def test_configured_combos_follow_scenarios(config_dir) -> None:
 
 
 # ---------------------------------------------------------------------------
+# get_combo_pathways
+# ---------------------------------------------------------------------------
+
+PATHWAY_COMBOS_CSV = """\
+location,fortificant,vehicle
+india,all,rice
+nigeria,folate,salt
+nigeria,iron,wheat
+ethiopia,folate,salt
+"""
+
+
+@pytest.mark.parametrize(
+    "location, vehicle, expected",
+    [
+        # iron + folate: everything
+        ("india", "rice", (True, True, True)),
+        # folate-only, not opted in to the anemia pathway: NTD only
+        ("nigeria", "salt", (False, False, True)),
+        # folate-only, listed in folate_anemia_vehicles: NTD + anemia, no sims
+        ("ethiopia", "salt", (False, True, True)),
+        # iron-only: sims + anemia, no NTD
+        ("nigeria", "wheat", (True, True, False)),
+    ],
+)
+def test_combo_pathways(config_dir, location, vehicle, expected) -> None:
+    config_dir(
+        config_yaml=CONFIG_YAML + "folate_anemia_vehicles:\n  ethiopia: [salt]\n",
+        combos_csv=PATHWAY_COMBOS_CSV,
+    )
+    pathways = config_utils.get_combo_pathways(location, vehicle)
+    assert list(pathways) == ["has_simulations", "has_anemia_model", "has_ntd_model"]
+    assert tuple(pathways.values()) == expected
+    # papermill turns "-p name True/False" into a bool only for these exact spellings
+    assert all(type(v) is bool for v in pathways.values())
+
+
+def test_combo_pathways_without_folate_anemia_block(config_dir) -> None:
+    """No folate_anemia_vehicles key means no folate-only combo has an anemia pathway."""
+    config_dir(combos_csv=PATHWAY_COMBOS_CSV)
+    assert config_utils.get_combo_pathways("ethiopia", "salt")["has_anemia_model"] is False
+
+
+def test_combo_pathways_unconfigured_pair_raises(config_dir) -> None:
+    with pytest.raises(ValueError, match="not in location_fortificant_vehicles"):
+        config_utils.get_combo_pathways("nigeria", "wheat")
+
+
+# ---------------------------------------------------------------------------
 # The committed config
 # ---------------------------------------------------------------------------
 
@@ -212,3 +261,10 @@ def test_scenario_comparisons_reference_configured_scenarios() -> None:
             checkout_config_utils.get_intervention_scenarios(row.location, row.vehicle)
         )
         assert {row.baseline, row.intervention} <= available, row
+
+
+def test_committed_template_combo_has_every_pathway() -> None:
+    """The 5000 notebooks build zero-valued stand-ins from india/rice's files, so
+    india/rice must produce all of them (the 5000 Snakefile asserts this too)."""
+    checkout_config_utils = _load_config_utils_from_checkout()
+    assert all(checkout_config_utils.get_combo_pathways("india", "rice").values())

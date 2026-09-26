@@ -29,6 +29,10 @@ pregnancy or child sim packages.
   `prep_extracted`, `calculate_effective_coverage_nigeria`,
   `neural_tube_defects_model`, `dalys_by_scenario`, `cases_by_scenario`, and
   the spreadsheet/plots — no simulations, no anemia model.
+  *(Test run: true of the jobs this combo needs, but rerunning
+  `prep_extracted` reschedules every sim through its other outputs; see T1.
+  The gating logic itself now lives in `config_utils.get_combo_pathways`;
+  see T5.)*
 - [x] `folate_anemia_vehicles` knob in `0050_config/config.yaml`, encoding
   which folate-only combos carry an anemia pathway (today: ethiopia/salt).
   Nigeria/salt is deliberately not listed — see step 3.
@@ -86,8 +90,9 @@ pipeline needs and its `check_totals` guards the arithmetic.
 
 Current decision: **nigeria/salt does not change anemia.** It is not listed in
 `folate_anemia_vehicles`, so the pipeline produces NTD results only for this
-combo; the dalys/cases notebooks substitute zero-valued anemia inputs (the
-same mechanism ethiopia uses for its absent simulation inputs).
+combo. `config_utils.get_combo_pathways` reports `has_anemia_model=False`,
+and the dalys/cases notebooks substitute zero-valued anemia inputs, the same
+mechanism ethiopia/salt uses for its absent simulation inputs (see T5 below).
 
 - [ ] Revisit later if the team wants folate-deficiency anemia for Nigeria
   (the ethiopia/salt precedent). Flipping it on requires, in order:
@@ -101,19 +106,30 @@ same mechanism ethiopia uses for its absent simulation inputs).
 
 ## 4. Flip the switch (engineering — one line)
 
-- [ ] Add the row `nigeria,folate,salt` to
+- [x] Add the row `nigeria,folate,salt` to
   `0050_config/location_fortificant_vehicles.csv`. This is the single point
   the whole pipeline reads combos from; do it **after** step 1, because the
   moment the row exists snakemake demands the step-1 files.
 
 ## 5. Run
 
-- [ ] `snakemake --cores 4` (artifact env prerequisites as usual). Expected to
-  run: `prep_extracted`, `calculate_effective_coverage_nigeria`
-  (folate/salt), `neural_tube_defects_model` (nigeria/salt),
-  `dalys_by_scenario` + `cases_by_scenario` (nigeria/salt), spreadsheet,
-  plots. Expected NOT to run: any simulation, any artifact build, any 0400
-  job. If the DAG schedules more than that for this change, stop and look.
+- [x] ~~`snakemake --cores 4`~~ **Corrected (T1 below):** a plain run *does*
+  schedule every artifact build and simulation. Once `prep_extracted` runs,
+  Snakemake treats all of its outputs as updated, including the iron
+  coverage/consumption CSVs the sims read, even though their contents don't
+  change. Instead:
+  1. Run data prep on its own:
+     `snakemake --cores 4 --config skip_data_prep=true --until prep_extracted
+     calculate_effective_coverage_nigeria calculate_effective_coverage_nigeria_salt
+     calculate_effective_coverage_india calculate_effective_coverage_ethiopia`
+  2. `git diff --stat 0100_data_prep/results`: existing CSVs must be
+     unchanged; only new `.../salt/.../nigeria.csv` files appear (16 of them).
+  3. Run the rest without the timestamp trigger:
+     `snakemake --cores 4 --rerun-triggers params input software-env code`.
+     Expected: `neural_tube_defects_model` for every combo (its notebook was
+     edited, T2), 0400 for the iron combos and ethiopia/salt (same reason),
+     `dalys_by_scenario` + `cases_by_scenario` for every combo (params
+     changed, T5), spreadsheet, plots. No artifacts, no simulations.
 
 ## 6. V&V (research + engineering)
 
@@ -130,6 +146,91 @@ same mechanism ethiopia uses for its absent simulation inputs).
   freshness-aware run then verifies they reproduce.
 - [ ] Review the new rows in `results_spreadsheet.xlsx` before they go to the
   partner.
+
+## Test-run log: what it actually took (branch `ndbs/test-nigeria-salt-folate`)
+
+This branch is a trial run, not for merging. It records every change needed
+to get nigeria/folate/salt through the pipeline, so the work can be
+re-implemented on main in smaller pieces. Each item names the problem, the
+fix, and where it lives.
+
+**T1. Data-prep reruns pull in the simulations.**
+*Problem:* editing `Data Extraction Sheet.xlsx` makes `prep_vehicle` and
+`prep_extracted` newer than their outputs. Adding a combo also leaves some
+of their outputs missing. Either way Snakemake reruns them, then reschedules
+everything that reads any of their outputs: artifacts, both sims, 0400, 5000.
+It can't know the regenerated iron CSVs will be byte-identical. Step 5's
+original "no simulations" expectation was wrong for this reason.
+*Workaround used:* run 0100 alone, diff its outputs, then run the rest with
+`--rerun-triggers` excluding `mtime` (step 5).
+*For main:* structural. Either split `prep_extracted` so the iron-sim inputs
+don't depend on the whole workbook, or make the sim inputs depend on content
+(e.g. a checksum-stamped marker) rather than on timestamps.
+
+**T2. Intervention scenarios are configured per (location, vehicle).**
+*Problem:* `custom_intervention_scenarios` was keyed by location only.
+Nigeria/salt needs `intervention_25_nrv` and `intervention_100_nrv`, but
+listing `nigeria` there would have given rice and bouillon those scenarios
+too. Without it, `prep_extracted` looked for an `intervention` scenario that
+the workbook doesn't have and failed its `assert len(sheet) > 0`.
+*Fix:*
+- `config.yaml` is now nested `location → vehicle → [scenarios]`.
+- New helper `config_utils.get_intervention_scenarios(location, vehicle)`,
+  which also validates the block (rejects the old layout and typo'd pairs).
+- Every caller now uses the helper: the 0100, 0400 and 0500 Snakefiles; the
+  `model.ipynb`, `non_pregnant_anemia.ipynb` and
+  `non_pregnant_anemia_folate.ipynb` notebooks; and the coverage notebook,
+  which had its own hardcoded per-location list.
+- A rule's outputs can't depend on the `{vehicle}` wildcard, so nigeria/salt
+  coverage got its own rule, `calculate_effective_coverage_nigeria_salt`.
+  The nigeria rule is limited to its default-scenario vehicles.
+- Tests in `tests/test_config_utils.py`.
+
+**T3. Scenario comparisons.**
+*Fix:* added the two nigeria/salt comparisons to
+`location_vehicle_scenario_comparisons.csv` (the file also lacked a trailing
+newline). Declared the CSV as an input to `results_spreadsheet` and
+`results_plots`, which loop over it but didn't list it.
+
+**T4. U5 salt consumption rows didn't match `prep_extracted`.**
+See the resolved "U5 disaggregation vintage" caveat below. Ten U5 quintile
+rows were deleted from the workbook, and the U5 SD row's Sex was set to
+`All (assumed same)`. The SD rows' note should also be corrected: the ~0.31
+ratio divides an Addis Ababa survey SD (2.2) by Ethiopia's national mean
+(7.1). The Addis survey's own mean is 7.5, which gives ~0.29.
+
+**T5. Result notebooks branched on "does the file exist?".**
+*Problem:* the Snakefile decides which result pathways a combo has (iron
+sims, 0400 anemia, 0500 NTD) and declares inputs to match. But
+`dalys_by_scenario.ipynb` and `cases_by_scenario.ipynb` re-decided with
+`if pathlib.Path(path).is_file()`, falling back to india/rice's files as an
+all-zero template. Nothing declared those fallbacks. Nigeria/salt's
+`cases_by_scenario` started before `0400/.../rice/india/anemia_cases.parquet`
+existed and crashed with `FileNotFoundError`. The design had two further
+hazards:
+- a file missing by mistake (bug, half-finished run) became zeros silently;
+- the dalys NTD fallback read a stale `0500/.../india/rice/intervention/`
+  file left over from an older layout. The first iron-only combo (e.g.
+  nigeria/iron/wheat on `albrja/mic-7549`) would have hit it.
+
+*Fix:*
+- `config_utils.get_combo_pathways(location, vehicle)` returns
+  `has_simulations`, `has_anemia_model` and `has_ntd_model`. It is the one
+  source of truth.
+- The 5000 Snakefile declares either the combo's own files or the india/rice
+  template for each pathway, and passes the three flags to papermill.
+- The notebooks branch on the flags, so an expected file that is missing now
+  raises instead of becoming zeros.
+- The dalys NTD fallback now points at the current path.
+- The Snakefile asserts that the template combo has every pathway.
+- Checked with dry runs for nigeria/salt, ethiopia/salt, india/rice and a
+  hypothetical nigeria/iron/wheat.
+
+*For main:* consider building the zero frames directly (a helper in
+`lsff_utils.results`) instead of reading india/rice's files, so no combo
+depends on another's outputs. Delete the stale
+`0500_neural_tube_defects_model/results/india/rice/intervention/` files,
+which nothing reads now.
 
 ## Caveats that ride along
 

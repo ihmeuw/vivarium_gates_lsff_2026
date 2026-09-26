@@ -115,6 +115,43 @@ def get_location_fortificant_vehicle_intervention_scenarios():
     return location_fortificant_vehicle_intervention_scenarios
 
 
+def get_combo_pathways(location, vehicle):
+    """Which result pathways a (location, vehicle) pair produces.
+
+    This is the single source of truth for both the 5000 Snakefile (which
+    inputs to declare) and the dalys/cases notebooks (which inputs to read, via
+    papermill flags). The notebooks must not decide by checking whether a file
+    exists: that disagrees with Snakemake's DAG, so a job can start before a
+    file it will read has been built, and a file missing by mistake is
+    silently read as zeros.
+
+    - ``has_simulations``: iron combos run the pregnancy and child sims.
+    - ``has_anemia_model``: every iron combo runs the 0400 anemia model; a
+      folate-only combo does only if it is listed in config.yaml's
+      ``folate_anemia_vehicles`` (today: ethiopia/salt).
+    - ``has_ntd_model``: folate combos run the 0500 NTD model.
+
+    A pathway a combo lacks contributes zeros, built from the template combo's
+    (india/rice) files.
+    """
+    combos = get_location_fortificant_vehicle_intervention_scenarios()
+    fortificants = set(
+        combos[(combos.location == location) & (combos.vehicle == vehicle)].fortificant
+    )
+    if not fortificants:
+        raise ValueError(
+            f"({location!r}, {vehicle!r}) is not in location_fortificant_vehicles.csv"
+        )
+    folate_anemia_vehicles = get_config().get("folate_anemia_vehicles") or {}
+    has_iron = "iron" in fortificants
+    return {
+        "has_simulations": has_iron,
+        "has_anemia_model": has_iron
+        or vehicle in (folate_anemia_vehicles.get(location) or []),
+        "has_ntd_model": "folate" in fortificants,
+    }
+
+
 def get_configured_combos(variables):
     location_fortificant_vehicle_intervention_scenarios = (
         get_location_fortificant_vehicle_intervention_scenarios()
