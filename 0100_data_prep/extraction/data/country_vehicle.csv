@@ -1,0 +1,86 @@
+Country,Vehicle,Quintile,Sex,Data need,Data point name,Units,Year,Data source,Value,CI,SE,Notes,Derivation
+Ethiopia,Salt,All (assumed same),Female,Vehicle consumption by WRA -- any,percentage,%,,EPHI data sent by Andy Garcia,0.97,,,"Total population (?), not WRA specifically; Not stratified by wealth quintile",
+Ethiopia,Salt,Total,Female,Vehicle consumption by WRA -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.1,,,"2022 National Nutrition Survey; Total population (?), not WRA specifically",
+Ethiopia,Salt,Lowest,Female,Vehicle consumption by WRA -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.1,,,,
+Ethiopia,Salt,Second,Female,Vehicle consumption by WRA -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.2,,,,
+Ethiopia,Salt,Middle,Female,Vehicle consumption by WRA -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.7,,,,
+Ethiopia,Salt,Fourth,Female,Vehicle consumption by WRA -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.2,,,,
+Ethiopia,Salt,Highest,Female,Vehicle consumption by WRA -- amount,mean,g/day,,EPHI data sent by Andy Garcia,6.5,,,,
+Ethiopia,Salt,All (assumed same),Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,,Survey in Addis Ababa,2.2,,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10195378/; among all adults,
+Ethiopia,Salt,All (assumed same),All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,,0.97,,,"Total population (?), not U5 specifically",
+Ethiopia,Salt,Total,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.1,,,"2022 National Nutrition Survey; Total population (?), not U5 specifically",
+Ethiopia,Salt,Lowest,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.1,,,,
+Ethiopia,Salt,Second,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.2,,,,
+Ethiopia,Salt,Middle,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.7,,,,
+Ethiopia,Salt,Fourth,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,,EPHI data sent by Andy Garcia,7.2,,,,
+Ethiopia,Salt,Highest,All (assumed same),Vehicle consumption by U5 children -- amount,mean,g/day,,EPHI data sent by Andy Garcia,6.5,,,,
+Ethiopia,Salt,All (assumed same),All (assumed same),Vehicle consumption by U5 children -- amount,standard deviation,g/day,,Survey in Addis Ababa,2.2,,,https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10195378/; among all adults,
+Ethiopia,Salt,All (assumed same),All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,,Assumption,1,,,"""Almost all households in Ethiopia have access to iodized salt."" ~ National Food and Nutrition Strategy Baseline Survey",
+Nigeria,Bouillon,Total,Female,Vehicle consumption by WRA -- any,percentage,%,2021,NFCMS,0.981,"[97.5,98.8]",,https://www.unicef.org/nigeria/media/9271/file/%20National%20Food%20Consumption%20and%20Micronutrient%20Survey%20(2021).pdf,
+Nigeria,Bouillon,Lowest,Female,Vehicle consumption by WRA -- any,percentage,%,2021,NFCMS,0.963,"[94.2, 98.4]",,"Table 169, page 220",
+Nigeria,Bouillon,Second,Female,Vehicle consumption by WRA -- any,percentage,%,2021,NFCMS,0.981,"[96.8, 99.3]",,95% CI,
+Nigeria,Bouillon,Middle,Female,Vehicle consumption by WRA -- any,percentage,%,2021,NFCMS,0.992,"[98.5, 99.8]",,"These numbers are for non-pregnant WRA, not all WRA",
+Nigeria,Bouillon,Fourth,Female,Vehicle consumption by WRA -- any,percentage,%,2021,NFCMS,0.986,"[97.8, 99.4]",,,
+Nigeria,Bouillon,Highest,Female,Vehicle consumption by WRA -- any,percentage,%,2021,NFCMS,0.986,"[97.5, 99.7]",,,
+Nigeria,Bouillon,Total,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,6.3,"[6.0, 6.6]",0.1,"Table 170, page 222",
+Nigeria,Bouillon,Lowest,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,8.4,"[7.7, 9.0]",0.3,95% CI,
+Nigeria,Bouillon,Second,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,8,"[7.3, 8.7]",0.3,"Pregnant and non-pregnant WRA have been stratified in the NFCMS final report, these are the non-pregnant numbers  ",
+Nigeria,Bouillon,Middle,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,5.9,"[5.3, 6.5]",0.3,"Also, these numbers are across all women, not just those who consume bouillon",
+Nigeria,Bouillon,Fourth,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,4.9,"[4.3, 5.4]",0.3,,
+Nigeria,Bouillon,Highest,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,4.6,"[4.1, 5.2]",0.3,,
+Nigeria,Bouillon,Total,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,3.037037037037037,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 170",
+Nigeria,Bouillon,Lowest,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,3.62962962962963,,,,
+Nigeria,Bouillon,Second,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,3.111111111111111,,,,
+Nigeria,Bouillon,Middle,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,2.962962962962962,,,,
+Nigeria,Bouillon,Fourth,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,2.444444444444445,,,,
+Nigeria,Bouillon,Highest,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,1.703703703703703,,,,
+Nigeria,Bouillon,Total,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,NFCMS,0.988,"[98.3,99.2]",,"Annex 43, page 549",
+Nigeria,Bouillon,Lowest,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,NFCMS,0.963,"[94.2, 98.4]",,Children 6-59 months old (doesn't include U6months),
+Nigeria,Bouillon,Second,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,NFCMS,0.981,"[96.8, 99.3]",,Not stratified by wealth quintile for children; wealth stratification numbers are for WRA,
+Nigeria,Bouillon,Middle,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,NFCMS,0.992,"[98.5, 99.8]",,95% CI,
+Nigeria,Bouillon,Fourth,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,NFCMS,0.986,"[97.8, 99.4]",,,
+Nigeria,Bouillon,Highest,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,2021,NFCMS,0.986,"[97.5, 99.7]",,,
+Nigeria,Bouillon,Total,Total,Vehicle consumption by U5 children -- amount,mean,g/day,2021,NFCMS,4.2,"[4.0, 4.5]",0.1,"Table 171, page 223",
+Nigeria,Bouillon,Total,Female,Vehicle consumption by U5 children -- amount,mean,g/day,2021,NFCMS,4.1,"[3.8, 4.4]",,"Table 171, page 223",
+Nigeria,Bouillon,Total,Male,Vehicle consumption by U5 children -- amount,mean,g/day,2021,NFCMS,4.3,"[4.0, 4.6]",,"Table 171, page 223",
+Nigeria,Bouillon,Total,Total,Vehicle consumption by U5 children -- amount,standard deviation,g/day,2021,NFCMS,2.222222222222222,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 171",Value = (5.5-2.5)/1.35
+Nigeria,Bouillon,Total,Female,Vehicle consumption by U5 children -- amount,standard deviation,g/day,2021,NFCMS,2.2222222222222223,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 171",Value = (5.4-2.4)/1.35
+Nigeria,Bouillon,Total,Male,Vehicle consumption by U5 children -- amount,standard deviation,g/day,2021,NFCMS,2.296296296296296,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 171",Value = (5.6-2.5)/1.35
+Nigeria,Bouillon,Total,Total,"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2021,NFCMS,0.979612640163099,,,"Table 169, page 220 'Percentage of Non-Pregnant Women Whose Households Consumed Bouillon (purchased, branded, and labelled as fortified) by Residence, Zone, and Wealth Quintile', using 'branded' as a proxy for fortifiable and % of households as a proxy for % of product. Values obtained by dividing percent consuming branded food by percent consuming food, which is why we don't have uncertainty. A similar thing is reported in Annex 43, page 549; 'How household obtained bouillon the last time it was obtained': 'purchased', and not by wealth quintile",
+Nigeria,Bouillon,Lowest,All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2021,NFCMS,0.965732087227414,,,,
+Nigeria,Bouillon,Second,All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2021,NFCMS,0.9785932721712538,,,,
+Nigeria,Bouillon,Middle,All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2021,NFCMS,0.9808467741935484,,,,
+Nigeria,Bouillon,Fourth,All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2021,NFCMS,0.9888438133874239,,,,
+Nigeria,Bouillon,Highest,All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2021,NFCMS,0.9837728194726166,,,,
+India,Rice,Total,All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,2024,"Laura Key (BCG), ""India_Bangladesh_data"" (note in ""Vehicles - preschool!Q48"" of ""20260416_Input data to IHME models.xlsx""",0.45,,,"51.3% ""Industry consolidation"" sent by Jonathan Gorstein in a spreadsheet on 7/19/2024 according to M4N Database, but on 8/15/2024 we agreed to consider all open-market rice unfortifiable; in 2025 or 26 Laura Key (Boston Consulting Group) put 45% in the ""Vehicles - preschool"" sheet entry for India Rice Industry consolidation",
+Nigeria,Rice,All (assumed same),All (assumed same),"Vehicle ""fortifiability"" (essentially amount industrially produced)",percentage,%,,BCG-measured tonnage,0.74,,,"""Updated for Portfolio Review - 3.92 / 5.23 MT"" and is attributed to Laura Key (Boston Consulting Group), from ""20260416_Input data to IHME models.xlsx"" and on both the ""Vehicles - WRA"" and ""Vehicles - Preschool"" sheets, cell Q10",
+Nigeria,Rice,Total,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,32.803200000000004,,,"Table 172, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 61.2*0.536 [Value of: Rice, Total, Female, Vehicle consumption by WRA -- any]"
+Nigeria,Rice,Lowest,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,11.491200000000001,,,"Table 172, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 34.2*0.336 [Value of: Rice, Lowest, Female, Vehicle consumption by WRA -- any]"
+Nigeria,Rice,Second,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,23.4752,,,"Table 172, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 52.4*0.448 [Value of: Rice, Second, Female, Vehicle consumption by WRA -- any]"
+Nigeria,Rice,Middle,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,33.1422,,,"Table 172, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 60.7*0.546 [Value of: Rice, Middle, Female, Vehicle consumption by WRA -- any]"
+Nigeria,Rice,Fourth,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,46.652100000000004,,,"Table 172, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 73.7*0.633 [Value of: Rice, Fourth, Female, Vehicle consumption by WRA -- any]"
+Nigeria,Rice,Highest,Female,Vehicle consumption by WRA -- amount,mean,g/day,2021,NFCMS,53.742000000000004,,,"Table 172, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 79.5*0.676 [Value of: Rice, Highest, Female, Vehicle consumption by WRA -- any]"
+Nigeria,Rice,Total,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.536,,,INTAKE tabulation of NFCMS (?) shared by Jonathan Gorstein on 8/30; presumably in WRA,
+Nigeria,Rice,Lowest,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.336,,,,
+Nigeria,Rice,Second,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.448,,,,
+Nigeria,Rice,Middle,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.546,,,,
+Nigeria,Rice,Fourth,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.633,,,,
+Nigeria,Rice,Highest,Female,Vehicle consumption by WRA -- any,percentage,%,,INTAKE,0.676,,,,
+Nigeria,Rice,Total,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,40.07407407407407,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 172",Value = (84.6-30.5)/1.35
+Nigeria,Rice,Lowest,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,24.814814814814813,,,,Value = (47.2-13.7)/1.35
+Nigeria,Rice,Second,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,33.333333333333336,,,,Value = (71.4-26.4)/1.35
+Nigeria,Rice,Middle,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,35.03703703703703,,,,Value = (81.1-33.8)/1.35
+Nigeria,Rice,Fourth,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,37.77777777777778,,,,Value = (96.3-45.3)/1.35
+Nigeria,Rice,Highest,Female,Vehicle consumption by WRA -- amount,standard deviation,g/day,2021,NFCMS,39.03703703703703,,,,Value = (103.1-50.4)/1.35
+Nigeria,Rice,Total,Total,Vehicle consumption by U5 children -- amount,mean,g/day,2021,NFCMS,20.5288,,,"Table 173, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 38.3*0.536 [Value of: Rice, Total, All (assumed same), Vehicle consumption by U5 children -- any]"
+Nigeria,Rice,Total,Female,Vehicle consumption by U5 children -- amount,mean,g/day,2021,NFCMS,19.028000000000002,,,"Table 173, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 35.5*0.536 [Value of: Rice, Total, All (assumed same), Vehicle consumption by U5 children -- any]"
+Nigeria,Rice,Total,Male,Vehicle consumption by U5 children -- amount,mean,g/day,2021,NFCMS,21.976000000000003,,,"Table 173, page 224; based on email from Jonathan Gorstein 8/31 we have assumed the number reported is among consumers, so have multiplied it by coverage here","Value = 41*0.536 [Value of: Rice, Total, All (assumed same), Vehicle consumption by U5 children -- any]"
+Nigeria,Rice,Total,Total,Vehicle consumption by U5 children -- amount,standard deviation,g/day,2021,NFCMS,25.62962962962963,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 173",Value = (53.6-19)/1.35
+Nigeria,Rice,Total,Female,Vehicle consumption by U5 children -- amount,standard deviation,g/day,2021,NFCMS,23.999999999999996,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 173",Value = (49.5-17.1)/1.35
+Nigeria,Rice,Total,Male,Vehicle consumption by U5 children -- amount,standard deviation,g/day,2021,NFCMS,27.333333333333336,,,"Very rough estimate using SD = IQR / 1.35 (normality assumption), IQR reported in table 173",Value = (57.6-20.7)/1.35
+Nigeria,Rice,Total,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,INTAKE,0.536,,,INTAKE tabulation of NFCMS (?) shared by Jonathan Gorstein on 8/30; presumably in WRA,
+Nigeria,Rice,Lowest,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,INTAKE,0.336,,,,
+Nigeria,Rice,Second,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,INTAKE,0.448,,,,
+Nigeria,Rice,Middle,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,INTAKE,0.546,,,,
+Nigeria,Rice,Fourth,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,INTAKE,0.633,,,,
+Nigeria,Rice,Highest,All (assumed same),Vehicle consumption by U5 children -- any,percentage,%,,INTAKE,0.676,,,,

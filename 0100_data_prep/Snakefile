@@ -59,7 +59,7 @@ rule prep_vehicle:
     input:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_vehicle.ipynb",
-            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
+            "0100_data_prep/extraction/data/vehicle.csv",
         ], frozen)
     log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
     output: 
@@ -144,7 +144,9 @@ rule prep_extracted:
     input:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_extracted.ipynb",
-            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
+            "0100_data_prep/extraction/data/country_vehicle.csv",
+            "0100_data_prep/extraction/data/country_vehicle_fortificant.csv",
+            "0100_data_prep/extraction/data/scenario_definition.csv",
             '0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv',
             '0100_data_prep/hces/india_proportion_government_rice.csv',
             '0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv',

@@ -209,7 +209,7 @@ the end -- everything after ``--config`` is read as a setting::
   count as true -- ``full_scale=1`` silently gives you the small run.
 ``--config skip_data_prep=true``
   Take the data prep CSVs in ``0100_data_prep/results/`` as given. Use this
-  unless you changed a data prep notebook or the extraction workbook: git can
+  unless you changed a data prep notebook or the extraction CSVs: git can
   make those CSVs look out of date when they are not, which otherwise reruns
   data prep and everything after it. Genuinely missing CSVs are still built.
 ``--config debug=true``

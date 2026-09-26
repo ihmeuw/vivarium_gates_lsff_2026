@@ -1,0 +1,29 @@
+Country,Vehicle,Fortificant,Quintile,Data need,Data point name,Units,Year,Data source,Value,CI,Notes
+Ethiopia,Salt,Folate,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,
+Ethiopia,Salt,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,
+Nigeria,Rice,Folate,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,"Jonathan Gorstein, 8/30"
+Nigeria,Rice,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,"Jonathan Gorstein, 8/30"
+Nigeria,Rice,Iron,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,"Jonathan Gorstein, 8/30"
+Nigeria,Rice,Iron,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,"Jonathan Gorstein, 8/30"
+Nigeria,Bouillon,Iron,Total,Vehicle fortification at baseline -- any,percentage,%,,Assumption,0.618756371049949,,"Assumption: labeled as fortified = fortified (basically true for salt). Divided ""consumed food labeled as fortified"" by ""consumed food""."
+Nigeria,Bouillon,Iron,Lowest,Vehicle fortification at baseline -- any,percentage,%,,Assumption,0.5192107995846313,,
+Nigeria,Bouillon,Iron,Second,Vehicle fortification at baseline -- any,percentage,%,,Assumption,0.5840978593272171,,
+Nigeria,Bouillon,Iron,Middle,Vehicle fortification at baseline -- any,percentage,%,,Assumption,0.6381048387096774,,
+Nigeria,Bouillon,Iron,Fourth,Vehicle fortification at baseline -- any,percentage,%,,Assumption,0.6693711967545639,,
+Nigeria,Bouillon,Iron,Highest,Vehicle fortification at baseline -- any,percentage,%,,Assumption,0.6997971602434078,,
+Nigeria,Bouillon,Iron,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,420,,"Maggi cubes (most popular brand and format) claim to have 15% NRV per serving (https://www.nestle-cwa.com/en/ask-nestle/products-brands/what-is-in-the-maggi-cube), but according to Jonathan Gorstein email on July 27th it is actually 12%; https://www.wolframalpha.com/input?i=12%25+of+14mg+per+4+grams+in+mcg%2Fg"
+Nigeria,Bouillon,Folate,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,"There is some information on fraction labeled as fortified in NFCMS Table 169, but it Figure 71 shows that 95% of WRA have RBC folate insufficiency. Also: '61 percent of the non-pregnant women from households consumed bouillons that are labelled as fortified with iodine and/or iron.' There is some evidence that the rich have more bouillon labeled as fortified (Table 169)."
+Nigeria,Bouillon,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,
+India,Rice,Iron,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,"slide deck JG shared to ADF, credited to 
+Helena.Pachon@emory.edu
+",42.5,,Originally in mg/100g; https://www.wolframalpha.com/input?i=4.25+mg+per+100+grams+in+micrograms+per+gram
+India,Rice,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,"slide deck JG shared to ADF, credited to 
+Helena.Pachon@emory.edu
+",0.125,,Originally in mcg/100g; https://www.wolframalpha.com/input?i=12.5+mcg+per+100+grams+in+micrograms+per+gram
+Nigeria,Bouillon,Iron,All (assumed same),Baseline effective % of fortified,percentage,%,,Assumption,0,,"Jonathan Gorstein, 8/15"
+Nigeria,Bouillon,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,Assumption,0,,"Jonathan Gorstein, 8/15"
+India,Rice,Iron,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Same as intervention, for now"
+India,Rice,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Same as intervention, for now"
+Ethiopia,Salt,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Does not matter, no baseline fortification"
+Nigeria,Rice,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Does not matter, no baseline fortification"
+Nigeria,Rice,Iron,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Does not matter, no baseline fortification"
