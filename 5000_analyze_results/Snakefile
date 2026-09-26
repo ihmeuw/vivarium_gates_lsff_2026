@@ -80,53 +80,85 @@ template_rescaled_results = [
 ]
 
 
+# Zero-valued stand-ins for pathways a combo doesn't have. The notebooks read
+# the template combo's file only for its index structure and set every value
+# to 0, so these are declared as inputs to keep Snakemake from starting a job
+# before the template exists.
+TEMPLATE_ANEMIA_YLDS = "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet".format(**TEMPLATE_WILDCARDS)
+TEMPLATE_ANEMIA_CASES = "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet".format(**TEMPLATE_WILDCARDS)
+TEMPLATE_NTD_YLLS = "0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv".format(**TEMPLATE_WILDCARDS)
+TEMPLATE_NTD_CASES = "0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv".format(**TEMPLATE_WILDCARDS)
+
+# The template combo has to have every pathway, or its files won't exist.
+assert all(config_utils.get_combo_pathways(**TEMPLATE_WILDCARDS).values()), (
+    f"template combo {TEMPLATE_WILDCARDS} must have every result pathway"
+)
+
+
+def combo_pathways(wildcards):
+    return config_utils.get_combo_pathways(wildcards.location, wildcards.vehicle)
+
+
+def pathway_flags(wildcards):
+    """papermill -p flags telling the notebook which pathways this combo has.
+
+    The notebooks branch on these, never on whether a file exists, so the
+    inputs declared below and the files the notebook reads can't disagree.
+    """
+    return " ".join(
+        f"-p {name} {value}" for name, value in combo_pathways(wildcards).items()
+    )
+
+
 def dalys_by_scenario_inputs(wildcards):
-    fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    pathways = combo_pathways(wildcards)
     result = ["5000_analyze_results/dalys_by_scenario.ipynb"]
-    if "folate" in fortificants:
-        result += [
-            "0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv",
-        ]
-    if "iron" in fortificants:
-        result += rescaled_pregnancy_results + rescaled_child_results + [
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
-        ]
+    if pathways["has_simulations"]:
+        result += rescaled_pregnancy_results + rescaled_child_results
     else:
-        result += [
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
-        ] + template_rescaled_results
+        result += template_rescaled_results
+    if pathways["has_anemia_model"]:
+        result += ["0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet"]
+    else:
+        result += [TEMPLATE_ANEMIA_YLDS]
+    if pathways["has_ntd_model"]:
+        result += ["0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv"]
+    else:
+        result += [TEMPLATE_NTD_YLLS]
     return result
 
 rule dalys_by_scenario:
     input: dalys_by_scenario_inputs
     output: "5000_analyze_results/results/{location}/{vehicle}/dalys_by_scenario.csv"
+    params:
+        pathway_flags=pathway_flags,
     log: "5000_analyze_results/executed/{location}/{vehicle}/dalys_by_scenario.ipynb"
     shell:
         """
         {artifact_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}
-        papermill dalys_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/dalys_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
+        papermill dalys_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/dalys_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} {params.pathway_flags} -k python3 {papermill_engine}
         """
 
 def cases_by_scenario_inputs(wildcards):
-    fortificants = config_utils.get_location_fortificant_vehicle_intervention_scenarios().pipe(lambda df: df[df.location == wildcards.location]).fortificant.unique()
+    pathways = combo_pathways(wildcards)
     result = ["5000_analyze_results/cases_by_scenario.ipynb"]
-    if "folate" in fortificants:
-        result += [
-            "0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv",
-        ]
-    iron_paths = rescaled_pregnancy_results + rescaled_child_results + [
-        "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
-        "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
-    ]
-    if "iron" in fortificants:
-        result += iron_paths
+    if pathways["has_simulations"]:
+        result += rescaled_pregnancy_results + rescaled_child_results
     else:
+        result += template_rescaled_results
+    if pathways["has_anemia_model"]:
         result += [
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
             "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
-        ] + template_rescaled_results
+        ]
+    else:
+        result += [TEMPLATE_ANEMIA_CASES]
+    if pathways["has_ntd_model"]:
+        result += ["0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv"]
+    else:
+        result += [TEMPLATE_NTD_CASES]
     return result
 
 cases_by_scenario_outputs = [
@@ -140,13 +172,15 @@ cases_by_scenario_outputs = [
 rule cases_by_scenario:
     input: cases_by_scenario_inputs
     output: [f"5000_analyze_results/results/{{location}}/{{vehicle}}/{output}" for output in cases_by_scenario_outputs]
+    params:
+        pathway_flags=pathway_flags,
     log: "5000_analyze_results/executed/{location}/{vehicle}/cases_by_scenario.ipynb"
     shell:
         """
         {artifact_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}/
-        papermill cases_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/cases_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
+        papermill cases_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/cases_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} {params.pathway_flags} -k python3 {papermill_engine}
         """
 
 dalys_by_scenario_resolved = []
@@ -158,9 +192,13 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
         f"5000_analyze_results/results/{location}/{vehicle}/{output}" for output in cases_by_scenario_outputs
     ]
 
+# Both summary notebooks iterate over this file to decide which comparisons to
+# report, so an edit to it alone has to rerun them.
+scenario_comparisons = "0050_config/location_vehicle_scenario_comparisons.csv"
+
 rule results_spreadsheet:
     input:
-        ["5000_analyze_results/results_spreadsheet.ipynb"] +
+        ["5000_analyze_results/results_spreadsheet.ipynb", scenario_comparisons] +
         dalys_by_scenario_resolved +
         cases_by_scenario_resolved
     output: "5000_analyze_results/results_spreadsheet.xlsx"
@@ -175,7 +213,7 @@ rule results_spreadsheet:
 
 rule results_plots:
     input:
-        ["5000_analyze_results/results_plots.ipynb"] +
+        ["5000_analyze_results/results_plots.ipynb", scenario_comparisons] +
         dalys_by_scenario_resolved +
         cases_by_scenario_resolved
     # The executed notebook is this rule's product, not a log of it -- the plots

@@ -152,3 +152,7 @@ model_spec_int.yaml
 
 # Local Claude Code session config.
 .claude/
+
+# Mac stuff
+*.DS_Store
+

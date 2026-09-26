@@ -1,3 +1,5 @@
+from lsff_utils import config_utils
+
 debug = config["debug"]
 
 # Recipes are plain strings and Snakemake does the interpolation -- never
@@ -17,7 +19,7 @@ def non_pregnant_anemia_inputs(wildcards):
             "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv",
         ] + [
             f"0100_data_prep/results/iron/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/{{location}}.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get(wildcards.location, ["intervention"])
+            for intervention_scenario in config_utils.get_intervention_scenarios(wildcards.location, wildcards.vehicle, config)
         ]
     )
 
