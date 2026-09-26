@@ -153,6 +153,9 @@ This branch is a trial run, not for merging. It records every change needed
 to get nigeria/folate/salt through the pipeline, so the work can be
 re-implemented on main in smaller pieces. Each item names the problem, the
 fix, and where it lives.
+The branch starts from [`3b52d06`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/3b52d06b6f49fda4e2e77882ce25fd6ecbbb7354), which merges `abie/nigeria-salt-folate`
+into the full pipeline run on main. The combo row itself (step 4) is
+[`856d298`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/856d298b28f3288656cd19126c2c77eadb485291).
 
 **T1. Data-prep reruns pull in the simulations.**
 *Problem:* editing `Data Extraction Sheet.xlsx` makes `prep_vehicle` and
@@ -166,6 +169,11 @@ original "no simulations" expectation was wrong for this reason.
 *For main:* structural. Either split `prep_extracted` so the iron-sim inputs
 don't depend on the whole workbook, or make the sim inputs depend on content
 (e.g. a checksum-stamped marker) rather than on timestamps.
+*Commits:* none (a workaround, not a code change). The run it describes is
+[`afc9a14`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/afc9a146debbac8005bb0f9ba9ee6e4931b85038), which re-executed the existing combos' notebooks and changed
+no result CSVs (only executed notebooks and the spreadsheet), confirming
+the iron inputs were unchanged. [`041c7f6`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/041c7f6bc24d825a4f3bb0b4ba4bbf6b5ce35d11) adds the new nigeria/salt
+outputs.
 
 **T2. Intervention scenarios are configured per (location, vehicle).**
 *Problem:* `custom_intervention_scenarios` was keyed by location only.
@@ -186,11 +194,16 @@ the workbook doesn't have and failed its `assert len(sheet) > 0`.
   The nigeria rule is limited to its default-scenario vehicles.
 - Tests in `tests/test_config_utils.py`.
 
+*Commits:* [`1633b21`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/1633b2130fd207f7399b85c308bf6bc804ada991) (config, helper, callers, coverage rule),
+[`a89edab`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/a89edab7e67dcfa53c89a2eed01f04af86876693) (tests; `CONFIG_DIR` made a module constant so tests can
+use a scratch config).
+
 **T3. Scenario comparisons.**
 *Fix:* added the two nigeria/salt comparisons to
 `location_vehicle_scenario_comparisons.csv` (the file also lacked a trailing
 newline). Declared the CSV as an input to `results_spreadsheet` and
 `results_plots`, which loop over it but didn't list it.
+*Commits:* [`4a983e4`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/4a983e472a3d7676114c5c4294be663ee2b06f8f).
 
 **T4. U5 salt consumption rows didn't match `prep_extracted`.**
 See the resolved "U5 disaggregation vintage" caveat below. Ten U5 quintile
@@ -198,6 +211,9 @@ rows were deleted from the workbook, and the U5 SD row's Sex was set to
 `All (assumed same)`. The SD rows' note should also be corrected: the ~0.31
 ratio divides an Addis Ababa survey SD (2.2) by Ethiopia's national mean
 (7.1). The Addis survey's own mean is 7.5, which gives ~0.29.
+*Commits:* [`12db424`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/12db424d6a66a974cd620fb6f66ae9874c6e33ec) (workbook rows and the caveat). That commit also
+corrects the SD note on the U5 row (row 109). The same note was then applied
+to the WRA SD row (row 99) in a follow-up commit.
 
 **T5. Result notebooks branched on "does the file exist?".**
 *Problem:* the Snakefile decides which result pathways a combo has (iron
@@ -231,6 +247,10 @@ hazards:
 depends on another's outputs. Delete the stale
 `0500_neural_tube_defects_model/results/india/rice/intervention/` files,
 which nothing reads now.
+*Commits:* [`d4fbb85`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/d4fbb8524cf030d9eeddf031e2e231bb6fa6b4cd) (flags, declared templates, notebooks, tests,
+and this log). The nigeria/salt 5000 outputs in [`041c7f6`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/041c7f6bc24d825a4f3bb0b4ba4bbf6b5ce35d11) were
+produced before this change, after rerunning past the race. Regenerate
+them under the flags; the values should be identical.
 
 ## Caveats that ride along
 
