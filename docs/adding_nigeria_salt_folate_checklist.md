@@ -213,7 +213,8 @@ ratio divides an Addis Ababa survey SD (2.2) by Ethiopia's national mean
 (7.1). The Addis survey's own mean is 7.5, which gives ~0.29.
 *Commits:* [`12db424`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/12db424d6a66a974cd620fb6f66ae9874c6e33ec) (workbook rows and the caveat). That commit also
 corrects the SD note on the U5 row (row 109). The same note was then applied
-to the WRA SD row (row 99) in a follow-up commit.
+to the WRA SD row (row 99) in
+[`e61db68`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/e61db68036d5f02637e746068e2dc543ddc77d18).
 
 **T5. Result notebooks branched on "does the file exist?".**
 *Problem:* the Snakefile decides which result pathways a combo has (iron
