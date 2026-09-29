@@ -102,10 +102,11 @@ hces_output_files = []
 
 location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
 
+# HCES microdata covers India rice only; every other arm comes from the workbook.
 for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"]):
     for data_need in vehicle_specific_data_needs:
         file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
-        if location == "india" and ("vehicle_consumption" in data_need) and data_need != "vehicle_consumption/fortifiability":
+        if (location, vehicle) == ("india", "rice") and ("vehicle_consumption" in data_need) and data_need != "vehicle_consumption/fortifiability":
             hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
@@ -113,7 +114,7 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
 for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"]):
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
-        if location == "india" and (("baseline_fortification" in data_need) and ("concentration" not in data_need) and ("effectiveness" not in data_need)):
+        if (location, vehicle) == ("india", "rice") and (("baseline_fortification" in data_need) and ("concentration" not in data_need) and ("effectiveness" not in data_need)):
             hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
