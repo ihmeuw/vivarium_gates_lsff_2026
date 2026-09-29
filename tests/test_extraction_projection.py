@@ -10,7 +10,10 @@ from lsff_utils import extraction_projection
 
 # Relative to this file, not paths.REPO_ROOT: CI installs lsff_utils
 # non-editable, so REPO_ROOT points into site-packages.
-WORKBOOK = Path(__file__).resolve().parents[1] / "0100_data_prep/extraction/Data Extraction Sheet.xlsx"
+WORKBOOK = (
+    Path(__file__).resolve().parents[1]
+    / "0100_data_prep/extraction/Data Extraction Sheet.xlsx"
+)
 
 
 def test_projection_in_sync_with_workbook():
