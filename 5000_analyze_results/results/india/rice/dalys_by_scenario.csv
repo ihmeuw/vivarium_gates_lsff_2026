@@ -15,10 +15,10 @@ baseline,maternal_disorders,3,343228.9891441523
 baseline,maternal_disorders,4,332087.5277864625
 baseline,maternal_disorders,5,207763.07121981858
 baseline,ntd,1,346981.6661888988
-baseline,ntd,2,309124.9344712267
+baseline,ntd,2,309124.9344712262
 baseline,ntd,3,278190.9082376888
-baseline,ntd,4,262984.3912217172
-baseline,ntd,5,228110.39867740887
+baseline,ntd,4,262984.39122171665
+baseline,ntd,5,228110.39867740803
 intervention,anemia,1,4298462.089852179
 intervention,anemia,2,3881330.065812802
 intervention,anemia,3,3795144.06863124
@@ -34,11 +34,11 @@ intervention,maternal_disorders,2,288583.73108646227
 intervention,maternal_disorders,3,339537.4525777138
 intervention,maternal_disorders,4,329483.524030331
 intervention,maternal_disorders,5,204714.12942118218
-intervention,ntd,1,211851.48863318373
+intervention,ntd,1,211851.48863318333
 intervention,ntd,2,199425.75869891868
-intervention,ntd,3,177714.96287417514
-intervention,ntd,4,168831.74340146224
-intervention,ntd,5,163986.3286059146
+intervention,ntd,3,177714.96287417482
+intervention,ntd,4,168831.74340146195
+intervention,ntd,5,163986.32860591428
 zero,anemia,1,4771261.231090824
 zero,anemia,2,4315212.65961095
 zero,anemia,3,4220065.01252761
@@ -57,5 +57,5 @@ zero,maternal_disorders,5,209694.20367088122
 zero,ntd,1,362852.9849538489
 zero,ntd,2,320542.7437766894
 zero,ntd,3,287772.04824723984
-zero,ntd,4,271354.8595424364
-zero,ntd,5,231101.54309438917
+zero,ntd,4,271354.8595424359
+zero,ntd,5,231101.5430943887
