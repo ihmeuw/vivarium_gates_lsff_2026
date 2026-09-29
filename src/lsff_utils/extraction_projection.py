@@ -183,12 +183,12 @@ def write(projection_dir=PROJECTION_DIR):
     return sorted(files)
 
 
-def check(projection_dir=PROJECTION_DIR):
+def check(projection_dir=PROJECTION_DIR, workbook_path=WORKBOOK):
     """Regenerate to a temp dir and compare; return list of problems."""
     problems = []
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        files = project()
+        files = project(workbook_path)
         for name, text in files.items():
             (tmp / name).write_text(text)
             committed = projection_dir / name
