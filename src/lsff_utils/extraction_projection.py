@@ -42,18 +42,47 @@ PROJECTION_DIR = WORKBOOK.with_name(WORKBOOK.stem + ".d")
 #: projected in raw row order. Ties beyond the key sort on the remaining
 #: columns, so the order is total and deterministic either way.
 SHEET_KEYS = {
-    "Country-Vehicle Extraction": ["Country", "Vehicle", "Data need", "Data point name", "Quintile", "Sex"],
-    "Country-Vehicle-Fort Extraction": ["Country", "Vehicle", "Fortificant", "Data need", "Data point name", "Quintile"],
+    "Country-Vehicle Extraction": [
+        "Country",
+        "Vehicle",
+        "Data need",
+        "Data point name",
+        "Quintile",
+        "Sex",
+    ],
+    "Country-Vehicle-Fort Extraction": [
+        "Country",
+        "Vehicle",
+        "Fortificant",
+        "Data need",
+        "Data point name",
+        "Quintile",
+    ],
     "Country Extraction": ["Country", "Data need", "Data point name", "Quintile"],
     "Vehicle Extraction": ["Vehicle", "Data need", "Data point name"],
-    "Scenario Definition Extraction": ["Country", "Vehicle", "Fortificant", "Scenario", "Data need", "Data point name"],
+    "Scenario Definition Extraction": [
+        "Country",
+        "Vehicle",
+        "Fortificant",
+        "Scenario",
+        "Data need",
+        "Data point name",
+    ],
     "Universal": ["Data need", "Data point name"],
 }
 
 #: Semantic orderings for key columns where alphabetical would scramble
 #: related rows apart. Unknown values sort after known ones, alphabetically.
 VALUE_ORDER = {
-    "Quintile": ["Total", "All (assumed same)", "Lowest", "Second", "Middle", "Fourth", "Highest"],
+    "Quintile": [
+        "Total",
+        "All (assumed same)",
+        "Lowest",
+        "Second",
+        "Middle",
+        "Fourth",
+        "Highest",
+    ],
     "Sex": ["Total", "All (assumed same)", "Female", "Male"],
 }
 
@@ -129,12 +158,14 @@ def project(workbook_path=WORKBOOK):
         for row in ws.iter_rows():
             for cell in row:
                 if isinstance(cell.value, str) and cell.value.startswith("="):
-                    formula_rows.append([
-                        sheet_name,
-                        cell.coordinate,
-                        cell.value,
-                        _render(cached[cell.coordinate].value),
-                    ])
+                    formula_rows.append(
+                        [
+                            sheet_name,
+                            cell.coordinate,
+                            cell.value,
+                            _render(cached[cell.coordinate].value),
+                        ]
+                    )
     buffer = io.StringIO()
     csv.writer(buffer, lineterminator="\n").writerows(formula_rows)
     out["_formulas.csv"] = buffer.getvalue()
@@ -173,16 +204,20 @@ def check(projection_dir=PROJECTION_DIR):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--check", action="store_true",
-                        help="verify the committed projection matches the workbook")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify the committed projection matches the workbook",
+    )
     args = parser.parse_args(argv)
     if args.check:
         problems = check()
         for problem in problems:
             print(problem, file=sys.stderr)
         if problems:
-            print("regenerate with: python -m lsff_utils.extraction_projection",
-                  file=sys.stderr)
+            print(
+                "regenerate with: python -m lsff_utils.extraction_projection", file=sys.stderr
+            )
             return 1
         print("projection in sync with workbook")
         return 0
