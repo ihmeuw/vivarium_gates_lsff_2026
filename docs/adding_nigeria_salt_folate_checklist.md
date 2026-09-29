@@ -81,8 +81,9 @@ pipeline needs and its `check_totals` guards the arithmetic.
   by (location, vehicle) (`config_utils.get_intervention_scenarios`), so
   `nigeria: {salt: [...]}` leaves nigeria's rice and bouillon on the default
   `intervention` scenario. Because a rule's outputs can't depend on the
-  `{vehicle}` wildcard, nigeria/salt effective coverage has its own rule,
-  `calculate_effective_coverage_nigeria_salt`. Both comparisons (vs baseline)
+  `{vehicle}` wildcard, the 0100 Snakefile generates one effective-coverage
+  rule per configured pair, e.g. `calculate_effective_coverage_nigeria_salt`,
+  so a new pair needs no Snakefile edit. Both comparisons (vs baseline)
   are listed in `0050_config/location_vehicle_scenario_comparisons.csv`,
   which the spreadsheet and plots rules now declare as an input.
 
@@ -120,8 +121,7 @@ mechanism ethiopia/salt uses for its absent simulation inputs (see T5 below).
   change. Instead:
   1. Run data prep on its own:
      `snakemake --cores 4 --config skip_data_prep=true --until prep_extracted
-     calculate_effective_coverage_nigeria calculate_effective_coverage_nigeria_salt
-     calculate_effective_coverage_india calculate_effective_coverage_ethiopia`
+     $(snakemake --list-rules | grep '^calculate_effective_coverage_')`
   2. `git diff --stat 0100_data_prep/results`: existing CSVs must be
      unchanged; only new `.../salt/.../nigeria.csv` files appear (16 of them).
   3. Run the rest without the timestamp trigger:
@@ -191,7 +191,8 @@ the workbook doesn't have and failed its `assert len(sheet) > 0`.
   which had its own hardcoded per-location list.
 - A rule's outputs can't depend on the `{vehicle}` wildcard, so nigeria/salt
   coverage got its own rule, `calculate_effective_coverage_nigeria_salt`.
-  The nigeria rule is limited to its default-scenario vehicles.
+  The nigeria rule is limited to its default-scenario vehicles. (Since
+  replaced by one generated rule per configured pair; see step 2.)
 - Tests in `tests/test_config_utils.py`.
 
 *Commits:* [`1633b21`](https://github.com/ihmeuw/vivarium_gates_lsff_2026/commit/1633b2130fd207f7399b85c308bf6bc804ada991) (config, helper, callers, coverage rule),
