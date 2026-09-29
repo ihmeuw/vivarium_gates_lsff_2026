@@ -38,7 +38,7 @@ rebuilds a stage just because a number was bumped -- it reruns on changed inputs
 or changed recipe code, which is what its staleness tracking is for. Starting a
 new iteration therefore means: archive what you have, bump MODEL_NUMBER, then
 clear the in-repo roots (or ``--forcerun`` the stages you want rebuilt). See the
-"Starting a New Model Iteration" section of the README.
+"What to delete" section of the README.
 
 These constants live in ``lsff_utils`` rather than in either simulation package
 because the two packages have to agree on them. The child model's population

@@ -1,6 +1,6 @@
 scenario,entity,wealth_quintile,value
-baseline,anemia,1,1024476.0573842013
-baseline,anemia,2,968887.4507802925
+baseline,anemia,1,1024476.0573842012
+baseline,anemia,2,968887.4507802924
 baseline,anemia,3,792656.8327877751
 baseline,anemia,4,714586.8735320346
 baseline,anemia,5,607199.6095192959
@@ -21,7 +21,7 @@ baseline,ntd,4,338670.15783841495
 baseline,ntd,5,297460.2934996698
 intervention,anemia,1,936022.995164069
 intervention,anemia,2,879712.2488645482
-intervention,anemia,3,710495.1790590452
+intervention,anemia,3,710495.1790590453
 intervention,anemia,4,638157.7145323376
 intervention,anemia,5,538594.1915188633
 intervention,lbwsg,1,15313347.588645777
@@ -39,8 +39,8 @@ intervention,ntd,2,272480.11551736336
 intervention,ntd,3,269878.6859915495
 intervention,ntd,4,252438.60044445103
 intervention,ntd,5,226591.5729019266
-zero,anemia,1,1024476.0573842013
-zero,anemia,2,968887.4507802925
+zero,anemia,1,1024476.0573842012
+zero,anemia,2,968887.4507802924
 zero,anemia,3,792656.8327877751
 zero,anemia,4,714586.8735320346
 zero,anemia,5,607199.6095192959

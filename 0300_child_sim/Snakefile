@@ -52,7 +52,7 @@ LBWSG_PAF_RUN_MARKER = snakemake_utils.run_marker(paths.LBWSG_PAF_RESULTS_ROOT, 
 # is marked `ancient()`: Snakemake stops comparing those mtimes against the
 # outputs, and editing the child package no longer drags the PAFs along with it.
 # To recompute them deliberately, `--forcerun` these rules or clear their roots;
-# see "Starting a New Model Iteration" in the README.
+# see "What to delete" in the README.
 rule artifact_for_lbwsg_pafs:
     input: ancient("0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py")
     output: [LBWSG_PAF_ARTIFACT]

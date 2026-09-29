@@ -23,7 +23,7 @@ config = {
     # repository, so a fresh clone or a branch switch can leave the notebooks
     # looking newer than the CSVs they produced and schedule the whole of data
     # prep -- and everything downstream of it -- over a timestamp rather than a
-    # change. See "Skipping data prep" in the README.
+    # change. See "Snakemake flags" in the README.
     "skip_data_prep": "false",
     **config,
 }
