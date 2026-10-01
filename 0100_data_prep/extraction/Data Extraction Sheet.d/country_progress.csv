@@ -1,0 +1,15 @@
+Country,Ethiopia,,Nigeria,,India,,Notes
+Wealth,Overall,Quintile,Overall,Quintile,Overall,Quintile,
+Data need,,,,,,,
+Pregnant people hemoglobin levels at baseline,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,
+Serum/plasma folate levels at baseline,Missing,Missing,Missing,Missing,Missing,Missing,
+RBC folate levels at baseline,Missing,Missing,Missing,Missing,Missing,Missing,
+LBWSG prevalence,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,
+CGF prevalence,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,
+Measles prevalence,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,We have microdata on whether child has received Measles 1 vaccination.
+LRI prevalence,Not modeled,Not modeled,GBD,Missing,GBD,Missing,"We have microdata on whether child has had cough in the last two weeks, or ARI prevalence in DHS final reports."
+Malaria prevalence,Not modeled,Not modeled,GBD,Missing,GBD,DHS 2016,"For India, we might have to use the DHS microdata for whether child has had fever in the last two weeks as a proxy for malaria."
+U5 hemoglobin levels at baseline,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,
+Maternal disorders incidence,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,Using DHS' maternal mortality ratio as a proxy for maternal disorders
+Maternal hemorrhage incidence,Not modeled,Not modeled,GBD,DHS 2018,GBD,DHS 2016,Using DHS' maternal mortality ratio as a proxy for maternal hemorrhage
+Neural tube defect deaths,GBD,Missing,GBD,Missing,GBD,Missing,

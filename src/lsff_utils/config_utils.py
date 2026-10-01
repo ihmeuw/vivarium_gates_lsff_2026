@@ -3,23 +3,66 @@ import pathlib
 import pandas as pd
 import yaml
 
+# The repository's config directory. Module-level so tests can point it at a
+# scratch directory.
+CONFIG_DIR = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
+
 
 def get_config():
-    config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
-
-    with open(config_dir / "config.yaml") as stream:
+    with open(CONFIG_DIR / "config.yaml") as stream:
         config = yaml.safe_load(stream)
 
     return config
 
 
-def get_location_fortificant_vehicle_intervention_scenarios():
-    config_dir = (pathlib.Path(__file__) / ".." / ".." / ".." / "0050_config").resolve()
+DEFAULT_INTERVENTION_SCENARIOS = ["intervention"]
 
+
+def _custom_intervention_scenarios(config):
+    """The `custom_intervention_scenarios` block, validated as location -> vehicle -> list.
+
+    The block is keyed by (location, vehicle) because a location can carry
+    vehicles with different scenario sets: nigeria's rice and bouillon programs
+    use the default single intervention, while its folate-only salt program has
+    25% and 100% NRV dose scenarios. A location-level list would apply the
+    custom scenarios to every vehicle in that location.
+    """
+    custom = config.get("custom_intervention_scenarios") or {}
+    for location, by_vehicle in custom.items():
+        if not isinstance(by_vehicle, dict):
+            raise ValueError(
+                f"custom_intervention_scenarios[{location!r}] must map vehicle -> list of "
+                f"scenarios (e.g. `{location}: {{salt: [intervention_25_nrv]}}`), got "
+                f"{type(by_vehicle).__name__}. Scenarios are configured per "
+                "(location, vehicle), not per location."
+            )
+        for vehicle, scenarios in by_vehicle.items():
+            if isinstance(scenarios, str) or not scenarios:
+                raise ValueError(
+                    f"custom_intervention_scenarios[{location!r}][{vehicle!r}] must be a "
+                    "non-empty list of scenario names."
+                )
+    return custom
+
+
+def get_intervention_scenarios(location, vehicle, config=None):
+    """Intervention scenarios for one (location, vehicle) pair.
+
+    Pairs not listed under `custom_intervention_scenarios` get the single
+    default "intervention" scenario. Pass `config` to use an already-loaded
+    config (e.g. Snakemake's); otherwise config.yaml is read.
+    """
+    if config is None:
+        config = get_config()
+    custom = _custom_intervention_scenarios(config)
+    return list(custom.get(location, {}).get(vehicle, DEFAULT_INTERVENTION_SCENARIOS))
+
+
+def get_location_fortificant_vehicle_intervention_scenarios():
     config = get_config()
 
     location_fortificant_vehicles = pd.read_csv(
-        str(config_dir / "location_fortificant_vehicles.csv")
+        str(CONFIG_DIR / "location_fortificant_vehicles.csv")
     )
 
     # Expand "all" fortificants
@@ -37,26 +80,76 @@ def get_location_fortificant_vehicle_intervention_scenarios():
 
     assert location_fortificant_vehicles["fortificant"].isin(config["all_fortificants"]).all()
 
-    location_fortificant_vehicle_intervention_scenarios = location_fortificant_vehicles[
-        ~location_fortificant_vehicles.location.isin(config["custom_intervention_scenarios"])
-    ].assign(intervention_scenario="intervention")
-
-    for location, custom_intervention_scenarios in config[
-        "custom_intervention_scenarios"
-    ].items():
-        location_fortificant_vehicle_intervention_scenarios = pd.concat(
-            [
-                location_fortificant_vehicle_intervention_scenarios,
-                *[
-                    location_fortificant_vehicles[
-                        location_fortificant_vehicles.location == location
-                    ].assign(intervention_scenario=scenario)
-                    for scenario in custom_intervention_scenarios
-                ],
-            ]
+    # Catch typos: a custom entry for a pair that isn't configured would
+    # otherwise be silently ignored, and that pair would fall back to the
+    # default scenario.
+    configured_pairs = set(
+        zip(location_fortificant_vehicles.location, location_fortificant_vehicles.vehicle)
+    )
+    unknown_pairs = [
+        (location, vehicle)
+        for location, by_vehicle in _custom_intervention_scenarios(config).items()
+        for vehicle in by_vehicle
+        if (location, vehicle) not in configured_pairs
+    ]
+    if unknown_pairs:
+        raise ValueError(
+            "custom_intervention_scenarios lists (location, vehicle) pairs that are not in "
+            f"location_fortificant_vehicles.csv: {unknown_pairs}"
         )
 
+    location_fortificant_vehicle_intervention_scenarios = (
+        location_fortificant_vehicles.assign(
+            intervention_scenario=[
+                get_intervention_scenarios(location, vehicle, config)
+                for location, vehicle in zip(
+                    location_fortificant_vehicles.location,
+                    location_fortificant_vehicles.vehicle,
+                )
+            ]
+        )
+        .explode("intervention_scenario")
+        .reset_index(drop=True)
+    )
+
     return location_fortificant_vehicle_intervention_scenarios
+
+
+def get_combo_pathways(location, vehicle):
+    """Which result pathways a (location, vehicle) pair produces.
+
+    This is the single source of truth for both the 5000 Snakefile (which
+    inputs to declare) and the dalys/cases notebooks (which inputs to read, via
+    papermill flags). The notebooks must not decide by checking whether a file
+    exists: that disagrees with Snakemake's DAG, so a job can start before a
+    file it will read has been built, and a file missing by mistake is
+    silently read as zeros.
+
+    - ``has_simulations``: iron combos run the pregnancy and child sims.
+    - ``has_anemia_model``: every iron combo runs the 0400 anemia model; a
+      folate-only combo does only if it is listed in config.yaml's
+      ``folate_anemia_vehicles`` (today: ethiopia/salt).
+    - ``has_ntd_model``: folate combos run the 0500 NTD model.
+
+    A pathway a combo lacks contributes zeros, built from the template combo's
+    (india/rice) files.
+    """
+    combos = get_location_fortificant_vehicle_intervention_scenarios()
+    fortificants = set(
+        combos[(combos.location == location) & (combos.vehicle == vehicle)].fortificant
+    )
+    if not fortificants:
+        raise ValueError(
+            f"({location!r}, {vehicle!r}) is not in location_fortificant_vehicles.csv"
+        )
+    folate_anemia_vehicles = get_config().get("folate_anemia_vehicles") or {}
+    has_iron = "iron" in fortificants
+    return {
+        "has_simulations": has_iron,
+        "has_anemia_model": has_iron
+        or vehicle in (folate_anemia_vehicles.get(location) or []),
+        "has_ntd_model": "folate" in fortificants,
+    }
 
 
 def get_configured_combos(variables):

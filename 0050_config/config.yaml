@@ -1,8 +1,27 @@
 all_fortificants: ["folate", "iron"]
-# Scenarios besides the default "intervention"
+# Scenarios besides the default "intervention", keyed by location then vehicle.
+# A (location, vehicle) pair not listed here gets the single "intervention"
+# scenario. Keyed per vehicle because a location can mix vehicles with
+# different scenario sets (nigeria: rice/bouillon default, salt NRV doses).
+# Scenario names must match the extraction sheet's Scenario column, lowercased
+# with non-word characters collapsed to "_" ("Intervention - 25% NRV" ->
+# intervention_25_nrv).
 custom_intervention_scenarios:
   ethiopia:
-    - intervention_25_nrv
-    - intervention_100_nrv
-    # GF Apr-2026: preliminary Ethiopian DFS-IoFA standard, 45 +/- 5 ppm
-    - intervention_45_ppm
+    salt:
+      - intervention_25_nrv
+      - intervention_100_nrv
+      # GF Apr-2026: preliminary Ethiopian DFS-IoFA standard, 45 +/- 5 ppm
+      - intervention_45_ppm
+  nigeria:
+    salt:
+      - intervention_25_nrv
+      - intervention_100_nrv
+# Folate-only (location, vehicle) pairs whose program also contributes a
+# folate-deficiency-anemia pathway, via 0400's non_pregnant_anemia_folate
+# notebook. Iron combos always carry an anemia pathway, so they are not listed.
+# A folate-only pair NOT listed here produces NTD results only -- the intended
+# shape for nigeria/salt unless the team decides otherwise; see
+# docs/adding_nigeria_salt_folate_checklist.md.
+folate_anemia_vehicles:
+  ethiopia: [salt]

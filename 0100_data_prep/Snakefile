@@ -168,72 +168,36 @@ rule prep_extracted:
 #         for scenario in scenarios[location]
 #     ]
 
-# NOTE: I tried to define these three in a for loop, but: https://github.com/snakemake/snakemake/issues/2178
-rule calculate_effective_coverage_nigeria:
-    input:
-        snakemake_utils.freeze([
-            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
-            "0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv",
-        ] + hces_output_files + extracted_output_files, frozen)
-    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
-    output:
-        [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/nigeria.csv",
-        ] + [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/nigeria.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get("nigeria", ["intervention"])
-        ]
-    shell:
-        """
-        {common_setup}
-        cd coverage_calculation
-        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/nigeria/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/nigeria/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location nigeria -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
-        """
-
-rule calculate_effective_coverage_india:
-    input:
-        snakemake_utils.freeze([
-            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
-            "0100_data_prep/results/wealth_quintile_probabilities/india.csv",
-        ] + hces_output_files + extracted_output_files, frozen)
-    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
-    output:
-        [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/india.csv",
-        ] + [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/india.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get("india", ["intervention"])
-        ]
-    shell:
-        """
-        {common_setup}
-        cd coverage_calculation
-        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/india/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/india/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location india -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
-        """
-
-rule calculate_effective_coverage_ethiopia:
-    input:
-        snakemake_utils.freeze([
-            "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
-            "0100_data_prep/results/wealth_quintile_probabilities/ethiopia.csv",
-        ] + hces_output_files + extracted_output_files, frozen)
-    log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{{vehicle}}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
-    output:
-        [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/baseline_fortification/effective_coverage/ethiopia.csv",
-        ] + [
-            f"0100_data_prep/results/{{fortificant}}/{{vehicle}}/{intervention_scenario}/intervention_fortification/effective_coverage/ethiopia.csv"
-            for intervention_scenario in config["custom_intervention_scenarios"].get("ethiopia", ["intervention"])
-        ]
-    shell:
-        """
-        {common_setup}
-        cd coverage_calculation
-        mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/ethiopia/
-        papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{wildcards.vehicle}/ethiopia/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location ethiopia -p fortificant {wildcards.fortificant} -p vehicle {wildcards.vehicle} {papermill_engine}
-        """
+# One rule per configured (location, vehicle), because a rule's outputs can't
+# depend on a wildcard and each pair has its own intervention scenarios.
+# Location and vehicle reach the recipe through params: a loop variable named
+# in a shell string would be read when the job runs, after the loop has ended.
+for coverage_location, coverage_vehicle in config_utils.get_configured_combos(["location", "vehicle"]):
+    rule:
+        name: f"calculate_effective_coverage_{coverage_location}_{coverage_vehicle}"
+        input:
+            snakemake_utils.freeze([
+                "0100_data_prep/coverage_calculation/calculate_effective_coverage_by_quintile_and_scenario.ipynb",
+                f"0100_data_prep/results/wealth_quintile_probabilities/{coverage_location}.csv",
+            ] + hces_output_files + extracted_output_files, frozen)
+        log: f"0100_data_prep/executed/coverage_calculation/{{fortificant}}/{coverage_vehicle}/{coverage_location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb"
+        output:
+            [
+                f"0100_data_prep/results/{{fortificant}}/{coverage_vehicle}/baseline_fortification/effective_coverage/{coverage_location}.csv",
+            ] + [
+                f"0100_data_prep/results/{{fortificant}}/{coverage_vehicle}/{intervention_scenario}/intervention_fortification/effective_coverage/{coverage_location}.csv"
+                for intervention_scenario in config_utils.get_intervention_scenarios(coverage_location, coverage_vehicle, config)
+            ]
+        params:
+            location=coverage_location,
+            vehicle=coverage_vehicle,
+        shell:
+            """
+            {common_setup}
+            cd coverage_calculation
+            mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{params.vehicle}/{params.location}/
+            papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{params.vehicle}/{params.location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location {params.location} -p fortificant {wildcards.fortificant} -p vehicle {params.vehicle} {papermill_engine}
+            """
 
 rule population_with_pregnancy_status:
     input: snakemake_utils.freeze(["0100_data_prep/population/population_with_pregnancy_status.ipynb", "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv"], frozen)
