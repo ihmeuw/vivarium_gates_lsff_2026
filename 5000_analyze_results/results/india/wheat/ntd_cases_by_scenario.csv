@@ -1,0 +1,16 @@
+scenario,wealth_quintile,value
+intervention,1,0
+intervention,2,0
+intervention,3,0
+intervention,4,0
+intervention,5,0
+zero,1,0
+zero,2,0
+zero,3,0
+zero,4,0
+zero,5,0
+baseline,1,0
+baseline,2,0
+baseline,3,0
+baseline,4,0
+baseline,5,0
