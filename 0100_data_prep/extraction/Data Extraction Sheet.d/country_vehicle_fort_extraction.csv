@@ -2,6 +2,9 @@ Country,Vehicle,Fortificant,Quintile,Data need,Data point name,Units,Year,Data s
 Ethiopia,Salt,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Does not matter, no baseline fortification"
 Ethiopia,Salt,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,Assumption,0,,
 Ethiopia,Salt,Folate,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,Assumption,0,,
+Ethiopia,Wheat,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,DUMMY (MIC-7585),0.8,,DUMMY PLACEHOLDER (MIC-7585): value copied from the Nigeria wheat folate placeholder row. Replace with real Ethiopia wheat data.
+Ethiopia,Wheat,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,DUMMY (MIC-7585),0.0,,DUMMY PLACEHOLDER (MIC-7585): value copied from the Nigeria wheat folate placeholder row. Replace with real Ethiopia wheat data.
+Ethiopia,Wheat,Folate,All (assumed same),Vehicle fortification at baseline -- any,percentage,%,,DUMMY (MIC-7585),0.0,,DUMMY PLACEHOLDER (MIC-7585): value copied from the Nigeria wheat folate placeholder row. Replace with real Ethiopia wheat data.
 India,Rice,Folate,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Same as intervention, for now"
 India,Rice,Folate,All (assumed same),Vehicle fortification at baseline -- amount among fortified,concentration,mcg/g,,"slide deck JG shared to ADF, credited to \nHelena.Pachon@emory.edu\n",0.125,,Originally in mcg/100g; https://www.wolframalpha.com/input?i=12.5+mcg+per+100+grams+in+micrograms+per+gram
 India,Rice,Iron,All (assumed same),Baseline effective % of fortified,percentage,%,,,0.8,,"Same as intervention, for now"
