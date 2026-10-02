@@ -156,3 +156,6 @@ model_spec_int.yaml
 # Mac stuff
 *.DS_Store
 
+
+# Office lock files
+~$*
