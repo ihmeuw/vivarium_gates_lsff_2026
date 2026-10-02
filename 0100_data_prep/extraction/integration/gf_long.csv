@@ -1,0 +1,1188 @@
+source_sheet,source_cell,country,vehicle,stratum_type,stratum,metric,year,value,raw
+Burden x Vehicle Matrix,C6,Ethiopia,,national,National,burden_dalys_all_ages:va,current,64273.0,64273
+Burden x Vehicle Matrix,D6,Ethiopia,,national,National,burden_dalys_all_ages:iron,current,909668.0,909668
+Burden x Vehicle Matrix,E6,Ethiopia,,national,National,burden_dalys_all_ages:folate,current,191764.0,191764
+Burden x Vehicle Matrix,G6,Ethiopia,,national,National,inadequate_intake:va,current,0.873,0.873
+Burden x Vehicle Matrix,H6,Ethiopia,,national,National,inadequate_intake:iron,current,0.144,0.144
+Burden x Vehicle Matrix,I6,Ethiopia,,national,National,inadequate_intake:folate,current,0.58,0.58
+Burden x Vehicle Matrix,J6,Ethiopia,,national,National,inadequate_intake:zinc,current,0.313,0.313
+Burden x Vehicle Matrix,K6,Ethiopia,,national,National,mn_biomarker_data:va_deficiency,current,,32.0 (2022)
+Burden x Vehicle Matrix,L6,Ethiopia,,national,National,mn_biomarker_data:iron_deficiency,current,,8.0 (2022)
+Burden x Vehicle Matrix,M6,Ethiopia,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,"63.0% (2022, RBC)"
+Burden x Vehicle Matrix,N6,Ethiopia,,national,National,mn_biomarker_data:zinc_deficiency,current,,50.0% (2022)
+Burden x Vehicle Matrix,O6,Ethiopia,Wheat,national,National,consolidation,current,0.6,0.6
+Burden x Vehicle Matrix,P6,Ethiopia,Wheat,national,National,coverage,current,0.4,0.4
+Burden x Vehicle Matrix,Q6,Ethiopia,Wheat,national,National,g_per_capita,current,34.5,34.5
+Burden x Vehicle Matrix,R6,Ethiopia,Wheat,national,National,compliance,current,0.4,0.4
+Burden x Vehicle Matrix,S6,Ethiopia,Oil,national,National,consolidation,current,1.0,1
+Burden x Vehicle Matrix,T6,Ethiopia,Oil,national,National,coverage,current,0.9,0.9
+Burden x Vehicle Matrix,U6,Ethiopia,Oil,national,National,g_per_capita,current,6.8,6.8
+Burden x Vehicle Matrix,V6,Ethiopia,Oil,national,National,compliance,current,0.5,0.5
+Burden x Vehicle Matrix,W6,Ethiopia,Rice,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,X6,Ethiopia,Rice,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,Y6,Ethiopia,Rice,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,Z6,Ethiopia,Rice,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AA6,Ethiopia,Maize,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AB6,Ethiopia,Maize,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AC6,Ethiopia,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD6,Ethiopia,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE6,Ethiopia,Salt,national,National,consolidation,current,0.95,0.95
+Burden x Vehicle Matrix,AF6,Ethiopia,Salt,national,National,coverage,current,0.98,0.98
+Burden x Vehicle Matrix,AG6,Ethiopia,Salt,national,National,g_per_capita,current,7.8,7.8
+Burden x Vehicle Matrix,AH6,Ethiopia,Salt,national,National,compliance,current,0.0,0
+Burden x Vehicle Matrix,AI6,Ethiopia,Bouillon,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AJ6,Ethiopia,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK6,Ethiopia,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL6,Ethiopia,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM6,Ethiopia,,national,National,additional:cohd_ppp_day,current,4.75,4.75
+Burden x Vehicle Matrix,AN6,Ethiopia,,national,National,additional:unable_to_afford,current,0.679,0.679
+Burden x Vehicle Matrix,AO6,Ethiopia,,national,National,additional:mdd_w,current,0.07,0.07
+Burden x Vehicle Matrix,AP6,Ethiopia,,national,National,additional:anemia_wra,current,0.2,0.2
+Burden x Vehicle Matrix,C7,India,,national,National,burden_dalys_all_ages:va,current,286411.0,286411
+Burden x Vehicle Matrix,D7,India,,national,National,burden_dalys_all_ages:iron,current,13693048.0,13693048
+Burden x Vehicle Matrix,E7,India,,national,National,burden_dalys_all_ages:folate,current,727963.0,727963
+Burden x Vehicle Matrix,G7,India,,national,National,inadequate_intake:va,current,0.975,0.975
+Burden x Vehicle Matrix,H7,India,,national,National,inadequate_intake:iron,current,0.57,0.57
+Burden x Vehicle Matrix,I7,India,,national,National,inadequate_intake:folate,current,0.39,0.39
+Burden x Vehicle Matrix,J7,India,,national,National,inadequate_intake:zinc,current,0.722,0.722
+Burden x Vehicle Matrix,K7,India,,national,National,mn_biomarker_data:va_deficiency,current,,17.6% (2018)
+Burden x Vehicle Matrix,L7,India,,national,National,mn_biomarker_data:iron_deficiency,current,,54.0% (2019)
+Burden x Vehicle Matrix,M7,India,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,"41.0% (2019, serum)"
+Burden x Vehicle Matrix,N7,India,,national,National,mn_biomarker_data:zinc_deficiency,current,,18.9% (2018)
+Burden x Vehicle Matrix,O7,India,Wheat,national,National,consolidation,current,0.15,0.15
+Burden x Vehicle Matrix,P7,India,Wheat,national,National,coverage,current,0.927,0.927
+Burden x Vehicle Matrix,Q7,India,Wheat,national,National,g_per_capita,current,122.7,122.7
+Burden x Vehicle Matrix,R7,India,Wheat,national,National,compliance,current,0.05,0.05
+Burden x Vehicle Matrix,S7,India,Oil,national,National,consolidation,current,0.74,0.74
+Burden x Vehicle Matrix,T7,India,Oil,national,National,coverage,current,0.999,0.999
+Burden x Vehicle Matrix,U7,India,Oil,national,National,g_per_capita,current,30.3,30.3
+Burden x Vehicle Matrix,V7,India,Oil,national,National,compliance,current,0.5,0.5
+Burden x Vehicle Matrix,W7,India,Rice,national,National,consolidation,current,0.5,0.5
+Burden x Vehicle Matrix,X7,India,Rice,national,National,coverage,current,0.988,0.988
+Burden x Vehicle Matrix,Y7,India,Rice,national,National,g_per_capita,current,155.0,155
+Burden x Vehicle Matrix,Z7,India,Rice,national,National,compliance,current,0.5,0.5
+Burden x Vehicle Matrix,AA7,India,Maize,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AB7,India,Maize,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AC7,India,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD7,India,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE7,India,Salt,national,National,consolidation,current,0.035,0.035
+Burden x Vehicle Matrix,AF7,India,Salt,national,National,coverage,current,1.0,1
+Burden x Vehicle Matrix,AG7,India,Salt,national,National,g_per_capita,current,7.0,7
+Burden x Vehicle Matrix,AH7,India,Salt,national,National,compliance,current,0.33,0.33
+Burden x Vehicle Matrix,AI7,India,Bouillon,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AJ7,India,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK7,India,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL7,India,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM7,India,,national,National,additional:cohd_ppp_day,current,4.11,4.11
+Burden x Vehicle Matrix,AN7,India,,national,National,additional:unable_to_afford,current,0.355,0.355
+Burden x Vehicle Matrix,AO7,India,,national,National,additional:mdd_w,current,0.41,0.41
+Burden x Vehicle Matrix,AP7,India,,national,National,additional:anemia_wra,current,,57.2% non-preg; 52.2% preg
+Burden x Vehicle Matrix,C8,Kenya,,national,National,burden_dalys_all_ages:va,current,9680.0,9680
+Burden x Vehicle Matrix,D8,Kenya,,national,National,burden_dalys_all_ages:iron,current,289102.0,289102
+Burden x Vehicle Matrix,E8,Kenya,,national,National,burden_dalys_all_ages:folate,current,17997.0,17997
+Burden x Vehicle Matrix,G8,Kenya,,national,National,inadequate_intake:va,current,0.5265,0.5265
+Burden x Vehicle Matrix,H8,Kenya,,national,National,inadequate_intake:iron,current,0.7805,0.7805
+Burden x Vehicle Matrix,I8,Kenya,,national,National,inadequate_intake:folate,current,0.4553,0.4553
+Burden x Vehicle Matrix,J8,Kenya,,national,National,inadequate_intake:zinc,current,0.5007,0.5007
+Burden x Vehicle Matrix,K8,Kenya,,national,National,mn_biomarker_data:va_deficiency,current,,84.4% (1999)
+Burden x Vehicle Matrix,L8,Kenya,,national,National,mn_biomarker_data:iron_deficiency,current,,28.6% (1999)
+Burden x Vehicle Matrix,M8,Kenya,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,30.9% (2011)
+Burden x Vehicle Matrix,N8,Kenya,,national,National,mn_biomarker_data:zinc_deficiency,current,,52.2% (1999)
+Burden x Vehicle Matrix,O8,Kenya,Wheat,national,National,consolidation,current,0.95,0.95
+Burden x Vehicle Matrix,P8,Kenya,Wheat,national,National,coverage,current,0.47,0.47
+Burden x Vehicle Matrix,Q8,Kenya,Wheat,national,National,g_per_capita,current,55.0,55
+Burden x Vehicle Matrix,R8,Kenya,Wheat,national,National,compliance,current,0.6,0.6
+Burden x Vehicle Matrix,S8,Kenya,Oil,national,National,consolidation,current,0.95,0.95
+Burden x Vehicle Matrix,T8,Kenya,Oil,national,National,coverage,current,0.69,0.69
+Burden x Vehicle Matrix,U8,Kenya,Oil,national,National,g_per_capita,current,30.0,30
+Burden x Vehicle Matrix,V8,Kenya,Oil,national,National,compliance,current,0.55,0.55
+Burden x Vehicle Matrix,W8,Kenya,Rice,national,National,consolidation,current,0.74,0.74
+Burden x Vehicle Matrix,X8,Kenya,Rice,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,Y8,Kenya,Rice,national,National,g_per_capita,current,164.0,164
+Burden x Vehicle Matrix,Z8,Kenya,Rice,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AA8,Kenya,Maize,national,National,consolidation,current,0.5,0.5
+Burden x Vehicle Matrix,AB8,Kenya,Maize,national,National,coverage,current,0.74,0.74
+Burden x Vehicle Matrix,AC8,Kenya,Maize,national,National,g_per_capita,current,141.0,141
+Burden x Vehicle Matrix,AD8,Kenya,Maize,national,National,compliance,current,0.64,0.64
+Burden x Vehicle Matrix,AE8,Kenya,Salt,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AF8,Kenya,Salt,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AG8,Kenya,Salt,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AH8,Kenya,Salt,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AI8,Kenya,Bouillon,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AJ8,Kenya,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK8,Kenya,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL8,Kenya,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM8,Kenya,,national,National,additional:cohd_ppp_day,current,4.26,4.26
+Burden x Vehicle Matrix,AN8,Kenya,,national,National,additional:unable_to_afford,current,0.77,0.77
+Burden x Vehicle Matrix,AO8,Kenya,,national,National,additional:mdd_w,current,,n/a
+Burden x Vehicle Matrix,AP8,Kenya,,national,National,additional:anemia_wra,current,0.322,0.322
+Burden x Vehicle Matrix,C9,Nigeria,,national,National,burden_dalys_all_ages:va,current,493063.0,493063
+Burden x Vehicle Matrix,D9,Nigeria,,national,National,burden_dalys_all_ages:iron,current,2306803.0,2306803
+Burden x Vehicle Matrix,E9,Nigeria,,national,National,burden_dalys_all_ages:folate,current,336170.0,336170
+Burden x Vehicle Matrix,G9,Nigeria,,national,National,inadequate_intake:va,current,0.093,0.093
+Burden x Vehicle Matrix,H9,Nigeria,,national,National,inadequate_intake:iron,current,0.569,0.569
+Burden x Vehicle Matrix,I9,Nigeria,,national,National,inadequate_intake:folate,current,0.568,0.568
+Burden x Vehicle Matrix,J9,Nigeria,,national,National,inadequate_intake:zinc,current,0.744,0.744
+Burden x Vehicle Matrix,K9,Nigeria,,national,National,mn_biomarker_data:va_deficiency,current,,32.0% (2021)
+Burden x Vehicle Matrix,L9,Nigeria,,national,National,mn_biomarker_data:iron_deficiency,current,,10.4% (2021)
+Burden x Vehicle Matrix,M9,Nigeria,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,"42.8% (2021, RBC)"
+Burden x Vehicle Matrix,N9,Nigeria,,national,National,mn_biomarker_data:zinc_deficiency,current,,20.4% (2021)
+Burden x Vehicle Matrix,O9,Nigeria,Wheat,national,National,consolidation,current,1.0,1
+Burden x Vehicle Matrix,P9,Nigeria,Wheat,national,National,coverage,current,0.28,0.28
+Burden x Vehicle Matrix,Q9,Nigeria,Wheat,national,National,g_per_capita,current,39.0,39
+Burden x Vehicle Matrix,R9,Nigeria,Wheat,national,National,compliance,current,0.63,0.63
+Burden x Vehicle Matrix,S9,Nigeria,Oil,national,National,consolidation,current,0.329,0.329
+Burden x Vehicle Matrix,T9,Nigeria,Oil,national,National,coverage,current,0.903,0.903
+Burden x Vehicle Matrix,U9,Nigeria,Oil,national,National,g_per_capita,current,18.7,18.7
+Burden x Vehicle Matrix,V9,Nigeria,Oil,national,National,compliance,current,0.6,0.6
+Burden x Vehicle Matrix,W9,Nigeria,Rice,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,X9,Nigeria,Rice,national,National,coverage,current,0.54,0.54
+Burden x Vehicle Matrix,Y9,Nigeria,Rice,national,National,g_per_capita,current,38.0,38
+Burden x Vehicle Matrix,Z9,Nigeria,Rice,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AA9,Nigeria,Maize,national,National,consolidation,current,0.05,0.05
+Burden x Vehicle Matrix,AB9,Nigeria,Maize,national,National,coverage,current,0.574,0.574
+Burden x Vehicle Matrix,AC9,Nigeria,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD9,Nigeria,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE9,Nigeria,Salt,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AF9,Nigeria,Salt,national,National,coverage,current,0.992,0.992
+Burden x Vehicle Matrix,AG9,Nigeria,Salt,national,National,g_per_capita,current,3.9,3.9
+Burden x Vehicle Matrix,AH9,Nigeria,Salt,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AI9,Nigeria,Bouillon,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AJ9,Nigeria,Bouillon,national,National,coverage,current,0.981,0.981
+Burden x Vehicle Matrix,AK9,Nigeria,Bouillon,national,National,g_per_capita,current,6.3,6.3
+Burden x Vehicle Matrix,AL9,Nigeria,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM9,Nigeria,,national,National,additional:cohd_ppp_day,current,4.17,4.17
+Burden x Vehicle Matrix,AN9,Nigeria,,national,National,additional:unable_to_afford,current,0.805,0.805
+Burden x Vehicle Matrix,AO9,Nigeria,,national,National,additional:mdd_w,current,,27.7 non-preg; 28.8 preg
+Burden x Vehicle Matrix,AP9,Nigeria,,national,National,additional:anemia_wra,current,,25.4% non-preg; 32.8% preg
+Burden x Vehicle Matrix,C11,Bangladesh,,national,National,burden_dalys_all_ages:va,current,11290.0,11290
+Burden x Vehicle Matrix,D11,Bangladesh,,national,National,burden_dalys_all_ages:iron,current,1025044.0,1025044
+Burden x Vehicle Matrix,E11,Bangladesh,,national,National,burden_dalys_all_ages:folate,current,168025.0,168025
+Burden x Vehicle Matrix,G11,Bangladesh,,national,National,inadequate_intake:va,current,0.749,0.749
+Burden x Vehicle Matrix,H11,Bangladesh,,national,National,inadequate_intake:iron,current,0.615,0.615
+Burden x Vehicle Matrix,I11,Bangladesh,,national,National,inadequate_intake:folate,current,0.42,0.42
+Burden x Vehicle Matrix,J11,Bangladesh,,national,National,inadequate_intake:zinc,current,0.61,0.61
+Burden x Vehicle Matrix,K11,Bangladesh,,national,National,mn_biomarker_data:va_deficiency,current,,20.5% (2011)
+Burden x Vehicle Matrix,L11,Bangladesh,,national,National,mn_biomarker_data:iron_deficiency,current,,14.1% (2020)
+Burden x Vehicle Matrix,M11,Bangladesh,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,"9.1% (2011, serum)"
+Burden x Vehicle Matrix,N11,Bangladesh,,national,National,mn_biomarker_data:zinc_deficiency,current,,44.6% (2011)
+Burden x Vehicle Matrix,O11,Bangladesh,Wheat,national,National,consolidation,current,0.49,0.49
+Burden x Vehicle Matrix,P11,Bangladesh,Wheat,national,National,coverage,current,0.61,0.61
+Burden x Vehicle Matrix,Q11,Bangladesh,Wheat,national,National,g_per_capita,current,36.0,36
+Burden x Vehicle Matrix,R11,Bangladesh,Wheat,national,National,compliance,current,0.01,0.01
+Burden x Vehicle Matrix,S11,Bangladesh,Oil,national,National,consolidation,current,0.34,0.34
+Burden x Vehicle Matrix,T11,Bangladesh,Oil,national,National,coverage,current,1.0,1
+Burden x Vehicle Matrix,U11,Bangladesh,Oil,national,National,g_per_capita,current,19.0,19
+Burden x Vehicle Matrix,V11,Bangladesh,Oil,national,National,compliance,current,0.98,0.98
+Burden x Vehicle Matrix,W11,Bangladesh,Rice,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,X11,Bangladesh,Rice,national,National,coverage,current,1.0,1
+Burden x Vehicle Matrix,Y11,Bangladesh,Rice,national,National,g_per_capita,current,480.0,480
+Burden x Vehicle Matrix,Z11,Bangladesh,Rice,national,National,compliance,current,0.03,0.03
+Burden x Vehicle Matrix,AB11,Bangladesh,Maize,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AC11,Bangladesh,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD11,Bangladesh,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE11,Bangladesh,Salt,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AF11,Bangladesh,Salt,national,National,coverage,current,1.0,1
+Burden x Vehicle Matrix,AG11,Bangladesh,Salt,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AH11,Bangladesh,Salt,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AJ11,Bangladesh,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK11,Bangladesh,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL11,Bangladesh,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM11,Bangladesh,,national,National,additional:cohd_ppp_day,current,4.49,4.49
+Burden x Vehicle Matrix,AN11,Bangladesh,,national,National,additional:unable_to_afford,current,0.444,0.444
+Burden x Vehicle Matrix,AO11,Bangladesh,,national,National,additional:mdd_w,current,,n/a
+Burden x Vehicle Matrix,AP11,Bangladesh,,national,National,additional:anemia_wra,current,0.376,0.376
+Burden x Vehicle Matrix,C12,Indonesia,,national,National,burden_dalys_all_ages:va,current,30023.0,30023
+Burden x Vehicle Matrix,D12,Indonesia,,national,National,burden_dalys_all_ages:iron,current,1270248.0,1270248
+Burden x Vehicle Matrix,E12,Indonesia,,national,National,burden_dalys_all_ages:folate,current,147091.0,147091
+Burden x Vehicle Matrix,G12,Indonesia,,national,National,inadequate_intake:va,current,0.566,0.566
+Burden x Vehicle Matrix,H12,Indonesia,,national,National,inadequate_intake:iron,current,0.5329,0.5329
+Burden x Vehicle Matrix,I12,Indonesia,,national,National,inadequate_intake:folate,current,0.8389,0.8389
+Burden x Vehicle Matrix,J12,Indonesia,,national,National,inadequate_intake:zinc,current,0.6645,0.6645
+Burden x Vehicle Matrix,K12,Indonesia,,national,National,mn_biomarker_data:va_deficiency,current,,9.8% (2023)
+Burden x Vehicle Matrix,L12,Indonesia,,national,National,mn_biomarker_data:iron_deficiency,current,,10.3% (2011)
+Burden x Vehicle Matrix,M12,Indonesia,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,n/a
+Burden x Vehicle Matrix,N12,Indonesia,,national,National,mn_biomarker_data:zinc_deficiency,current,,n/a
+Burden x Vehicle Matrix,O12,Indonesia,Wheat,national,National,consolidation,current,1.0,1
+Burden x Vehicle Matrix,P12,Indonesia,Wheat,national,National,coverage,current,0.61,0.61
+Burden x Vehicle Matrix,Q12,Indonesia,Wheat,national,National,g_per_capita,current,76.0,76
+Burden x Vehicle Matrix,R12,Indonesia,Wheat,national,National,compliance,current,0.9,0.9
+Burden x Vehicle Matrix,S12,Indonesia,Oil,national,National,consolidation,current,0.57,0.57
+Burden x Vehicle Matrix,T12,Indonesia,Oil,national,National,coverage,current,0.99,0.99
+Burden x Vehicle Matrix,U12,Indonesia,Oil,national,National,g_per_capita,current,23.0,23
+Burden x Vehicle Matrix,V12,Indonesia,Oil,national,National,compliance,current,0.85,0.85
+Burden x Vehicle Matrix,W12,Indonesia,Rice,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,X12,Indonesia,Rice,national,National,coverage,current,0.0,0
+Burden x Vehicle Matrix,Y12,Indonesia,Rice,national,National,g_per_capita,current,256.0,256
+Burden x Vehicle Matrix,Z12,Indonesia,Rice,national,National,compliance,current,0.04,0.04
+Burden x Vehicle Matrix,AB12,Indonesia,Maize,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AC12,Indonesia,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD12,Indonesia,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE12,Indonesia,Salt,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AF12,Indonesia,Salt,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AG12,Indonesia,Salt,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AH12,Indonesia,Salt,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AJ12,Indonesia,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK12,Indonesia,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL12,Indonesia,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM12,Indonesia,,national,National,additional:cohd_ppp_day,current,4.75,4.75
+Burden x Vehicle Matrix,AN12,Indonesia,,national,National,additional:unable_to_afford,current,0.435,0.435
+Burden x Vehicle Matrix,AO12,Indonesia,,national,National,additional:mdd_w,current,,n/a
+Burden x Vehicle Matrix,AP12,Indonesia,,national,National,additional:anemia_wra,current,0.267,0.267
+Burden x Vehicle Matrix,C13,Pakistan,,national,National,burden_dalys_all_ages:va,current,93280.0,93280
+Burden x Vehicle Matrix,D13,Pakistan,,national,National,burden_dalys_all_ages:iron,current,2650954.0,2650954
+Burden x Vehicle Matrix,E13,Pakistan,,national,National,burden_dalys_all_ages:folate,current,202223.0,202223
+Burden x Vehicle Matrix,G13,Pakistan,,national,National,inadequate_intake:va,current,0.8628,0.8628
+Burden x Vehicle Matrix,H13,Pakistan,,national,National,inadequate_intake:iron,current,0.923,0.923
+Burden x Vehicle Matrix,I13,Pakistan,,national,National,inadequate_intake:folate,current,0.7823,0.7823
+Burden x Vehicle Matrix,J13,Pakistan,,national,National,inadequate_intake:zinc,current,0.8451,0.8451
+Burden x Vehicle Matrix,K13,Pakistan,,national,National,mn_biomarker_data:va_deficiency,current,,51.5% (2019)
+Burden x Vehicle Matrix,L13,Pakistan,,national,National,mn_biomarker_data:iron_deficiency,current,,34.3% (2019)
+Burden x Vehicle Matrix,M13,Pakistan,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,,"45.2% (2019, serum)"
+Burden x Vehicle Matrix,N13,Pakistan,,national,National,mn_biomarker_data:zinc_deficiency,current,,22.1% (2019)
+Burden x Vehicle Matrix,O13,Pakistan,Wheat,national,National,consolidation,current,0.25,0.25
+Burden x Vehicle Matrix,P13,Pakistan,Wheat,national,National,coverage,current,0.9,0.9
+Burden x Vehicle Matrix,Q13,Pakistan,Wheat,national,National,g_per_capita,current,340.0,340
+Burden x Vehicle Matrix,R13,Pakistan,Wheat,national,National,compliance,current,,<1%
+Burden x Vehicle Matrix,S13,Pakistan,Oil,national,National,consolidation,current,0.65,0.65
+Burden x Vehicle Matrix,T13,Pakistan,Oil,national,National,coverage,current,0.98,0.98
+Burden x Vehicle Matrix,U13,Pakistan,Oil,national,National,g_per_capita,current,60.0,60
+Burden x Vehicle Matrix,V13,Pakistan,Oil,national,National,compliance,current,0.52,0.52
+Burden x Vehicle Matrix,X13,Pakistan,Rice,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,Y13,Pakistan,Rice,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,Z13,Pakistan,Rice,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AB13,Pakistan,Maize,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AC13,Pakistan,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD13,Pakistan,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE13,Pakistan,Salt,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AF13,Pakistan,Salt,national,National,coverage,current,1.0,1
+Burden x Vehicle Matrix,AG13,Pakistan,Salt,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AH13,Pakistan,Salt,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AJ13,Pakistan,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK13,Pakistan,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL13,Pakistan,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM13,Pakistan,,national,National,additional:cohd_ppp_day,current,3.95,3.95
+Burden x Vehicle Matrix,AN13,Pakistan,,national,National,additional:unable_to_afford,current,0.603,0.603
+Burden x Vehicle Matrix,AO13,Pakistan,,national,National,additional:mdd_w,current,,n/a
+Burden x Vehicle Matrix,AP13,Pakistan,,national,National,additional:anemia_wra,current,0.465,0.465
+Burden x Vehicle Matrix,C14,Tanzania,,national,National,burden_dalys_all_ages:va,current,31614.0,31614
+Burden x Vehicle Matrix,D14,Tanzania,,national,National,burden_dalys_all_ages:iron,current,804646.0,804646
+Burden x Vehicle Matrix,E14,Tanzania,,national,National,burden_dalys_all_ages:folate,current,60295.0,60295
+Burden x Vehicle Matrix,G14,Tanzania,,national,National,inadequate_intake:va,current,0.96,0.96
+Burden x Vehicle Matrix,H14,Tanzania,,national,National,inadequate_intake:iron,current,0.65,0.65
+Burden x Vehicle Matrix,I14,Tanzania,,national,National,inadequate_intake:folate,current,0.57,0.57
+Burden x Vehicle Matrix,J14,Tanzania,,national,National,inadequate_intake:zinc,current,0.69,0.69
+Burden x Vehicle Matrix,K14,Tanzania,,national,National,mn_biomarker_data:va_deficiency,current,0.05,0.05
+Burden x Vehicle Matrix,L14,Tanzania,,national,National,mn_biomarker_data:iron_deficiency,current,0.3,0.3
+Burden x Vehicle Matrix,M14,Tanzania,,national,National,mn_biomarker_data:folate_deficiency_insufficiency,current,0.52,0.52
+Burden x Vehicle Matrix,N14,Tanzania,,national,National,mn_biomarker_data:zinc_deficiency,current,,n/a
+Burden x Vehicle Matrix,O14,Tanzania,Wheat,national,National,consolidation,current,1.0,1
+Burden x Vehicle Matrix,P14,Tanzania,Wheat,national,National,coverage,current,0.529,0.529
+Burden x Vehicle Matrix,Q14,Tanzania,Wheat,national,National,g_per_capita,current,25.0,25
+Burden x Vehicle Matrix,R14,Tanzania,Wheat,national,National,compliance,current,0.79,0.79
+Burden x Vehicle Matrix,S14,Tanzania,Oil,national,National,consolidation,current,1.0,1
+Burden x Vehicle Matrix,T14,Tanzania,Oil,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,U14,Tanzania,Oil,national,National,g_per_capita,current,22.0,22
+Burden x Vehicle Matrix,V14,Tanzania,Oil,national,National,compliance,current,0.38,0.38
+Burden x Vehicle Matrix,X14,Tanzania,Rice,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,Y14,Tanzania,Rice,national,National,g_per_capita,current,370.0,370
+Burden x Vehicle Matrix,Z14,Tanzania,Rice,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AB14,Tanzania,Maize,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AC14,Tanzania,Maize,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AD14,Tanzania,Maize,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AE14,Tanzania,Salt,national,National,consolidation,current,,n/a
+Burden x Vehicle Matrix,AF14,Tanzania,Salt,national,National,coverage,current,1.0,1
+Burden x Vehicle Matrix,AG14,Tanzania,Salt,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AH14,Tanzania,Salt,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AJ14,Tanzania,Bouillon,national,National,coverage,current,,n/a
+Burden x Vehicle Matrix,AK14,Tanzania,Bouillon,national,National,g_per_capita,current,,n/a
+Burden x Vehicle Matrix,AL14,Tanzania,Bouillon,national,National,compliance,current,,n/a
+Burden x Vehicle Matrix,AM14,Tanzania,,national,National,additional:cohd_ppp_day,current,3.37,3.37
+Burden x Vehicle Matrix,AN14,Tanzania,,national,National,additional:unable_to_afford,current,0.738,0.738
+Burden x Vehicle Matrix,AO14,Tanzania,,national,National,additional:mdd_w,current,,n/a
+Burden x Vehicle Matrix,AP14,Tanzania,,national,National,additional:anemia_wra,current,0.37,0.37
+Ethiopia (stratified),L7,Ethiopia,,region,Addis,mn_biomarker:iron_deficiency,current,0.08,0.08
+Ethiopia (stratified),M7,Ethiopia,,region,Addis,mn_biomarker:folate_insufficiency,current,0.7,0.7
+Ethiopia (stratified),P7,Ethiopia,Wheat,region,Addis,coverage,current,0.53,0.53
+Ethiopia (stratified),Q7,Ethiopia,Wheat,region,Addis,g_per_capita,current,21.41048,21.41048
+Ethiopia (stratified),T7,Ethiopia,Oil,region,Addis,coverage,current,0.96,0.96
+Ethiopia (stratified),U7,Ethiopia,Oil,region,Addis,g_per_capita,current,9.417328,9.417328
+Ethiopia (stratified),AF7,Ethiopia,Salt,region,Addis,coverage,current,0.98,0.98
+Ethiopia (stratified),AG7,Ethiopia,Salt,region,Addis,g_per_capita,current,6.825589,6.825589
+Ethiopia (stratified),AM7,Ethiopia,,region,Addis,additional_survey:b12_def,current,0.08,0.08
+Ethiopia (stratified),AN7,Ethiopia,,region,Addis,additional_survey:vit_d_def,current,0.61,0.61
+Ethiopia (stratified),L8,Ethiopia,,region,Afar,mn_biomarker:iron_deficiency,current,0.19,0.19
+Ethiopia (stratified),M8,Ethiopia,,region,Afar,mn_biomarker:folate_insufficiency,current,0.91,0.91
+Ethiopia (stratified),P8,Ethiopia,Wheat,region,Afar,coverage,current,0.38,0.38
+Ethiopia (stratified),Q8,Ethiopia,Wheat,region,Afar,g_per_capita,current,86.23275,86.23275
+Ethiopia (stratified),T8,Ethiopia,Oil,region,Afar,coverage,current,0.79,0.79
+Ethiopia (stratified),U8,Ethiopia,Oil,region,Afar,g_per_capita,current,4.497056,4.497056
+Ethiopia (stratified),AF8,Ethiopia,Salt,region,Afar,coverage,current,0.96,0.96
+Ethiopia (stratified),AG8,Ethiopia,Salt,region,Afar,g_per_capita,current,6.019396,6.019396
+Ethiopia (stratified),AM8,Ethiopia,,region,Afar,additional_survey:b12_def,current,0.04,0.04
+Ethiopia (stratified),L9,Ethiopia,,region,Amhara,mn_biomarker:iron_deficiency,current,0.03,0.03
+Ethiopia (stratified),M9,Ethiopia,,region,Amhara,mn_biomarker:folate_insufficiency,current,0.56,0.56
+Ethiopia (stratified),P9,Ethiopia,Wheat,region,Amhara,coverage,current,0.17,0.17
+Ethiopia (stratified),Q9,Ethiopia,Wheat,region,Amhara,g_per_capita,current,21.30075,21.30075
+Ethiopia (stratified),T9,Ethiopia,Oil,region,Amhara,coverage,current,0.88,0.88
+Ethiopia (stratified),U9,Ethiopia,Oil,region,Amhara,g_per_capita,current,5.867862,5.867862
+Ethiopia (stratified),AF9,Ethiopia,Salt,region,Amhara,coverage,current,0.97,0.97
+Ethiopia (stratified),AG9,Ethiopia,Salt,region,Amhara,g_per_capita,current,5.481077,5.481077
+Ethiopia (stratified),AM9,Ethiopia,,region,Amhara,additional_survey:b12_def,current,0.08,0.08
+Ethiopia (stratified),AN9,Ethiopia,,region,Amhara,additional_survey:vit_d_def,current,0.47,0.47
+Ethiopia (stratified),P10,Ethiopia,Wheat,region,Benishangul-Gumuz,coverage,current,0.38,0.38
+Ethiopia (stratified),Q10,Ethiopia,Wheat,region,Benishangul-Gumuz,g_per_capita,current,13.99703,13.99703
+Ethiopia (stratified),T10,Ethiopia,Oil,region,Benishangul-Gumuz,coverage,current,0.9,0.9
+Ethiopia (stratified),U10,Ethiopia,Oil,region,Benishangul-Gumuz,g_per_capita,current,9.64746,9.64746
+Ethiopia (stratified),AF10,Ethiopia,Salt,region,Benishangul-Gumuz,coverage,current,0.98,0.98
+Ethiopia (stratified),AG10,Ethiopia,Salt,region,Benishangul-Gumuz,g_per_capita,current,8.420136,8.420136
+Ethiopia (stratified),L11,Ethiopia,,region,Dire Dawa,mn_biomarker:iron_deficiency,current,0.25,0.25
+Ethiopia (stratified),M11,Ethiopia,,region,Dire Dawa,mn_biomarker:folate_insufficiency,current,0.85,0.85
+Ethiopia (stratified),P11,Ethiopia,Wheat,region,Dire Dawa,coverage,current,0.39,0.39
+Ethiopia (stratified),Q11,Ethiopia,Wheat,region,Dire Dawa,g_per_capita,current,48.27154,48.27154
+Ethiopia (stratified),T11,Ethiopia,Oil,region,Dire Dawa,coverage,current,0.77,0.77
+Ethiopia (stratified),U11,Ethiopia,Oil,region,Dire Dawa,g_per_capita,current,10.3824,10.3824
+Ethiopia (stratified),AF11,Ethiopia,Salt,region,Dire Dawa,coverage,current,0.94,0.94
+Ethiopia (stratified),AG11,Ethiopia,Salt,region,Dire Dawa,g_per_capita,current,4.962971,4.962971
+Ethiopia (stratified),AM11,Ethiopia,,region,Dire Dawa,additional_survey:b12_def,current,0.19,0.19
+Ethiopia (stratified),AN11,Ethiopia,,region,Dire Dawa,additional_survey:vit_d_def,current,0.11,0.11
+Ethiopia (stratified),L12,Ethiopia,,region,Gambela,mn_biomarker:iron_deficiency,current,0.07,0.07
+Ethiopia (stratified),M12,Ethiopia,,region,Gambela,mn_biomarker:folate_insufficiency,current,0.73,0.73
+Ethiopia (stratified),P12,Ethiopia,Wheat,region,Gambela,coverage,current,0.29,0.29
+Ethiopia (stratified),Q12,Ethiopia,Wheat,region,Gambela,g_per_capita,current,29.32778,29.32778
+Ethiopia (stratified),T12,Ethiopia,Oil,region,Gambela,coverage,current,0.9,0.9
+Ethiopia (stratified),U12,Ethiopia,Oil,region,Gambela,g_per_capita,current,8.541496,8.541496
+Ethiopia (stratified),AF12,Ethiopia,Salt,region,Gambela,coverage,current,0.98,0.98
+Ethiopia (stratified),AG12,Ethiopia,Salt,region,Gambela,g_per_capita,current,11.81201,11.81201
+Ethiopia (stratified),AM12,Ethiopia,,region,Gambela,additional_survey:b12_def,current,0.03,0.03
+Ethiopia (stratified),AN12,Ethiopia,,region,Gambela,additional_survey:vit_d_def,current,0.11,0.11
+Ethiopia (stratified),L13,Ethiopia,,region,Harari,mn_biomarker:iron_deficiency,current,0.18,0.18
+Ethiopia (stratified),M13,Ethiopia,,region,Harari,mn_biomarker:folate_insufficiency,current,0.8,0.8
+Ethiopia (stratified),P13,Ethiopia,Wheat,region,Harari,coverage,current,0.64,0.64
+Ethiopia (stratified),Q13,Ethiopia,Wheat,region,Harari,g_per_capita,current,37.91966,37.91966
+Ethiopia (stratified),T13,Ethiopia,Oil,region,Harari,coverage,current,0.91,0.91
+Ethiopia (stratified),U13,Ethiopia,Oil,region,Harari,g_per_capita,current,9.324589,9.324589
+Ethiopia (stratified),AF13,Ethiopia,Salt,region,Harari,coverage,current,0.97,0.97
+Ethiopia (stratified),AG13,Ethiopia,Salt,region,Harari,g_per_capita,current,9.085969,9.085969
+Ethiopia (stratified),AM13,Ethiopia,,region,Harari,additional_survey:b12_def,current,0.11,0.11
+Ethiopia (stratified),AN13,Ethiopia,,region,Harari,additional_survey:vit_d_def,current,0.34,0.34
+Ethiopia (stratified),L14,Ethiopia,,region,Oromia,mn_biomarker:iron_deficiency,current,0.1,0.1
+Ethiopia (stratified),M14,Ethiopia,,region,Oromia,mn_biomarker:folate_insufficiency,current,0.48,0.48
+Ethiopia (stratified),P14,Ethiopia,Wheat,region,Oromia,coverage,current,0.31,0.31
+Ethiopia (stratified),Q14,Ethiopia,Wheat,region,Oromia,g_per_capita,current,40.76837,40.76837
+Ethiopia (stratified),T14,Ethiopia,Oil,region,Oromia,coverage,current,0.92,0.92
+Ethiopia (stratified),U14,Ethiopia,Oil,region,Oromia,g_per_capita,current,7.278724,7.278724
+Ethiopia (stratified),AF14,Ethiopia,Salt,region,Oromia,coverage,current,0.98,0.98
+Ethiopia (stratified),AG14,Ethiopia,Salt,region,Oromia,g_per_capita,current,8.175828,8.175828
+Ethiopia (stratified),AM14,Ethiopia,,region,Oromia,additional_survey:b12_def,current,0.13,0.13
+Ethiopia (stratified),AN14,Ethiopia,,region,Oromia,additional_survey:vit_d_def,current,0.32,0.32
+Ethiopia (stratified),L15,Ethiopia,,region,Sidama,mn_biomarker:iron_deficiency,current,0.03,0.03
+Ethiopia (stratified),M15,Ethiopia,,region,Sidama,mn_biomarker:folate_insufficiency,current,0.11,0.11
+Ethiopia (stratified),P15,Ethiopia,Wheat,region,Sidama,coverage,current,0.33,0.33
+Ethiopia (stratified),Q15,Ethiopia,Wheat,region,Sidama,g_per_capita,current,14.60529,14.60529
+Ethiopia (stratified),T15,Ethiopia,Oil,region,Sidama,coverage,current,0.92,0.92
+Ethiopia (stratified),U15,Ethiopia,Oil,region,Sidama,g_per_capita,current,5.812991,5.812991
+Ethiopia (stratified),AF15,Ethiopia,Salt,region,Sidama,coverage,current,0.97,0.97
+Ethiopia (stratified),AG15,Ethiopia,Salt,region,Sidama,g_per_capita,current,7.444192,7.444192
+Ethiopia (stratified),AM15,Ethiopia,,region,Sidama,additional_survey:b12_def,current,0.01,0.01
+Ethiopia (stratified),AN15,Ethiopia,,region,Sidama,additional_survey:vit_d_def,current,0.21,0.21
+Ethiopia (stratified),L16,Ethiopia,,region,SNNP,mn_biomarker:iron_deficiency,current,0.06,0.06
+Ethiopia (stratified),M16,Ethiopia,,region,SNNP,mn_biomarker:folate_insufficiency,current,0.39,0.39
+Ethiopia (stratified),P16,Ethiopia,Wheat,region,SNNP,coverage,current,0.29,0.29
+Ethiopia (stratified),Q16,Ethiopia,Wheat,region,SNNP,g_per_capita,current,17.94918,17.94918
+Ethiopia (stratified),T16,Ethiopia,Oil,region,SNNP,coverage,current,0.88,0.88
+Ethiopia (stratified),U16,Ethiopia,Oil,region,SNNP,g_per_capita,current,7.253862,7.253862
+Ethiopia (stratified),AF16,Ethiopia,Salt,region,SNNP,coverage,current,0.96,0.96
+Ethiopia (stratified),AG16,Ethiopia,Salt,region,SNNP,g_per_capita,current,7.306291,7.306291
+Ethiopia (stratified),AM16,Ethiopia,,region,SNNP,additional_survey:b12_def,current,0.07,0.07
+Ethiopia (stratified),AN16,Ethiopia,,region,SNNP,additional_survey:vit_d_def,current,0.21,0.21
+Ethiopia (stratified),L17,Ethiopia,,region,Somalia,mn_biomarker:iron_deficiency,current,0.48,0.48
+Ethiopia (stratified),M17,Ethiopia,,region,Somalia,mn_biomarker:folate_insufficiency,current,0.86,0.86
+Ethiopia (stratified),P17,Ethiopia,Wheat,region,Somalia,coverage,current,0.68,0.68
+Ethiopia (stratified),Q17,Ethiopia,Wheat,region,Somalia,g_per_capita,current,145.7574,145.7574
+Ethiopia (stratified),T17,Ethiopia,Oil,region,Somalia,coverage,current,0.79,0.79
+Ethiopia (stratified),U17,Ethiopia,Oil,region,Somalia,g_per_capita,current,4.984524,4.984524
+Ethiopia (stratified),AF17,Ethiopia,Salt,region,Somalia,coverage,current,0.83,0.83
+Ethiopia (stratified),AG17,Ethiopia,Salt,region,Somalia,g_per_capita,current,5.262013,5.262013
+Ethiopia (stratified),AM17,Ethiopia,,region,Somalia,additional_survey:b12_def,current,0.02,0.02
+Ethiopia (stratified),AN17,Ethiopia,,region,Somalia,additional_survey:vit_d_def,current,0.01,0.01
+Ethiopia (stratified),Q18,Ethiopia,Wheat,region,Tigray,g_per_capita,current,25.1878,25.1878
+Ethiopia (stratified),U18,Ethiopia,Oil,region,Tigray,g_per_capita,current,4.194372,4.194372
+Ethiopia (stratified),AG18,Ethiopia,Salt,region,Tigray,g_per_capita,current,6.209738,6.209738
+Ethiopia (stratified),L20,Ethiopia,,location,Urban,mn_biomarker:iron_deficiency,current,0.09,0.09
+Ethiopia (stratified),M20,Ethiopia,,location,Urban,mn_biomarker:folate_insufficiency,current,0.63,0.63
+Ethiopia (stratified),P20,Ethiopia,Wheat,location,Urban,coverage,current,0.45,0.45
+Ethiopia (stratified),Q20,Ethiopia,Wheat,location,Urban,g_per_capita,current,34.01923,34.01923
+Ethiopia (stratified),T20,Ethiopia,Oil,location,Urban,coverage,current,0.94,0.94
+Ethiopia (stratified),U20,Ethiopia,Oil,location,Urban,g_per_capita,current,9.169278,9.169278
+Ethiopia (stratified),AF20,Ethiopia,Salt,location,Urban,coverage,current,0.98,0.98
+Ethiopia (stratified),AG20,Ethiopia,Salt,location,Urban,g_per_capita,current,6.865382,6.865382
+Ethiopia (stratified),AM20,Ethiopia,,location,Urban,additional_survey:b12_def,current,0.07,0.07
+Ethiopia (stratified),AN20,Ethiopia,,location,Urban,additional_survey:vit_d_def,current,0.33,0.33
+Ethiopia (stratified),L21,Ethiopia,,location,Rural,mn_biomarker:iron_deficiency,current,0.08,0.08
+Ethiopia (stratified),M21,Ethiopia,,location,Rural,mn_biomarker:folate_insufficiency,current,0.43,0.43
+Ethiopia (stratified),P21,Ethiopia,Wheat,location,Rural,coverage,current,0.23,0.23
+Ethiopia (stratified),Q21,Ethiopia,Wheat,location,Rural,g_per_capita,current,36.83984,36.83984
+Ethiopia (stratified),T21,Ethiopia,Oil,location,Rural,coverage,current,0.88,0.88
+Ethiopia (stratified),U21,Ethiopia,Oil,location,Rural,g_per_capita,current,5.446428,5.446428
+Ethiopia (stratified),AF21,Ethiopia,Salt,location,Rural,coverage,current,0.96,0.96
+Ethiopia (stratified),AG21,Ethiopia,Salt,location,Rural,g_per_capita,current,7.246491,7.246491
+Ethiopia (stratified),AM21,Ethiopia,,location,Rural,additional_survey:b12_def,current,0.1,0.1
+Ethiopia (stratified),AN21,Ethiopia,,location,Rural,additional_survey:vit_d_def,current,0.34,0.34
+Ethiopia (stratified),Q23,Ethiopia,Wheat,wealth_quintile,Lowest,g_per_capita,current,64.70252,64.70252
+Ethiopia (stratified),U23,Ethiopia,Oil,wealth_quintile,Lowest,g_per_capita,current,4.385465,4.385465
+Ethiopia (stratified),AG23,Ethiopia,Salt,wealth_quintile,Lowest,g_per_capita,current,7.084152,7.084152
+Ethiopia (stratified),Q24,Ethiopia,Wheat,wealth_quintile,Second,g_per_capita,current,29.85205,29.85205
+Ethiopia (stratified),U24,Ethiopia,Oil,wealth_quintile,Second,g_per_capita,current,5.38305,5.38305
+Ethiopia (stratified),AG24,Ethiopia,Salt,wealth_quintile,Second,g_per_capita,current,7.235241,7.235241
+Ethiopia (stratified),Q25,Ethiopia,Wheat,wealth_quintile,Middle,g_per_capita,current,23.55881,23.55881
+Ethiopia (stratified),U25,Ethiopia,Oil,wealth_quintile,Middle,g_per_capita,current,5.78538,5.78538
+Ethiopia (stratified),AG25,Ethiopia,Salt,wealth_quintile,Middle,g_per_capita,current,7.704005,7.704005
+Ethiopia (stratified),Q26,Ethiopia,Wheat,wealth_quintile,Fourth,g_per_capita,current,32.09161,32.09161
+Ethiopia (stratified),U26,Ethiopia,Oil,wealth_quintile,Fourth,g_per_capita,current,6.990192,6.990192
+Ethiopia (stratified),AG26,Ethiopia,Salt,wealth_quintile,Fourth,g_per_capita,current,7.157051,7.157051
+Ethiopia (stratified),Q27,Ethiopia,Wheat,wealth_quintile,Highest,g_per_capita,current,29.97842,29.97842
+Ethiopia (stratified),U27,Ethiopia,Oil,wealth_quintile,Highest,g_per_capita,current,10.23495,10.23495
+Ethiopia (stratified),AG27,Ethiopia,Salt,wealth_quintile,Highest,g_per_capita,current,6.504427,6.504427
+India (stratified),G7,India,,subnational,Delhi,inadequate_intake:va,current,0.974910255859019,0.974910255859019
+India (stratified),H7,India,,subnational,Delhi,inadequate_intake:iron,current,0.9205,0.9205
+India (stratified),I7,India,,subnational,Delhi,inadequate_intake:folate,current,0.2346,0.2346
+India (stratified),K7,India,,subnational,Delhi,mn_biomarker:va_deficiency,current,0.178,0.178
+India (stratified),L7,India,,subnational,Delhi,mn_biomarker:iron_deficiency,current,0.383,0.383
+India (stratified),M7,India,,subnational,Delhi,mn_biomarker:folate_deficiency,current,0.013,0.013
+India (stratified),P7,India,Wheat,subnational,Delhi,coverage,current,0.998303235,0.998303235
+India (stratified),Q7,India,Wheat,subnational,Delhi,g_per_capita,current,135.5068665,135.5068665
+India (stratified),T7,India,Oil,subnational,Delhi,coverage,current,0.995548964,0.995548964
+India (stratified),U7,India,Oil,subnational,Delhi,g_per_capita,current,24.72537994,24.72537994
+India (stratified),X7,India,Rice,subnational,Delhi,coverage,current,0.995548964,0.995548964
+India (stratified),Y7,India,Rice,subnational,Delhi,g_per_capita,current,50.58205414,50.58205414
+India (stratified),AF7,India,Salt,subnational,Delhi,coverage,current,0.999459326,0.999459326
+India (stratified),AG7,India,Salt,subnational,Delhi,g_per_capita,current,5.724912643,5.724912643
+India (stratified),G8,India,,subnational,Haryana,inadequate_intake:va,current,0.985011713099077,0.985011713099077
+India (stratified),H8,India,,subnational,Haryana,inadequate_intake:iron,current,0.6753,0.6753
+India (stratified),I8,India,,subnational,Haryana,inadequate_intake:folate,current,0.0727,0.0727
+India (stratified),K8,India,,subnational,Haryana,mn_biomarker:va_deficiency,current,0.261,0.261
+India (stratified),L8,India,,subnational,Haryana,mn_biomarker:iron_deficiency,current,0.589,0.589
+India (stratified),M8,India,,subnational,Haryana,mn_biomarker:folate_deficiency,current,0.146,0.146
+India (stratified),P8,India,Wheat,subnational,Haryana,coverage,current,0.995010436,0.995010436
+India (stratified),Q8,India,Wheat,subnational,Haryana,g_per_capita,current,210.5958862,210.5958862
+India (stratified),T8,India,Oil,subnational,Haryana,coverage,current,0.965371609,0.965371609
+India (stratified),U8,India,Oil,subnational,Haryana,g_per_capita,current,24.7017231,24.7017231
+India (stratified),X8,India,Rice,subnational,Haryana,coverage,current,0.965371609,0.965371609
+India (stratified),Y8,India,Rice,subnational,Haryana,g_per_capita,current,23.70432091,23.70432091
+India (stratified),AF8,India,Salt,subnational,Haryana,coverage,current,0.999279439,0.999279439
+India (stratified),AG8,India,Salt,subnational,Haryana,g_per_capita,current,6.580555916,6.580555916
+India (stratified),G9,India,,subnational,Himachal Pradesh,inadequate_intake:va,current,0.982792027126079,0.982792027126079
+India (stratified),H9,India,,subnational,Himachal Pradesh,inadequate_intake:iron,current,0.6889,0.6889
+India (stratified),I9,India,,subnational,Himachal Pradesh,inadequate_intake:folate,current,0.0156999999999999,0.0156999999999999
+India (stratified),K9,India,,subnational,Himachal Pradesh,mn_biomarker:va_deficiency,current,0.059,0.059
+India (stratified),L9,India,,subnational,Himachal Pradesh,mn_biomarker:iron_deficiency,current,0.345,0.345
+India (stratified),M9,India,,subnational,Himachal Pradesh,mn_biomarker:folate_deficiency,current,0.046,0.046
+India (stratified),P9,India,Wheat,subnational,Himachal Pradesh,coverage,current,0.999039829,0.999039829
+India (stratified),Q9,India,Wheat,subnational,Himachal Pradesh,g_per_capita,current,171.1798401,171.1798401
+India (stratified),T9,India,Oil,subnational,Himachal Pradesh,coverage,current,0.999364197,0.999364197
+India (stratified),U9,India,Oil,subnational,Himachal Pradesh,g_per_capita,current,27.43398857,27.43398857
+India (stratified),X9,India,Rice,subnational,Himachal Pradesh,coverage,current,0.999364197,0.999364197
+India (stratified),Y9,India,Rice,subnational,Himachal Pradesh,g_per_capita,current,119.708252,119.708252
+India (stratified),AF9,India,Salt,subnational,Himachal Pradesh,coverage,current,0.999865234,0.999865234
+India (stratified),AG9,India,Salt,subnational,Himachal Pradesh,g_per_capita,current,6.349276543,6.349276543
+India (stratified),G10,India,,subnational,Jammu & Kashmir,inadequate_intake:va,current,0.991773397363437,0.991773397363437
+India (stratified),H10,India,,subnational,Jammu & Kashmir,inadequate_intake:iron,current,0.9052,0.9052
+India (stratified),I10,India,,subnational,Jammu & Kashmir,inadequate_intake:folate,current,0.2061,0.2061
+India (stratified),K10,India,,subnational,Jammu & Kashmir,mn_biomarker:va_deficiency,current,0.087,0.087
+India (stratified),L10,India,,subnational,Jammu & Kashmir,mn_biomarker:iron_deficiency,current,0.447,0.447
+India (stratified),M10,India,,subnational,Jammu & Kashmir,mn_biomarker:folate_deficiency,current,0.059,0.059
+India (stratified),P10,India,Wheat,subnational,Jammu & Kashmir,coverage,current,0.816233218,0.816233218
+India (stratified),Q10,India,Wheat,subnational,Jammu & Kashmir,g_per_capita,current,101.1109467,101.1109467
+India (stratified),T10,India,Oil,subnational,Jammu & Kashmir,coverage,current,0.999844909,0.999844909
+India (stratified),U10,India,Oil,subnational,Jammu & Kashmir,g_per_capita,current,26.21459007,26.21459007
+India (stratified),X10,India,Rice,subnational,Jammu & Kashmir,coverage,current,0.999844909,0.999844909
+India (stratified),Y10,India,Rice,subnational,Jammu & Kashmir,g_per_capita,current,198.6270447,198.6270447
+India (stratified),AF10,India,Salt,subnational,Jammu & Kashmir,coverage,current,1.0,1
+India (stratified),AG10,India,Salt,subnational,Jammu & Kashmir,g_per_capita,current,7.80175209,7.80175209
+India (stratified),G11,India,,subnational,Punjab,inadequate_intake:va,current,0.98369409249638,0.98369409249638
+India (stratified),H11,India,,subnational,Punjab,inadequate_intake:iron,current,0.7551,0.7551
+India (stratified),I11,India,,subnational,Punjab,inadequate_intake:folate,current,0.1315,0.1315
+India (stratified),K11,India,,subnational,Punjab,mn_biomarker:va_deficiency,current,0.172,0.172
+India (stratified),L11,India,,subnational,Punjab,mn_biomarker:iron_deficiency,current,0.672,0.672
+India (stratified),M11,India,,subnational,Punjab,mn_biomarker:folate_deficiency,current,0.098,0.098
+India (stratified),P11,India,Wheat,subnational,Punjab,coverage,current,0.986740291,0.986740291
+India (stratified),Q11,India,Wheat,subnational,Punjab,g_per_capita,current,201.1195679,201.1195679
+India (stratified),T11,India,Oil,subnational,Punjab,coverage,current,0.957522094,0.957522094
+India (stratified),U11,India,Oil,subnational,Punjab,g_per_capita,current,25.12517357,25.12517357
+India (stratified),X11,India,Rice,subnational,Punjab,coverage,current,0.957522094,0.957522094
+India (stratified),Y11,India,Rice,subnational,Punjab,g_per_capita,current,25.02485466,25.02485466
+India (stratified),AF11,India,Salt,subnational,Punjab,coverage,current,0.999919951,0.999919951
+India (stratified),AG11,India,Salt,subnational,Punjab,g_per_capita,current,5.359478474,5.359478474
+India (stratified),G12,India,,subnational,Rajasthan,inadequate_intake:va,current,0.992593764247187,0.992593764247187
+India (stratified),H12,India,,subnational,Rajasthan,inadequate_intake:iron,current,0.3746,0.3746
+India (stratified),I12,India,,subnational,Rajasthan,inadequate_intake:folate,current,0.1812,0.1812
+India (stratified),L12,India,,subnational,Rajasthan,mn_biomarker:iron_deficiency,current,0.443,0.443
+India (stratified),M12,India,,subnational,Rajasthan,mn_biomarker:folate_deficiency,current,0.34,0.34
+India (stratified),P12,India,Wheat,subnational,Rajasthan,coverage,current,0.988712728,0.988712728
+India (stratified),Q12,India,Wheat,subnational,Rajasthan,g_per_capita,current,269.4253235,269.4253235
+India (stratified),T12,India,Oil,subnational,Rajasthan,coverage,current,0.878253698,0.878253698
+India (stratified),U12,India,Oil,subnational,Rajasthan,g_per_capita,current,24.97888374,24.97888374
+India (stratified),X12,India,Rice,subnational,Rajasthan,coverage,current,0.878253698,0.878253698
+India (stratified),Y12,India,Rice,subnational,Rajasthan,g_per_capita,current,11.8374939,11.8374939
+India (stratified),AF12,India,Salt,subnational,Rajasthan,coverage,current,0.999731421,0.999731421
+India (stratified),AG12,India,Salt,subnational,Rajasthan,g_per_capita,current,5.925888062,5.925888062
+India (stratified),G13,India,,subnational,Uttarakhand,inadequate_intake:va,current,0.985995643343216,0.985995643343216
+India (stratified),H13,India,,subnational,Uttarakhand,inadequate_intake:iron,current,0.9132,0.9132
+India (stratified),I13,India,,subnational,Uttarakhand,inadequate_intake:folate,current,0.1334,0.1334
+India (stratified),K13,India,,subnational,Uttarakhand,mn_biomarker:va_deficiency,current,0.143,0.143
+India (stratified),L13,India,,subnational,Uttarakhand,mn_biomarker:iron_deficiency,current,0.512,0.512
+India (stratified),M13,India,,subnational,Uttarakhand,mn_biomarker:folate_deficiency,current,0.176,0.176
+India (stratified),P13,India,Wheat,subnational,Uttarakhand,coverage,current,0.9952721,0.9952721
+India (stratified),Q13,India,Wheat,subnational,Uttarakhand,g_per_capita,current,154.7209167,154.7209167
+India (stratified),T13,India,Oil,subnational,Uttarakhand,coverage,current,0.996760309,0.996760309
+India (stratified),U13,India,Oil,subnational,Uttarakhand,g_per_capita,current,25.59550858,25.59550858
+India (stratified),X13,India,Rice,subnational,Uttarakhand,coverage,current,0.996760309,0.996760309
+India (stratified),Y13,India,Rice,subnational,Uttarakhand,g_per_capita,current,116.3458939,116.3458939
+India (stratified),AF13,India,Salt,subnational,Uttarakhand,coverage,current,0.999915123,0.999915123
+India (stratified),AG13,India,Salt,subnational,Uttarakhand,g_per_capita,current,5.614800453,5.614800453
+India (stratified),G14,India,,subnational,Chhattisgarh,inadequate_intake:va,current,0.996376729953836,0.996376729953836
+India (stratified),H14,India,,subnational,Chhattisgarh,inadequate_intake:iron,current,0.9643,0.9643
+India (stratified),I14,India,,subnational,Chhattisgarh,inadequate_intake:folate,current,0.2949,0.2949
+India (stratified),K14,India,,subnational,Chhattisgarh,mn_biomarker:va_deficiency,current,0.266,0.266
+India (stratified),L14,India,,subnational,Chhattisgarh,mn_biomarker:iron_deficiency,current,0.385,0.385
+India (stratified),M14,India,,subnational,Chhattisgarh,mn_biomarker:folate_deficiency,current,0.437,0.437
+India (stratified),P14,India,Wheat,subnational,Chhattisgarh,coverage,current,0.819997966,0.819997966
+India (stratified),Q14,India,Wheat,subnational,Chhattisgarh,g_per_capita,current,32.37008286,32.37008286
+India (stratified),T14,India,Oil,subnational,Chhattisgarh,coverage,current,0.998072982,0.998072982
+India (stratified),U14,India,Oil,subnational,Chhattisgarh,g_per_capita,current,30.2175827,30.2175827
+India (stratified),X14,India,Rice,subnational,Chhattisgarh,coverage,current,0.998072982,0.998072982
+India (stratified),Y14,India,Rice,subnational,Chhattisgarh,g_per_capita,current,298.2650757,298.2650757
+India (stratified),AF14,India,Salt,subnational,Chhattisgarh,coverage,current,0.998579919,0.998579919
+India (stratified),AG14,India,Salt,subnational,Chhattisgarh,g_per_capita,current,9.469164848,9.469164848
+India (stratified),G15,India,,subnational,Madhya Pradesh,inadequate_intake:va,current,0.996956634154863,0.996956634154863
+India (stratified),H15,India,,subnational,Madhya Pradesh,inadequate_intake:iron,current,0.7389,0.7389
+India (stratified),I15,India,,subnational,Madhya Pradesh,inadequate_intake:folate,current,0.2184,0.2184
+India (stratified),K15,India,,subnational,Madhya Pradesh,mn_biomarker:va_deficiency,current,0.271,0.271
+India (stratified),L15,India,,subnational,Madhya Pradesh,mn_biomarker:iron_deficiency,current,0.459,0.459
+India (stratified),M15,India,,subnational,Madhya Pradesh,mn_biomarker:folate_deficiency,current,0.576,0.576
+India (stratified),P15,India,Wheat,subnational,Madhya Pradesh,coverage,current,0.997298181,0.997298181
+India (stratified),Q15,India,Wheat,subnational,Madhya Pradesh,g_per_capita,current,199.7640839,199.7640839
+India (stratified),T15,India,Oil,subnational,Madhya Pradesh,coverage,current,0.993312895,0.993312895
+India (stratified),U15,India,Oil,subnational,Madhya Pradesh,g_per_capita,current,28.32909203,28.32909203
+India (stratified),X15,India,Rice,subnational,Madhya Pradesh,coverage,current,0.993312895,0.993312895
+India (stratified),Y15,India,Rice,subnational,Madhya Pradesh,g_per_capita,current,68.45243835,68.45243835
+India (stratified),AF15,India,Salt,subnational,Madhya Pradesh,coverage,current,0.999818206,0.999818206
+India (stratified),AG15,India,Salt,subnational,Madhya Pradesh,g_per_capita,current,6.490470409,6.490470409
+India (stratified),G16,India,,subnational,Uttar Pradesh,inadequate_intake:va,current,0.991324781815366,0.991324781815366
+India (stratified),H16,India,,subnational,Uttar Pradesh,inadequate_intake:iron,current,0.8801,0.8801
+India (stratified),I16,India,,subnational,Uttar Pradesh,inadequate_intake:folate,current,0.3264,0.3264
+India (stratified),K16,India,,subnational,Uttar Pradesh,mn_biomarker:va_deficiency,current,0.171,0.171
+India (stratified),L16,India,,subnational,Uttar Pradesh,mn_biomarker:iron_deficiency,current,0.239,0.239
+India (stratified),M16,India,,subnational,Uttar Pradesh,mn_biomarker:folate_deficiency,current,0.061,0.061
+India (stratified),P16,India,Wheat,subnational,Uttar Pradesh,coverage,current,0.99767375,0.99767375
+India (stratified),Q16,India,Wheat,subnational,Uttar Pradesh,g_per_capita,current,172.6710815,172.6710815
+India (stratified),T16,India,Oil,subnational,Uttar Pradesh,coverage,current,0.995863557,0.995863557
+India (stratified),U16,India,Oil,subnational,Uttar Pradesh,g_per_capita,current,26.45888329,26.45888329
+India (stratified),X16,India,Rice,subnational,Uttar Pradesh,coverage,current,0.995863557,0.995863557
+India (stratified),Y16,India,Rice,subnational,Uttar Pradesh,g_per_capita,current,100.3493729,100.3493729
+India (stratified),AF16,India,Salt,subnational,Uttar Pradesh,coverage,current,0.999716401,0.999716401
+India (stratified),AG16,India,Salt,subnational,Uttar Pradesh,g_per_capita,current,5.87168026,5.87168026
+India (stratified),G17,India,,subnational,Bihar,inadequate_intake:va,current,0.998743028981241,0.998743028981241
+India (stratified),H17,India,,subnational,Bihar,inadequate_intake:iron,current,0.7997,0.7997
+India (stratified),I17,India,,subnational,Bihar,inadequate_intake:folate,current,0.2238,0.2238
+India (stratified),K17,India,,subnational,Bihar,mn_biomarker:va_deficiency,current,0.235,0.235
+India (stratified),L17,India,,subnational,Bihar,mn_biomarker:iron_deficiency,current,0.202,0.202
+India (stratified),M17,India,,subnational,Bihar,mn_biomarker:folate_deficiency,current,0.061,0.061
+India (stratified),P17,India,Wheat,subnational,Bihar,coverage,current,0.995661676,0.995661676
+India (stratified),Q17,India,Wheat,subnational,Bihar,g_per_capita,current,154.1739807,154.1739807
+India (stratified),T17,India,Oil,subnational,Bihar,coverage,current,0.998025358,0.998025358
+India (stratified),U17,India,Oil,subnational,Bihar,g_per_capita,current,30.52836609,30.52836609
+India (stratified),X17,India,Rice,subnational,Bihar,coverage,current,0.998025358,0.998025358
+India (stratified),Y17,India,Rice,subnational,Bihar,g_per_capita,current,166.8430176,166.8430176
+India (stratified),AF17,India,Salt,subnational,Bihar,coverage,current,0.999989748,0.999989748
+India (stratified),AG17,India,Salt,subnational,Bihar,g_per_capita,current,6.858905792,6.858905792
+India (stratified),G18,India,,subnational,Jharkhand,inadequate_intake:va,current,0.997906250750412,0.997906250750412
+India (stratified),H18,India,,subnational,Jharkhand,inadequate_intake:iron,current,0.9454,0.9454
+India (stratified),I18,India,,subnational,Jharkhand,inadequate_intake:folate,current,0.516,0.516
+India (stratified),K18,India,,subnational,Jharkhand,mn_biomarker:va_deficiency,current,0.432,0.432
+India (stratified),L18,India,,subnational,Jharkhand,mn_biomarker:iron_deficiency,current,0.138,0.138
+India (stratified),M18,India,,subnational,Jharkhand,mn_biomarker:folate_deficiency,current,0.053,0.053
+India (stratified),P18,India,Wheat,subnational,Jharkhand,coverage,current,0.940823257,0.940823257
+India (stratified),Q18,India,Wheat,subnational,Jharkhand,g_per_capita,current,101.859726,101.859726
+India (stratified),T18,India,Oil,subnational,Jharkhand,coverage,current,0.996836782,0.996836782
+India (stratified),U18,India,Oil,subnational,Jharkhand,g_per_capita,current,26.49293709,26.49293709
+India (stratified),X18,India,Rice,subnational,Jharkhand,coverage,current,0.996836782,0.996836782
+India (stratified),Y18,India,Rice,subnational,Jharkhand,g_per_capita,current,199.7654572,199.7654572
+India (stratified),AF18,India,Salt,subnational,Jharkhand,coverage,current,0.999872148,0.999872148
+India (stratified),AG18,India,Salt,subnational,Jharkhand,g_per_capita,current,6.689213753,6.689213753
+India (stratified),G19,India,,subnational,Odisha,inadequate_intake:va,current,0.999190523177569,0.999190523177569
+India (stratified),H19,India,,subnational,Odisha,inadequate_intake:iron,current,0.9671,0.9671
+India (stratified),I19,India,,subnational,Odisha,inadequate_intake:folate,current,0.4444,0.4444
+India (stratified),K19,India,,subnational,Odisha,mn_biomarker:va_deficiency,current,0.198,0.198
+India (stratified),L19,India,,subnational,Odisha,mn_biomarker:iron_deficiency,current,0.304,0.304
+India (stratified),M19,India,,subnational,Odisha,mn_biomarker:folate_deficiency,current,0.344,0.344
+India (stratified),P19,India,Wheat,subnational,Odisha,coverage,current,0.718965352,0.718965352
+India (stratified),Q19,India,Wheat,subnational,Odisha,g_per_capita,current,29.28060341,29.28060341
+India (stratified),T19,India,Oil,subnational,Odisha,coverage,current,0.99707222,0.99707222
+India (stratified),U19,India,Oil,subnational,Odisha,g_per_capita,current,25.53797913,25.53797913
+India (stratified),X19,India,Rice,subnational,Odisha,coverage,current,0.99707222,0.99707222
+India (stratified),Y19,India,Rice,subnational,Odisha,g_per_capita,current,307.2702942,307.2702942
+India (stratified),AF19,India,Salt,subnational,Odisha,coverage,current,0.999793947,0.999793947
+India (stratified),AG19,India,Salt,subnational,Odisha,g_per_capita,current,8.199654579,8.199654579
+India (stratified),G20,India,,subnational,West Bengal,inadequate_intake:va,current,0.98948198447718,0.98948198447718
+India (stratified),H20,India,,subnational,West Bengal,inadequate_intake:iron,current,0.9641,0.9641
+India (stratified),I20,India,,subnational,West Bengal,inadequate_intake:folate,current,0.4785,0.4785
+India (stratified),K20,India,,subnational,West Bengal,mn_biomarker:va_deficiency,current,0.05,0.05
+India (stratified),L20,India,,subnational,West Bengal,mn_biomarker:iron_deficiency,current,0.211,0.211
+India (stratified),M20,India,,subnational,West Bengal,mn_biomarker:folate_deficiency,current,0.003,0.003
+India (stratified),P20,India,Wheat,subnational,West Bengal,coverage,current,0.929225206,0.929225206
+India (stratified),Q20,India,Wheat,subnational,West Bengal,g_per_capita,current,57.74398041,57.74398041
+India (stratified),T20,India,Oil,subnational,West Bengal,coverage,current,0.999457717,0.999457717
+India (stratified),U20,India,Oil,subnational,West Bengal,g_per_capita,current,29.27388954,29.27388954
+India (stratified),X20,India,Rice,subnational,West Bengal,coverage,current,0.999457717,0.999457717
+India (stratified),Y20,India,Rice,subnational,West Bengal,g_per_capita,current,228.0436554,228.0436554
+India (stratified),AF20,India,Salt,subnational,West Bengal,coverage,current,0.999898672,0.999898672
+India (stratified),AG20,India,Salt,subnational,West Bengal,g_per_capita,current,7.98910284,7.98910284
+India (stratified),G21,India,,subnational,Arunachal Pradesh,inadequate_intake:va,current,0.95782488295851,0.95782488295851
+India (stratified),H21,India,,subnational,Arunachal Pradesh,inadequate_intake:iron,current,0.9728,0.9728
+India (stratified),I21,India,,subnational,Arunachal Pradesh,inadequate_intake:folate,current,0.3618,0.3618
+India (stratified),K21,India,,subnational,Arunachal Pradesh,mn_biomarker:va_deficiency,current,0.148,0.148
+India (stratified),L21,India,,subnational,Arunachal Pradesh,mn_biomarker:iron_deficiency,current,0.149,0.149
+India (stratified),M21,India,,subnational,Arunachal Pradesh,mn_biomarker:folate_deficiency,current,0.38,0.38
+India (stratified),P21,India,Wheat,subnational,Arunachal Pradesh,coverage,current,0.542680562,0.542680562
+India (stratified),Q21,India,Wheat,subnational,Arunachal Pradesh,g_per_capita,current,8.455394745,8.455394745
+India (stratified),T21,India,Oil,subnational,Arunachal Pradesh,coverage,current,0.998384118,0.998384118
+India (stratified),U21,India,Oil,subnational,Arunachal Pradesh,g_per_capita,current,23.98787689,23.98787689
+India (stratified),X21,India,Rice,subnational,Arunachal Pradesh,coverage,current,0.998384118,0.998384118
+India (stratified),Y21,India,Rice,subnational,Arunachal Pradesh,g_per_capita,current,303.5713501,303.5713501
+India (stratified),AF21,India,Salt,subnational,Arunachal Pradesh,coverage,current,1.0,1
+India (stratified),AG21,India,Salt,subnational,Arunachal Pradesh,g_per_capita,current,7.014044285,7.014044285
+India (stratified),G22,India,,subnational,Assam,inadequate_intake:va,current,0.998021060684686,0.998021060684686
+India (stratified),H22,India,,subnational,Assam,inadequate_intake:iron,current,0.9939,0.9939
+India (stratified),I22,India,,subnational,Assam,inadequate_intake:folate,current,0.6007,0.6007
+India (stratified),K22,India,,subnational,Assam,mn_biomarker:va_deficiency,current,0.214,0.214
+India (stratified),L22,India,,subnational,Assam,mn_biomarker:iron_deficiency,current,0.085,0.085
+India (stratified),M22,India,,subnational,Assam,mn_biomarker:folate_deficiency,current,0.599,0.599
+India (stratified),P22,India,Wheat,subnational,Assam,coverage,current,0.764888525,0.764888525
+India (stratified),Q22,India,Wheat,subnational,Assam,g_per_capita,current,12.1299305,12.1299305
+India (stratified),T22,India,Oil,subnational,Assam,coverage,current,0.999693513,0.999693513
+India (stratified),U22,India,Oil,subnational,Assam,g_per_capita,current,25.01400757,25.01400757
+India (stratified),X22,India,Rice,subnational,Assam,coverage,current,0.999693513,0.999693513
+India (stratified),Y22,India,Rice,subnational,Assam,g_per_capita,current,260.2685852,260.2685852
+India (stratified),AF22,India,Salt,subnational,Assam,coverage,current,0.99998498,0.99998498
+India (stratified),AG22,India,Salt,subnational,Assam,g_per_capita,current,6.704279423,6.704279423
+India (stratified),G23,India,,subnational,Manipur,inadequate_intake:va,current,0.999369779643099,0.999369779643099
+India (stratified),H23,India,,subnational,Manipur,inadequate_intake:iron,current,0.9977,0.9977
+India (stratified),I23,India,,subnational,Manipur,inadequate_intake:folate,current,0.6576,0.6576
+India (stratified),K23,India,,subnational,Manipur,mn_biomarker:va_deficiency,current,0.171,0.171
+India (stratified),L23,India,,subnational,Manipur,mn_biomarker:iron_deficiency,current,0.174,0.174
+India (stratified),M23,India,,subnational,Manipur,mn_biomarker:folate_deficiency,current,0.064,0.064
+India (stratified),P23,India,Wheat,subnational,Manipur,coverage,current,0.146290079,0.146290079
+India (stratified),Q23,India,Wheat,subnational,Manipur,g_per_capita,current,0.998959243,0.998959243
+India (stratified),T23,India,Oil,subnational,Manipur,coverage,current,0.996736586,0.996736586
+India (stratified),U23,India,Oil,subnational,Manipur,g_per_capita,current,23.83538055,23.83538055
+India (stratified),X23,India,Rice,subnational,Manipur,coverage,current,0.996736586,0.996736586
+India (stratified),Y23,India,Rice,subnational,Manipur,g_per_capita,current,348.287262,348.287262
+India (stratified),AF23,India,Salt,subnational,Manipur,coverage,current,1.0,1
+India (stratified),AG23,India,Salt,subnational,Manipur,g_per_capita,current,5.39417696,5.39417696
+India (stratified),G24,India,,subnational,Meghalaya,inadequate_intake:va,current,0.998934858744427,0.998934858744427
+India (stratified),H24,India,,subnational,Meghalaya,inadequate_intake:iron,current,0.9966,0.9966
+India (stratified),I24,India,,subnational,Meghalaya,inadequate_intake:folate,current,0.6379,0.6379
+India (stratified),K24,India,,subnational,Meghalaya,mn_biomarker:va_deficiency,current,0.063,0.063
+India (stratified),L24,India,,subnational,Meghalaya,mn_biomarker:iron_deficiency,current,0.249,0.249
+India (stratified),M24,India,,subnational,Meghalaya,mn_biomarker:folate_deficiency,current,0.261,0.261
+India (stratified),P24,India,Wheat,subnational,Meghalaya,coverage,current,0.519748926,0.519748926
+India (stratified),Q24,India,Wheat,subnational,Meghalaya,g_per_capita,current,5.146409988,5.146409988
+India (stratified),T24,India,Oil,subnational,Meghalaya,coverage,current,0.996310771,0.996310771
+India (stratified),U24,India,Oil,subnational,Meghalaya,g_per_capita,current,24.53463364,24.53463364
+India (stratified),X24,India,Rice,subnational,Meghalaya,coverage,current,0.996310771,0.996310771
+India (stratified),Y24,India,Rice,subnational,Meghalaya,g_per_capita,current,265.2116394,265.2116394
+India (stratified),AF24,India,Salt,subnational,Meghalaya,coverage,current,1.0,1
+India (stratified),AG24,India,Salt,subnational,Meghalaya,g_per_capita,current,6.652191639,6.652191639
+India (stratified),G25,India,,subnational,Mizoram,inadequate_intake:va,current,0.990458276128345,0.990458276128345
+India (stratified),H25,India,,subnational,Mizoram,inadequate_intake:iron,current,0.9953,0.9953
+India (stratified),I25,India,,subnational,Mizoram,inadequate_intake:folate,current,0.5412,0.5412
+India (stratified),K25,India,,subnational,Mizoram,mn_biomarker:va_deficiency,current,0.392,0.392
+India (stratified),L25,India,,subnational,Mizoram,mn_biomarker:iron_deficiency,current,0.042,0.042
+India (stratified),M25,India,,subnational,Mizoram,mn_biomarker:folate_deficiency,current,0.179,0.179
+India (stratified),P25,India,Wheat,subnational,Mizoram,coverage,current,0.025417931,0.025417931
+India (stratified),Q25,India,Wheat,subnational,Mizoram,g_per_capita,current,0.203475997,0.203475997
+India (stratified),T25,India,Oil,subnational,Mizoram,coverage,current,1.0,1
+India (stratified),U25,India,Oil,subnational,Mizoram,g_per_capita,current,31.79212189,31.79212189
+India (stratified),X25,India,Rice,subnational,Mizoram,coverage,current,1.0,1
+India (stratified),Y25,India,Rice,subnational,Mizoram,g_per_capita,current,276.02771,276.02771
+India (stratified),AF25,India,Salt,subnational,Mizoram,coverage,current,1.0,1
+India (stratified),AG25,India,Salt,subnational,Mizoram,g_per_capita,current,6.510499477,6.510499477
+India (stratified),G26,India,,subnational,Nagaland,inadequate_intake:va,current,0.999305741827905,0.999305741827905
+India (stratified),H26,India,,subnational,Nagaland,inadequate_intake:iron,current,0.9867,0.9867
+India (stratified),I26,India,,subnational,Nagaland,inadequate_intake:folate,current,0.502,0.502
+India (stratified),M26,India,,subnational,Nagaland,mn_biomarker:folate_deficiency,current,0.741,0.741
+India (stratified),P26,India,Wheat,subnational,Nagaland,coverage,current,0.1810482,0.1810482
+India (stratified),Q26,India,Wheat,subnational,Nagaland,g_per_capita,current,2.072093248,2.072093248
+India (stratified),T26,India,Oil,subnational,Nagaland,coverage,current,0.999502063,0.999502063
+India (stratified),U26,India,Oil,subnational,Nagaland,g_per_capita,current,12.72672081,12.72672081
+India (stratified),X26,India,Rice,subnational,Nagaland,coverage,current,0.999502063,0.999502063
+India (stratified),Y26,India,Rice,subnational,Nagaland,g_per_capita,current,284.0584717,284.0584717
+India (stratified),AF26,India,Salt,subnational,Nagaland,coverage,current,0.999841094,0.999841094
+India (stratified),AG26,India,Salt,subnational,Nagaland,g_per_capita,current,5.424171448,5.424171448
+India (stratified),G27,India,,subnational,Sikkim,inadequate_intake:va,current,0.993546516118542,0.993546516118542
+India (stratified),H27,India,,subnational,Sikkim,inadequate_intake:iron,current,0.955,0.955
+India (stratified),I27,India,,subnational,Sikkim,inadequate_intake:folate,current,0.1768,0.1768
+India (stratified),K27,India,,subnational,Sikkim,mn_biomarker:va_deficiency,current,0.027,0.027
+India (stratified),L27,India,,subnational,Sikkim,mn_biomarker:iron_deficiency,current,0.279,0.279
+India (stratified),M27,India,,subnational,Sikkim,mn_biomarker:folate_deficiency,current,0.001,0.001
+India (stratified),P27,India,Wheat,subnational,Sikkim,coverage,current,0.889306486,0.889306486
+India (stratified),Q27,India,Wheat,subnational,Sikkim,g_per_capita,current,17.10282135,17.10282135
+India (stratified),T27,India,Oil,subnational,Sikkim,coverage,current,0.999299645,0.999299645
+India (stratified),U27,India,Oil,subnational,Sikkim,g_per_capita,current,36.91860199,36.91860199
+India (stratified),X27,India,Rice,subnational,Sikkim,coverage,current,0.999299645,0.999299645
+India (stratified),Y27,India,Rice,subnational,Sikkim,g_per_capita,current,264.8687134,264.8687134
+India (stratified),AF27,India,Salt,subnational,Sikkim,coverage,current,1.0,1
+India (stratified),AG27,India,Salt,subnational,Sikkim,g_per_capita,current,6.784402847,6.784402847
+India (stratified),G28,India,,subnational,Tripura,inadequate_intake:va,current,0.996287551145066,0.996287551145066
+India (stratified),H28,India,,subnational,Tripura,inadequate_intake:iron,current,0.987,0.987
+India (stratified),I28,India,,subnational,Tripura,inadequate_intake:folate,current,0.4583,0.4583
+India (stratified),K28,India,,subnational,Tripura,mn_biomarker:va_deficiency,current,0.206,0.206
+India (stratified),L28,India,,subnational,Tripura,mn_biomarker:iron_deficiency,current,0.16,0.16
+India (stratified),M28,India,,subnational,Tripura,mn_biomarker:folate_deficiency,current,0.01,0.01
+India (stratified),P28,India,Wheat,subnational,Tripura,coverage,current,0.610969543,0.610969543
+India (stratified),Q28,India,Wheat,subnational,Tripura,g_per_capita,current,8.621789932,8.621789932
+India (stratified),T28,India,Oil,subnational,Tripura,coverage,current,0.999969602,0.999969602
+India (stratified),U28,India,Oil,subnational,Tripura,g_per_capita,current,29.80799294,29.80799294
+India (stratified),X28,India,Rice,subnational,Tripura,coverage,current,0.999969602,0.999969602
+India (stratified),Y28,India,Rice,subnational,Tripura,g_per_capita,current,313.0452576,313.0452576
+India (stratified),AF28,India,Salt,subnational,Tripura,coverage,current,0.999976397,0.999976397
+India (stratified),AG28,India,Salt,subnational,Tripura,g_per_capita,current,7.330740929,7.330740929
+India (stratified),G29,India,,subnational,Goa,inadequate_intake:va,current,0.999999999997486,0.999999999997486
+India (stratified),H29,India,,subnational,Goa,inadequate_intake:iron,current,0.6319,0.6319
+India (stratified),I29,India,,subnational,Goa,inadequate_intake:folate,current,0.0464,0.0464
+India (stratified),K29,India,,subnational,Goa,mn_biomarker:va_deficiency,current,0.024,0.024
+India (stratified),L29,India,,subnational,Goa,mn_biomarker:iron_deficiency,current,0.119,0.119
+India (stratified),M29,India,,subnational,Goa,mn_biomarker:folate_deficiency,current,0.166,0.166
+India (stratified),P29,India,Wheat,subnational,Goa,coverage,current,0.988815725,0.988815725
+India (stratified),Q29,India,Wheat,subnational,Goa,g_per_capita,current,50.70539474,50.70539474
+India (stratified),T29,India,Oil,subnational,Goa,coverage,current,0.99765569,0.99765569
+India (stratified),U29,India,Oil,subnational,Goa,g_per_capita,current,28.40934563,28.40934563
+India (stratified),X29,India,Rice,subnational,Goa,coverage,current,0.99765569,0.99765569
+India (stratified),Y29,India,Rice,subnational,Goa,g_per_capita,current,194.9385681,194.9385681
+India (stratified),AF29,India,Salt,subnational,Goa,coverage,current,1.0,1
+India (stratified),AG29,India,Salt,subnational,Goa,g_per_capita,current,7.159842491,7.159842491
+India (stratified),G30,India,,subnational,Gujarat,inadequate_intake:va,current,0.998401824640638,0.998401824640638
+India (stratified),H30,India,,subnational,Gujarat,inadequate_intake:iron,current,0.8629,0.8629
+India (stratified),I30,India,,subnational,Gujarat,inadequate_intake:folate,current,0.2724,0.2724
+India (stratified),K30,India,,subnational,Gujarat,mn_biomarker:va_deficiency,current,0.146,0.146
+India (stratified),L30,India,,subnational,Gujarat,mn_biomarker:iron_deficiency,current,0.557,0.557
+India (stratified),M30,India,,subnational,Gujarat,mn_biomarker:folate_deficiency,current,0.394,0.394
+India (stratified),P30,India,Wheat,subnational,Gujarat,coverage,current,0.988551795,0.988551795
+India (stratified),Q30,India,Wheat,subnational,Gujarat,g_per_capita,current,140.7092743,140.7092743
+India (stratified),T30,India,Oil,subnational,Gujarat,coverage,current,0.9878878,0.9878878
+India (stratified),U30,India,Oil,subnational,Gujarat,g_per_capita,current,39.36196136,39.36196136
+India (stratified),X30,India,Rice,subnational,Gujarat,coverage,current,0.9878878,0.9878878
+India (stratified),Y30,India,Rice,subnational,Gujarat,g_per_capita,current,63.12047577,63.12047577
+India (stratified),AF30,India,Salt,subnational,Gujarat,coverage,current,0.999180317,0.999180317
+India (stratified),AG30,India,Salt,subnational,Gujarat,g_per_capita,current,6.137604237,6.137604237
+India (stratified),G31,India,,subnational,Maharashtra,inadequate_intake:va,current,0.991230539900499,0.991230539900499
+India (stratified),H31,India,,subnational,Maharashtra,inadequate_intake:iron,current,0.9172,0.9172
+India (stratified),I31,India,,subnational,Maharashtra,inadequate_intake:folate,current,0.3509,0.3509
+India (stratified),K31,India,,subnational,Maharashtra,mn_biomarker:va_deficiency,current,0.094,0.094
+India (stratified),L31,India,,subnational,Maharashtra,mn_biomarker:iron_deficiency,current,0.49,0.49
+India (stratified),M31,India,,subnational,Maharashtra,mn_biomarker:folate_deficiency,current,0.422,0.422
+India (stratified),P31,India,Wheat,subnational,Maharashtra,coverage,current,0.992429495,0.992429495
+India (stratified),Q31,India,Wheat,subnational,Maharashtra,g_per_capita,current,123.9866486,123.9866486
+India (stratified),T31,India,Oil,subnational,Maharashtra,coverage,current,0.995232582,0.995232582
+India (stratified),U31,India,Oil,subnational,Maharashtra,g_per_capita,current,31.66501617,31.66501617
+India (stratified),X31,India,Rice,subnational,Maharashtra,coverage,current,0.995232582,0.995232582
+India (stratified),Y31,India,Rice,subnational,Maharashtra,g_per_capita,current,87.64247131,87.64247131
+India (stratified),AF31,India,Salt,subnational,Maharashtra,coverage,current,0.999726415,0.999726415
+India (stratified),AG31,India,Salt,subnational,Maharashtra,g_per_capita,current,5.956520557,5.956520557
+India (stratified),G32,India,,subnational,Andhra Pradesh,inadequate_intake:va,current,0.9872019936439,0.9872019936439
+India (stratified),H32,India,,subnational,Andhra Pradesh,inadequate_intake:iron,current,0.9817,0.9817
+India (stratified),I32,India,,subnational,Andhra Pradesh,inadequate_intake:folate,current,0.3905,0.3905
+India (stratified),K32,India,,subnational,Andhra Pradesh,mn_biomarker:va_deficiency,current,0.208,0.208
+India (stratified),L32,India,,subnational,Andhra Pradesh,mn_biomarker:iron_deficiency,current,0.13,0.13
+India (stratified),M32,India,,subnational,Andhra Pradesh,mn_biomarker:folate_deficiency,current,0.627,0.627
+India (stratified),P32,India,Wheat,subnational,Andhra Pradesh,coverage,current,0.715702534,0.715702534
+India (stratified),Q32,India,Wheat,subnational,Andhra Pradesh,g_per_capita,current,9.044802666,9.044802666
+India (stratified),T32,India,Oil,subnational,Andhra Pradesh,coverage,current,0.997631848,0.997631848
+India (stratified),U32,India,Oil,subnational,Andhra Pradesh,g_per_capita,current,31.09648895,31.09648895
+India (stratified),X32,India,Rice,subnational,Andhra Pradesh,coverage,current,0.997631848,0.997631848
+India (stratified),Y32,India,Rice,subnational,Andhra Pradesh,g_per_capita,current,245.7978821,245.7978821
+India (stratified),AF32,India,Salt,subnational,Andhra Pradesh,coverage,current,0.998959184,0.998959184
+India (stratified),AG32,India,Salt,subnational,Andhra Pradesh,g_per_capita,current,7.360467434,7.360467434
+India (stratified),G33,India,,subnational,Karnataka,inadequate_intake:va,current,0.992926333374146,0.992926333374146
+India (stratified),H33,India,,subnational,Karnataka,inadequate_intake:iron,current,0.9097,0.9097
+India (stratified),I33,India,,subnational,Karnataka,inadequate_intake:folate,current,0.3627,0.3627
+India (stratified),K33,India,,subnational,Karnataka,mn_biomarker:va_deficiency,current,0.096,0.096
+India (stratified),L33,India,,subnational,Karnataka,mn_biomarker:iron_deficiency,current,0.501,0.501
+India (stratified),M33,India,,subnational,Karnataka,mn_biomarker:folate_deficiency,current,0.36,0.36
+India (stratified),P33,India,Wheat,subnational,Karnataka,coverage,current,0.889131546,0.889131546
+India (stratified),Q33,India,Wheat,subnational,Karnataka,g_per_capita,current,24.03204155,24.03204155
+India (stratified),T33,India,Oil,subnational,Karnataka,coverage,current,0.998840928,0.998840928
+India (stratified),U33,India,Oil,subnational,Karnataka,g_per_capita,current,28.45929146,28.45929146
+India (stratified),X33,India,Rice,subnational,Karnataka,coverage,current,0.998840928,0.998840928
+India (stratified),Y33,India,Rice,subnational,Karnataka,g_per_capita,current,150.6826172,150.6826172
+India (stratified),AF33,India,Salt,subnational,Karnataka,coverage,current,0.999884963,0.999884963
+India (stratified),AG33,India,Salt,subnational,Karnataka,g_per_capita,current,6.850527287,6.850527287
+India (stratified),G34,India,,subnational,Kerala,inadequate_intake:va,current,0.989287874878742,0.989287874878742
+India (stratified),H34,India,,subnational,Kerala,inadequate_intake:iron,current,0.8741,0.8741
+India (stratified),I34,India,,subnational,Kerala,inadequate_intake:folate,current,0.4512,0.4512
+India (stratified),K34,India,,subnational,Kerala,mn_biomarker:va_deficiency,current,0.171,0.171
+India (stratified),L34,India,,subnational,Kerala,mn_biomarker:iron_deficiency,current,0.352,0.352
+India (stratified),M34,India,,subnational,Kerala,mn_biomarker:folate_deficiency,current,0.184,0.184
+India (stratified),P34,India,Wheat,subnational,Kerala,coverage,current,0.932395399,0.932395399
+India (stratified),Q34,India,Wheat,subnational,Kerala,g_per_capita,current,19.32298851,19.32298851
+India (stratified),T34,India,Oil,subnational,Kerala,coverage,current,0.995578468,0.995578468
+India (stratified),U34,India,Oil,subnational,Kerala,g_per_capita,current,21.45384598,21.45384598
+India (stratified),X34,India,Rice,subnational,Kerala,coverage,current,0.995578468,0.995578468
+India (stratified),Y34,India,Rice,subnational,Kerala,g_per_capita,current,178.1475372,178.1475372
+India (stratified),AF34,India,Salt,subnational,Kerala,coverage,current,0.999093115,0.999093115
+India (stratified),AG34,India,Salt,subnational,Kerala,g_per_capita,current,6.317211628,6.317211628
+India (stratified),G35,India,,subnational,Tamil Nadu,inadequate_intake:va,current,0.995749965182734,0.995749965182734
+India (stratified),H35,India,,subnational,Tamil Nadu,inadequate_intake:iron,current,0.9713,0.9713
+India (stratified),I35,India,,subnational,Tamil Nadu,inadequate_intake:folate,current,0.4493,0.4493
+India (stratified),K35,India,,subnational,Tamil Nadu,mn_biomarker:va_deficiency,current,0.131,0.131
+India (stratified),L35,India,,subnational,Tamil Nadu,mn_biomarker:iron_deficiency,current,0.417,0.417
+India (stratified),M35,India,,subnational,Tamil Nadu,mn_biomarker:folate_deficiency,current,0.239,0.239
+India (stratified),P35,India,Wheat,subnational,Tamil Nadu,coverage,current,0.790216386,0.790216386
+India (stratified),Q35,India,Wheat,subnational,Tamil Nadu,g_per_capita,current,11.8042469,11.8042469
+India (stratified),T35,India,Oil,subnational,Tamil Nadu,coverage,current,0.996810615,0.996810615
+India (stratified),U35,India,Oil,subnational,Tamil Nadu,g_per_capita,current,27.57565498,27.57565498
+India (stratified),X35,India,Rice,subnational,Tamil Nadu,coverage,current,0.996810615,0.996810615
+India (stratified),Y35,India,Rice,subnational,Tamil Nadu,g_per_capita,current,208.9627228,208.9627228
+India (stratified),AF35,India,Salt,subnational,Tamil Nadu,coverage,current,0.999100566,0.999100566
+India (stratified),AG35,India,Salt,subnational,Tamil Nadu,g_per_capita,current,6.58727026,6.58727026
+India (stratified),H36,India,,subnational,Telangana,inadequate_intake:iron,current,0.9815,0.9815
+India (stratified),I36,India,,subnational,Telangana,inadequate_intake:folate,current,0.4605,0.4605
+India (stratified),K36,India,,subnational,Telangana,mn_biomarker:va_deficiency,current,0.265,0.265
+India (stratified),L36,India,,subnational,Telangana,mn_biomarker:iron_deficiency,current,0.334,0.334
+India (stratified),M36,India,,subnational,Telangana,mn_biomarker:folate_deficiency,current,0.468,0.468
+India (stratified),P36,India,Wheat,subnational,Telangana,coverage,current,0.854629874,0.854629874
+India (stratified),Q36,India,Wheat,subnational,Telangana,g_per_capita,current,15.28592968,15.28592968
+India (stratified),T36,India,Oil,subnational,Telangana,coverage,current,0.999034703,0.999034703
+India (stratified),U36,India,Oil,subnational,Telangana,g_per_capita,current,33.20789719,33.20789719
+India (stratified),X36,India,Rice,subnational,Telangana,coverage,current,0.999034703,0.999034703
+India (stratified),Y36,India,Rice,subnational,Telangana,g_per_capita,current,274.419281,274.419281
+India (stratified),AF36,India,Salt,subnational,Telangana,coverage,current,1.0,1
+India (stratified),AG36,India,Salt,subnational,Telangana,g_per_capita,current,7.44695282,7.44695282
+Kenya (stratified),K7,Kenya,,residence,Rural,mn_biomarker:va_deficiency,current,0.018,0.018
+Kenya (stratified),L7,Kenya,,residence,Rural,mn_biomarker:iron_deficiency,current,0.214,0.214
+Kenya (stratified),M7,Kenya,,residence,Rural,mn_biomarker:folate_insufficiency,current,0.251,0.251
+Kenya (stratified),K8,Kenya,,residence,Urban,mn_biomarker:va_deficiency,current,0.004,0.004
+Kenya (stratified),L8,Kenya,,residence,Urban,mn_biomarker:iron_deficiency,current,0.212,0.212
+Kenya (stratified),M8,Kenya,,residence,Urban,mn_biomarker:folate_insufficiency,current,0.406,0.406
+Nigeria (stratified),G7,Nigeria,,zone,North Central,inadequate_intake:va,current,0.282,0.282
+Nigeria (stratified),H7,Nigeria,,zone,North Central,inadequate_intake:iron,current,0.589,0.589
+Nigeria (stratified),I7,Nigeria,,zone,North Central,inadequate_intake:folate,current,0.971,0.971
+Nigeria (stratified),K7,Nigeria,,zone,North Central,mn_biomarker:va_deficiency,current,0.159,0.159
+Nigeria (stratified),L7,Nigeria,,zone,North Central,mn_biomarker:iron_deficiency,current,0.092,0.092
+Nigeria (stratified),M7,Nigeria,,zone,North Central,mn_biomarker:folate_insufficiency,current,0.586,0.586
+Nigeria (stratified),N7,Nigeria,,zone,North Central,mn_biomarker:zinc_deficiency,current,0.128,0.128
+Nigeria (stratified),P7,Nigeria,Wheat,zone,North Central,coverage,current,0.127,0.127
+Nigeria (stratified),Q7,Nigeria,Wheat,zone,North Central,g_per_capita,current,29.0,29
+Nigeria (stratified),T7,Nigeria,Oil,zone,North Central,coverage,current,0.782,0.782
+Nigeria (stratified),U7,Nigeria,Oil,zone,North Central,g_per_capita,current,22.5,22.5
+Nigeria (stratified),X7,Nigeria,Rice,zone,North Central,coverage,current,0.579,0.579
+Nigeria (stratified),Y7,Nigeria,Rice,zone,North Central,g_per_capita,current,70.0,70
+Nigeria (stratified),AB7,Nigeria,Maize,zone,North Central,coverage,current,0.844,0.844
+Nigeria (stratified),AC7,Nigeria,Maize,zone,North Central,g_per_capita,current,53.7,53.7
+Nigeria (stratified),AF7,Nigeria,Salt,zone,North Central,coverage,current,0.994,0.994
+Nigeria (stratified),AG7,Nigeria,Salt,zone,North Central,g_per_capita,current,3.5,3.5
+Nigeria (stratified),AJ7,Nigeria,Bouillon,zone,North Central,coverage,current,0.996,0.996
+Nigeria (stratified),AK7,Nigeria,Bouillon,zone,North Central,g_per_capita,current,4.8,4.8
+Nigeria (stratified),G8,Nigeria,,zone,North East,inadequate_intake:va,current,0.406,0.406
+Nigeria (stratified),H8,Nigeria,,zone,North East,inadequate_intake:iron,current,0.427,0.427
+Nigeria (stratified),I8,Nigeria,,zone,North East,inadequate_intake:folate,current,0.994,0.994
+Nigeria (stratified),K8,Nigeria,,zone,North East,mn_biomarker:va_deficiency,current,0.329,0.329
+Nigeria (stratified),L8,Nigeria,,zone,North East,mn_biomarker:iron_deficiency,current,0.161,0.161
+Nigeria (stratified),M8,Nigeria,,zone,North East,mn_biomarker:folate_insufficiency,current,0.735,0.735
+Nigeria (stratified),N8,Nigeria,,zone,North East,mn_biomarker:zinc_deficiency,current,0.148,0.148
+Nigeria (stratified),P8,Nigeria,Wheat,zone,North East,coverage,current,0.443,0.443
+Nigeria (stratified),Q8,Nigeria,Wheat,zone,North East,g_per_capita,current,28.9,28.9
+Nigeria (stratified),T8,Nigeria,Oil,zone,North East,coverage,current,0.87,0.87
+Nigeria (stratified),U8,Nigeria,Oil,zone,North East,g_per_capita,current,32.7,32.7
+Nigeria (stratified),X8,Nigeria,Rice,zone,North East,coverage,current,0.496,0.496
+Nigeria (stratified),Y8,Nigeria,Rice,zone,North East,g_per_capita,current,48.7,48.7
+Nigeria (stratified),AB8,Nigeria,Maize,zone,North East,coverage,current,0.812,0.812
+Nigeria (stratified),AC8,Nigeria,Maize,zone,North East,g_per_capita,current,81.8,81.8
+Nigeria (stratified),AF8,Nigeria,Salt,zone,North East,coverage,current,0.99,0.99
+Nigeria (stratified),AG8,Nigeria,Salt,zone,North East,g_per_capita,current,3.3,3.3
+Nigeria (stratified),AJ8,Nigeria,Bouillon,zone,North East,coverage,current,0.959,0.959
+Nigeria (stratified),AK8,Nigeria,Bouillon,zone,North East,g_per_capita,current,8.5,8.5
+Nigeria (stratified),G9,Nigeria,,zone,North West,inadequate_intake:va,current,0.483,0.483
+Nigeria (stratified),H9,Nigeria,,zone,North West,inadequate_intake:iron,current,0.307,0.307
+Nigeria (stratified),I9,Nigeria,,zone,North West,inadequate_intake:folate,current,0.984,0.984
+Nigeria (stratified),K9,Nigeria,,zone,North West,mn_biomarker:va_deficiency,current,0.508,0.508
+Nigeria (stratified),L9,Nigeria,,zone,North West,mn_biomarker:iron_deficiency,current,0.099,0.099
+Nigeria (stratified),M9,Nigeria,,zone,North West,mn_biomarker:folate_insufficiency,current,0.522,0.522
+Nigeria (stratified),N9,Nigeria,,zone,North West,mn_biomarker:zinc_deficiency,current,0.354,0.354
+Nigeria (stratified),P9,Nigeria,Wheat,zone,North West,coverage,current,0.405,0.405
+Nigeria (stratified),Q9,Nigeria,Wheat,zone,North West,g_per_capita,current,35.8,35.8
+Nigeria (stratified),T9,Nigeria,Oil,zone,North West,coverage,current,0.935,0.935
+Nigeria (stratified),U9,Nigeria,Oil,zone,North West,g_per_capita,current,41.2,41.2
+Nigeria (stratified),X9,Nigeria,Rice,zone,North West,coverage,current,0.479,0.479
+Nigeria (stratified),Y9,Nigeria,Rice,zone,North West,g_per_capita,current,58.4,58.4
+Nigeria (stratified),AB9,Nigeria,Maize,zone,North West,coverage,current,0.848,0.848
+Nigeria (stratified),AC9,Nigeria,Maize,zone,North West,g_per_capita,current,76.1,76.1
+Nigeria (stratified),AF9,Nigeria,Salt,zone,North West,coverage,current,0.99,0.99
+Nigeria (stratified),AG9,Nigeria,Salt,zone,North West,g_per_capita,current,3.7,3.7
+Nigeria (stratified),AJ9,Nigeria,Bouillon,zone,North West,coverage,current,0.981,0.981
+Nigeria (stratified),AK9,Nigeria,Bouillon,zone,North West,g_per_capita,current,9.1,9.1
+Nigeria (stratified),G10,Nigeria,,zone,South East,inadequate_intake:va,current,0.013,0.013
+Nigeria (stratified),H10,Nigeria,,zone,South East,inadequate_intake:iron,current,0.463,0.463
+Nigeria (stratified),I10,Nigeria,,zone,South East,inadequate_intake:folate,current,0.905,0.905
+Nigeria (stratified),K10,Nigeria,,zone,South East,mn_biomarker:va_deficiency,current,0.072,0.072
+Nigeria (stratified),L10,Nigeria,,zone,South East,mn_biomarker:iron_deficiency,current,0.103,0.103
+Nigeria (stratified),M10,Nigeria,,zone,South East,mn_biomarker:folate_insufficiency,current,0.206,0.206
+Nigeria (stratified),N10,Nigeria,,zone,South East,mn_biomarker:zinc_deficiency,current,0.046,0.046
+Nigeria (stratified),P10,Nigeria,Wheat,zone,South East,coverage,current,0.099,0.099
+Nigeria (stratified),Q10,Nigeria,Wheat,zone,South East,g_per_capita,current,48.2,48.2
+Nigeria (stratified),T10,Nigeria,Oil,zone,South East,coverage,current,0.541,0.541
+Nigeria (stratified),U10,Nigeria,Oil,zone,South East,g_per_capita,current,17.6,17.6
+Nigeria (stratified),X10,Nigeria,Rice,zone,South East,coverage,current,0.509,0.509
+Nigeria (stratified),Y10,Nigeria,Rice,zone,South East,g_per_capita,current,64.8,64.8
+Nigeria (stratified),AB10,Nigeria,Maize,zone,South East,coverage,current,0.177,0.177
+Nigeria (stratified),AC10,Nigeria,Maize,zone,South East,g_per_capita,current,2.5,2.5
+Nigeria (stratified),AF10,Nigeria,Salt,zone,South East,coverage,current,0.999,0.999
+Nigeria (stratified),AG10,Nigeria,Salt,zone,South East,g_per_capita,current,5.4,5.4
+Nigeria (stratified),AJ10,Nigeria,Bouillon,zone,South East,coverage,current,0.968,0.968
+Nigeria (stratified),AK10,Nigeria,Bouillon,zone,South East,g_per_capita,current,3.9,3.9
+Nigeria (stratified),G11,Nigeria,,zone,South South,inadequate_intake:va,current,0.038,0.038
+Nigeria (stratified),H11,Nigeria,,zone,South South,inadequate_intake:iron,current,0.547,0.547
+Nigeria (stratified),I11,Nigeria,,zone,South South,inadequate_intake:folate,current,0.925,0.925
+Nigeria (stratified),K11,Nigeria,,zone,South South,mn_biomarker:va_deficiency,current,0.196,0.196
+Nigeria (stratified),L11,Nigeria,,zone,South South,mn_biomarker:iron_deficiency,current,0.125,0.125
+Nigeria (stratified),M11,Nigeria,,zone,South South,mn_biomarker:folate_insufficiency,current,0.205,0.205
+Nigeria (stratified),N11,Nigeria,,zone,South South,mn_biomarker:zinc_deficiency,current,0.119,0.119
+Nigeria (stratified),P11,Nigeria,Wheat,zone,South South,coverage,current,0.092,0.092
+Nigeria (stratified),Q11,Nigeria,Wheat,zone,South South,g_per_capita,current,43.0,43
+Nigeria (stratified),T11,Nigeria,Oil,zone,South South,coverage,current,0.459,0.459
+Nigeria (stratified),U11,Nigeria,Oil,zone,South South,g_per_capita,current,14.2,14.2
+Nigeria (stratified),X11,Nigeria,Rice,zone,South South,coverage,current,0.512,0.512
+Nigeria (stratified),Y11,Nigeria,Rice,zone,South South,g_per_capita,current,59.8,59.8
+Nigeria (stratified),AB11,Nigeria,Maize,zone,South South,coverage,current,0.07,0.07
+Nigeria (stratified),AC11,Nigeria,Maize,zone,South South,g_per_capita,current,0.4,0.4
+Nigeria (stratified),AF11,Nigeria,Salt,zone,South South,coverage,current,1.0,1
+Nigeria (stratified),AG11,Nigeria,Salt,zone,South South,g_per_capita,current,4.8,4.8
+Nigeria (stratified),AJ11,Nigeria,Bouillon,zone,South South,coverage,current,0.998,0.998
+Nigeria (stratified),AK11,Nigeria,Bouillon,zone,South South,g_per_capita,current,4.8,4.8
+Nigeria (stratified),G12,Nigeria,,zone,South West,inadequate_intake:va,current,0.067,0.067
+Nigeria (stratified),H12,Nigeria,,zone,South West,inadequate_intake:iron,current,0.531,0.531
+Nigeria (stratified),I12,Nigeria,,zone,South West,inadequate_intake:folate,current,0.888,0.888
+Nigeria (stratified),K12,Nigeria,,zone,South West,mn_biomarker:va_deficiency,current,0.198,0.198
+Nigeria (stratified),L12,Nigeria,,zone,South West,mn_biomarker:iron_deficiency,current,0.053,0.053
+Nigeria (stratified),M12,Nigeria,,zone,South West,mn_biomarker:folate_insufficiency,current,0.12,0.12
+Nigeria (stratified),N12,Nigeria,,zone,South West,mn_biomarker:zinc_deficiency,current,0.124,0.124
+Nigeria (stratified),P12,Nigeria,Wheat,zone,South West,coverage,current,0.287,0.287
+Nigeria (stratified),Q12,Nigeria,Wheat,zone,South West,g_per_capita,current,55.6,55.6
+Nigeria (stratified),T12,Nigeria,Oil,zone,South West,coverage,current,0.529,0.529
+Nigeria (stratified),U12,Nigeria,Oil,zone,South West,g_per_capita,current,14.7,14.7
+Nigeria (stratified),X12,Nigeria,Rice,zone,South West,coverage,current,0.663,0.663
+Nigeria (stratified),Y12,Nigeria,Rice,zone,South West,g_per_capita,current,73.0,73
+Nigeria (stratified),AB12,Nigeria,Maize,zone,South West,coverage,current,0.208,0.208
+Nigeria (stratified),AC12,Nigeria,Maize,zone,South West,g_per_capita,current,2.4,2.4
+Nigeria (stratified),AF12,Nigeria,Salt,zone,South West,coverage,current,0.992,0.992
+Nigeria (stratified),AG12,Nigeria,Salt,zone,South West,g_per_capita,current,3.6,3.6
+Nigeria (stratified),AJ12,Nigeria,Bouillon,zone,South West,coverage,current,0.982,0.982
+Nigeria (stratified),AK12,Nigeria,Bouillon,zone,South West,g_per_capita,current,2.7,2.7
+Nigeria (stratified),G14,Nigeria,,wealth_quintile,Lowest,inadequate_intake:va,current,0.421,0.421
+Nigeria (stratified),H14,Nigeria,,wealth_quintile,Lowest,inadequate_intake:iron,current,0.359,0.359
+Nigeria (stratified),I14,Nigeria,,wealth_quintile,Lowest,inadequate_intake:folate,current,0.929,0.929
+Nigeria (stratified),P14,Nigeria,Wheat,wealth_quintile,Lowest,coverage,current,0.191,0.191
+Nigeria (stratified),Q14,Nigeria,Wheat,wealth_quintile,Lowest,g_per_capita,current,16.1,16.1
+Nigeria (stratified),T14,Nigeria,Oil,wealth_quintile,Lowest,coverage,current,0.808,0.808
+Nigeria (stratified),U14,Nigeria,Oil,wealth_quintile,Lowest,g_per_capita,current,31.6,31.6
+Nigeria (stratified),X14,Nigeria,Rice,wealth_quintile,Lowest,coverage,current,0.336,0.336
+Nigeria (stratified),Y14,Nigeria,Rice,wealth_quintile,Lowest,g_per_capita,current,34.1,34.1
+Nigeria (stratified),AB14,Nigeria,Maize,wealth_quintile,Lowest,coverage,current,0.757,0.757
+Nigeria (stratified),AC14,Nigeria,Maize,wealth_quintile,Lowest,g_per_capita,current,69.6,69.6
+Nigeria (stratified),AF14,Nigeria,Salt,wealth_quintile,Lowest,coverage,current,0.995,0.995
+Nigeria (stratified),AG14,Nigeria,Salt,wealth_quintile,Lowest,g_per_capita,current,4.2,4.2
+Nigeria (stratified),AJ14,Nigeria,Bouillon,wealth_quintile,Lowest,coverage,current,0.963,0.963
+Nigeria (stratified),AK14,Nigeria,Bouillon,wealth_quintile,Lowest,g_per_capita,current,8.4,8.4
+Nigeria (stratified),G15,Nigeria,,wealth_quintile,Second,inadequate_intake:va,current,0.403,0.403
+Nigeria (stratified),H15,Nigeria,,wealth_quintile,Second,inadequate_intake:iron,current,0.333,0.333
+Nigeria (stratified),I15,Nigeria,,wealth_quintile,Second,inadequate_intake:folate,current,0.98,0.98
+Nigeria (stratified),P15,Nigeria,Wheat,wealth_quintile,Second,coverage,current,0.253,0.253
+Nigeria (stratified),Q15,Nigeria,Wheat,wealth_quintile,Second,g_per_capita,current,23.4,23.4
+Nigeria (stratified),T15,Nigeria,Oil,wealth_quintile,Second,coverage,current,0.787,0.787
+Nigeria (stratified),U15,Nigeria,Oil,wealth_quintile,Second,g_per_capita,current,32.1,32.1
+Nigeria (stratified),X15,Nigeria,Rice,wealth_quintile,Second,coverage,current,0.448,0.448
+Nigeria (stratified),Y15,Nigeria,Rice,wealth_quintile,Second,g_per_capita,current,52.4,52.4
+Nigeria (stratified),AB15,Nigeria,Maize,wealth_quintile,Second,coverage,current,0.674,0.674
+Nigeria (stratified),AC15,Nigeria,Maize,wealth_quintile,Second,g_per_capita,current,76.7,76.7
+Nigeria (stratified),AF15,Nigeria,Salt,wealth_quintile,Second,coverage,current,0.997,0.997
+Nigeria (stratified),AG15,Nigeria,Salt,wealth_quintile,Second,g_per_capita,current,4.0,4
+Nigeria (stratified),AJ15,Nigeria,Bouillon,wealth_quintile,Second,coverage,current,0.981,0.981
+Nigeria (stratified),AK15,Nigeria,Bouillon,wealth_quintile,Second,g_per_capita,current,8.0,8
+Nigeria (stratified),G16,Nigeria,,wealth_quintile,Middle,inadequate_intake:va,current,0.197,0.197
+Nigeria (stratified),H16,Nigeria,,wealth_quintile,Middle,inadequate_intake:iron,current,0.5021,0.5021
+Nigeria (stratified),I16,Nigeria,,wealth_quintile,Middle,inadequate_intake:folate,current,0.944,0.944
+Nigeria (stratified),P16,Nigeria,Wheat,wealth_quintile,Middle,coverage,current,0.305,0.305
+Nigeria (stratified),Q16,Nigeria,Wheat,wealth_quintile,Middle,g_per_capita,current,38.2,38.2
+Nigeria (stratified),T16,Nigeria,Oil,wealth_quintile,Middle,coverage,current,0.68,0.68
+Nigeria (stratified),U16,Nigeria,Oil,wealth_quintile,Middle,g_per_capita,current,24.9,24.9
+Nigeria (stratified),X16,Nigeria,Rice,wealth_quintile,Middle,coverage,current,0.546,0.546
+Nigeria (stratified),Y16,Nigeria,Rice,wealth_quintile,Middle,g_per_capita,current,60.7,60.7
+Nigeria (stratified),AB16,Nigeria,Maize,wealth_quintile,Middle,coverage,current,0.525,0.525
+Nigeria (stratified),AC16,Nigeria,Maize,wealth_quintile,Middle,g_per_capita,current,43.6,43.6
+Nigeria (stratified),AF16,Nigeria,Salt,wealth_quintile,Middle,coverage,current,0.995,0.995
+Nigeria (stratified),AG16,Nigeria,Salt,wealth_quintile,Middle,g_per_capita,current,3.8,3.8
+Nigeria (stratified),AJ16,Nigeria,Bouillon,wealth_quintile,Middle,coverage,current,0.992,0.992
+Nigeria (stratified),AK16,Nigeria,Bouillon,wealth_quintile,Middle,g_per_capita,current,5.9,5.9
+Nigeria (stratified),G17,Nigeria,,wealth_quintile,Fourth,inadequate_intake:va,current,0.19,0.19
+Nigeria (stratified),H17,Nigeria,,wealth_quintile,Fourth,inadequate_intake:iron,current,0.528,0.528
+Nigeria (stratified),I17,Nigeria,,wealth_quintile,Fourth,inadequate_intake:folate,current,0.967,0.967
+Nigeria (stratified),P17,Nigeria,Wheat,wealth_quintile,Fourth,coverage,current,0.333,0.333
+Nigeria (stratified),Q17,Nigeria,Wheat,wealth_quintile,Fourth,g_per_capita,current,49.3,49.3
+Nigeria (stratified),T17,Nigeria,Oil,wealth_quintile,Fourth,coverage,current,0.708,0.708
+Nigeria (stratified),U17,Nigeria,Oil,wealth_quintile,Fourth,g_per_capita,current,23.2,23.2
+Nigeria (stratified),X17,Nigeria,Rice,wealth_quintile,Fourth,coverage,current,0.633,0.633
+Nigeria (stratified),Y17,Nigeria,Rice,wealth_quintile,Fourth,g_per_capita,current,73.7,73.7
+Nigeria (stratified),AB17,Nigeria,Maize,wealth_quintile,Fourth,coverage,current,0.496,0.496
+Nigeria (stratified),AC17,Nigeria,Maize,wealth_quintile,Fourth,g_per_capita,current,28.5,28.5
+Nigeria (stratified),AF17,Nigeria,Salt,wealth_quintile,Fourth,coverage,current,0.994,0.994
+Nigeria (stratified),AG17,Nigeria,Salt,wealth_quintile,Fourth,g_per_capita,current,3.7,3.7
+Nigeria (stratified),AJ17,Nigeria,Bouillon,wealth_quintile,Fourth,coverage,current,0.986,0.986
+Nigeria (stratified),AK17,Nigeria,Bouillon,wealth_quintile,Fourth,g_per_capita,current,4.9,4.9
+Nigeria (stratified),G18,Nigeria,,wealth_quintile,Highest,inadequate_intake:va,current,0.12,0.12
+Nigeria (stratified),H18,Nigeria,,wealth_quintile,Highest,inadequate_intake:iron,current,0.537,0.537
+Nigeria (stratified),I18,Nigeria,,wealth_quintile,Highest,inadequate_intake:folate,current,0.941,0.941
+Nigeria (stratified),P18,Nigeria,Wheat,wealth_quintile,Highest,coverage,current,0.353,0.353
+Nigeria (stratified),Q18,Nigeria,Wheat,wealth_quintile,Highest,g_per_capita,current,62.4,62.4
+Nigeria (stratified),T18,Nigeria,Oil,wealth_quintile,Highest,coverage,current,0.702,0.702
+Nigeria (stratified),U18,Nigeria,Oil,wealth_quintile,Highest,g_per_capita,current,23.5,23.5
+Nigeria (stratified),X18,Nigeria,Rice,wealth_quintile,Highest,coverage,current,0.676,0.676
+Nigeria (stratified),Y18,Nigeria,Rice,wealth_quintile,Highest,g_per_capita,current,79.5,79.5
+Nigeria (stratified),AB18,Nigeria,Maize,wealth_quintile,Highest,coverage,current,0.366,0.366
+Nigeria (stratified),AC18,Nigeria,Maize,wealth_quintile,Highest,g_per_capita,current,12.6,12.6
+Nigeria (stratified),AF18,Nigeria,Salt,wealth_quintile,Highest,coverage,current,0.985,0.985
+Nigeria (stratified),AG18,Nigeria,Salt,wealth_quintile,Highest,g_per_capita,current,3.8,3.8
+Nigeria (stratified),AJ18,Nigeria,Bouillon,wealth_quintile,Highest,coverage,current,0.986,0.986
+Nigeria (stratified),AK18,Nigeria,Bouillon,wealth_quintile,Highest,g_per_capita,current,4.6,4.6
+Bangladesh (stratified),M7,Bangladesh,,division,Dhaka,mn_biomarker:folate_insufficiency,current,0.125,0.125
+Bangladesh (stratified),M8,Bangladesh,,division,Chattogram,mn_biomarker:folate_insufficiency,current,0.152,0.152
+Bangladesh (stratified),M9,Bangladesh,,division,Rajshahi,mn_biomarker:folate_insufficiency,current,0.049,0.049
+Bangladesh (stratified),M10,Bangladesh,,division,Khulna,mn_biomarker:folate_insufficiency,current,0.029,0.029
+Bangladesh (stratified),M11,Bangladesh,,division,Barishal,mn_biomarker:folate_insufficiency,current,0.111,0.111
+Bangladesh (stratified),M12,Bangladesh,,division,Rangpur,mn_biomarker:folate_insufficiency,current,0.2,0.2
+Bangladesh (stratified),M13,Bangladesh,,division,Mymensingh,mn_biomarker:folate_insufficiency,current,0.12,0.12
+Bangladesh (stratified),M14,Bangladesh,,division,Sylhet,mn_biomarker:folate_insufficiency,current,0.091,0.091
+Bangladesh (stratified),L16,Bangladesh,,residence,Rural,mn_biomarker:iron_deficiency,current,0.116,0.116
+Bangladesh (stratified),L17,Bangladesh,,residence,Urban,mn_biomarker:iron_deficiency,current,0.19,0.19
+Pakistan (stratified),K7,Pakistan,,residence,Rural,mn_biomarker:va_deficiency,current,0.293,0.293
+Pakistan (stratified),L7,Pakistan,,residence,Rural,mn_biomarker:iron_deficiency,current,0.187,0.187
+Pakistan (stratified),L8,Pakistan,,residence,Urban,mn_biomarker:iron_deficiency,current,0.174,0.174
+Coverage Over Time,G8,Nigeria,Wheat,national,National,coverage,2031,0.28,0.28
+Coverage Over Time,H8,Nigeria,Wheat,national,National,consolidation,2031,1.0,1
+Coverage Over Time,I8,Nigeria,Wheat,national,National,compliance,2031,0.8,0.8
+Coverage Over Time,K8,Nigeria,Wheat,national,National,coverage,2035,0.28,0.28
+Coverage Over Time,L8,Nigeria,Wheat,national,National,consolidation,2035,1.0,1
+Coverage Over Time,M8,Nigeria,Wheat,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G9,Nigeria,Oil,national,National,coverage,2031,0.903,0.903
+Coverage Over Time,H9,Nigeria,Oil,national,National,consolidation,2031,0.5,0.5
+Coverage Over Time,I9,Nigeria,Oil,national,National,compliance,2031,0.8,0.8
+Coverage Over Time,K9,Nigeria,Oil,national,National,coverage,2035,0.903,0.903
+Coverage Over Time,L9,Nigeria,Oil,national,National,consolidation,2035,0.5,0.5
+Coverage Over Time,M9,Nigeria,Oil,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G10,Nigeria,Rice,national,National,coverage,2031,0.54,0.54
+Coverage Over Time,H10,Nigeria,Rice,national,National,consolidation,2031,0.7,0.7
+Coverage Over Time,I10,Nigeria,Rice,national,National,compliance,2031,0.5,0.5
+Coverage Over Time,K10,Nigeria,Rice,national,National,coverage,2035,0.54,0.54
+Coverage Over Time,L10,Nigeria,Rice,national,National,consolidation,2035,0.9,0.9
+Coverage Over Time,M10,Nigeria,Rice,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G11,Nigeria,Maize,national,National,coverage,2031,0.574,0.574
+Coverage Over Time,H11,Nigeria,Maize,national,National,consolidation,2031,0.05,0.05
+Coverage Over Time,I11,Nigeria,Maize,national,National,compliance,2031,,n/a
+Coverage Over Time,G12,Nigeria,Salt,national,National,coverage,2031,0.992,0.992
+Coverage Over Time,H12,Nigeria,Salt,national,National,consolidation,2031,0.9,0.9
+Coverage Over Time,I12,Nigeria,Salt,national,National,compliance,2031,0.92,0.92
+Coverage Over Time,K12,Nigeria,Salt,national,National,coverage,2035,0.992,0.992
+Coverage Over Time,L12,Nigeria,Salt,national,National,consolidation,2035,0.9,0.9
+Coverage Over Time,M12,Nigeria,Salt,national,National,compliance,2035,0.95,0.95
+Coverage Over Time,G13,Nigeria,Bouillon,national,National,coverage,2031,0.981,0.981
+Coverage Over Time,H13,Nigeria,Bouillon,national,National,consolidation,2031,0.7,0.7
+Coverage Over Time,I13,Nigeria,Bouillon,national,National,compliance,2031,0.7,0.7
+Coverage Over Time,K13,Nigeria,Bouillon,national,National,coverage,2035,0.981,0.981
+Coverage Over Time,L13,Nigeria,Bouillon,national,National,consolidation,2035,1.0,1
+Coverage Over Time,M13,Nigeria,Bouillon,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G14,Ethiopia,Wheat,national,National,coverage,2031,0.4,0.4
+Coverage Over Time,H14,Ethiopia,Wheat,national,National,consolidation,2031,0.75,0.75
+Coverage Over Time,I14,Ethiopia,Wheat,national,National,compliance,2031,0.8,0.8
+Coverage Over Time,K14,Ethiopia,Wheat,national,National,coverage,2035,0.4,0.4
+Coverage Over Time,L14,Ethiopia,Wheat,national,National,consolidation,2035,0.75,0.75
+Coverage Over Time,M14,Ethiopia,Wheat,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G15,Ethiopia,Oil,national,National,coverage,2031,0.9,0.9
+Coverage Over Time,H15,Ethiopia,Oil,national,National,consolidation,2031,1.0,1
+Coverage Over Time,I15,Ethiopia,Oil,national,National,compliance,2031,0.8,0.8
+Coverage Over Time,K15,Ethiopia,Oil,national,National,coverage,2035,0.9,0.9
+Coverage Over Time,L15,Ethiopia,Oil,national,National,consolidation,2035,1.0,1
+Coverage Over Time,M15,Ethiopia,Oil,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G18,Ethiopia,Salt,national,National,coverage,2031,0.98,0.98
+Coverage Over Time,H18,Ethiopia,Salt,national,National,consolidation,2031,0.95,0.95
+Coverage Over Time,I18,Ethiopia,Salt,national,National,compliance,2031,0.8,0.8
+Coverage Over Time,K18,Ethiopia,Salt,national,National,coverage,2035,0.98,0.98
+Coverage Over Time,L18,Ethiopia,Salt,national,National,consolidation,2035,0.95,0.95
+Coverage Over Time,M18,Ethiopia,Salt,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,E20,India,Wheat,national,National,compliance,current,0.5,0.5
+Coverage Over Time,G20,India,Wheat,national,National,coverage,2031,0.927,0.927
+Coverage Over Time,H20,India,Wheat,national,National,consolidation,2031,0.15,0.15
+Coverage Over Time,I20,India,Wheat,national,National,compliance,2031,0.5,0.5
+Coverage Over Time,K20,India,Wheat,national,National,coverage,2035,0.927,0.927
+Coverage Over Time,L20,India,Wheat,national,National,consolidation,2035,0.15,0.15
+Coverage Over Time,M20,India,Wheat,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G21,India,Oil,national,National,coverage,2031,0.999,0.999
+Coverage Over Time,H21,India,Oil,national,National,consolidation,2031,0.625,0.625
+Coverage Over Time,I21,India,Oil,national,National,compliance,2031,0.75,0.75
+Coverage Over Time,K21,India,Oil,national,National,coverage,2035,0.999,0.999
+Coverage Over Time,L21,India,Oil,national,National,consolidation,2035,0.625,0.625
+Coverage Over Time,M21,India,Oil,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G22,India,Rice,national,National,coverage,2031,0.988,0.988
+Coverage Over Time,H22,India,Rice,national,National,consolidation,2031,0.480645,0.480645
+Coverage Over Time,I22,India,Rice,national,National,compliance,2031,0.75,0.75
+Coverage Over Time,K22,India,Rice,national,National,coverage,2035,0.988,0.988
+Coverage Over Time,L22,India,Rice,national,National,consolidation,2035,0.528711,0.528711
+Coverage Over Time,M22,India,Rice,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,G24,India,Salt,national,National,coverage,2031,1.0,1
+Coverage Over Time,H24,India,Salt,national,National,consolidation,2031,0.196397128538535,0.196397128538535
+Coverage Over Time,I24,India,Salt,national,National,compliance,2031,0.5,0.5
+Coverage Over Time,K24,India,Salt,national,National,coverage,2035,1.0,1
+Coverage Over Time,L24,India,Salt,national,National,consolidation,2035,0.331843424082351,0.331843424082351
+Coverage Over Time,M24,India,Salt,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,I26,Kenya,Wheat,national,National,compliance,2031,0.85,0.85
+Coverage Over Time,M26,Kenya,Wheat,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,I27,Kenya,Oil,national,National,compliance,2031,0.85,0.85
+Coverage Over Time,M27,Kenya,Oil,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,I28,Kenya,Rice,national,National,compliance,2031,0.03,0.03
+Coverage Over Time,M28,Kenya,Rice,national,National,compliance,2035,0.05,0.05
+Coverage Over Time,I29,Kenya,Maize,national,National,compliance,2031,0.7,0.7
+Coverage Over Time,M29,Kenya,Maize,national,National,compliance,2035,0.7,0.7
+Coverage Over Time,I32,Bangladesh,Wheat,national,National,compliance,2031,0.02,0.02
+Coverage Over Time,M32,Bangladesh,Wheat,national,National,compliance,2035,0.1,0.1
+Coverage Over Time,I33,Bangladesh,Oil,national,National,compliance,2031,0.98,0.98
+Coverage Over Time,M33,Bangladesh,Oil,national,National,compliance,2035,0.98,0.98
+Coverage Over Time,I34,Bangladesh,Rice,national,National,compliance,2031,0.05,0.05
+Coverage Over Time,M34,Bangladesh,Rice,national,National,compliance,2035,0.1,0.1
+Coverage Over Time,G36,Bangladesh,Salt,national,National,coverage,2031,0.98,0.98
+Coverage Over Time,H36,Bangladesh,Salt,national,National,consolidation,2031,1.0,1
+Coverage Over Time,K36,Bangladesh,Salt,national,National,coverage,2035,0.98,0.98
+Coverage Over Time,L36,Bangladesh,Salt,national,National,consolidation,2035,1.0,1
+Coverage Over Time,I38,Indonesia,Wheat,national,National,compliance,2031,0.95,0.95
+Coverage Over Time,M38,Indonesia,Wheat,national,National,compliance,2035,0.95,0.95
+Coverage Over Time,I39,Indonesia,Oil,national,National,compliance,2031,0.85,0.85
+Coverage Over Time,M39,Indonesia,Oil,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,I40,Indonesia,Rice,national,National,compliance,2031,0.1,0.1
+Coverage Over Time,M40,Indonesia,Rice,national,National,compliance,2035,0.2,0.2
+Coverage Over Time,I44,Pakistan,Wheat,national,National,compliance,2031,0.02,0.02
+Coverage Over Time,M44,Pakistan,Wheat,national,National,compliance,2035,0.1,0.1
+Coverage Over Time,I45,Pakistan,Oil,national,National,compliance,2031,0.75,0.75
+Coverage Over Time,M45,Pakistan,Oil,national,National,compliance,2035,0.75,0.75
+Coverage Over Time,G48,Pakistan,Salt,national,National,coverage,2031,0.98,0.98
+Coverage Over Time,H48,Pakistan,Salt,national,National,consolidation,2031,0.25,0.25
+Coverage Over Time,K48,Pakistan,Salt,national,National,coverage,2035,0.98,0.98
+Coverage Over Time,L48,Pakistan,Salt,national,National,consolidation,2035,0.25,0.25
+Coverage Over Time,I50,Tanzania,Wheat,national,National,compliance,2031,0.85,0.85
+Coverage Over Time,M50,Tanzania,Wheat,national,National,compliance,2035,0.9,0.9
+Coverage Over Time,I51,Tanzania,Oil,national,National,compliance,2031,0.75,0.75
+Coverage Over Time,M51,Tanzania,Oil,national,National,compliance,2035,0.85,0.85
+Coverage Over Time,I53,Tanzania,Maize,national,National,compliance,2031,0.15,0.15
+Coverage Over Time,M53,Tanzania,Maize,national,National,compliance,2035,0.25,0.25
+Coverage Over Time,G54,Tanzania,Salt,national,National,coverage,2031,0.98,0.98
+Coverage Over Time,H54,Tanzania,Salt,national,National,consolidation,2031,0.75,0.75
+Coverage Over Time,K54,Tanzania,Salt,national,National,coverage,2035,0.98,0.98
+Coverage Over Time,L54,Tanzania,Salt,national,National,consolidation,2035,0.75,0.75

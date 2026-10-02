@@ -1,0 +1,12 @@
+decision_id,status,need,country,vehicle,fortificant,scenario,quintile,sex,data_point_name,source,transform,rationale,decided_by,date
+D001,active,intervention_concentration,Nigeria,Wheat,Iron,,,,,lit:f58ba17c,,Nigeria mandatory standard for iron in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder,,2026-10-01
+D002,active,intervention_concentration,Nigeria,Wheat,Folate,,,,,lit:0e0ab3ff,,Nigeria mandatory standard for folic acid in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder (1.69),,2026-10-01
+D003,active,u5_amount,Nigeria,Wheat,,,,Total,mean,lit:09d00f55,,NFCMS Table 148 U5 wheat intake replaces the value derived from rice; same per-capita basis as the WRA rows,,2026-10-01
+D004,active,u5_amount,Nigeria,Wheat,,,,Female,mean,lit:4ebcf9f8,,NFCMS Table 148 U5 wheat intake (girls) replaces the value derived from rice,,2026-10-01
+D005,active,u5_amount,Nigeria,Wheat,,,,Male,mean,lit:abec9d3d,,NFCMS Table 148 U5 wheat intake (boys) replaces the value derived from rice,,2026-10-01
+P001,proposed,baseline_any,Nigeria,Wheat,Folate,,,,,lit:5d79bd1d,,Nigeria wheat flour is not currently fortified with folic acid (Juhi); GF compliance is per vehicle so the GF default gives folate the iron coverage,,2026-10-01
+P002,proposed,baseline_any,Nigeria,Wheat,Iron,,,,,lit:8ab2783f,,NFCMS Table 146: 12.6% (any level of iron fortification). Check its denominator: all women or wheat consumers? Ours is a share of consumers,,2026-10-01
+P003,proposed,baseline_concentration,Nigeria,Wheat,Iron,,,,,lit:878cf880,,NFCMS Table 178 mean iron in fortified wheat samples; baseline is otherwise 0 mcg/g despite non-zero baseline coverage,,2026-10-01
+P004,proposed,baseline_effectiveness,Nigeria,Wheat,Iron,,,,,lit:a6cd48aa,,NFCMS Figure 28: 73% fortified at or above standard (vs M4N 63% used by GF),,2026-10-01
+P005,proposed,amount,Nigeria,Wheat,,,Lowest,,standard deviation,lit:5415905e,,"NFCMS Table 147 SD (IQR/1.35) for the poorest quintile. Fails the consumer-variance check if means are per capita, so the SDs look like they are among consumers",,2026-10-01
+P006,proposed,intervention_coverage,Nigeria,Wheat,Iron,,,,,lit:91cd553c,,Juhi: coverage = effectiveness = 100% of fortifiable; conflicts with the sqrt(0.85) split used for every other arm,,2026-10-01
