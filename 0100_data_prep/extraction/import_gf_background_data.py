@@ -17,7 +17,7 @@ Terminology (GF -> ours). See GF_DATA_MAPPING.md for the full explanation.
     GF "Coverage" (Cov)         -> "Vehicle consumption by WRA -- any"
     GF "g/cap"                  -> "Vehicle consumption by WRA -- amount" (mean)
                                    (x Coverage for vehicles where the NFCMS figure
-                                   is among consumers: rice, wheat)
+                                   is among consumers: Nigeria rice, per JG 8/31)
     GF "Consolidation" (2035)   -> 'Vehicle "fortifiability" ...'
     GF current Cons x Compl     -> baseline "any" coverage x "Baseline effective %"
     GF "Compliance" (2035)      -> "Intervention coverage % of fortifiable" x
@@ -83,15 +83,17 @@ GF_QUINTILES = {
 }
 QUINTILES = ["Lowest", "Second", "Middle", "Fourth", "Highest"]
 
-# The arms we model (must match 0050_config/location_fortificant_vehicles.csv), and how
-# to interpret GF's g/cap for each. "among_consumers": NFCMS reports intake among
-# consumers, so we multiply by coverage to get the population mean the model expects
-# (JG email 8/31 for rice). "per_capita": already a mean over all women (NFCMS bouillon
-# tables; Ethiopia salt with ~98% coverage).
+# The arms this script updates, and how to interpret GF's g/cap for each. Deliberately a
+# subset of 0050_config/location_fortificant_vehicles.csv: arms whose data are still being
+# extracted from other sources are left out so the script doesn't overwrite that work.
+# "among_consumers": intake among consumers, so we multiply by coverage to get the
+# population mean the model expects (Nigeria rice, per JG email 8/31).
+# "per_capita": already a mean over all women (NFCMS bouillon tables; Nigeria wheat,
+# judged more likely per capita on review of NFCMS; Ethiopia salt, ~98% coverage).
 ARMS = {
     ("Nigeria", "Rice"): {"fortificants": ["Iron", "Folate"], "gcap_basis": "among_consumers"},
     ("Nigeria", "Bouillon"): {"fortificants": ["Iron", "Folate"], "gcap_basis": "per_capita"},
-    ("Nigeria", "Wheat"): {"fortificants": ["Iron", "Folate"], "gcap_basis": "among_consumers"},
+    ("Nigeria", "Wheat"): {"fortificants": ["Iron", "Folate"], "gcap_basis": "per_capita"},
     ("Ethiopia", "Salt"): {"fortificants": ["Folate"], "gcap_basis": "per_capita"},
     # India rice consumption and baseline coverage come from HCES microdata
     # (0100_data_prep/hces), not from the workbook, so only the intervention rows apply.

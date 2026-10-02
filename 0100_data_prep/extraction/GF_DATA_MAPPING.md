@@ -9,11 +9,11 @@
 | GF term (Definitions tab) | Our data need | Conversion |
 |---|---|---|
 | Coverage (Cov): % using the vehicle | `Vehicle consumption by WRA -- any` | none; quintiles from the country's stratified tab, Total from the cover sheet |
-| g/cap | `Vehicle consumption by WRA -- amount` (mean) | Our mean is over **all** women, including non-consumers (the sim treats it as a zero-inflated normal). Rice and wheat g/cap are NFCMS figures **among consumers**, so the script multiplies them by coverage. Bouillon and Ethiopia salt are used as they are. |
+| g/cap | `Vehicle consumption by WRA -- amount` (mean) | Our mean is over **all** women, including non-consumers (the sim treats it as a zero-inflated normal). Nigeria rice is treated as **among consumers** and multiplied by coverage, as before (JG 8/31). Nigeria wheat, bouillon and Ethiopia salt are treated as **per capita** and used as they are. Set per arm by `gcap_basis` in `ARMS`. |
 | Consolidation (2035) | `Vehicle "fortifiability"` | none; the 2035 value. Our model uses fortifiability only for the intervention target. |
 | Compliance (2035) | `Intervention coverage % of fortifiable` and `Intervention effective % of fortified` | each = √compliance, rounded to 2 d.p. (the equal split agreed with KB on 9/9) |
 | Current Consolidation × Compliance | `Vehicle fortification at baseline -- any` × `Baseline effective % of fortified` | any = consolidation × √compliance; effectiveness = √compliance |
-| Effective coverage | output of `coverage_calculation/` | It is a cross-check, not an input. The new intervention values reproduce GF's 2035 effective coverage: wheat 0.16–0.30 vs GF 0.238; rice 0.26–0.51 vs 0.413; bouillon 0.82–0.84 vs 0.834; Ethiopia salt 0.788 vs 0.791. |
+| Effective coverage | output of `coverage_calculation/` | It is a cross-check, not an input. Our quintile values, weighted by each quintile's share of women aged 15–49, match GF's national effective coverage to within about 0.01. Nigeria wheat: 0.179 vs GF 0.176 (baseline) and 0.243 vs 0.238 (2035). 2035 for the others: Nigeria rice 0.402 vs 0.413, bouillon 0.831 vs 0.834, Ethiopia salt 0.788 vs 0.791. |
 
 Quintile labels: Poorest/Lowest → Lowest, Second/2nd → Second, Third/3rd → Middle,
 Fourth/4th → Fourth, Wealthiest → Highest.
@@ -48,11 +48,45 @@ India wheat the Reach and Coverage Over Time tabs disagree on compliance, 5% vs 
   figures are market-wide, while ours apply to non-PDS purchased rice and to the HCES
   baseline, so they don't map one-to-one. These need a decision.
 
-## Known issue in `prep_extracted.ipynb`
+## Latent issue in `prep_extracted.ipynb`
 
-With the real wheat wealth gradient (3 → 22 g/day), `check_totals_reasonable` fails at the
-U5 step of the Nigeria interpolation (males are 10.3% off; the tolerance is 10%). The check
-compares the U5 sex totals with the **unweighted** mean of the quintiles. The notebook
-builds those quintiles to match the total **weighted** by U5 wealth probabilities, so a steep
-gradient fails regardless of the U5 inputs. Raising `rtol` to 0.15, or weighting the mean,
-fixes it. With either change, the whole of data prep and every coverage calculation ran.
+`check_totals_reasonable` compares the U5 sex totals with the **unweighted** mean of the
+quintile values that the Nigeria interpolation builds. Those values are scaled to match the
+total **weighted** by U5 wealth probabilities, so a steep enough WRA wealth gradient fails the
+10% tolerance no matter what the U5 inputs are. Wheat treated as among consumers
+(3 → 22 g/day) failed it. Treated as per capita (16 → 62 g/day), it passes, and all of data
+prep and every coverage calculation runs on the unmodified notebooks. If it trips again, the
+fix is to weight that mean (or loosen `rtol`).
+
+## Open questions and planned improvements
+
+These are deferred on purpose: for now we only want the pipeline running on the new data.
+
+1. **What basis is NFCMS consumption on?** This is still open.
+   - **Rice: among consumers.** We kept this to match earlier work. It rests only on the
+     existing workbook note ("based on email from Jonathan Gorstein 8/31 we have assumed
+     the number reported is among consumers").
+   - **Wheat: per capita.** We chose this because a closer review of NFCMS (Juhi) suggests
+     its figures are over the whole population. Wheat consumers then average 84–177 g/day
+     by quintile.
+   - **Inconsistency:** the two vehicles come from parallel NFCMS tables, so this should be
+     resolved with JG/GF. If rice is also per capita, its means are about 2–3x larger, and its
+     IQR-based SDs need re-reading.
+2. **Store published numbers, convert in code.** The model only needs P(any consumption) and
+   the consumers' distribution, and the sim recovers the consumer mean as mean ÷ `any`. So
+   storing population means just makes a round trip, and our sources don't agree on a basis.
+   Plan: label each amount row's basis in the workbook (e.g. "mean among consumers" vs
+   "mean, all women") and let `prep_extracted` convert. The same applies to SDs.
+3. **Put baseline and intervention coverage on the same basis.**
+   - Baseline "any" coverage is a share of *consumers*, with consolidation already folded
+     in. Intervention coverage is a share of *fortifiable* product, and is multiplied by
+     fortifiability in code.
+   - Plan: store current fortifiability too, and compute baseline coverage from consolidation
+     × compliance in code, the same way as the intervention.
+4. **Arms beyond `ARMS`.** The main branch added India wheat, India salt, Ethiopia wheat and
+   Nigeria salt. They are left out of `ARMS` on purpose while their data are being extracted
+   from other sources. Their placeholder rows appear in the change log as "still
+   placeholder".
+5. **Extract everything from GF into a tidy table.** A separate step could write every GF
+   value (country × vehicle × stratum × metric × year) to a long CSV, with no judgment calls
+   in it. The workbook update would then read from that CSV.
