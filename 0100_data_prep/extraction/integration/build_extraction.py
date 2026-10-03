@@ -25,7 +25,9 @@ Outputs:
     ../Data Extraction Sheet (integrated).xlsx   recalculated with LibreOffice and verified
     changelog.csv    every planned row: old -> new, origin, reference, what it overrode
     review.csv       things a person should look at: GF/literature conflicts, literature
-                     values not used, proposed decisions and their effect, placeholders left
+                     values not used, proposed decisions and their effect, placeholders left;
+                     every row spelled out (arm, item, values, sources, decision text)
+    STATUS.md        the same, per arm, as a readable page, plus the decisions in effect
 
 Usage:
     python extract_gf.py && python extract_lit.py && python build_extraction.py
@@ -40,6 +42,7 @@ import numpy as np
 import openpyxl
 import pandas as pd
 
+from report import enrich_review, write_status
 from common import (
     ALL_SAME, ARMS_FILE, CV, CVF, DECISIONS_FILE, EXTRACTION_DIR, EXTRACTION_FILE, GF_LONG, HERE,
     LIT_LONG, NEEDS, QUINTILES, SCEN, VEH, Workbook, consumer_moments, mixture_sd, need_alias, norm,
@@ -49,6 +52,7 @@ from common import (
 DEFAULT_OUTPUT = EXTRACTION_DIR / "Data Extraction Sheet (integrated).xlsx"
 CHANGELOG = HERE / "changelog.csv"
 REVIEW = HERE / "review.csv"
+STATUS = HERE / "STATUS.md"
 COMPARISON = HERE / "comparison.csv"
 COMPARISON_XLSX = HERE / "comparison.xlsx"
 
@@ -266,6 +270,18 @@ def coverage_row(wb, sheet, row):
                   need="any", quintile=q)
 
 
+def likely_lit_rows(lit, d):
+    """Literature rows matching a decision's target, to suggest when its lit ID went missing."""
+    c = lit[lit.need == need_alias(d["need"])]
+    for col in ["country", "vehicle", "fortificant", "quintile", "sex", "data_point_name"]:
+        if not blank(d.get(col)):
+            c = c[c[col].fillna("").str.lower() == str(d[col]).lower()]
+    if c.empty:
+        return "none found"
+    return "; ".join(f"{r.lit_id} = {r.raw_value} {r.raw_units or ''} from {r.data_source} "
+                     f"('{r.source_sheet}' row {r.source_row})" for _, r in c.iterrows())
+
+
 def resolve_decision(wb, lit, d, gf_values):
     """What a decision would do: a list of effects, one per targeted row.
 
@@ -299,8 +315,9 @@ def resolve_decision(wb, lit, d, gf_values):
         elif source.startswith("lit:"):
             match = lit[lit.lit_id == source]
             if len(match) != 1:
-                raise ValueError(f"decision {d['decision_id']}: literature row {source} not found "
-                                 "(did the source row change? see lit_long.csv)")
+                raise ValueError(f"decision {d['decision_id']}: literature row {source} not found. It probably "
+                                 "changed in Juhi's sheet; rows that could replace it: "
+                                 + likely_lit_rows(lit, d))
             m = match.iloc[0]
             if pd.isna(m.value):
                 raise ValueError(f"decision {d['decision_id']}: {source} has no value")
@@ -419,12 +436,47 @@ def method_derive_from(wb, lit, sheet, row, d, base):
     raise ValueError(f"decision {d['decision_id']}: method derive_from applies to amount SD rows and U5 mean rows")
 
 
+GF_DATA = None  # the GF lookup, set in main(); methods that need GF's numbers use it
+
+
+def method_scale_to_gf_total(wb, lit, sheet, row, d):
+    """Rescale an arm's amount means so they agree with GF's national g/cap.
+
+    For when GF's national figure is newer than its quintile figures. Every quintile is
+    multiplied by f = GF national / mean(GF quintiles), keeping the wealth gradient.
+    Quintiles are population fifths, so their unweighted mean is the national mean. The
+    Total row is set to the same scaled mean, on whatever basis the rows are already on
+    (e.g. x coverage if a times_coverage decision applies), so the pipeline's totals
+    check passes.
+    """
+    need = need_alias(wb.get(sheet, row, "data need"))
+    if need != "amount" or norm(wb.get(sheet, row, "data point name")) != "mean":
+        raise ValueError(f"decision {d['decision_id']}: method scale_to_gf_total applies only to amount mean rows")
+    c, v = wb.get(sheet, row, "country"), wb.get(sheet, row, "vehicle")
+    national, nat_ref, _ = GF_DATA.national(c, v, "g_per_capita")
+    gf_q = [val for val, _ in GF_DATA.by_quintile(c, v, "g_per_capita").values()]
+    if national is None or any(x is None for x in gf_q):
+        raise ValueError(f"decision {d['decision_id']}: GF has no national and quintile g/cap for {c} {v}")
+    f = national / np.mean(gf_q)
+    q_rows = [wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile=q) for q in QUINTILES]
+    current_q_mean = np.mean([wb.current(CV, r) for r in q_rows])
+    q = wb.get(sheet, row, "quintile")
+    value = f * current_q_mean if q == "Total" else f * wb.current(sheet, row)
+    return {"action": "set", "value": value, "ref": f"{nat_ref} / mean of GF quintile g/cap",
+            "label": f"{SOURCE_LABELS['gf']}: quintiles rescaled to the national g/cap",
+            "source": "GF, rescaled to GF national",
+            "method": f"x {f:.4f} (GF national {national:g} / GF quintile mean {np.mean(gf_q):.4g}); "
+                      f"{d['rationale']}"}
+
+
 def run_method(wb, lit, name, sheet, row, d):
     if name == "consumer_cv":
         return method_consumer_cv(wb, lit, sheet, row, d)
+    if name == "scale_to_gf_total":
+        return method_scale_to_gf_total(wb, lit, sheet, row, d)
     if name.startswith("derive_from:"):
         return method_derive_from(wb, lit, sheet, row, d, name.split(":", 1)[1].strip())
-    raise ValueError(f"decision {d['decision_id']}: unknown method '{name}' (known: consumer_cv, derive_from:<vehicle>)")
+    raise ValueError(f"decision {d['decision_id']}: unknown method '{name}' (known: consumer_cv, scale_to_gf_total, derive_from:<vehicle>)")
 
 
 def is_method(d):
@@ -440,7 +492,8 @@ def apply_decisions(wb, lit, decisions, gf_values):
     ordered = pd.concat([values[values["transform"].str.lower() != "times_coverage"],
                          values[values["transform"].str.lower() == "times_coverage"], methods])
     for _, d in ordered.iterrows():
-        for e in resolve_decision(wb, lit, d, gf_values):
+        effects = resolve_decision(wb, lit, d, gf_values)  # all rows resolved before any is applied
+        for e in effects:
             decided[(e["sheet"], e["row"])] = d.decision_id
             if e["action"] == "set":
                 wb.propose(e["sheet"], e["row"], e["value"], origin=e["origin"], ref=e["ref"], method=e["method"],
@@ -561,6 +614,11 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
     def add(kind, detail, **kw):
         issues.append({"issue": kind, "detail": detail, **kw})
 
+    for (sheet, row), entry in wb.plan.items():
+        if entry["action"] == "keep" and entry["origin"] == "gf" and entry["method"].startswith("GF national g/cap"):
+            add("GF national inconsistent with GF quintiles", entry["method"]
+                + ". To use the national figure, add a decision with source method:scale_to_gf_total",
+                tab=sheet, row=row, output_value=wb.current(sheet, row))
     for _, r in lit[lit.status == "needs_attention"].iterrows():
         add("literature row needs attention", r.issues, lit_id=r.lit_id,
             location=f"{r.source_sheet} row {r.source_row}")
@@ -591,7 +649,7 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
         lits = recommended_first(lits)
         values = sorted({round(float(x.value), 9) for x in lits})
         recommended = [x for x in lits if x.use_in_model == "yes"]
-        if len(values) > 1:
+        if len(values) > 1 and (sheet, row) not in decided:
             add("several literature candidates", f"{label}: " + ", ".join(
                 f"{x.lit_id}={x.value:g} ({x.data_source}){recommendation_tag(x)}" for x in lits),
                 tab=sheet, row=row, output_value=current, decision_id=decided.get((sheet, row)),
@@ -647,8 +705,11 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
         for row in wb.rows(sheet):
             entry = wb.plan.get((sheet, row))
             source = norm(wb.get(sheet, row, "data source"))
+            # A placeholder deliberately kept by a decision is no longer reported
+            kept_on_purpose = entry is not None and entry["action"] == "keep" and entry["origin"] == "decision"
             is_placeholder = (entry is not None and entry["origin"] == "derived") or (
-                (entry is None or entry["action"] == "keep") and source.startswith("dummy"))
+                (entry is None or entry["action"] == "keep") and source.startswith("dummy")
+                and not kept_on_purpose)
             key = (wb.get(sheet, row, "country"), wb.get(sheet, row, "vehicle"))
             if is_placeholder and (sheet == VEH or key in modeled):
                 desc = wb.describe(sheet, row)
@@ -829,7 +890,9 @@ def main():
     if args.output.resolve() == args.extraction.resolve():
         sys.exit("Refusing to overwrite the base extraction workbook; choose another --output")
 
+    global GF_DATA
     gf, lit = GF(GF_LONG), pd.read_csv(args.lit_long)
+    GF_DATA = gf
     if "use_in_model" not in lit.columns:
         lit["use_in_model"] = None
     arms, decisions = read_arms(args.arms), read_decisions(args.decisions)
@@ -839,8 +902,9 @@ def main():
     gf_values = {key: (e["value"], e["ref"]) for key, e in wb.plan.items() if e["action"] == "set"}
     decided = apply_decisions(wb, lit, decisions, gf_values)
 
-    review = build_review(wb, lit, arms, decisions, decided, gf_values)
+    review = enrich_review(build_review(wb, lit, arms, decisions, decided, gf_values), wb, lit, decisions)
     review.to_csv(REVIEW, index=False)
+    write_status(STATUS, wb, lit, arms, decisions, review, resolve_decision, gf_values)
     comparison = build_comparison(gf, wb, lit, arms, decisions, args.extraction)
     comparison.to_csv(COMPARISON, index=False)
     write_comparison_xlsx(comparison, COMPARISON_XLSX)
@@ -870,7 +934,7 @@ def main():
         print("WARNING: LibreOffice not found; open the output in Excel and save it before use.")
 
     log = pd.DataFrame(records)
-    print(f"\nWrote {args.output.name}, {CHANGELOG.name}, {REVIEW.name}, {COMPARISON_XLSX.name}")
+    print(f"\nWrote {args.output.name}, {CHANGELOG.name}, {REVIEW.name}, {STATUS.name}, {COMPARISON_XLSX.name}")
     print(log.groupby(["step", "source", "status"]).size().to_string())
     if len(review):
         print("\nReview items:")

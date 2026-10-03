@@ -103,7 +103,23 @@ A typical loop:
 If a decision's literature row disappears (for example, its key fields were edited), the
 build stops and says which decision broke.
 
+## STATUS.md
+
+The easiest place to start. It is regenerated on every build, with one section per arm
+listing:
+- the decisions in effect: what each one targets, the value it sets, where that value comes
+  from (for literature, the value, source and row in Juhi's sheet), and its rationale;
+- proposed decisions, with what they would set;
+- what is still open, with output and literature values side by side.
+
+No IDs need looking up.
+
 ## review.csv
+
+Each row spells out its `arm`, `item` (the data need in plain words), `where` (scenario,
+quintile or sex), `output_value`, `literature` (value, source, and row in Juhi's sheet), the
+`decision` (ID, status and rationale) and a `what_to_do` hint. The IDs and positions are kept
+at the end for filtering. Rows are sorted by arm, then issue.
 
 | issue | what to do |
 |---|---|
