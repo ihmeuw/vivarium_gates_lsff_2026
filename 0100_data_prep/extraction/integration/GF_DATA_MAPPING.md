@@ -9,7 +9,7 @@ reads, and the questions that are still open. For how to run the scripts, see `R
 | GF term (Definitions tab) | Our data need | Conversion |
 |---|---|---|
 | Coverage (Cov): % using the vehicle | `Vehicle consumption by WRA -- any` | None. Quintiles come from the country's stratified tab, the Total from the cover sheet. |
-| g/cap | `Vehicle consumption by WRA -- amount` (mean) | Our mean is over **all** women, including non-consumers; the sim treats it as a zero-inflated normal. Each arm's `gcap_basis` in `arms.csv` sets the conversion. Nigeria rice is `among_consumers`, so it's multiplied by coverage (JG 8/31). Nigeria wheat, bouillon and Ethiopia salt are `per_capita` and used as they are. |
+| g/cap | `Vehicle consumption by WRA -- amount` (mean) | Our mean is over **all** women, including non-consumers; the sim treats it as a zero-inflated normal. The GF default uses it as published, i.e. per capita. Exceptions are decisions: Nigeria rice is multiplied by coverage, treating g/cap as among consumers (decision D006, JG 8/31). |
 | Consolidation (2035) | `Vehicle "fortifiability"` | None; the 2035 value is used. Fortifiability is used only for the intervention target. |
 | Compliance (2035) | `Intervention coverage % of fortifiable` and `Intervention effective % of fortified` | Each = √compliance, rounded to 2 d.p. This is the equal split agreed with KB on 9/9. |
 | Current consolidation × compliance | `Vehicle fortification at baseline -- any` × `Baseline effective % of fortified` | any = consolidation × √compliance; effectiveness = √compliance. Applied only when GF gives both numbers. |
@@ -78,15 +78,16 @@ If it trips again, weight that mean (or loosen `rtol`).
 
 ## Open questions and planned improvements
 
-1. **What basis is NFCMS consumption on?**
-   - **Rice: among consumers.** We kept this to match earlier work. It rests only on the
-     workbook note citing JG's 8/31 email.
-   - **Wheat: per capita.** Juhi's review of NFCMS suggests the figures are over the whole
-     population.
-   - **The NFCMS SDs point the other way.** Wheat's poorest quintile has SD ≈ 13 for a
-     mean of 16.1 g/day at 19% coverage. If the mean were per capita, with 81% of women at
-     zero, the SD would have to be at least about 33.
-   - Rice and wheat come from parallel tables, so this should be settled with JG/GF.
+1. **What basis is NFCMS consumption on?** It is most likely population-wide. NFCMS's
+   NCI usual-intake method produces intake for everyone, and the GHS-Panel cross-check
+   matches for rice (Juhi, Oct 2026). Confirmation from JG/GF has been requested.
+   - **Wheat:** treated as per capita. SDs use the NFCMS CV (decisions D007, D008), because NFCMS
+     usual-intake SDs are incompatible with our zero-inflated model. See
+     `CONSUMPTION_DISTRIBUTION.md`.
+   - **Rice:** deliberately kept as among consumers (D006), for comparability with earlier
+     results. Switching means rejecting D006 and activating P007 and P008.
+   - **A redesign** of the consumption model (a non-negative intake distribution, with GF
+     coverage unchanged) is described in `CONSUMPTION_DISTRIBUTION.md`, section 5.
 2. **Store published numbers and convert in code.** Label each amount row's basis in the
    sheet (e.g. "mean among consumers" vs "mean, all women") and let `prep_extracted` do
    the conversion, for SDs as well as means.

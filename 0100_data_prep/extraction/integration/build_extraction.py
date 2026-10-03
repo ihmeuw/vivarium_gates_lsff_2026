@@ -3,16 +3,23 @@
 Inputs (all in this directory unless noted):
     gf_long.csv      from extract_gf.py
     lit_long.csv     from extract_lit.py
-    arms.csv         which arms take GF values, and how to read GF's g/cap for each
-    decisions.csv    hand-made choices that override GF defaults (see README.md)
+    arms.csv         scope: which arms the build manages, whether they take GF values, and
+                     where their consumption data come from
+    decisions.csv    every interpretive choice: values to use, conversions and computation
+                     methods, with rationale (see README.md)
     ../Data Extraction Sheet.xlsx   the base workbook (never modified)
 
 Phases, each of which can override the one before:
-    1. GF defaults   for arms with apply_gf = yes (the mapping in GF_DATA_MAPPING.md)
-    2. decisions     rows of decisions.csv with status = active
-    3. derived       placeholder SDs / U5 amounts for arms with derive_sd_u5_from,
-                     only where neither GF nor a decision supplied a value
-    4. checks        the constraints the pipeline relies on (fails the build)
+    1. GF defaults       for arms with apply_gf = yes, using GF values as published (the
+                         mapping in GF_DATA_MAPPING.md)
+    2. value decisions   active decisions whose source is lit:, value:, gf or keep
+                         (times_coverage ones run last, after coverage is final)
+    3. method decisions  active decisions whose source is method:<name>; values computed from
+                         others already in place (e.g. consumption SDs, CONSUMPTION_DISTRIBUTION.md)
+    4. checks            the constraints the pipeline relies on (fails the build)
+
+Methods (how a value is computed) live in this file, in METHODS. Which method applies where,
+and why, lives in decisions.csv.
 
 Outputs:
     ../Data Extraction Sheet (integrated).xlsx   recalculated with LibreOffice and verified
@@ -108,12 +115,14 @@ def read_arms(path):
     arms = pd.read_csv(path, dtype=str).fillna("")
     out = []
     for _, a in arms.iterrows():
+        source = norm(a.get("consumption_source", "")) or "sheet"
+        if source not in ("sheet", "hces"):
+            raise ValueError(f"arms.csv: consumption_source must be sheet or hces, not '{source}'")
         out.append({
             "country": a.country, "vehicle": a.vehicle,
             "fortificants": [f.strip() for f in a.fortificants.split(";") if f.strip()],
             "apply_gf": norm(a.apply_gf) == "yes",
-            "gcap_basis": norm(a.gcap_basis) or None,
-            "derive_from": a.derive_sd_u5_from or None,
+            "hces": source == "hces",
         })
     return out
 
@@ -146,46 +155,32 @@ def gf_consumption_any(gf, wb, arm):
 
 
 def gf_consumption_amount(gf, wb, arm):
-    c, v, basis = arm["country"], arm["vehicle"], arm["gcap_basis"]
-    letter = openpyxl.utils.get_column_letter(wb.header(CV)["value"])
+    """GF g/cap as published, as the mean over all WRA. Conversions are decisions."""
+    c, v = arm["country"], arm["vehicle"]
     national, nat_ref, _ = gf.national(c, v, "g_per_capita")
     by_q = gf.by_quintile(c, v, "g_per_capita")
-    means = {}
+    if any(gcap is None for gcap, _ in by_q.values()):
+        return
     for q, (gcap, ref) in by_q.items():
-        if gcap is None:
-            return
         row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile=q)
-        if basis == "among_consumers":
-            any_row = wb.one(CV, country=c, vehicle=v, need="any", quintile=q)
-            value = gcap * wb.current(CV, any_row)
-            wb.propose(CV, row, value, origin="gf", ref=ref, formula=f"={gcap}*{letter}{any_row}",
-                       method="GF g/cap is among consumers, multiplied by WRA coverage")
-        else:
-            value = gcap
-            wb.propose(CV, row, value, origin="gf", ref=ref, method="GF g/cap used as the mean over all WRA")
-        means[q] = value
+        wb.propose(CV, row, gcap, origin="gf", ref=ref, method="GF g/cap as published (mean over all WRA)")
     row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile="Total")
-    formula = None
-    if basis == "among_consumers":
-        any_row = wb.one(CV, country=c, vehicle=v, need="any", quintile="Total")
-        total, formula = national * wb.current(CV, any_row), f"={national}*{letter}{any_row}"
-    else:
-        total = national
-    if np.isclose(np.mean(list(means.values())), total, rtol=TOTALS_RTOL, atol=0):
-        wb.propose(CV, row, total, origin="gf", ref=nat_ref, formula=formula,
-                   method="GF national g/cap (converted as for the quintiles); only sanity-checks them")
+    q_mean = np.mean([gcap for gcap, _ in by_q.values()])
+    if np.isclose(q_mean, national, rtol=TOTALS_RTOL, atol=0):
+        wb.propose(CV, row, national, origin="gf", ref=nat_ref,
+                   method="GF national g/cap as published; only sanity-checks the quintiles")
     else:
         wb.keep(CV, row, origin="gf", ref=nat_ref,
-                method=f"GF national converts to {total:.3g} but the quintile mean is "
-                       f"{np.mean(list(means.values())):.3g} (GF national is from M4N, strata from NFCMS); "
-                       "kept the existing Total so the pipeline's totals check passes")
+                method=f"GF national g/cap {national:.3g} differs from the quintile mean {q_mean:.3g} "
+                       "(GF national is from M4N, strata from NFCMS); kept the existing Total so the "
+                       "pipeline's totals check passes")
 
 
 def gf_fortifiability(gf, wb, arm):
     c, v = arm["country"], arm["vehicle"]
     value, ref, raw = gf.target(c, v, "consolidation")
     rows = wb.find(CV, country=c, vehicle=v, need="fortifiability")
-    if arm["gcap_basis"] == "hces":
+    if arm["hces"]:
         for row in rows:
             wb.keep(CV, row, origin="gf", ref=ref,
                     method=f"GF {TARGET_YEAR} consolidation {raw} is market-wide; ours applies only to purchased "
@@ -204,7 +199,7 @@ def gf_baseline(gf, wb, arm, fortificant):
     eff_rows = wb.find(CVF, country=c, vehicle=v, fortificant=fortificant, need="baseline_effectiveness")
     cons, cons_ref, _ = gf.national(c, v, "consolidation")
     compl, compl_ref, _ = gf.national(c, v, "compliance")
-    if arm["gcap_basis"] == "hces":
+    if arm["hces"]:
         for row in eff_rows:
             wb.keep(CVF, row, origin="gf", ref=compl_ref,
                     method="India baseline coverage comes from HCES; GF's market-wide numbers don't map onto it")
@@ -236,7 +231,7 @@ def apply_gf_defaults(gf, wb, arms):
     for arm in arms:
         if not arm["apply_gf"]:
             continue
-        if arm["gcap_basis"] != "hces":
+        if not arm["hces"]:
             gf_consumption_any(gf, wb, arm)
             gf_consumption_amount(gf, wb, arm)
         gf_fortifiability(gf, wb, arm)
@@ -246,7 +241,7 @@ def apply_gf_defaults(gf, wb, arms):
 
 
 # --------------------------------------------------------------------------------------
-# Phase 2: decisions
+# Phases 2 and 3: decisions
 # --------------------------------------------------------------------------------------
 
 DECISION_KEYS = ["country", "vehicle", "fortificant", "scenario", "quintile", "sex", "data_point_name"]
@@ -263,21 +258,45 @@ def decision_rows(wb, d):
     return sheet, wb.find(sheet, need=alias, **criteria)
 
 
-def resolve_decision(wb, lit, d):
-    """What a decision would do: list of (sheet, row, action, value, ref, method, label)."""
+def coverage_row(wb, sheet, row):
+    """The WRA coverage row that goes with an amount row (national for U5 rows)."""
+    need = need_alias(wb.get(sheet, row, "data need"))
+    q = wb.get(sheet, row, "quintile") if need == "amount" else "Total"
+    return wb.one(CV, country=wb.get(sheet, row, "country"), vehicle=wb.get(sheet, row, "vehicle"),
+                  need="any", quintile=q)
+
+
+def resolve_decision(wb, lit, d, gf_values):
+    """What a decision would do: a list of effects, one per targeted row.
+
+    Each effect is a dict with sheet, row, action (set / keep / accept), value, formula,
+    origin, ref, method, label (Data source text) and source (for the changelog).
+    """
     sheet, rows = decision_rows(wb, d)
     if not rows:
         raise ValueError(f"decision {d['decision_id']} matches no rows in the extraction sheet")
     source, transform = str(d["source"]).strip(), norm(d.get("transform"))
+    rationale = d["rationale"]
     out = []
     for row in rows:
+        effect = {"sheet": sheet, "row": row, "formula": None, "origin": "decision", "method": rationale}
         if source == "keep":
-            out.append((sheet, row, "keep", None, "decision: keep existing value", d["rationale"], None))
+            out.append({**effect, "action": "keep", "value": None, "ref": "decision: keep existing value"})
+            continue
+        if source.startswith("method:"):
+            out.append({**effect, **run_method(wb, lit, source.split(":", 1)[1], sheet, row, d)})
             continue
         if source == "gf":
-            out.append((sheet, row, "accept", None, "decision: accept GF default", d["rationale"], None))
-            continue
-        if source.startswith("lit:"):
+            if (sheet, row) not in gf_values:
+                out.append({**effect, "action": "keep", "value": None,
+                            "ref": "decision: GF has no value for this row; kept existing"})
+                continue
+            value, ref = gf_values[(sheet, row)]
+            if not transform:
+                out.append({**effect, "action": "accept", "value": value, "ref": "decision: accept GF default"})
+                continue
+            label, kind = SOURCE_LABELS["gf"], "GF"
+        elif source.startswith("lit:"):
             match = lit[lit.lit_id == source]
             if len(match) != 1:
                 raise ValueError(f"decision {d['decision_id']}: literature row {source} not found "
@@ -287,91 +306,157 @@ def resolve_decision(wb, lit, d):
                 raise ValueError(f"decision {d['decision_id']}: {source} has no value")
             value = float(m.value)
             ref = f"{source} ({m.source_sheet} row {m.source_row}: {m.data_source})"
-            label = f"Literature extraction: {m.data_source}"
-            kind = "literature"
+            label, kind = f"Literature extraction: {m.data_source}", "literature"
         elif source.startswith("value:"):
             value = float(source.split(":", 1)[1])
-            ref, label = f"value typed in decision {d['decision_id']}", f"Decision {d['decision_id']}"
-            kind = "typed value"
+            ref, label, kind = f"value typed in decision {d['decision_id']}", f"Decision {d['decision_id']}", "typed value"
         else:
             raise ValueError(f"decision {d['decision_id']}: unknown source '{source}'")
-        method = d["rationale"]
+        formula = None
         if transform == "sqrt":
             value = round2(math.sqrt(value))
-            method = f"sqrt, 2 d.p.; {method}"
+            rationale_m = f"sqrt, 2 d.p.; {rationale}"
         elif transform == "times_coverage":
-            q = wb.get(sheet, row, "quintile")
-            any_row = wb.one(CV, country=wb.get(sheet, row, "country"), vehicle=wb.get(sheet, row, "vehicle"),
-                             need="any", quintile=q)
+            any_row = coverage_row(wb, sheet, row)
+            letter = openpyxl.utils.get_column_letter(wb.header(CV)["value"])
+            formula = f"={value}*{letter}{any_row}"
             value = value * wb.current(CV, any_row)
-            method = f"x WRA coverage; {method}"
+            rationale_m = f"x WRA coverage; {rationale}"
+            kind += " x coverage"
         elif transform:
             raise ValueError(f"decision {d['decision_id']}: unknown transform '{transform}'")
-        out.append((sheet, row, "set", value, ref, method, (label, kind)))
+        else:
+            rationale_m = rationale
+        out.append({**effect, "action": "set", "value": value, "formula": formula, "ref": ref,
+                    "method": rationale_m, "label": label, "source": kind})
     return out
 
 
-def apply_decisions(wb, lit, decisions):
+# --------------------------------------------------------------------------------------
+# Methods: how a value is computed from others (see CONSUMPTION_DISTRIBUTION.md)
+# --------------------------------------------------------------------------------------
+
+WOMEN_POPULATIONS = {"non-pregnant wra", "wra", "all", ""}
+
+
+def lit_one(lit, *, country, vehicle, need, point, quintile=None, sex=None):
+    """The single literature row for a consumption statistic (Juhi's pick if several)."""
+    d = lit[(lit.status == "ok") & (lit.country == country) & (lit.vehicle == vehicle) & (lit.need == need)
+            & (lit.data_point_name == point)]
+    if need == "amount":
+        d = d[d.population.fillna("").str.lower().isin(WOMEN_POPULATIONS) & (d.quintile == quintile)]
+    else:
+        d = d[d.sex == sex]
+    if len(d) > 1 and (d.use_in_model == "yes").sum() == 1:
+        d = d[d.use_in_model == "yes"]
+    if len(d) != 1:
+        raise ValueError(f"expected one literature {point} for {country} {vehicle} {need} "
+                         f"{quintile or sex}, found {len(d)} ({', '.join(d.lit_id)})")
+    return d.iloc[0]
+
+
+def matching_row(wb, sheet, row, **changes):
+    """The row with the same keys as `row`, except for `changes` (e.g. the mean for an SD row)."""
+    keys = {k: wb.get(sheet, row, k.replace("_", " ")) for k in ["country", "vehicle", "quintile", "sex"]}
+    keys["need"] = need_alias(wb.get(sheet, row, "data need"))
+    keys["data_point_name"] = wb.get(sheet, row, "data point name")
+    keys.update(changes)
+    return wb.one(sheet, **keys)
+
+
+def method_consumer_cv(wb, lit, sheet, row, d):
+    """SD over all women when consumers get the literature's coefficient of variation.
+
+    The literature (NFCMS usual intake) gives a mean m and SD s over everyone, with no zero
+    mass. Our model has a zero mass 1 - p, so it can't match both. Keep the workbook mean
+    and give consumers the literature CV s/m:
+        mu = m / p,  sigma = CV mu,  SD over all = sqrt(p sigma^2 + p (1 - p) mu^2)
+    """
+    need = need_alias(wb.get(sheet, row, "data need"))
+    if need not in ("amount", "u5_amount") or norm(wb.get(sheet, row, "data point name")) != "standard deviation":
+        raise ValueError(f"decision {d['decision_id']}: method consumer_cv applies only to amount SD rows")
+    c, v = wb.get(sheet, row, "country"), wb.get(sheet, row, "vehicle")
+    key = {"quintile": wb.get(sheet, row, "quintile")} if need == "amount" else {"sex": wb.get(sheet, row, "sex")}
+    lit_mean = lit_one(lit, country=c, vehicle=v, need=need, point="mean", **key)
+    lit_sd = lit_one(lit, country=c, vehicle=v, need=need, point="standard deviation", **key)
+    cv = float(lit_sd.value) / float(lit_mean.value)
+    m = wb.current(sheet, matching_row(wb, sheet, row, data_point_name="mean"))
+    p = wb.current(CV, coverage_row(wb, sheet, row))
+    who = "women" if need == "amount" else "children (national WRA coverage)"
+    return {"action": "set", "value": mixture_sd(p, m, cv),
+            "ref": f"{lit_sd.lit_id} / {lit_mean.lit_id} ({lit_sd.data_source})",
+            "label": f"Derived from {lit_sd.data_source}: literature CV applied to consumers",
+            "source": "literature CV applied to consumers",
+            "method": f"consumer CV {cv:.3f} (= {float(lit_sd.value):.4g} / {float(lit_mean.value):.4g}); "
+                      f"consumer mean = {m:.4g} / coverage {p:.3g}; SD over all {who} = "
+                      f"sqrt(p (CV mu)^2 + p (1 - p) mu^2); {d['rationale']}"}
+
+
+def method_derive_from(wb, lit, sheet, row, d, base):
+    """Placeholder from another vehicle: its consumer CV (SD rows) or U5/WRA ratio (U5 means)."""
+    need = need_alias(wb.get(sheet, row, "data need"))
+    point = norm(wb.get(sheet, row, "data point name"))
+    v = wb.get(sheet, row, "vehicle")
+    base_row = matching_row(wb, sheet, row, vehicle=base)
+    common = {"action": "set", "origin": "derived", "label": SOURCE_LABELS["derived"], "source": f"derived from {base}"}
+    if point == "standard deviation":
+        mean_a, var_a = consumer_moments(wb.current(CV, coverage_row(wb, sheet, base_row)),
+                                         wb.current(sheet, matching_row(wb, sheet, base_row, data_point_name="mean")),
+                                         wb.current(sheet, base_row))
+        cv = math.sqrt(var_a) / mean_a
+        p = wb.current(CV, coverage_row(wb, sheet, row))
+        m = wb.current(sheet, matching_row(wb, sheet, row, data_point_name="mean"))
+        return {**common, "value": mixture_sd(p, m, cv), "ref": f"(no SD source) {base} consumer CV",
+                "method": f"DERIVED: {base} consumer CV {cv:.3f}, converted with coverage {p}; {d['rationale']}"}
+    if need == "u5_amount" and point == "mean":
+        def wra_quintile_mean(vehicle):
+            return np.mean([wb.current(CV, wb.one(CV, country=wb.get(sheet, row, "country"), vehicle=vehicle,
+                                                  need="amount", data_point_name="mean", quintile=q))
+                            for q in QUINTILES])
+        ratio = wra_quintile_mean(v) / wra_quintile_mean(base)
+        return {**common, "value": wb.current(sheet, base_row) * ratio, "ref": f"(no U5 source) {base} U5 x {ratio:.4f}",
+                "method": f"DERIVED: {base} U5 mean x {ratio:.4f} (ratio of mean WRA quintile means); {d['rationale']}"}
+    raise ValueError(f"decision {d['decision_id']}: method derive_from applies to amount SD rows and U5 mean rows")
+
+
+def run_method(wb, lit, name, sheet, row, d):
+    if name == "consumer_cv":
+        return method_consumer_cv(wb, lit, sheet, row, d)
+    if name.startswith("derive_from:"):
+        return method_derive_from(wb, lit, sheet, row, d, name.split(":", 1)[1].strip())
+    raise ValueError(f"decision {d['decision_id']}: unknown method '{name}' (known: consumer_cv, derive_from:<vehicle>)")
+
+
+def is_method(d):
+    return str(d["source"]).strip().startswith("method:")
+
+
+def apply_decisions(wb, lit, decisions, gf_values):
+    """Phase 2 (values; times_coverage last) then phase 3 (methods, in file order)."""
     decided = {}  # (sheet, row) -> decision_id, for silencing conflicts
     active = decisions[decisions.status.str.lower() == "active"]
-    # times_coverage decisions depend on coverage, which other decisions may set first
-    ordered = pd.concat([active[active["transform"].str.lower() != "times_coverage"],
-                         active[active["transform"].str.lower() == "times_coverage"]])
+    methods = active[active.apply(is_method, axis=1)]
+    values = active[~active.apply(is_method, axis=1)]
+    ordered = pd.concat([values[values["transform"].str.lower() != "times_coverage"],
+                         values[values["transform"].str.lower() == "times_coverage"], methods])
     for _, d in ordered.iterrows():
-        for sheet, row, action, value, ref, method, label in resolve_decision(wb, lit, d):
-            decided[(sheet, row)] = d.decision_id
-            if action == "set":
-                wb.propose(sheet, row, value, origin="decision", ref=ref, method=method,
-                           decision_id=d.decision_id, source_label=label[0], source=label[1])
-            elif action == "keep":
-                wb.keep(sheet, row, origin="decision", ref=ref, method=method, decision_id=d.decision_id)
+        for e in resolve_decision(wb, lit, d, gf_values):
+            decided[(e["sheet"], e["row"])] = d.decision_id
+            if e["action"] == "set":
+                wb.propose(e["sheet"], e["row"], e["value"], origin=e["origin"], ref=e["ref"], method=e["method"],
+                           formula=e.get("formula"), decision_id=d.decision_id, source_label=e["label"],
+                           source=e["source"])
+            elif e["action"] == "keep":
+                wb.keep(e["sheet"], e["row"], origin="decision", ref=e["ref"], method=e["method"],
+                        decision_id=d.decision_id)
     return decided
 
 
-# --------------------------------------------------------------------------------------
-# Phase 3: derived placeholders
-# --------------------------------------------------------------------------------------
-
-
-def derive_sd_and_u5(wb, arm, decided):
-    """Placeholder SDs and U5 amounts from another vehicle (see GF_DATA_MAPPING.md)."""
-    c, v, base = arm["country"], arm["vehicle"], arm["derive_from"]
-
-    def value(vehicle, need, point, **kw):
-        return wb.current(CV, wb.one(CV, country=c, vehicle=vehicle, need=need, data_point_name=point, **kw))
-
-    def coverage(vehicle, q):
-        return wb.current(CV, wb.one(CV, country=c, vehicle=vehicle, need="any", quintile=q))
-
-    for q in QUINTILES + ["Total"]:
-        row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="standard deviation", quintile=q)
-        if (CV, row) in decided:
-            continue
-        mean_a, var_a = consumer_moments(coverage(base, q), value(base, "amount", "mean", quintile=q),
-                                         value(base, "amount", "standard deviation", quintile=q))
-        cv = math.sqrt(var_a) / mean_a
-        p = coverage(v, q)
-        wb.propose(CV, row, mixture_sd(p, value(v, "amount", "mean", quintile=q), cv), origin="derived",
-                   source=f"derived from {base}", ref=f"(no SD source) {base} consumer CV", method=f"DERIVED: {base} consumer CV {cv:.3f}, "
-                   f"converted to an SD over all women with coverage {p}")
-
-    ratio = (np.mean([value(v, "amount", "mean", quintile=q) for q in QUINTILES])
-             / np.mean([value(base, "amount", "mean", quintile=q) for q in QUINTILES]))
-    p_base, p = coverage(base, "Total"), coverage(v, "Total")
-    for sex in ["Total", "Female", "Male"]:
-        mean_row = wb.one(CV, country=c, vehicle=v, need="u5_amount", data_point_name="mean", sex=sex)
-        if (CV, mean_row) not in decided:
-            wb.propose(CV, mean_row, value(base, "u5_amount", "mean", sex=sex) * ratio, origin="derived",
-                       source=f"derived from {base}", ref=f"(no U5 source) {base} U5 x {ratio:.4f}",
-                       method=f"DERIVED: {base} U5 mean x {ratio:.4f} (ratio of mean WRA quintile means)")
-        sd_row = wb.one(CV, country=c, vehicle=v, need="u5_amount", data_point_name="standard deviation", sex=sex)
-        if (CV, sd_row) not in decided:
-            mean_a, var_a = consumer_moments(p_base, value(base, "u5_amount", "mean", sex=sex),
-                                             value(base, "u5_amount", "standard deviation", sex=sex))
-            cv = math.sqrt(var_a) / mean_a
-            wb.propose(CV, sd_row, mixture_sd(p, wb.current(CV, mean_row), cv), origin="derived",
-                       source=f"derived from {base}", ref=f"(no U5 SD source) {base} U5 consumer CV",
-                       method=f"DERIVED: {base} U5 consumer CV {cv:.3f} at national coverage {p}")
+def among_consumers_arms(decisions):
+    """Arms whose amount means are converted with times_coverage (for comparisons)."""
+    active = decisions[(decisions.status.str.lower() == "active")
+                       & (decisions["transform"].str.lower() == "times_coverage")]
+    return {(d.country, d.vehicle) for _, d in active.iterrows() if need_alias(d.need) == "amount"}
 
 
 # --------------------------------------------------------------------------------------
@@ -387,7 +472,7 @@ def run_checks(wb, arms):
 
     for arm in arms:
         c, v = arm["country"], arm["vehicle"]
-        if arm["gcap_basis"] == "hces" or not wb.find(CV, country=c, vehicle=v, need="amount"):
+        if arm["hces"] or not wb.find(CV, country=c, vehicle=v, need="amount"):
             continue
         # Pregnancy sim: consumers' variance must be positive (intervention.py)
         for row in wb.find(CV, country=c, vehicle=v, need="amount", data_point_name="mean"):
@@ -469,9 +554,9 @@ def recommendation_tag(x):
     return {"yes": " [recommended]", "no": " [not recommended]"}.get(x.use_in_model, "")
 
 
-def build_review(wb, lit, arms, decisions, decided):
+def build_review(wb, lit, arms, decisions, decided, gf_values):
     issues = []
-    basis = {(a["country"], a["vehicle"]): a["gcap_basis"] for a in arms}
+    consumer_basis = among_consumers_arms(decisions)
 
     def add(kind, detail, **kw):
         issues.append({"issue": kind, "detail": detail, **kw})
@@ -521,12 +606,12 @@ def build_review(wb, lit, arms, decisions, decided):
             comparable = x.value
             note = ""
             if x.need in ("amount", "u5_amount") and x.data_point_name == "mean" and \
-                    basis.get((x.country, x.vehicle)) == "among_consumers":
+                    (x.country, x.vehicle) in consumer_basis:
                 q = wb.get(sheet, row, "quintile") if x.need == "amount" else "Total"
                 any_row = wb.find(CV, country=x.country, vehicle=x.vehicle, need="any", quintile=q)
                 if any_row:
                     comparable = x.value * wb.current(CV, any_row[0])
-                    note = " (literature value x coverage, per the arm's among_consumers basis)"
+                    note = " (literature value x coverage, as this arm's amounts are converted with times_coverage)"
             agree = isinstance(current, (int, float)) and np.isclose(current, comparable, rtol=AGREE_RTOL, atol=1e-9)
             if agree or (sheet, row) in decided:
                 continue
@@ -544,11 +629,12 @@ def build_review(wb, lit, arms, decisions, decided):
 
     for _, d in decisions[decisions.status.str.lower() == "proposed"].iterrows():
         try:
-            effects = resolve_decision(wb, lit, d)
+            effects = resolve_decision(wb, lit, d, gf_values)
         except ValueError as e:
             add("proposed decision is invalid", str(e), decision_id=d.decision_id)
             continue
-        for sheet, row, action, value, ref, method, _ in effects:
+        for e in effects:
+            sheet, row, action, value = e["sheet"], e["row"], e["action"], e["value"]
             now = wb.current(sheet, row)
             now = float(now) if isinstance(now, (int, float)) else now
             add("proposed decision (not applied)", f"{d.rationale} -> would {action} "
@@ -585,7 +671,7 @@ def gf_only(gf, path, arms):
     wb = Workbook(path)
     for arm in arms:
         arm = dict(arm, apply_gf=True)
-        steps = [] if arm["gcap_basis"] == "hces" else [gf_consumption_any, gf_consumption_amount]
+        steps = [] if arm["hces"] else [gf_consumption_any, gf_consumption_amount]
         for step in steps + [gf_fortifiability]:
             try:
                 step(gf, wb, arm)
@@ -608,9 +694,9 @@ def compare(a, b):
     return f"differs ({(b - a) / a:+.0%})" if a else "differs"
 
 
-def build_comparison(gf, wb, lit, arms, extraction_path):
+def build_comparison(gf, wb, lit, arms, decisions, extraction_path):
     gfw = gf_only(gf, extraction_path, arms)
-    basis = {(a["country"], a["vehicle"]): a["gcap_basis"] for a in arms}
+    consumer_basis = among_consumers_arms(decisions)
     listed = {(a["country"], a["vehicle"]): ("yes" if a["apply_gf"] else "listed, GF off") for a in arms}
 
     lit_by_row, lit_unplaced = {}, []
@@ -634,11 +720,12 @@ def build_comparison(gf, wb, lit, arms, extraction_path):
             g = gfw.plan.get((sheet, row))
             gf_value = g["value"] if g and g["action"] == "set" else None
             lits = recommended_first(lit_by_row.get((sheet, row), []))
-            lit_values, lit_published = [], []
+            lit_values, lit_published, lit_raw = [], [], []
             for x in lits:
                 v = x.value
+                lit_raw.append(round(float(x.value), 9))  # in our units, before any basis conversion
                 if x.need in ("amount", "u5_amount") and x.data_point_name == "mean" and \
-                        basis.get((x.country, x.vehicle)) == "among_consumers":
+                        (x.country, x.vehicle) in consumer_basis:
                     q = wb.get(sheet, row, "quintile") if x.need == "amount" else "Total"
                     any_row = wb.find(CV, country=x.country, vehicle=x.vehicle, need="any", quintile=q)
                     v = x.value * wb.current(CV, any_row[0]) if any_row else v
@@ -650,6 +737,9 @@ def build_comparison(gf, wb, lit, arms, extraction_path):
             lit_recommended = rec_values.pop() if len(rec_values) == 1 else None
             # Compare against Juhi's pick when she made one, else the single candidate
             lit_compare = lit_recommended if lit_recommended is not None else lit_value
+            # GF values are as published, so compare them with the literature as published too
+            raw_rec = {v for v, x in zip(lit_raw, lits) if x.use_in_model == "yes"}
+            lit_raw_compare = raw_rec.pop() if len(raw_rec) == 1 else (lit_raw[0] if len(set(lit_raw)) == 1 else None)
             entry = wb.plan.get((sheet, row))
             out_set = entry is not None and entry["action"] == "set"
             output = entry["value"] if out_set else existing
@@ -671,7 +761,7 @@ def build_comparison(gf, wb, lit, arms, extraction_path):
                 "lit_source": "; ".join(str(x.data_source) for x in lits) or None,
                 "gf_vs_existing": compare(existing, gf_value),
                 "lit_vs_existing": compare(existing, lit_compare),
-                "lit_vs_gf": compare(gf_value, lit_compare),
+                "lit_vs_gf": compare(gf_value, lit_raw_compare),
                 "output_value": output,
                 "output_source": entry["source"] if entry else "existing extraction sheet",
                 "decision_id": entry["decision_id"] if entry else None,
@@ -746,14 +836,12 @@ def main():
     wb = Workbook(args.extraction)
 
     apply_gf_defaults(gf, wb, arms)
-    decided = apply_decisions(wb, lit, decisions)
-    for arm in arms:
-        if arm["derive_from"]:
-            derive_sd_and_u5(wb, arm, decided)
+    gf_values = {key: (e["value"], e["ref"]) for key, e in wb.plan.items() if e["action"] == "set"}
+    decided = apply_decisions(wb, lit, decisions, gf_values)
 
-    review = build_review(wb, lit, arms, decisions, decided)
+    review = build_review(wb, lit, arms, decisions, decided, gf_values)
     review.to_csv(REVIEW, index=False)
-    comparison = build_comparison(gf, wb, lit, arms, args.extraction)
+    comparison = build_comparison(gf, wb, lit, arms, decisions, args.extraction)
     comparison.to_csv(COMPARISON, index=False)
     write_comparison_xlsx(comparison, COMPARISON_XLSX)
     problems = run_checks(wb, arms)

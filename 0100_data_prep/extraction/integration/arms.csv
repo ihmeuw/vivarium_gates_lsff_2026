@@ -1,10 +1,10 @@
-country,vehicle,fortificants,apply_gf,gcap_basis,derive_sd_u5_from,notes
-Nigeria,Rice,Iron;Folate,yes,among_consumers,,g/cap treated as among consumers (JG email 8/31); multiplied by coverage
-Nigeria,Bouillon,Iron;Folate,yes,per_capita,,NFCMS bouillon tables are over all women
-Nigeria,Wheat,Iron;Folate,yes,per_capita,Rice,per capita judged more likely (Oct 2026); SD/U5 derived from rice unless a decision supplies them
-Ethiopia,Salt,Folate,yes,per_capita,,~98% coverage so the basis barely matters
-India,Rice,Iron;Folate,yes,hces,,consumption and baseline coverage come from HCES; only intervention rows take GF values
-India,Wheat,Iron;Folate,no,,,literature extraction in progress
-India,Salt,Iron,no,,,literature extraction in progress
-Ethiopia,Wheat,Folate,no,,,literature extraction in progress
-Nigeria,Salt,Folate,no,,,literature extraction in progress
+country,vehicle,fortificants,apply_gf,consumption_source,notes
+Nigeria,Rice,Iron;Folate,yes,sheet,
+Nigeria,Bouillon,Iron;Folate,yes,sheet,
+Nigeria,Wheat,Iron;Folate,yes,sheet,
+Ethiopia,Salt,Folate,yes,sheet,
+India,Rice,Iron;Folate,yes,hces,consumption and baseline coverage come from HCES microdata; only intervention rows take GF values
+India,Wheat,Iron;Folate,no,sheet,literature extraction in progress
+India,Salt,Iron,no,sheet,literature extraction in progress
+Ethiopia,Wheat,Folate,no,sheet,literature extraction in progress
+Nigeria,Salt,Folate,no,sheet,literature extraction in progress
