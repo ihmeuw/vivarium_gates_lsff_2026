@@ -211,7 +211,7 @@ def decision_effects(wb, lit, decisions, resolve, gf_values):
     return out
 
 
-def write_status(path, wb, lit, arms, decisions, review, resolve, gf_values):
+def write_status(path, wb, lit, arms, decisions, review, resolve, gf_values, gf_automatic=()):
     """STATUS.md: per arm, the decisions in effect and what is still open."""
     effects = decision_effects(wb, lit, decisions, resolve, gf_values)
     arm_names = [f"{a['country']} {a['vehicle']}" for a in arms if a["apply_gf"]]
@@ -259,6 +259,20 @@ def write_status(path, wb, lit, arms, decisions, review, resolve, gf_values):
         if len(lines) == 2:
             lines += ["Nothing open.", ""]
         return lines
+
+    if gf_automatic:
+        out += ["## Automatic choices made by the build", "",
+                "Places where the GF defaults did **not** use GF's number, by a rule in "
+                "`build_extraction.py` rather than a decision (see GF_DATA_MAPPING.md, "
+                "\"Automatic rules\"). A decision in `decisions.csv` overrides any of them.", ""]
+        for x in gf_automatic:
+            arm, item, stratum = describe_row(wb, x["tab"], x["row"])
+            entry = wb.plan.get((x["tab"], x["row"]))
+            now = (f" (this row is now covered by decision {entry['decision_id']})"
+                   if entry is not None and entry["origin"] == "decision" and entry["decision_id"] else "")
+            where = f" [{stratum}]" if stratum else ""
+            out.append(f"- {arm}: {item}{where}. {x['reason']}{now}")
+        out.append("")
 
     for name in arm_names:
         out += section(name, lambda arm, name=name: arm.startswith(name))

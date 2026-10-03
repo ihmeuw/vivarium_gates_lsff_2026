@@ -168,6 +168,10 @@ def gf_consumption_amount(gf, wb, arm):
     for q, (gcap, ref) in by_q.items():
         row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile=q)
         wb.propose(CV, row, gcap, origin="gf", ref=ref, method="GF g/cap as published (mean over all WRA)")
+    # AUTOMATIC RULE (listed in STATUS.md and GF_DATA_MAPPING.md): if GF's national g/cap is
+    # more than TOTALS_RTOL from the mean of its own quintiles, keep the sheet's existing
+    # Total instead, because prep_extracted's totals check would otherwise fail. A decision
+    # can override this (e.g. method:scale_to_gf_total).
     row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile="Total")
     q_mean = np.mean([gcap for gcap, _ in by_q.values()])
     if np.isclose(q_mean, national, rtol=TOTALS_RTOL, atol=0):
@@ -900,11 +904,14 @@ def main():
 
     apply_gf_defaults(gf, wb, arms)
     gf_values = {key: (e["value"], e["ref"]) for key, e in wb.plan.items() if e["action"] == "set"}
+    # Places where the GF defaults deliberately did NOT use GF's number (automatic rules)
+    gf_automatic = [{"tab": key[0], "row": key[1], "reason": e["method"], "ref": e["ref"]}
+                    for key, e in wb.plan.items() if e["action"] == "keep"]
     decided = apply_decisions(wb, lit, decisions, gf_values)
 
     review = enrich_review(build_review(wb, lit, arms, decisions, decided, gf_values), wb, lit, decisions)
     review.to_csv(REVIEW, index=False)
-    write_status(STATUS, wb, lit, arms, decisions, review, resolve_decision, gf_values)
+    write_status(STATUS, wb, lit, arms, decisions, review, resolve_decision, gf_values, gf_automatic)
     comparison = build_comparison(gf, wb, lit, arms, decisions, args.extraction)
     comparison.to_csv(COMPARISON, index=False)
     write_comparison_xlsx(comparison, COMPARISON_XLSX)
