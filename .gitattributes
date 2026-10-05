@@ -1,0 +1,4 @@
+# Hand-edited CSVs: store and check out with LF line endings, so saving them from
+# Excel (which writes CRLF) doesn't show every line as changed in git diffs.
+0100_data_prep/extraction/integration/*.csv text eol=lf
+0050_config/*.csv text eol=lf
