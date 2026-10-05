@@ -87,6 +87,13 @@ Nothing open.
 
 ## India Rice
 
+**Proposed, not applied** (set status to active or rejected)
+
+- **P010** would set India Rice Iron: baseline: effective share of fortified → 0.625 | India Rice Folate: baseline: effective share of fortified → 0.625  
+  Source: typed value. Why: Match GF current India rice compliance (50%): HCES notebook fixes the share of PDS rice fortified at GOVERNMENT_BASELINE_COVERAGE = 0.8, so effectiveness = 0.5 / 0.8. National effective baseline coverage would go from 0.277 to about 0.22 (GF 0.247; the gap is HCES PDS share 0.45 vs GF consolidation 0.50). Shrinks the '80% PDS vs none' comparison by about 22%
+- **P011** would set India Rice: fortifiability (consolidation) → Total 0.175  
+  Source: typed value. Why: Calibrate the industry consolidation (applied to purchased non-PDS rice) so national fortifiability matches GF 2035 consolidation 0.529: PDS share + (1 - PDS share) x purchased x 0.175, averaged over WRA strata from the HCES files. Intervention effective coverage would go from about 0.54 to about 0.44 (GF 2035: 0.444)
+
 **Still open**
 
 *literature disagrees with output*: Decide which is right; a 'gf' or 'keep' decision records that the output is

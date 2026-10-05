@@ -111,7 +111,10 @@ overridden with a decision.
    Our model applies consolidation only to purchased rice outside the PDS, and takes baseline
    coverage from HCES, so we haven't used them. (Our handling of India rice is itself under
    review.)
-8. **Minor transcription differences** spotted in the literature extraction: Nigeria wheat
+8. **India rice consolidation path.** Current consolidation is 0.50, 2031 is 0.48 and 2035 is
+   0.53, so it falls before it rises. Is the 2031 value intended? (Proposed decisions P010 and
+   P011 would align India rice with GF's current compliance and 2035 consolidation.)
+9. **Minor transcription differences** spotted in the literature extraction: Nigeria wheat
    coverage 28.0 vs NFCMS 28.2; salt 99.2 vs 99.3; rice poorest-quintile g/cap 34.1 vs NFCMS
    34.2.
 
@@ -159,7 +162,11 @@ If it trips again, weight that mean (or loosen `rtol`).
    config (`0050_config/location_fortificant_vehicles.csv`).
 6. **India rice** handling is under review: fortifiability (0.45, applied to purchased non-PDS
    rice), baseline effectiveness (0.8) and the HCES-based baseline coverage
-   (`GOVERNMENT_BASELINE_COVERAGE = 0.8`).
+   (`GOVERNMENT_BASELINE_COVERAGE = 0.8`). Proposed decisions P010 (baseline effectiveness 0.625,
+   matching GF's 50% compliance) and P011 (industry consolidation 0.175, matching GF's 2035
+   consolidation) record one way to align it with GF. A cleaner long-term fix is to move the
+   0.8 out of the HCES notebook into the extraction sheet; that needs one HCES rerun on the
+   cluster.
 7. **Literature row IDs** are hashes of each row's content, so editing key fields in Juhi's sheet
    (e.g. fixing a scenario label) changes the ID and breaks decisions that use it. The build
    stops and suggests replacements. An explicit ID column in her sheet would prevent this.

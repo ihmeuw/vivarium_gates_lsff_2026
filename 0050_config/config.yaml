@@ -13,10 +13,13 @@ custom_intervention_scenarios:
       - intervention_100_nrv
       # GF Apr-2026: preliminary Ethiopian DFS-IoFA standard, 45 +/- 5 ppm
       - intervention_45_ppm
-  nigeria:
-    salt:
-      - intervention_25_nrv
-      - intervention_100_nrv
+# nigeria salt (intervention_25_nrv, intervention_100_nrv) is left out of
+# location_fortificant_vehicles.csv for this test run; restore both
+# together.
+#   nigeria:
+# -    salt:
+# -      - intervention_25_nrv
+# -      - intervention_100_nrv
 # Folate-only (location, vehicle) pairs whose program also contributes a
 # folate-deficiency-anemia pathway, via 0400's non_pregnant_anemia_folate
 # notebook. Iron combos always carry an anemia pathway, so they are not listed.

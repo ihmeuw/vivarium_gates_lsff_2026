@@ -116,7 +116,9 @@ class GF:
 
 
 def read_arms(path):
-    arms = pd.read_csv(path, dtype=str).fillna("")
+    # utf-8-sig: tolerate the byte-order mark Excel adds when saving "CSV UTF-8"
+    arms = pd.read_csv(path, dtype=str, skipinitialspace=True, encoding="utf-8-sig").fillna("")
+    arms = arms.apply(lambda col: col.str.strip())
     out = []
     for _, a in arms.iterrows():
         source = norm(a.get("consumption_source", "")) or "sheet"
@@ -876,7 +878,7 @@ def write_comparison_xlsx(df, path):
 
 
 def read_decisions(path):
-    d = pd.read_csv(path, dtype=str, comment="#").fillna("")
+    d = pd.read_csv(path, dtype=str, encoding="utf-8-sig").fillna("")
     d.columns = [c.strip() for c in d.columns]
     if d.decision_id.duplicated().any():
         raise ValueError(f"duplicate decision_id: {d.decision_id[d.decision_id.duplicated()].tolist()}")
