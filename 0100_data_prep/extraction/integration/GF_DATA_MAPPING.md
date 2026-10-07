@@ -133,12 +133,14 @@ If it trips again, weight that mean (or loosen `rtol`).
 
 1. **What basis is NFCMS consumption on?** It is most likely population-wide. NFCMS's
    NCI usual-intake method produces intake for everyone, and the GHS-Panel cross-check
-   matches for rice (Juhi, Oct 2026). Confirmation from JG/GF has been requested.
+   matches for rice. To be confirmed with GF (question 3 above).
    - **Wheat:** treated as per capita. SDs use the NFCMS CV (decisions D007, D008), because NFCMS
      usual-intake SDs are incompatible with our zero-inflated model. See
      `CONSUMPTION_DISTRIBUTION.md`.
    - **Rice:** deliberately kept as among consumers (D006), for comparability with earlier
-     results. Switching means rejecting D006 and activating P007 and P008.
+     results. Switching means rejecting D006 and activating P007 and P008. P008 currently
+     reports as invalid because the literature workbook has two candidate national rice means
+     (NFCMS 61.2, M4N 38); marking one `Use in model` = yes fixes that.
    - **A redesign** of the consumption model (a non-negative intake distribution, with GF
      coverage unchanged) is described in `CONSUMPTION_DISTRIBUTION.md`, section 5.
 2. **Store published numbers and convert in code.** Label each amount row's basis in the
@@ -155,11 +157,13 @@ If it trips again, weight that mean (or loosen `rtol`).
    wheat flour as already fortified with both today, which reduces the modelled intervention
    effect. The literature alternatives (NFCMS 12.6% coverage, 73% compliance, 53.9 mcg/g) were
    rejected (P001–P004); question 5 above affects the folate part.
-5. **Arms not taking GF values yet** (India wheat, India salt, Ethiopia wheat) have
-   `apply_gf = no` in `arms.csv` while Juhi extracts their data. `comparison.xlsx` still shows
-   GF's numbers for them. India wheat already has baseline decisions (D023, D024). Nigeria salt
-   was removed from `arms.csv` and keeps its existing sheet values, but it is still in the model
-   config (`0050_config/location_fortificant_vehicles.csv`).
+5. **Arms not taking GF values yet** (Nigeria salt, India wheat, India salt, Ethiopia wheat)
+   have `apply_gf = no` in `arms.csv` while their data are reviewed or extracted.
+   `comparison.xlsx` still shows GF's numbers for them. India wheat already has baseline
+   decisions (D023, D024). These four arms are also left out of the model config for now
+   (`0050_config/location_fortificant_vehicles.csv`, `location_vehicle_scenario_comparisons.csv`,
+   and the Nigeria salt scenarios in `config.yaml`, which are commented out); restore them
+   together when an arm is ready.
 6. **India rice** handling is under review: fortifiability (0.45, applied to purchased non-PDS
    rice), baseline effectiveness (0.8) and the HCES-based baseline coverage
    (`GOVERNMENT_BASELINE_COVERAGE = 0.8`). Proposed decisions P010 (baseline effectiveness 0.625,
@@ -167,6 +171,7 @@ If it trips again, weight that mean (or loosen `rtol`).
    consolidation) record one way to align it with GF. A cleaner long-term fix is to move the
    0.8 out of the HCES notebook into the extraction sheet; that needs one HCES rerun on the
    cluster.
-7. **Literature row IDs** are hashes of each row's content, so editing key fields in Juhi's sheet
-   (e.g. fixing a scenario label) changes the ID and breaks decisions that use it. The build
-   stops and suggests replacements. An explicit ID column in her sheet would prevent this.
+7. **Literature row IDs** are hashes of each row's content, so editing key fields in the
+   literature workbook (e.g. fixing a scenario label) changes the ID and breaks decisions that
+   use it. The build stops and suggests replacements. An explicit `ID` column in the workbook
+   would prevent this.

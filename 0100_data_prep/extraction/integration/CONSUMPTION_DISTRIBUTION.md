@@ -17,7 +17,8 @@ Our *p* is GF's coverage, the share who eat the vehicle, fortified or not, and t
 
 ## The problem
 
-A zero-inflated distribution with mean *m* has a minimum SD, reached when every consumer eats exactly *m*/*p*:
+A zero-inflated distribution with mean *m* has a minimum standard
+deviation (SD), reached when every consumer eats exactly *m*/*p*:
 
     SD over all women ≥ m √((1 − p) / p)
 
@@ -30,7 +31,7 @@ The NFCMS SDs (IQR/1.35) fall well below it for low-coverage vehicles:
 
 Using these directly gives a negative consumer variance and NaN draws; the build checks for this and stops. Separately, clipping at 0 with a consumer CV around 0.8 puts about 10% of consumers at zero intake, and because the hemoglobin effect is all-or-nothing they lose the benefit, cutting effective coverage by up to about 10%.
 
-## Interim fix: survey CV applied to consumers
+## Interim fix: survey coefficient of variation (CV) applied to consumers
 
 Keep *p* and the published mean *m*, give consumers the survey CV = *s*/*m*, and write the implied SD over all women to the extraction sheet:
 
@@ -52,7 +53,7 @@ Nigeria wheat, women 15+:
 | Fourth | 0.333 | 49.3 | 148.0 | 0.64 | 88.4 (72.2) | 6% |
 | Highest | 0.353 | 62.4 | 176.8 | 0.53 | 101.1 (86.6) | 3% |
 
-Nigeria rice still uses the older among-consumers treatment via decision D006 (g/cap × coverage, original NFCMS SDs), which under the population-wide reading understates mean intake by about 1/0.536 ≈ 1.9. Switching it means rejecting D006 and activating P007 (per capita) and P008 (consumer CV SDs).
+Nigeria rice still uses the older among-consumers treatment via decision D006 (g/cap × coverage, original NFCMS SDs), which under the population-wide reading understates mean intake by about 1/0.536 ≈ 1.9. Switching it means rejecting D006 and activating P007 (per capita) and P008 (consumer CV SDs); P008 first needs one of the two candidate national rice means in the literature workbook marked `Use in model`.
 
 ## Proposed redesign: gamma intake for covered women
 

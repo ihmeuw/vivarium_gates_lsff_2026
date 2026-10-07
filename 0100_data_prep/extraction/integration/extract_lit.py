@@ -15,7 +15,7 @@ Built to survive the source workbook being edited and reformatted:
   otherwise a hash of the row's normalised key and data source. decisions.csv refers to
   rows by this ID. (An explicit ID column in the source is more robust; see README.)
 
-* An optional 'Use in model' column holds Juhi's recommendation when she has several
+* An optional 'Use in model' column holds the extractor's recommendation when there are several
   candidate values for the same thing: yes / no / blank (also y, n, true, false, 1, 0, x).
   It is advisory: build_extraction shows it in review.csv and comparison.xlsx, but only
   decisions.csv changes what goes into the workbook.

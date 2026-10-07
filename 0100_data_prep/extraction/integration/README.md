@@ -1,47 +1,65 @@
-# Combining GF data and literature extractions (prototype)
+# Combining GF data and literature extractions
 
-This builds `Data Extraction Sheet (integrated).xlsx` from three inputs:
+This folder builds the extraction workbook from three inputs:
 
-- the GF background data (`../Nutrition PST Background Data.xlsx`);
-- Juhi's hand extractions (`../LSFF_effect_sizes.xlsx`);
-- a small, hand-edited file of decisions (`decisions.csv`).
+- the Gates Foundation (GF) background data, `../Nutrition PST Background Data.xlsx`;
+- the hand-maintained literature extraction, `../LSFF_effect_sizes.xlsx`;
+- a hand-edited file of decisions, `decisions.csv`.
 
-It never modifies the base workbook (`../Data Extraction Sheet.xlsx`). With no decisions, it
-produces exactly the values of the earlier one-off GF import script, which it replaces.
-`GF_DATA_MAPPING.md` documents how GF's terms map onto ours, and which extraction-sheet rows
-the model actually reads.
+The build writes `../Data Extraction Sheet (integrated).xlsx`. It never modifies the
+extraction sheet that the pipeline reads, `../Data Extraction Sheet.xlsx`; adopting the
+output is a separate, manual step (see "Adopting the output").
 
 ```
-python extract_gf.py        # GF workbook   -> gf_long.csv   (every typed-in value, GF's terms)
-python extract_lit.py       # Juhi workbook -> lit_long.csv  (our terms, our units, stable IDs)
-python build_extraction.py  # + arms.csv + decisions.csv -> workbook, changelog.csv, review.csv,
-                            #   comparison.xlsx / comparison.csv
+python extract_gf.py        # GF workbook         -> gf_long.csv   (every typed-in value, GF's terms)
+python extract_lit.py       # literature workbook -> lit_long.csv  (our terms and units, row IDs)
+python build_extraction.py  # + arms.csv + decisions.csv -> output workbook, STATUS.md,
+                            #   review.csv, changelog.csv, comparison.xlsx / comparison.csv
 ```
 
-Some terms used in the outputs:
-- **extraction sheet**: the base `../Data Extraction Sheet.xlsx`, which is never modified.
+Run all three whenever either source workbook or `decisions.csv` changes. Commit the CSVs and
+`STATUS.md`: their git diffs show exactly what changed. `extract_lit.py --lit <file>` and
+`build_extraction.py --lit-long <file>` let you try a draft of the literature workbook
+without touching the real files.
+
+Other documents here:
+- `GF_DATA_MAPPING.md`: how GF's terms map onto ours, which extraction-sheet rows the model
+  reads, the rules built into the GF defaults, questions to raise with GF, and open issues.
+- `CONSUMPTION_DISTRIBUTION.md`: why survey consumption SDs can't be used directly, the
+  interim fix, and a proposed redesign of the consumption model.
+
+Terms used in the outputs:
+- **extraction sheet**: the base `../Data Extraction Sheet.xlsx`.
 - **output**: the workbook the build writes, `../Data Extraction Sheet (integrated).xlsx`.
 - **tab** and **row**: a row's position, which is the same in both workbooks.
 
-Run all three whenever either source workbook changes. Commit the CSVs: their git diffs
-show exactly what changed in GF's or Juhi's data.
+## Where to start: STATUS.md
+
+`STATUS.md` is regenerated on every build. It lists:
+- **Automatic choices made by the build**: rows where a rule built into the GF defaults
+  (not a decision) stopped a GF number being used;
+- for each arm with `apply_gf = yes`: the decisions in effect (what each targets, the value
+  it sets, where the value comes from, and its rationale), proposed decisions with what they
+  would set, and what is still open, with output and literature values side by side.
+
+No IDs need looking up. It is the current state of the build, so this README doesn't repeat it.
 
 ## How a value gets into the workbook
 
-Each file has one job:
+Each input file has one job:
 - `arms.csv` is **scope**: which arms the build manages, and where their data come from.
 - `build_extraction.py` holds the **methods**: how values are converted or computed.
 - `decisions.csv` holds the **choices**: which value or method applies where, and why.
 
 The build has four phases. Each phase can override the one before it.
 
-1. **GF defaults**, for arms with `apply_gf = yes` in `arms.csv`. GF values are used as
-   published, following the mapping in `GF_DATA_MAPPING.md`.
+1. **GF defaults**, for arms with `apply_gf = yes`. GF values are used as published,
+   following the mapping in `GF_DATA_MAPPING.md`, apart from a few built-in rules listed
+   there under "Automatic rules".
 2. **Value decisions**: active decisions whose source is `lit:`, `value:`, `gf` or `keep`.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a
-   value from others already in place, e.g. consumption SDs from the literature's CV (see
-   `CONSUMPTION_DISTRIBUTION.md`).
+   value from others already in place.
 4. **Checks**: the constraints the pipeline relies on. If any fail, the build stops without
    writing a workbook. The checks are:
    - percentages are in [0, 1];
@@ -49,14 +67,8 @@ The build has four phases. Each phase can override the one before it.
    - each amount Total is within 10% of its quintile mean (prep_extracted's check);
    - intervention coverage × fortifiability ≥ baseline coverage (the coverage notebook's check).
 
-`changelog.csv` lists every row the build planned. For each row it gives:
-- `old_value` (from the extraction sheet) and `new_value` (in the output);
-- `source`, where the number came from: GF, literature, typed value, literature CV applied
-  to consumers, derived from <vehicle>, or existing extraction sheet;
-- `step`, which phase set it (GF default, decision, or derived placeholder), plus the
-  `decision_id` if there is one;
-- `reference`, the exact GF cell or literature row;
-- `overrides`, what it replaced, if anything.
+After a successful build, the output is recalculated with LibreOffice and checked cell by
+cell against the extraction sheet: anything that changed and wasn't meant to stops the build.
 
 ## arms.csv
 
@@ -68,105 +80,108 @@ The build has four phases. Each phase can override the one before it.
 | `notes` | Free text. |
 
 How to interpret data (per capita or among consumers, how to compute SDs) is not set here;
-those are decisions.
+those are decisions. Which arms the model actually runs is set separately, in
+`0050_config/location_fortificant_vehicles.csv`.
 
 ## decisions.csv
 
 One row per choice. Blank target fields match any value, so one decision can cover, for
-example, all three Ethiopia scenarios.
+example, all three Ethiopia scenarios or both fortificants.
 
 | column | meaning |
 |---|---|
-| `decision_id` | Unique. By convention, `D…` for active decisions and `P…` for proposals. |
-| `status` | `active` (applied), `proposed` (shown in review.csv with its effect, not applied), or `rejected` (kept for the record). |
+| `decision_id` | Unique. By convention, `D…` for decisions made as active and `P…` for proposals. |
+| `status` | `active` (applied), `proposed` (shown in STATUS.md and review.csv with its effect, not applied), or `rejected` (kept for the record). |
 | `need` | A short alias: `any`, `amount`, `u5_any`, `u5_amount`, `fortifiability`, `baseline_any`, `baseline_concentration`, `baseline_effectiveness`, `intervention_coverage`, `intervention_effectiveness`, `intervention_concentration`, `hb_effect` or `bw_effect`. The full data-need text also works. |
-| `country` … `data_point_name` | Which workbook rows the decision targets. |
-| `source` | One of: `lit:<id>` (a row of lit_long.csv); `value:<number>`; `gf` (the GF default; with no transform this just accepts it and stops the conflict being flagged); `keep` (leave the base workbook's value); `method:<name>` (compute the value; see below). |
+| `country` … `data_point_name` | Which rows the decision targets. |
+| `source` | One of: `lit:<id>` (a row of lit_long.csv); `value:<number>`; `gf` (the GF default; with no transform this just accepts it, so the row stops being flagged); `keep` (leave the extraction sheet's value); `method:<name>` (compute the value; see below). |
 | `transform` | Optional, for `lit:`, `value:` and `gf` sources: `sqrt` (√ rounded to 2 d.p., the compliance split) or `times_coverage` (× the row's WRA coverage, national for U5 rows; turns a mean among consumers into a mean over all women). |
+| `rationale`, `decided_by`, `date` | Why. The rationale is copied into the workbook's Notes. |
 
 Methods (`source = method:<name>`), implemented in `build_extraction.py`:
 
 | method | applies to | computes |
 |---|---|---|
-| `consumer_cv` | amount and U5 amount SD rows | SD over all women when consumers get the literature's CV (Juhi's NFCMS mean and SD for the same quintile or sex). See `CONSUMPTION_DISTRIBUTION.md`, section 4. |
+| `consumer_cv` | amount and U5 amount SD rows | SD over all women when consumers get the literature's CV (the literature mean and SD for the same quintile or sex). See `CONSUMPTION_DISTRIBUTION.md`. |
+| `scale_to_gf_total` | amount mean rows | Rescales the quintile means so they agree with GF's national g/cap, keeping the wealth gradient. |
 | `derive_from:<vehicle>` | amount SD rows, U5 mean rows | A placeholder borrowed from another vehicle: its consumer CV, or its U5/WRA ratio. Tagged `DERIVED (MIC-7549)` and reported as a placeholder. |
 
 Methods run after all value decisions, in file order, so they see the final means and coverage.
-| `rationale`, `decided_by`, `date` | Why. The rationale is copied into the workbook's Notes. |
 
 A typical loop:
-1. Open `review.csv` and pick a "literature disagrees" or "could replace placeholder" row.
-2. Copy its `lit_id` into a new decision, starting as `proposed`.
-3. Rebuild and look at what it would change.
-4. Flip it to `active`.
+1. In `STATUS.md` or `review.csv`, find an open item.
+2. Add a decision for it, starting as `proposed`. For literature values, copy the `lit_id`
+   from `review.csv`.
+3. Rebuild and check what it would set in `STATUS.md`.
+4. Change its status to `active` and rebuild.
 
-If a decision's literature row disappears (for example, its key fields were edited), the
-build stops and says which decision broke.
+If a decision's literature row disappears (because its key fields were edited in the
+literature workbook), the build stops, names the decision, and suggests the rows that could
+replace it.
 
-## STATUS.md
+Editing `decisions.csv` in Excel works. `.gitattributes` keeps its line endings consistent in
+git, and the build tolerates the byte-order mark Excel adds when saving as "CSV UTF-8". Check
+`git diff` before committing, since Excel can reformat values such as dates.
 
-The easiest place to start. It is regenerated on every build, with one section per arm
-listing:
-- the decisions in effect: what each one targets, the value it sets, where that value comes
-  from (for literature, the value, source and row in Juhi's sheet), and its rationale;
-- proposed decisions, with what they would set;
-- what is still open, with output and literature values side by side.
+## Other outputs
 
-No IDs need looking up.
-
-## review.csv
-
-Each row spells out its `arm`, `item` (the data need in plain words), `where` (scenario,
-quintile or sex), `output_value`, `literature` (value, source, and row in Juhi's sheet), the
-`decision` (ID, status and rationale) and a `what_to_do` hint. The IDs and positions are kept
-at the end for filtering. Rows are sorted by arm, then issue.
+**review.csv** has the open items from `STATUS.md` as a filterable table. Each row spells out
+its `arm`, `item` (the data need in plain words), `where` (scenario, quintile or sex),
+`output_value`, `literature` (value, source, and tab and row in the literature workbook), the
+`decision` (ID, status and rationale) and a `what_to_do` hint. IDs and positions are at the
+end. Rows are sorted by arm, then issue.
 
 | issue | what to do |
 |---|---|
-| literature disagrees with output | The output value differs from Juhi's. The detail says whether the output value is unchanged from the extraction sheet, a GF default, a derived placeholder, or a decision. For rice amounts, the literature value has been put on the arm's basis (× coverage) before comparing. |
-| literature could replace placeholder | Usually make it a decision. |
-| several literature candidates | Juhi has more than one value for the same thing; pick one. Any she marked `Use in model` are listed first and tagged [recommended] or [not recommended]. |
-| recommended literature value differs from output | Juhi marked this value `Use in model` = yes, but the output uses something else. Either add a decision that adopts it, or record why not (e.g. with source `keep` or `gf`). |
-| conflicting literature recommendations | More than one candidate with different values is marked yes. Ask Juhi which she means. |
-| proposed decision (not applied) | Shows the value it would set next to the current value. |
-| literature row needs attention | Fix the source row, or add a typo fix to `common.py`. |
-| literature value has no row in the extraction sheet | There's nowhere to put it (e.g. U5 SDs by sex for Nigeria salt, where the sheet has only a Total row). |
-| placeholder remains | A `DUMMY`/`DERIVED` value is still in an arm listed in `arms.csv`. |
+| placeholder remains | A `DUMMY`/`DERIVED` value is still in an arm listed in `arms.csv`. Give it a real value, or a `keep` decision if the placeholder is deliberate. |
+| GF national inconsistent with GF quintiles | The existing Total was kept by the automatic rule. Rescale with `method:scale_to_gf_total`, or record a `keep` decision. |
+| recommended literature value differs from output | A value marked `Use in model` = yes isn't what the output uses. Adopt it, or record why not (e.g. a `keep` or `gf` decision). |
+| literature could replace placeholder | Usually adopt it with a `lit:` decision. |
+| literature disagrees with output | Decide which is right. The detail says whether the output value is unchanged from the extraction sheet, a GF default, a derived placeholder, or a decision. Where a decision converts an arm's amounts with `times_coverage`, the literature value is converted the same way before comparing. |
+| several literature candidates | The literature workbook has more than one value for the same thing. Pick one, or mark one `Use in model` there. Marked candidates are listed first and tagged [recommended] or [not recommended]. |
+| conflicting literature recommendations | More than one candidate with different values is marked yes. |
+| proposed decision (not applied) / is invalid | Set its status to active or rejected, or fix it. |
+| literature row needs attention | Fix the row in the literature workbook, or add a typo fix to `common.py`. |
+| literature value has no row in the extraction sheet | There's nowhere to put it (e.g. U5 SDs by sex where the sheet has only a Total row). |
 
-## Three-way comparison: comparison.xlsx
+**changelog.csv** lists every row the build planned: `old_value` (extraction sheet) and
+`new_value` (output); `source` (GF, literature, typed value, literature CV applied to
+consumers, derived from <vehicle>, or existing extraction sheet); `step` (GF default, decision,
+or derived placeholder) and `decision_id`; `reference` (the exact GF cell or literature row);
+and `overrides` (what it replaced).
 
-`comparison.xlsx` has one row per data row of the extraction sheet, with these columns side
-by side:
-- `existing_value` and `existing_source`: the extraction sheet as it is today;
-- `gf_value` and `gf_reference`: what the GF mapping gives. This is shown for every arm in
-  `arms.csv`, including those with `apply_gf = no`, so you can see GF's numbers before
-  switching an arm on;
-- `lit_value`, `lit_as_published` and `lit_ids`: Juhi's matching value(s). `lit_value` is on
-  the sheet's basis (rice amounts × coverage, % as fractions); several candidates are listed
-  separated by `;`, with `*` marking the one she recommends;
-- `lit_recommended_value` and `lit_recommended_id`: her pick, if exactly one value is marked
-  `Use in model` = yes. Otherwise these are blank;
-- `gf_vs_existing`, `lit_vs_existing` and `lit_vs_gf`: `same` (within 1%) or
-  `differs (±x%)`. Cells are shaded green or red. `gf_value` is GF as published, so
-  `lit_vs_gf` compares the two sources as published. `lit_vs_existing` puts the literature on
-  the sheet's basis first (e.g. × coverage where a decision converts that arm's amounts). The literature comparisons use her
-  recommended value if there is one, and otherwise compare only when there is a single
-  candidate;
-- `output_value`, `output_source` and `decision_id`: what the build actually wrote.
+**comparison.xlsx** (and `comparison.csv`, which diffs well in git) has one row per data row
+of the extraction sheet, with these side by side:
+- `existing_value`, `existing_source`: the extraction sheet;
+- `gf_value`, `gf_reference`: GF as published, through the GF mapping. Shown for every arm in
+  `arms.csv`, including those with `apply_gf = no`;
+- `lit_value`, `lit_as_published`, `lit_ids`: the matching literature value(s). `lit_value`
+  is on the sheet's basis (e.g. × coverage where a decision converts the arm's amounts; % as
+  fractions). Several candidates are separated by `;`, with `*` on the recommended one;
+- `lit_recommended_value`, `lit_recommended_id`: the candidate marked `Use in model` = yes,
+  if exactly one is;
+- `gf_vs_existing`, `lit_vs_existing`, `lit_vs_gf`: `same` (within 1%) or `differs (±x%)`,
+  shaded green or red. `lit_vs_gf` compares both sources as published. The literature
+  comparisons use the recommended value if there is one, otherwise only a single candidate;
+- `output_value`, `output_source`, `decision_id`: what the build wrote.
 
-Juhi's values that have no row in the sheet are listed at the bottom. The sheet has filters
-turned on, so you can filter, for example, to `lit_vs_existing = differs*`, or to one
-country and vehicle. `comparison.csv` holds the same data in a form that diffs well in git.
+Literature values with no row in the sheet are listed at the bottom. Filters are on, so you
+can filter to, e.g., `lit_vs_existing = differs*` or one country and vehicle.
 
 ## Adopting the output
 
-When you're happy with the output, copy it over `../Data Extraction Sheet.xlsx` yourself.
-Then regenerate the sheet's text projection: `tests/test_extraction_projection.py` checks
-that it's in sync.
+When you're happy with the output, copy it over `../Data Extraction Sheet.xlsx`, then
+regenerate the sheet's text projection (`tests/test_extraction_projection.py` checks that it's
+in sync):
 
     python -m lsff_utils.extraction_projection
 
-## Robustness to Juhi's sheet changing
+The next build then starts from the adopted sheet, so its changelog shows only new changes.
+Data prep has to rerun after this (Snakemake without `skip_data_prep=true`).
+
+## The literature workbook
+
+`extract_lit.py` is built to survive the literature workbook being edited and reformatted:
 
 - **Sheets:** any sheet with `Value` and `Data need` columns is read. Sheets named `OLD…` or
   `Sheet1` are skipped.
@@ -174,51 +189,24 @@ that it's in sync.
 - **Labels:** normalised to our vocabulary. Typo fixes are in `TYPO_FIXES` in `common.py`.
 - **Units:** `%` on a 0–100 scale becomes a fraction, `ppm` becomes mcg/g, and `g/dL`
   becomes g/L (flagged for checking).
-- **IDs:** without an ID column, each row's ID is a hash of its key fields and data source.
-  Editing those fields changes the ID. **Asking Juhi to add an `ID` column (any unique
-  text) makes the IDs permanent.**
+- **Row IDs:** without an `ID` column, each row's ID is a hash of its key fields and data
+  source, so editing those fields changes the ID. Adding an `ID` column (any unique text,
+  never reused) to the workbook makes the IDs permanent.
 
-## Juhi's recommendations: the `Use in model` column
+### The optional `Use in model` column
 
-This column is optional; until it exists, everything works as before. It goes on any
-sheet of `LSFF_effect_sizes.xlsx`, and the header may be `Use in model`, `Use in model?` or
-`use_in_model`. The values are:
-- `yes` (also `y`, `true`, `1`, `x`): her recommended candidate;
-- `no` (also `n`, `false`, `0`): a candidate she considered and doesn't recommend;
+The person doing the extraction can mark which candidate they recommend when there are
+several values for the same thing. The column can go on any sheet, headed `Use in model`,
+`Use in model?` or `use_in_model`, with values:
+- `yes` (also `y`, `true`, `1`, `x`): the recommended candidate;
+- `no` (also `n`, `false`, `0`): considered and not recommended;
 - blank: no view.
 
 Anything else makes the row "needs attention".
 
-It is **advisory only**: it never changes the output workbook. Values still get there only
-through `decisions.csv`. In practice:
-- **review.csv:** her pick is listed first among candidates. If it differs from the output,
-  that's reported as "recommended literature value differs from output". Candidates she
-  marked `no` are not reported as separate disagreements when she has marked another
-  candidate `yes`.
-- **comparison.xlsx:** shows her pick in `lit_recommended_value` and compares against it.
-
-To adopt a recommendation, add a decision with `source = lit:<the recommended lit_id>`. The
-ID is shown in review.csv.
-
-## Current state (2 Oct 2026)
-
-Nigeria wheat:
-- **Active decisions:** intervention concentrations from the national standard (iron 40,
-  folic acid 2.6 mcg/g), and U5 intake from NFCMS Table 148.
-- **Consumption** is per capita (the GF default, as published), with SDs from the NFCMS CV
-  applied to consumers (D007, D008).
-
-Nigeria rice is unchanged on purpose (among consumers, original SDs; D006), so that its results
-stay comparable with earlier runs. To switch it, reject D006 and activate P007 and P008. P008
-currently reports as invalid, because Juhi has two candidate rice national means (NFCMS 61.2
-and M4N 38). Marking one `Use in model` = yes fixes that.
-
-Proposed, needing your call:
-- **P001 Folate baseline:** set to 0, because Nigerian wheat flour isn't fortified with folic acid now.
-- **P002 Iron baseline coverage:** 12.6% (NFCMS) vs 79% (GF-derived).
-- **P003 Baseline concentration:** 53.9 mcg/g.
-- **P004 Compliance:** 73% (NFCMS) vs 63% (M4N).
-- **P006 Intervention split:** Juhi's 100%/100% vs √0.85.
-
-Rejected: P005 (NFCMS SDs used as they are). It fails the variance check and is
-superseded by D007/D008.
+It is **advisory only**: values reach the output only through `decisions.csv`. It changes
+what is reported: the recommended candidate is listed first, a recommendation that differs
+from the output gets its own review item, and candidates marked `no` aren't reported as
+separate disagreements when another candidate is marked `yes`. `comparison.xlsx` compares
+against the recommended value. `method:consumer_cv` also uses it to choose between candidate
+means or SDs.

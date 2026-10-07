@@ -16,7 +16,7 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 **Decisions in effect**
 
 - **D006** Nigeria Rice: WRA consumption: g/day mean → Total existing value kept; Lowest 11.46; Second 23.48; Middle 33.14; Fourth 46.65; Highest 53.74  
-  Source: GF, then times_coverage. Why: Keep Nigeria rice on the among-consumers basis used in earlier runs (JG email 8/31), so results stay comparable. NFCMS usual intake is probably population-wide (Juhi, Oct 2026); revisit with P007
+  Source: GF, then times_coverage. Why: Keep Nigeria rice on the among-consumers basis used in earlier runs (JG email 8/31), so results stay comparable. NFCMS usual intake is probably population-wide (literature review, Oct 2026); revisit with P007
 - **D013** Nigeria Rice: fortifiability (consolidation) → 0.9 (GF, accepted)  
   Source: GF. Why: Use GF 2035 consolidation (0.90) for the intervention target; literature values (M4N 0.54, GFDx 0.30) are current-state
 - **D014** Nigeria Rice Iron: intervention: coverage of fortifiable → Intervention 0.92 (GF, accepted) | Nigeria Rice Folate: intervention: coverage of fortifiable → Intervention 0.92 (GF, accepted)  
@@ -46,24 +46,24 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 **Still open**
 
-*literature row needs attention*: Fix the row in Juhi's sheet
+*literature row needs attention*: Fix the row in the literature workbook
 
-- Nigeria Bouillon: WRA consumption: share eating the vehicle [Total, Children U5]. literature: 98.8 % from NFCMS, Annex 44, 549 (Juhi's sheet 'Vehicle Consumption' row 66) Problem: population is children U5 but the data need is for WRA.
+- Nigeria Bouillon: WRA consumption: share eating the vehicle [Total, Children U5]. literature: 98.8 % from NFCMS, Annex 44, 549 (literature workbook 'Vehicle Consumption' row 66) Problem: population is children U5 but the data need is for WRA.
 
 ## Nigeria Wheat
 
 **Decisions in effect**
 
 - **D001** Nigeria Wheat Iron: intervention: concentration (mcg/g) → Intervention 40  
-  Source: 40.0 ppm from TechnoServe, 2019; Table 2 (Juhi's sheet 'MN intervention fortification' row 5). Why: Nigeria mandatory standard for iron in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder
+  Source: 40.0 ppm from TechnoServe, 2019; Table 2 (literature workbook 'MN intervention fortification' row 5). Why: Nigeria mandatory standard for iron in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder
 - **D002** Nigeria Wheat Folate: intervention: concentration (mcg/g) → Intervention 2.6  
-  Source: 2.6 ppm from TechnoServe, 2019; Table 2 (Juhi's sheet 'MN intervention fortification' row 6). Why: Nigeria mandatory standard for folic acid in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder (1.69)
+  Source: 2.6 ppm from TechnoServe, 2019; Table 2 (literature workbook 'MN intervention fortification' row 6). Why: Nigeria mandatory standard for folic acid in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder (1.69)
 - **D003** Nigeria Wheat: U5 consumption: g/day mean → Total 26  
-  Source: 26.0 g/day from NFCMS, Table 148, p 194 (Juhi's sheet 'Vehicle Consumption' row 22). Why: NFCMS Table 148 U5 wheat intake replaces the value derived from rice
+  Source: 26.0 g/day from NFCMS, Table 148, p 194 (literature workbook 'Vehicle Consumption' row 22). Why: NFCMS Table 148 U5 wheat intake replaces the value derived from rice
 - **D004** Nigeria Wheat: U5 consumption: g/day mean → Female 25.1  
-  Source: 25.1 g/day from NFCMS, Table 148, p 194 (Juhi's sheet 'Vehicle Consumption' row 24). Why: NFCMS Table 148 U5 wheat intake (girls) replaces the value derived from rice
+  Source: 25.1 g/day from NFCMS, Table 148, p 194 (literature workbook 'Vehicle Consumption' row 24). Why: NFCMS Table 148 U5 wheat intake (girls) replaces the value derived from rice
 - **D005** Nigeria Wheat: U5 consumption: g/day mean → Male 26.9  
-  Source: 26.9 g/day from NFCMS, Table 148, p 194 (Juhi's sheet 'Vehicle Consumption' row 23). Why: NFCMS Table 148 U5 wheat intake (boys) replaces the value derived from rice
+  Source: 26.9 g/day from NFCMS, Table 148, p 194 (literature workbook 'Vehicle Consumption' row 23). Why: NFCMS Table 148 U5 wheat intake (boys) replaces the value derived from rice
 - **D007** Nigeria Wheat: WRA consumption: g/day SD → Total 87.58; Lowest 44.93; Second 55.12; Middle 76.17; Fourth 88.41; Highest 101.1  
   Source: computed (consumer_cv). Why: NFCMS usual-intake SDs are incompatible with the zero-inflated model at 19-35% coverage; give consumers the NFCMS CV (CONSUMPTION_DISTRIBUTION.md section 4)
 - **D008** Nigeria Wheat: U5 consumption: g/day SD → Total 58.09; Female 53.98; Male 62.19  
@@ -73,7 +73,7 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 - **D012** Nigeria Wheat Iron: intervention: effective share of fortified → Intervention 0.92 (GF, accepted) | Nigeria Wheat Folate: intervention: effective share of fortified → Intervention 0.92 (GF, accepted)  
   Source: GF. Why: As D011
 - **D019** Nigeria Wheat Iron: baseline: concentration (mcg/g) → 40  
-  Source: 40.0 ppm from NFCMS,Table (Juhi's sheet 'MN baseline fortification' row 4). Why: Assume current concentration is at Nigeria standard
+  Source: 40.0 ppm from NFCMS,Table (literature workbook 'MN baseline fortification' row 4). Why: Assume current concentration is at Nigeria standard
 - **D020** Nigeria Wheat Folate: baseline: concentration (mcg/g) → 2.6  
   Source: typed value. Why: 2.6 mg/kg from Table 2 premix values from Technoserve
 - **D021** Nigeria Wheat Iron: baseline: effective share of fortified → 0.79 (GF, accepted) | Nigeria Wheat Folate: baseline: effective share of fortified → 0.79 (GF, accepted)  
@@ -98,11 +98,11 @@ Nothing open.
 
 *literature disagrees with output*: Decide which is right; a 'gf' or 'keep' decision records that the output is
 
-- India Rice: fortifiability (consolidation) [Total]. output 0.45; literature: 50.0 % from M4N Database (Juhi's sheet 'Vehicle Consumption' row 118)
+- India Rice: fortifiability (consolidation) [Total]. output 0.45; literature: 50.0 % from M4N Database (literature workbook 'Vehicle Consumption' row 118)
 
-*literature row needs attention*: Fix the row in Juhi's sheet
+*literature row needs attention*: Fix the row in the literature workbook
 
-- India Rice: baseline: effective share of fortified. literature: 50.0 % from nan (Juhi's sheet 'MN baseline fortification' row 24) Problem: unknown fortificant 'None'.
+- India Rice: baseline: effective share of fortified. literature: 50.0 % from nan (literature workbook 'MN baseline fortification' row 24) Problem: unknown fortificant 'None'.
 
 ## Effect sizes (all countries)
 

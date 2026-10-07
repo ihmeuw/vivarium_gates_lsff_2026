@@ -48,11 +48,11 @@ WHAT_TO_DO = {
     "recommended literature value differs from output": "Adopt it with a lit: decision, or record why not",
     "literature could replace placeholder": "Usually adopt it with a lit: decision",
     "literature disagrees with output": "Decide which is right; a 'gf' or 'keep' decision records that the output is",
-    "several literature candidates": "Pick one (decision), or ask Juhi to mark 'Use in model'",
-    "conflicting literature recommendations": "Ask Juhi which one she means",
+    "several literature candidates": "Pick one (decision), or mark one 'Use in model' in the literature workbook",
+    "conflicting literature recommendations": "More than one candidate is marked 'Use in model' = yes; resolve in the literature workbook",
     "proposed decision (not applied)": "Set its status to active or rejected",
     "proposed decision is invalid": "Fix the decision (see detail)",
-    "literature row needs attention": "Fix the row in Juhi's sheet",
+    "literature row needs attention": "Fix the row in the literature workbook",
     "literature value has no row in the extraction sheet": "Nothing to do unless the sheet should gain a row",
 }
 
@@ -87,7 +87,7 @@ def describe_row(wb, tab, row):
 
 
 def describe_lit(lit, lit_id):
-    """'value units (source; Juhi's sheet <tab> row <n>)' for a literature row."""
+    """'value units (source; literature workbook <tab> row <n>)' for a literature row."""
     if blank(lit_id) or not str(lit_id).startswith("lit:"):
         return ""
     m = lit[lit.lit_id == lit_id]
@@ -95,8 +95,8 @@ def describe_lit(lit, lit_id):
         return f"{lit_id} (not found)"
     r = m.iloc[0]
     value = f"{r.raw_value} {r.raw_units or ''}".strip() if not blank(r.raw_value) else "(no value)"
-    pick = {"yes": "; Juhi recommends it", "no": "; Juhi does not recommend it"}.get(r.use_in_model, "")
-    return f"{value} from {r.data_source} (Juhi's sheet '{r.source_sheet}' row {r.source_row}{pick})"
+    pick = {"yes": "; marked Use in model", "no": "; marked not for use in model"}.get(r.use_in_model, "")
+    return f"{value} from {r.data_source} (literature workbook '{r.source_sheet}' row {r.source_row}{pick})"
 
 
 def describe_lit_target(lit, lit_id):

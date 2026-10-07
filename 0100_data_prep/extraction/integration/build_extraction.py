@@ -322,7 +322,7 @@ def resolve_decision(wb, lit, d, gf_values):
             match = lit[lit.lit_id == source]
             if len(match) != 1:
                 raise ValueError(f"decision {d['decision_id']}: literature row {source} not found. It probably "
-                                 "changed in Juhi's sheet; rows that could replace it: "
+                                 "changed in the literature workbook; rows that could replace it: "
                                  + likely_lit_rows(lit, d))
             m = match.iloc[0]
             if pd.isna(m.value):
@@ -363,7 +363,7 @@ WOMEN_POPULATIONS = {"non-pregnant wra", "wra", "all", ""}
 
 
 def lit_one(lit, *, country, vehicle, need, point, quintile=None, sex=None):
-    """The single literature row for a consumption statistic (Juhi's pick if several)."""
+    """The single literature row for a consumption statistic ('Use in model' pick if several)."""
     d = lit[(lit.status == "ok") & (lit.country == country) & (lit.vehicle == vehicle) & (lit.need == need)
             & (lit.data_point_name == point)]
     if need == "amount":
@@ -604,7 +604,7 @@ def lit_workbook_rows(wb, r):
 
 
 def recommended_first(lits):
-    """Juhi's 'Use in model' = yes candidates first, then unmarked, then 'no'."""
+    """'Use in model' = yes candidates first, then unmarked, then 'no'."""
     order = {"yes": 0, "no": 2}
     return sorted(lits, key=lambda x: order.get(x.use_in_model, 1))
 
@@ -666,7 +666,7 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
                     tab=sheet, row=row, output_value=current)
         for x in lits:
             if x.use_in_model == "no" and recommended:
-                continue  # Juhi recommends another candidate for this row; that one is reported instead
+                continue  # another candidate is marked 'Use in model'; that one is reported instead
             comparable = x.value
             note = ""
             if x.need in ("amount", "u5_amount") and x.data_point_name == "mean" and \
@@ -802,7 +802,7 @@ def build_comparison(gf, wb, lit, arms, decisions, extraction_path):
             rec_values = {v for v, x in zip(lit_values, lits) if x.use_in_model == "yes"}
             rec_ids = [x.lit_id for x in lits if x.use_in_model == "yes"]
             lit_recommended = rec_values.pop() if len(rec_values) == 1 else None
-            # Compare against Juhi's pick when she made one, else the single candidate
+            # Compare against the 'Use in model' pick if there is one, else the single candidate
             lit_compare = lit_recommended if lit_recommended is not None else lit_value
             # GF values are as published, so compare them with the literature as published too
             raw_rec = {v for v, x in zip(lit_raw, lits) if x.use_in_model == "yes"}
