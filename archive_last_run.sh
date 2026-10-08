@@ -12,6 +12,9 @@
 #   0300_child_sim/lbwsg_pafs/<..>/<run>/           -> data/<M>/lbwsg_pafs/<..>/<run>/
 #   0200_pregnancy_sim/sim_results/<..>/<run>/      -> results/<M>/maternal/<..>/<run>/
 #   0300_child_sim/sim_results/<..>/<run>/          -> results/<M>/child/<..>/<run>/
+#   0400_non_pregnant_anemia_model/results/         -> results/<M>/non_pregnant_anemia/
+#   5000_analyze_results/results/rescaled_pregnancy_results/ -> results/<M>/rescaled_pregnancy/
+#   5000_analyze_results/results/rescaled_child_results/     -> results/<M>/rescaled_child/
 #
 # -- relative to the repository on the left and to TEAM_ARCHIVE_ROOT on the
 # right, with <M> standing in for MODEL_NUMBER. The mapping is not derived from
