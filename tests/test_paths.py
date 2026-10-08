@@ -208,13 +208,16 @@ def test_snakemake_local_inputs_match_rule_outputs() -> None:
     """Rules name their outputs repo-relative; a local input must be the same string."""
     from lsff_utils import snakemake_utils
 
-    assert snakemake_utils.source_path(
-        lsff_utils.paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT,
-        "{vehicle}",
-        "{location}",
-        "ylds.parquet",
-        source="local",
-    ) == "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet"
+    assert (
+        snakemake_utils.source_path(
+            lsff_utils.paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT,
+            "{vehicle}",
+            "{location}",
+            "ylds.parquet",
+            source="local",
+        )
+        == "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet"
+    )
 
 
 def test_run_lookup_works_against_the_archive(tmp_path: Path) -> None:
