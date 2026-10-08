@@ -48,6 +48,16 @@ Running the model
      ./archive_last_run.sh -n    # show what would be copied
      ./archive_last_run.sh
 
+Reading someone else's run
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default the pipeline notebooks in ``5000_analyze_results`` read your working
+tree, and the validation notebooks read the team drive under ``MODEL_NUMBER``. To
+point all of them at an archived run instead, set this before starting Jupyter or
+Snakemake, and check out the commit recorded in that run's ``archive_info.txt``::
+
+    export LSFF_DATA_SOURCE=model2.5.0
+
 What to delete
 ~~~~~~~~~~~~~~
 

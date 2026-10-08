@@ -128,6 +128,18 @@ def run_marker(results_root: Path, location: str, vehicle: str = None) -> str:
     return str(paths.run_marker(results_root, location, vehicle))
 
 
+def source_path(in_repo_root: Path, *parts: str, source: str) -> str:
+    """A pipeline output as a rule input, read from ``source`` (see :func:`paths.source_root`).
+
+    Local paths stay repo-relative so they match the rule that produces them;
+    archived ones are absolute, and no rule produces them.
+    """
+    root = paths.source_root(in_repo_root, source)
+    if source == paths.LOCAL_SOURCE:
+        root = root.relative_to(paths.REPO_ROOT)
+    return str(root.joinpath(*parts))
+
+
 def write_run_marker(results_root: Path, location: str, vehicle: str = None) -> str:
     """Shell that records the run just produced, for the end of a rule's recipe.
 

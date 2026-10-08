@@ -49,6 +49,9 @@ IN_REPO_ROOTS = {
     "CHILD_RESULTS_ROOT": paths.CHILD_RESULTS_ROOT,
     "LBWSG_PAF_ARTIFACT_ROOT": paths.LBWSG_PAF_ARTIFACT_ROOT,
     "LBWSG_PAF_RESULTS_ROOT": paths.LBWSG_PAF_RESULTS_ROOT,
+    "NON_PREGNANT_ANEMIA_RESULTS_ROOT": paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT,
+    "RESCALED_PREGNANCY_RESULTS_ROOT": paths.RESCALED_PREGNANCY_RESULTS_ROOT,
+    "RESCALED_CHILD_RESULTS_ROOT": paths.RESCALED_CHILD_RESULTS_ROOT,
 }
 
 
@@ -169,6 +172,49 @@ def test_archive_root_is_keyed_on_the_model_number() -> None:
 def test_archive_root_rejects_an_unarchived_root() -> None:
     with pytest.raises(KeyError, match="is not archived"):
         paths.archive_root(paths.REPO_ROOT / "not_a_pipeline_output")
+
+
+def test_data_source_prefers_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(paths.DATA_SOURCE_ENV_VAR, raising=False)
+    assert paths.data_source(default="local") == "local"
+    assert paths.data_source(default=paths.MODEL_NUMBER) == paths.MODEL_NUMBER
+
+    monkeypatch.setenv(paths.DATA_SOURCE_ENV_VAR, "model9.9")
+    assert paths.data_source(default="local") == "model9.9"
+    assert paths.data_source(default=paths.MODEL_NUMBER) == "model9.9"
+
+
+def test_source_root_reads_the_working_tree_or_the_archive(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+    root = paths.RESCALED_CHILD_RESULTS_ROOT
+    assert paths.source_root(root, "local") == root
+
+    archived = paths.archive_root(root, "model9.9")
+    archived.mkdir(parents=True)
+    assert paths.source_root(root, "model9.9") == archived
+
+
+def test_source_root_rejects_an_unpublished_model_number(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+    with pytest.raises(FileNotFoundError, match="model9.9"):
+        paths.source_root(paths.CHILD_RESULTS_ROOT, "model9.9")
+
+
+def test_snakemake_local_inputs_match_rule_outputs() -> None:
+    """Rules name their outputs repo-relative; a local input must be the same string."""
+    from lsff_utils import snakemake_utils
+
+    assert snakemake_utils.source_path(
+        lsff_utils.paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT,
+        "{vehicle}",
+        "{location}",
+        "ylds.parquet",
+        source="local",
+    ) == "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet"
 
 
 def test_run_lookup_works_against_the_archive(tmp_path: Path) -> None:
