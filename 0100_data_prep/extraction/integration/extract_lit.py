@@ -11,9 +11,11 @@ Built to survive the source workbook being edited and reformatted:
   quintiles, data needs (with typo fixes), data point names.
 * Units are converted to the workbook's: % values stored as 0-100 become fractions,
   ppm becomes mcg/g, g/dL becomes g/L.
-* Every row gets a stable ``lit_id``. If the sheet has an 'ID' column, that is used;
-  otherwise a hash of the row's normalised key and data source. decisions.csv refers to
-  rows by this ID. (An explicit ID column in the source is more robust; see README.)
+* Every row gets a ``lit_id``. If the sheet has an 'ID' column, that is used (prefixed
+  'lit:'); otherwise a hash of the row's normalised key and data source, which changes when
+  those fields are edited. decisions.csv refers to rows by this ID.
+* The workbook lives on SharePoint, not in the repo. Pass its path with --lit; the
+  file's date and SHA-256 are recorded in sources.csv next to the snapshot.
 
 * An optional 'Use in model' column holds the extractor's recommendation when there are several
   candidate values for the same thing: yes / no / blank (also y, n, true, false, 1, 0, x).
@@ -33,7 +35,7 @@ import pandas as pd
 
 from common import (
     CVF, SCEN, COUNTRIES, FORTIFICANTS, LIT_FILE, LIT_LONG, NEEDS, QUINTILE_LABELS, VEHICLES,
-    canonical, fix_typos, need_alias, norm, stable_id,
+    canonical, fix_typos, need_alias, norm, record_source, stable_id,
 )
 
 IGNORE_SHEETS = {"sheet1"}  # Sheet1 is a copy of our own Vehicle Extraction tab
@@ -137,11 +139,11 @@ def normalise(sheet_name, r, raw):
     alias = need_alias(raw.get("data_need"))
     rec["need"] = alias
     rec["data_need"] = NEEDS[alias][1] if alias else raw.get("data_need")
-    rec["workbook_sheet"] = NEEDS[alias][0] if alias else None
+    rec["table"] = NEEDS[alias][0] if alias else None
     no_target = []  # fine as data, but nothing in our workbook to put it in
     if alias is None:
         no_target.append("data need is not one of ours")
-    elif rec["workbook_sheet"] in (CVF, SCEN) and rec["fortificant"] not in FORTIFICANTS.values():
+    elif rec["table"] in (CVF, SCEN) and rec["fortificant"] not in FORTIFICANTS.values():
         issues.append(f"unknown fortificant '{rec['fortificant']}'")
 
     # A WRA-labelled need measured in children (or vice versa) is a labelling mistake
@@ -187,7 +189,8 @@ def normalise(sheet_name, r, raw):
     if norm(use) and rec["use_in_model"] is None:
         issues.append(f"'Use in model' should be yes, no or blank, not '{use}'")
 
-    rec["lit_id"] = raw.get("id") or stable_id(
+    explicit = " ".join(str(raw.get("id") or "").split())
+    rec["lit_id"] = (explicit if explicit.startswith("lit:") else f"lit:{explicit}") if explicit else stable_id(
         "lit", rec["country"], rec["vehicle"], rec["fortificant"], rec["scenario"], rec["quintile"],
         rec["population"], rec["need"] or rec["data_need"], rec["data_point_name"], rec["data_source"],
         rec["term"],
@@ -227,10 +230,12 @@ def main():
     dup = df.groupby("lit_id").cumcount()
     df.loc[dup > 0, "lit_id"] = df.loc[dup > 0, "lit_id"] + "-" + dup[dup > 0].astype(str)
 
-    first = ["lit_id", "status", "issues", "workbook_sheet", "need", "country", "vehicle", "fortificant",
+    first = ["lit_id", "status", "issues", "table", "need", "country", "vehicle", "fortificant",
              "scenario", "quintile", "sex", "population", "data_point_name", "value", "units", "use_in_model"]
     df = df[first + [c for c in df.columns if c not in first]]
-    df.to_csv(args.output, index=False)
+    df.to_csv(args.output, index=False, lineterminator="\n")
+    if args.output.resolve() == LIT_LONG.resolve():
+        record_source(args.output, args.lit)
     print(f"Wrote {args.output.name}: {len(df)} rows; " + ", ".join(f"{k}: {v}" for k, v in df.status.value_counts().items()))
     attention = df[df.status == "needs_attention"]
     for _, row in attention.iterrows():

@@ -55,11 +55,44 @@ rule dhs_mm:
         papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3 {papermill_engine}
         """
 
+# The extraction tables the data prep notebooks read are generated from the base tables
+# (hand-entered values), the literature and GF snapshots and decisions.csv. See
+# 0100_data_prep/extraction/README.md. The build is cheap and deterministic;
+# tests/test_extraction_build.py checks that the committed output is up to date.
+extraction_generated = [
+    f"0100_data_prep/extraction/generated/{table}.csv"
+    for table in ["country_vehicle", "country_vehicle_fortificant", "scenario_definition", "vehicle"]
+]
+
+rule build_extraction:
+    input:
+        snakemake_utils.freeze([
+            "0100_data_prep/extraction/data/country_vehicle.csv",
+            "0100_data_prep/extraction/data/country_vehicle_fortificant.csv",
+            "0100_data_prep/extraction/data/scenario_definition.csv",
+            "0100_data_prep/extraction/data/vehicle.csv",
+            "0100_data_prep/extraction/integration/lit_long.csv",
+            "0100_data_prep/extraction/integration/gf_long.csv",
+            "0100_data_prep/extraction/integration/arms.csv",
+            "0100_data_prep/extraction/integration/decisions.csv",
+            "0100_data_prep/extraction/integration/build_extraction.py",
+            "0100_data_prep/extraction/integration/common.py",
+            "0100_data_prep/extraction/integration/report.py",
+        ], frozen)
+    output:
+        extraction_generated
+    shell:
+        """
+        {common_setup}
+        cd extraction/integration
+        python build_extraction.py
+        """
+
 rule prep_vehicle:
     input:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_vehicle.ipynb",
-            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
+            "0100_data_prep/extraction/generated/vehicle.csv",
         ], frozen)
     log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
     output: 
@@ -145,7 +178,9 @@ rule prep_extracted:
     input:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_extracted.ipynb",
-            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
+            "0100_data_prep/extraction/generated/country_vehicle.csv",
+            "0100_data_prep/extraction/generated/country_vehicle_fortificant.csv",
+            "0100_data_prep/extraction/generated/scenario_definition.csv",
             '0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv',
             '0100_data_prep/hces/india_proportion_government_rice.csv',
             '0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv',

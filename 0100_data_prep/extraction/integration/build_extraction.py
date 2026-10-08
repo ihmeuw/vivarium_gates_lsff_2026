@@ -1,36 +1,42 @@
-"""Step 2: build the extraction workbook from GF data, literature data and decisions.
+"""Build the generated extraction tables from the base tables, literature, GF data and decisions.
 
 Inputs (all in this directory unless noted):
-    gf_long.csv      from extract_gf.py
-    lit_long.csv     from extract_lit.py
-    arms.csv         scope: which arms the build manages, whether they take GF values, and
-                     where their consumption data come from
+    ../data/*.csv    the base extraction tables: hand-entered values with no other source
+    lit_long.csv     the literature extraction, from extract_lit.py
+    gf_long.csv      the GF background data, from extract_gf.py
+    arms.csv         scope: which arms take default values, and where their consumption
+                     data come from
     decisions.csv    every interpretive choice: values to use, conversions and computation
                      methods, with rationale (see README.md)
-    ../Data Extraction Sheet.xlsx   the base workbook (never modified)
 
 Phases, each of which can override the one before:
-    1. GF defaults       for arms with apply_gf = yes, using GF values as published (the
-                         mapping in GF_DATA_MAPPING.md)
+    1. defaults          for arms with apply_defaults = yes:
+                         a. literature: rows where the literature gives a single value
+                            (or a single 'Use in model' pick);
+                         b. GF: rows the literature left unset, using GF values as published
+                            (the mapping in GF_DATA_MAPPING.md)
     2. value decisions   active decisions whose source is lit:, value:, gf or keep
                          (times_coverage ones run last, after coverage is final)
     3. method decisions  active decisions whose source is method:<name>; values computed from
                          others already in place (e.g. consumption SDs, CONSUMPTION_DISTRIBUTION.md)
     4. checks            the constraints the pipeline relies on (fails the build)
 
-Methods (how a value is computed) live in this file, in METHODS. Which method applies where,
-and why, lives in decisions.csv.
+Methods (how a value is computed) live in this file, in run_method. Which method applies
+where, and why, lives in decisions.csv.
 
 Outputs:
-    ../Data Extraction Sheet (integrated).xlsx   recalculated with LibreOffice and verified
-    changelog.csv    every planned row: old -> new, origin, reference, what it overrode
+    ../generated/*.csv   the tables the data prep notebooks read (never edit by hand)
+    changelog.csv    every planned row: base -> new, origin, reference, what it overrode
     review.csv       things a person should look at: GF/literature conflicts, literature
                      values not used, proposed decisions and their effect, placeholders left;
                      every row spelled out (arm, item, values, sources, decision text)
     STATUS.md        the same, per arm, as a readable page, plus the decisions in effect
+    comparison.csv   base vs GF vs literature vs output, one row per data row
+                     (and comparison.xlsx, the same with colours, when openpyxl is installed)
 
 Usage:
-    python extract_gf.py && python extract_lit.py && python build_extraction.py
+    python build_extraction.py            # write everything
+    python build_extraction.py --check    # exit 1 if ../generated/ is out of date
 """
 
 import argparse
@@ -39,17 +45,15 @@ import pathlib
 import sys
 
 import numpy as np
-import openpyxl
 import pandas as pd
 
 from report import enrich_review, write_status
 from common import (
-    ALL_SAME, ARMS_FILE, CV, CVF, DECISIONS_FILE, EXTRACTION_DIR, EXTRACTION_FILE, GF_LONG, HERE,
-    LIT_LONG, NEEDS, QUINTILES, SCEN, VEH, Workbook, consumer_moments, mixture_sd, need_alias, norm,
-    recalculate, round2, verify,
+    ALL_SAME, ARMS_FILE, BASE_DIR, CV, CVF, DECISIONS_FILE, GENERATED_DIR, GF_LONG, HERE, LIT_LONG,
+    NEEDS, QUINTILES, SCEN, TABLES, VEH, Workbook, consumer_moments, format_number, mixture_sd,
+    need_alias, norm, round2, table_text,
 )
 
-DEFAULT_OUTPUT = EXTRACTION_DIR / "Data Extraction Sheet (integrated).xlsx"
 CHANGELOG = HERE / "changelog.csv"
 REVIEW = HERE / "review.csv"
 STATUS = HERE / "STATUS.md"
@@ -61,6 +65,7 @@ TOTALS_RTOL = 0.1  # check_totals_reasonable in prep_extracted.ipynb
 AGREE_RTOL = 0.01  # literature and workbook values closer than this "agree"
 
 SOURCE_LABELS = {
+    "lit": "Literature extraction",  # replaced per row with the literature's data source
     "gf": "GF Nutrition PST Background Data (updated 30 Sep 2026)",
     "derived": "DERIVED (MIC-7549)",
     "decision": "decision",  # replaced per decision with a specific label
@@ -127,14 +132,75 @@ def read_arms(path):
         out.append({
             "country": a.country, "vehicle": a.vehicle,
             "fortificants": [f.strip() for f in a.fortificants.split(";") if f.strip()],
-            "apply_gf": norm(a.apply_gf) == "yes",
+            "apply_defaults": norm(a.apply_defaults) == "yes",
             "hces": source == "hces",
         })
     return out
 
 
 # --------------------------------------------------------------------------------------
-# Phase 1: GF defaults (the mapping documented in GF_DATA_MAPPING.md)
+# Phase 1a: literature defaults
+# --------------------------------------------------------------------------------------
+
+
+def lit_candidates(wb, lit):
+    """(table, line) -> the usable literature rows that speak to it."""
+    by_row = {}
+    for _, r in lit[lit.status == "ok"].iterrows():
+        for row in lit_workbook_rows(wb, r):
+            by_row.setdefault((NEEDS[r.need][0], row), []).append(r)
+    return by_row
+
+
+def lit_pick(candidates):
+    """The literature row to use, or None if the candidates disagree.
+
+    Candidates marked 'Use in model' = no are ignored; if any are marked yes, only those
+    count. The rest must all give the same value.
+    """
+    usable = [x for x in candidates if x.use_in_model != "no"]
+    pool = [x for x in usable if x.use_in_model == "yes"] or usable
+    if pool and len({round(float(x.value), 9) for x in pool}) == 1:
+        return pool[0], [x.lit_id for x in pool]
+    return None, []
+
+
+def default_scope(wb, sheet, row, arms):
+    """The arm a row belongs to, if it takes default values (None otherwise)."""
+    if sheet == VEH:
+        return None  # effect sizes are model-wide; they change only through decisions
+    arm = next((a for a in arms if a["apply_defaults"] and a["country"] == wb.get(sheet, row, "country")
+                and a["vehicle"] == wb.get(sheet, row, "vehicle")), None)
+    if arm is None:
+        return None
+    if sheet in (CVF, SCEN) and wb.get(sheet, row, "fortificant") not in arm["fortificants"]:
+        return None
+    if arm["hces"] and sheet != SCEN:
+        return None  # consumption, fortifiability and baseline come from HCES for these arms
+    return arm
+
+
+def apply_lit_defaults(wb, lit, arms):
+    """Phase 1a. Returns {(table, line): candidates} for rows left unset because the
+    literature candidates disagree."""
+    ambiguous = {}
+    for (sheet, row), candidates in sorted(lit_candidates(wb, lit).items(), key=lambda kv: kv[0]):
+        if default_scope(wb, sheet, row, arms) is None:
+            continue
+        x, ids = lit_pick(candidates)
+        if x is None:
+            ambiguous[(sheet, row)] = candidates
+            continue
+        pick = " (marked Use in model)" if x.use_in_model == "yes" else ""
+        wb.propose(sheet, row, float(x.value), origin="lit",
+                   ref=f"{'; '.join(ids)} ({x.source_sheet} row {x.source_row}: {x.data_source})",
+                   method=f"literature value as extracted{pick}",
+                   source_label=f"Literature extraction: {x.data_source}")
+    return ambiguous
+
+
+# --------------------------------------------------------------------------------------
+# Phase 1b: GF defaults (the mapping documented in GF_DATA_MAPPING.md)
 # --------------------------------------------------------------------------------------
 
 
@@ -171,7 +237,7 @@ def gf_consumption_amount(gf, wb, arm):
         row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile=q)
         wb.propose(CV, row, gcap, origin="gf", ref=ref, method="GF g/cap as published (mean over all WRA)")
     # AUTOMATIC RULE (listed in STATUS.md and GF_DATA_MAPPING.md): if GF's national g/cap is
-    # more than TOTALS_RTOL from the mean of its own quintiles, keep the sheet's existing
+    # more than TOTALS_RTOL from the mean of its own quintiles, keep the base table's
     # Total instead, because prep_extracted's totals check would otherwise fail. A decision
     # can override this (e.g. method:scale_to_gf_total).
     row = wb.one(CV, country=c, vehicle=v, need="amount", data_point_name="mean", quintile="Total")
@@ -182,7 +248,7 @@ def gf_consumption_amount(gf, wb, arm):
     else:
         wb.keep(CV, row, origin="gf", ref=nat_ref,
                 method=f"GF national g/cap {national:.3g} differs from the quintile mean {q_mean:.3g} "
-                       "(GF national is from M4N, strata from NFCMS); kept the existing Total so the "
+                       "(GF national is from M4N, strata from NFCMS); kept the base Total so the "
                        "pipeline's totals check passes")
 
 
@@ -239,7 +305,7 @@ def gf_intervention(gf, wb, arm, fortificant):
 
 def apply_gf_defaults(gf, wb, arms):
     for arm in arms:
-        if not arm["apply_gf"]:
+        if not arm["apply_defaults"]:
             continue
         if not arm["hces"]:
             gf_consumption_any(gf, wb, arm)
@@ -291,32 +357,30 @@ def likely_lit_rows(lit, d):
 def resolve_decision(wb, lit, d, gf_values):
     """What a decision would do: a list of effects, one per targeted row.
 
-    Each effect is a dict with sheet, row, action (set / keep / accept), value, formula,
-    origin, ref, method, label (Data source text) and source (for the changelog).
+    Each effect is a dict with sheet, row, action (set / keep / skip), value, derivation,
+    origin, ref, method, label (Data source text) and source (for the changelog). 'keep'
+    restores the base value; 'skip' leaves whatever earlier phases set.
     """
     sheet, rows = decision_rows(wb, d)
     if not rows:
-        raise ValueError(f"decision {d['decision_id']} matches no rows in the extraction sheet")
+        raise ValueError(f"decision {d['decision_id']} matches no rows in the extraction tables")
     source, transform = str(d["source"]).strip(), norm(d.get("transform"))
     rationale = d["rationale"]
     out = []
     for row in rows:
-        effect = {"sheet": sheet, "row": row, "formula": None, "origin": "decision", "method": rationale}
+        effect = {"sheet": sheet, "row": row, "derivation": None, "origin": "decision", "method": rationale}
         if source == "keep":
-            out.append({**effect, "action": "keep", "value": None, "ref": "decision: keep existing value"})
+            out.append({**effect, "action": "keep", "value": None, "ref": "decision: keep the base value"})
             continue
         if source.startswith("method:"):
             out.append({**effect, **run_method(wb, lit, source.split(":", 1)[1], sheet, row, d)})
             continue
         if source == "gf":
             if (sheet, row) not in gf_values:
-                out.append({**effect, "action": "keep", "value": None,
-                            "ref": "decision: GF has no value for this row; kept existing"})
+                out.append({**effect, "action": "skip", "value": None,
+                            "ref": "decision: GF has no value for this row; left as it was"})
                 continue
             value, ref = gf_values[(sheet, row)]
-            if not transform:
-                out.append({**effect, "action": "accept", "value": value, "ref": "decision: accept GF default"})
-                continue
             label, kind = SOURCE_LABELS["gf"], "GF"
         elif source.startswith("lit:"):
             match = lit[lit.lit_id == source]
@@ -335,22 +399,24 @@ def resolve_decision(wb, lit, d, gf_values):
             ref, label, kind = f"value typed in decision {d['decision_id']}", f"Decision {d['decision_id']}", "typed value"
         else:
             raise ValueError(f"decision {d['decision_id']}: unknown source '{source}'")
-        formula = None
+        derivation = None
         if transform == "sqrt":
+            derivation = f"Value = sqrt({format_number(value)}), 2 d.p."
             value = round2(math.sqrt(value))
             rationale_m = f"sqrt, 2 d.p.; {rationale}"
         elif transform == "times_coverage":
             any_row = coverage_row(wb, sheet, row)
-            letter = openpyxl.utils.get_column_letter(wb.header(CV)["value"])
-            formula = f"={value}*{letter}{any_row}"
-            value = value * wb.current(CV, any_row)
+            coverage = wb.current(CV, any_row)
+            key = ", ".join(str(wb.get(CV, any_row, c)) for c in ["vehicle", "quintile", "sex", "data need"])
+            derivation = f"Value = {format_number(value)}*{format_number(coverage)} [Value of: {key}]"
+            value = value * coverage
             rationale_m = f"x WRA coverage; {rationale}"
             kind += " x coverage"
         elif transform:
             raise ValueError(f"decision {d['decision_id']}: unknown transform '{transform}'")
         else:
             rationale_m = rationale
-        out.append({**effect, "action": "set", "value": value, "formula": formula, "ref": ref,
+        out.append({**effect, "action": "set", "value": value, "derivation": derivation, "ref": ref,
                     "method": rationale_m, "label": label, "source": kind})
     return out
 
@@ -503,7 +569,7 @@ def apply_decisions(wb, lit, decisions, gf_values):
             decided[(e["sheet"], e["row"])] = d.decision_id
             if e["action"] == "set":
                 wb.propose(e["sheet"], e["row"], e["value"], origin=e["origin"], ref=e["ref"], method=e["method"],
-                           formula=e.get("formula"), decision_id=d.decision_id, source_label=e["label"],
+                           derivation=e.get("derivation"), decision_id=d.decision_id, source_label=e["label"],
                            source=e["source"])
             elif e["action"] == "keep":
                 wb.keep(e["sheet"], e["row"], origin="decision", ref=e["ref"], method=e["method"],
@@ -625,6 +691,14 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
             add("GF national inconsistent with GF quintiles", entry["method"]
                 + ". To use the national figure, add a decision with source method:scale_to_gf_total",
                 tab=sheet, row=row, output_value=wb.current(sheet, row))
+        # The literature default won over a different GF value, and no decision says which is right
+        if entry["origin"] == "lit" and (sheet, row) in gf_values and (sheet, row) not in decided:
+            gf_value, gf_ref = gf_values[(sheet, row)]
+            if not np.isclose(entry["value"], gf_value, rtol=AGREE_RTOL, atol=1e-9):
+                label = " ".join(str(v) for k, v in wb.describe(sheet, row).items() if not blank(v))
+                add("GF disagrees with literature default", f"{label}: literature {entry['value']:g} (used) vs "
+                    f"GF {gf_value:g} ({gf_ref})", tab=sheet, row=row, output_value=entry["value"],
+                    lit_id=entry["ref"].split(";")[0].split(" ")[0])
     for _, r in lit[lit.status == "needs_attention"].iterrows():
         add("literature row needs attention", r.issues, lit_id=r.lit_id,
             location=f"{r.source_sheet} row {r.source_row}")
@@ -685,7 +759,7 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
                 kind = "literature could replace placeholder"
             else:
                 kind = "literature disagrees with output"
-            where = {"existing": "unchanged from extraction sheet", "gf": "GF default",
+            where = {"existing": "base value", "lit": "literature default", "gf": "GF default",
                      "derived": "derived placeholder", "decision": "decision"}[origin]
             add(kind, f"{label}: output {current!r} ({where}) vs literature {comparable:g}{note} "
                 f"[{x.data_source}]{recommendation_tag(x)}", tab=sheet, row=row, output_value=current,
@@ -725,19 +799,21 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
 
 
 # --------------------------------------------------------------------------------------
-# Three-way comparison: existing sheet vs GF vs literature (plus the output)
+# Comparison: base vs GF vs literature (plus the output)
 # --------------------------------------------------------------------------------------
 
 
-def gf_only(gf, path, arms):
+def gf_only(gf, base_dir, arms, ignore_apply=True):
     """What the GF mapping alone would put in every row, for every arm in arms.csv.
 
-    Unlike the build, this ignores apply_gf, so you can see GF's numbers for arms that
-    don't take them yet. Rows the mapping can't place are skipped.
+    By default this ignores apply_defaults, so you can see GF's numbers for arms that don't
+    take them yet. Rows the mapping can't place are skipped.
     """
-    wb = Workbook(path)
+    wb = Workbook(base_dir)
     for arm in arms:
-        arm = dict(arm, apply_gf=True)
+        if not (ignore_apply or arm["apply_defaults"]):
+            continue
+        arm = dict(arm, apply_defaults=True)
         steps = [] if arm["hces"] else [gf_consumption_any, gf_consumption_amount]
         for step in steps + [gf_fortifiability]:
             try:
@@ -761,10 +837,10 @@ def compare(a, b):
     return f"differs ({(b - a) / a:+.0%})" if a else "differs"
 
 
-def build_comparison(gf, wb, lit, arms, decisions, extraction_path):
-    gfw = gf_only(gf, extraction_path, arms)
+def build_comparison(gf, wb, lit, arms, decisions, base_dir):
+    gfw = gf_only(gf, base_dir, arms)
     consumer_basis = among_consumers_arms(decisions)
-    listed = {(a["country"], a["vehicle"]): ("yes" if a["apply_gf"] else "listed, GF off") for a in arms}
+    listed = {(a["country"], a["vehicle"]): ("yes" if a["apply_defaults"] else "listed, defaults off") for a in arms}
 
     lit_by_row, lit_unplaced = {}, []
     for _, r in lit[lit.status.isin(["ok", "needs_attention"])].iterrows():
@@ -815,8 +891,8 @@ def build_comparison(gf, wb, lit, arms, decisions, extraction_path):
                 **{k: d[k] for k in ["country", "vehicle", "fortificant", "scenario", "quintile", "sex", "data_point_name"]},
                 "units": wb.get(sheet, row, "units"),
                 "arm_in_arms_csv": listed.get((d["country"], d["vehicle"]), "" if sheet == VEH else "no"),
-                "existing_value": existing,
-                "existing_source": wb.get(sheet, row, "data source"),
+                "base_value": existing,
+                "base_source": wb.get(sheet, row, "data source"),
                 "gf_value": gf_value,
                 "gf_reference": g["ref"] if g else None,
                 "lit_value": lit_value if lit_value is not None else ("; ".join(
@@ -826,11 +902,11 @@ def build_comparison(gf, wb, lit, arms, decisions, extraction_path):
                 "lit_as_published": "; ".join(str(v) for v in lit_published) or None,
                 "lit_ids": "; ".join(x.lit_id for x in lits) or None,
                 "lit_source": "; ".join(str(x.data_source) for x in lits) or None,
-                "gf_vs_existing": compare(existing, gf_value),
-                "lit_vs_existing": compare(existing, lit_compare),
+                "gf_vs_base": compare(existing, gf_value),
+                "lit_vs_base": compare(existing, lit_compare),
                 "lit_vs_gf": compare(gf_value, lit_raw_compare),
                 "output_value": output,
-                "output_source": entry["source"] if entry else "existing extraction sheet",
+                "output_source": entry["source"] if entry else "base extraction table",
                 "decision_id": entry["decision_id"] if entry else None,
             })
     for x in lit_unplaced:
@@ -846,6 +922,7 @@ def build_comparison(gf, wb, lit, arms, decisions, extraction_path):
 
 
 def write_comparison_xlsx(df, path):
+    import openpyxl
     from openpyxl.styles import Font, PatternFill
     from openpyxl.utils import get_column_letter
     df.to_excel(path, index=False, sheet_name="comparison")
@@ -858,7 +935,7 @@ def write_comparison_xlsx(df, path):
     cols = {c.value: c.column for c in ws[1]}
     differs, same = PatternFill("solid", fgColor="F8CBAD"), PatternFill("solid", fgColor="C6EFCE")
     for r in range(2, ws.max_row + 1):
-        for flag, target in [("gf_vs_existing", "gf_value"), ("lit_vs_existing", "lit_value")]:
+        for flag, target in [("gf_vs_base", "gf_value"), ("lit_vs_base", "lit_value")]:
             v = ws.cell(r, cols[flag]).value or ""
             fill = differs if v.startswith("differs") else same if v == "same" else None
             if fill:
@@ -867,7 +944,7 @@ def write_comparison_xlsx(df, path):
         v = ws.cell(r, cols["lit_vs_gf"]).value or ""
         if v:
             ws.cell(r, cols["lit_vs_gf"]).fill = differs if v.startswith("differs") else same
-    widths = {"need": 22, "existing_source": 30, "gf_reference": 30, "lit_source": 30, "lit_ids": 16,
+    widths = {"need": 22, "base_source": 30, "gf_reference": 30, "lit_source": 30, "lit_ids": 16,
               "output_source": 24}
     for name, col in cols.items():
         ws.column_dimensions[get_column_letter(col)].width = widths.get(name, 12)
@@ -885,69 +962,109 @@ def read_decisions(path):
     return d
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--extraction", type=pathlib.Path, default=EXTRACTION_FILE)
-    parser.add_argument("--output", type=pathlib.Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--decisions", type=pathlib.Path, default=DECISIONS_FILE)
-    parser.add_argument("--arms", type=pathlib.Path, default=ARMS_FILE)
-    parser.add_argument("--lit-long", type=pathlib.Path, default=LIT_LONG)
-    args = parser.parse_args()
-    if args.output.resolve() == args.extraction.resolve():
-        sys.exit("Refusing to overwrite the base extraction workbook; choose another --output")
+class Build:
+    """Everything one build produces (see build())."""
 
+
+def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, arms_file=ARMS_FILE,
+          decisions_file=DECISIONS_FILE):
+    """Run phases 1 to 4 and the reports. Writes nothing."""
     global GF_DATA
-    gf, lit = GF(GF_LONG), pd.read_csv(args.lit_long)
+    b = Build()
+    gf, lit = GF(gf_long), pd.read_csv(lit_long)
     GF_DATA = gf
     if "use_in_model" not in lit.columns:
         lit["use_in_model"] = None
-    arms, decisions = read_arms(args.arms), read_decisions(args.decisions)
-    wb = Workbook(args.extraction)
+    arms, decisions = read_arms(arms_file), read_decisions(decisions_file)
+    wb = Workbook(base_dir)
 
-    apply_gf_defaults(gf, wb, arms)
-    gf_values = {key: (e["value"], e["ref"]) for key, e in wb.plan.items() if e["action"] == "set"}
-    # Places where the GF defaults deliberately did NOT use GF's number (automatic rules)
-    gf_automatic = [{"tab": key[0], "row": key[1], "reason": e["method"], "ref": e["ref"]}
-                    for key, e in wb.plan.items() if e["action"] == "keep"]
+    # Phase 1a: literature defaults
+    apply_lit_defaults(wb, lit, arms)
+    # Phase 1b: GF defaults, only where the literature set nothing. gf_values holds every GF
+    # default, used or not, so that 'gf' decisions can choose GF over the literature.
+    gfw = gf_only(gf, base_dir, arms, ignore_apply=False)
+    gf_values = {key: (e["value"], e["ref"]) for key, e in gfw.plan.items() if e["action"] == "set"}
+    gf_automatic = []  # places where a GF rule deliberately did NOT use GF's number
+    for key, e in sorted(gfw.plan.items()):
+        if key in wb.plan:
+            continue
+        wb.plan[key] = e
+        if e["action"] == "keep":
+            gf_automatic.append({"tab": key[0], "row": key[1], "reason": e["method"], "ref": e["ref"]})
+    # Phases 2 and 3: decisions
     decided = apply_decisions(wb, lit, decisions, gf_values)
 
-    review = enrich_review(build_review(wb, lit, arms, decisions, decided, gf_values), wb, lit, decisions)
-    review.to_csv(REVIEW, index=False)
-    write_status(STATUS, wb, lit, arms, decisions, review, resolve_decision, gf_values, gf_automatic)
-    comparison = build_comparison(gf, wb, lit, arms, decisions, args.extraction)
-    comparison.to_csv(COMPARISON, index=False)
-    write_comparison_xlsx(comparison, COMPARISON_XLSX)
-    problems = run_checks(wb, arms)
-    if problems:
-        print("Checks failed; workbook NOT written:")
-        for p in problems:
+    b.wb, b.lit, b.arms, b.decisions = wb, lit, arms, decisions
+    b.gf_values, b.gf_automatic = gf_values, gf_automatic
+    b.review = enrich_review(build_review(wb, lit, arms, decisions, decided, gf_values), wb, lit, decisions)
+    b.comparison = build_comparison(gf, wb, lit, arms, decisions, base_dir)
+    # Phase 4: checks
+    b.problems = run_checks(wb, arms)
+    records, frames = wb.outputs(SOURCE_LABELS)
+    b.changelog = pd.DataFrame(records)
+    b.tables = {t: table_text(df) for t, df in frames.items()}
+    return b
+
+
+def stale_tables(tables, generated_dir=GENERATED_DIR):
+    """Generated tables whose committed file differs from a fresh build."""
+    stale = []
+    for t, text in tables.items():
+        path = pathlib.Path(generated_dir) / f"{t}.csv"
+        if not path.exists() or path.read_text(encoding="utf-8") != text:
+            stale.append(path.name)
+    return stale
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--base", type=pathlib.Path, default=BASE_DIR, help="directory of the base tables")
+    parser.add_argument("--output-dir", type=pathlib.Path, default=GENERATED_DIR,
+                        help="where to write the generated tables")
+    parser.add_argument("--decisions", type=pathlib.Path, default=DECISIONS_FILE)
+    parser.add_argument("--arms", type=pathlib.Path, default=ARMS_FILE)
+    parser.add_argument("--lit-long", type=pathlib.Path, default=LIT_LONG)
+    parser.add_argument("--check", action="store_true",
+                        help="write nothing; exit 1 if the generated tables are out of date")
+    args = parser.parse_args()
+    if args.output_dir.resolve() == args.base.resolve():
+        sys.exit("Refusing to overwrite the base tables; choose another --output-dir")
+
+    b = build(args.base, args.lit_long, GF_LONG, args.arms, args.decisions)
+    if b.problems:
+        print("Checks failed; tables NOT written:")
+        for p in b.problems:
             print("  " + p)
-        print(f"See {REVIEW.name} for context.")
+        if not args.check:
+            b.review.to_csv(REVIEW, index=False)
+            print(f"See {REVIEW.name} for context.")
         sys.exit(1)
+    if args.check:
+        stale = stale_tables(b.tables, args.output_dir)
+        if stale:
+            sys.exit(f"Out of date in {args.output_dir}: {', '.join(stale)}. Run build_extraction.py.")
+        print("Generated tables are up to date.")
+        return
 
-    records, expected = wb.changelog(SOURCE_LABELS)
-    pd.DataFrame(records).to_csv(CHANGELOG, index=False)
-    wb.wb.calculation.fullCalcOnLoad = True
-    wb.wb.save(args.output)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    for t, text in b.tables.items():
+        (args.output_dir / f"{t}.csv").write_text(text, encoding="utf-8")
+    b.changelog.to_csv(CHANGELOG, index=False, lineterminator="\n")
+    b.review.to_csv(REVIEW, index=False, lineterminator="\n")
+    write_status(STATUS, b.wb, b.lit, b.arms, b.decisions, b.review, resolve_decision, b.gf_values, b.gf_automatic)
+    b.comparison.to_csv(COMPARISON, index=False, lineterminator="\n")
+    written = [f"{args.output_dir.name}/*.csv", CHANGELOG.name, REVIEW.name, STATUS.name, COMPARISON.name]
+    try:
+        write_comparison_xlsx(b.comparison, COMPARISON_XLSX)
+        written.append(COMPARISON_XLSX.name)
+    except ImportError:
+        print("openpyxl not installed; skipped comparison.xlsx")
 
-    if recalculate(args.output):
-        bad, recomputed = verify(args.extraction, args.output, expected)
-        if bad:
-            for p in bad[:30]:
-                print("MISMATCH", p)
-            sys.exit(f"{len(bad)} cells differ from what was intended; do not use {args.output.name}")
-        print("Recalculated with LibreOffice; all untouched values match the base workbook.")
-        for sheet, coord, formula, before, after in recomputed:
-            print(f"  recomputed: {sheet}!{coord} {formula}: {before} -> {after}")
-    else:
-        print("WARNING: LibreOffice not found; open the output in Excel and save it before use.")
-
-    log = pd.DataFrame(records)
-    print(f"\nWrote {args.output.name}, {CHANGELOG.name}, {REVIEW.name}, {STATUS.name}, {COMPARISON_XLSX.name}")
-    print(log.groupby(["step", "source", "status"]).size().to_string())
-    if len(review):
+    print(f"Wrote {', '.join(written)}")
+    print(b.changelog.groupby(["step", "source", "status"]).size().to_string())
+    if len(b.review):
         print("\nReview items:")
-        print(review.groupby("issue").size().to_string())
+        print(b.review.groupby("issue").size().to_string())
 
 
 if __name__ == "__main__":

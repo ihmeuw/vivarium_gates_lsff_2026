@@ -1,8 +1,10 @@
-# How GF background data maps onto the extraction sheet
+# How GF background data maps onto the extraction tables
 
-This is the reference for phase 1 of `build_extraction.py`, the GF defaults. It covers the
-translation between GF's terms and ours, which extraction-sheet rows the model actually
-reads, and the questions that are still open. For how to run the scripts, see `README.md`.
+This is the reference for phase 1b of `build_extraction.py`, the GF defaults. GF values fill
+the rows the literature extraction leaves unset (phase 1a); a `gf` decision uses GF's value
+where the literature has one too. This document covers the translation between GF's terms
+and ours, which extraction rows the model actually reads, and the questions that are still
+open. For how to run the scripts, see `README.md`.
 
 ## Terminology
 
@@ -29,7 +31,7 @@ India rice is special. Its consumption and baseline coverage come from HCES micr
 and baseline effectiveness are left alone: GF's figures are market-wide, while ours apply
 to purchased non-PDS rice and to the HCES baseline.
 
-## Which extraction-sheet rows the model actually reads
+## Which extraction rows the model actually reads
 
 | Data need | Read by | Notes |
 |---|---|---|
@@ -76,12 +78,13 @@ overridden with a decision.
 
 | Rule | Where | Effect |
 |---|---|---|
-| If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the sheet's existing Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
-| For `consumption_source = hces` arms, consumption, fortifiability and baseline effectiveness are not taken from GF. | `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based values. |
-| Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) keep the sheet's baseline. |
+| If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the base Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
+| For `consumption_source = hces` arms, consumption, fortifiability and baseline effectiveness are not taken from GF (nor from the literature). | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based values. |
+| Effect sizes take no defaults, from the literature or GF. | `default_scope` | They change only through decisions. |
+| Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) keep the base baseline. |
 | Compliance is split equally: coverage = effectiveness = √compliance, rounded to 2 d.p. | `gf_baseline`, `gf_intervention` | All arms. |
 | GF compliance is per vehicle, so iron and folate get the same baseline and intervention values. | `gf_baseline`, `gf_intervention` | Wrong if a vehicle is fortified with only one nutrient today; override with a decision for the other fortificant. |
-| CI and SE are cleared when a value changes by more than 1%. | `common.Workbook.changelog` | The old uncertainty no longer describes the new value. |
+| CI and SE are cleared when a value changes by more than 1%. | `common.Workbook.outputs` | The base uncertainty no longer describes the new value. |
 | Literature units: % on a 0–100 scale becomes a fraction, ppm becomes mcg/g, g/dL becomes g/L. | `extract_lit.convert_units` | The g/dL conversion is flagged for checking. |
 
 ## Questions to raise with GF
@@ -90,7 +93,8 @@ overridden with a decision.
    quintiles (34.1–79.5, mean 60.1) and zones (48.7–73) come from NFCMS and are consistent with
    NFCMS's national 61.2 and with a GHS-Panel 2023/24 estimate of 62.7. Is 38 an update that
    should replace the NFCMS values, or a different measure (e.g. industrially milled rice, or all
-   ages)? Currently the existing Total is kept (automatic rule above). Proposed decision P009
+   ages)? Currently the NFCMS national mean is used (D028; the literature has both figures).
+   Proposed decision P009
    would rescale the quintiles to 38 (× 0.63).
 2. **India wheat current compliance.** The cover sheet (R7) says 5%; Coverage Over Time (E20) says
    50%. GF's update log for 28 Sep says current wheat flour compliance was changed from 5% to
@@ -144,7 +148,7 @@ If it trips again, weight that mean (or loosen `rtol`).
    - **A redesign** of the consumption model (a non-negative intake distribution, with GF
      coverage unchanged) is described in `CONSUMPTION_DISTRIBUTION.md`, section 5.
 2. **Store published numbers and convert in code.** Label each amount row's basis in the
-   sheet (e.g. "mean among consumers" vs "mean, all women") and let `prep_extracted` do
+   tables (e.g. "mean among consumers" vs "mean, all women") and let `prep_extracted` do
    the conversion, for SDs as well as means.
 3. **Put baseline and intervention coverage on the same basis.**
    - Baseline "any" coverage is a share of *consumers*, with consolidation already folded in.
@@ -158,8 +162,8 @@ If it trips again, weight that mean (or loosen `rtol`).
    effect. The literature alternatives (NFCMS 12.6% coverage, 73% compliance, 53.9 mcg/g) were
    rejected (P001–P004); question 5 above affects the folate part.
 5. **Arms not taking GF values yet** (Nigeria salt, India wheat, India salt, Ethiopia wheat)
-   have `apply_gf = no` in `arms.csv` while their data are reviewed or extracted.
-   `comparison.xlsx` still shows GF's numbers for them. India wheat already has baseline
+   have `apply_defaults = no` in `arms.csv` while their data are reviewed or extracted.
+   `comparison.csv` still shows GF's numbers for them. India wheat already has baseline
    decisions (D023, D024). These four arms are also left out of the model config for now
    (`0050_config/location_fortificant_vehicles.csv`, `location_vehicle_scenario_comparisons.csv`,
    and the Nigeria salt scenarios in `config.yaml`, which are commented out); restore them
@@ -169,9 +173,14 @@ If it trips again, weight that mean (or loosen `rtol`).
    (`GOVERNMENT_BASELINE_COVERAGE = 0.8`). Proposed decisions P010 (baseline effectiveness 0.625,
    matching GF's 50% compliance) and P011 (industry consolidation 0.175, matching GF's 2035
    consolidation) record one way to align it with GF. A cleaner long-term fix is to move the
-   0.8 out of the HCES notebook into the extraction sheet; that needs one HCES rerun on the
+   0.8 out of the HCES notebook into the extraction tables; that needs one HCES rerun on the
    cluster.
 7. **Literature row IDs** are hashes of each row's content, so editing key fields in the
    literature workbook (e.g. fixing a scenario label) changes the ID and breaks decisions that
-   use it. The build stops and suggests replacements. An explicit `ID` column in the workbook
-   would prevent this.
+   use it. The build stops and suggests replacements. `extract_lit.py` already reads an `ID`
+   column; adding one to the workbook would prevent this.
+8. **Coverage Totals: literature vs GF.** GF's national coverage rounds NFCMS (rice 0.54 vs
+   0.536, wheat 0.28 vs 0.282). D025 and D026 keep GF's figures so the values match the
+   PR #53 run; rejecting them switches to the literature's (small changes to the rice
+   national mean and the wheat Total and U5 SDs). D027 keeps the rice U5 means at NFCMS ×
+   0.536; if the rice basis changes (P007), revisit it too.

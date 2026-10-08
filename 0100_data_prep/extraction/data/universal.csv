@@ -1,0 +1,8 @@
+Data need,Data point name,Units,Year,Data source,Value,CI,Notes
+Folate fortification/consumption effect on serum/plasma folate,,,,,,,
+    Rice,Risk Difference,nmol/L,2018,WHO 2018 systematic review,4.3,2.00-6.60,https://iris.who.int/bitstream/handle/10665/272535/9789241550291-eng.pdf?ua=1 found a single study
+Folate fortification/consumption effect on RBC folate,Relative Risk (linear dose-response),percent RBC increase per 10% increase in folate intake,2015,"Marchetta et al, 2015",6,4-9,
+Serum/plasma folate effect on RBC folate,,,,,,,
+RBC folate effect on NTD incidence,non-linear relationship,,,"(Daly et al, 1995)",ln (odds of NTD risk) = 1.6563 − 1.2193 × ln (RBC) ,,
+RBC folate effect on NTD incidence,non-linear relationship,,,"(Crider et al, 2014)",ln (odds of NTD risk) = 4.57 − 1.70 × ln (RBC),,
+NTD stillbirth-to-death ratio,Ratio,,,NTD Stillbirths paper in Lancet Global Health based on CHAMPS MITS data,51/18,,There might be more data available since this paper was published
