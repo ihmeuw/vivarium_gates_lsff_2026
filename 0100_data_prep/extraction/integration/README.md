@@ -161,7 +161,9 @@ git, and the build tolerates the byte-order mark Excel adds when saving as "CSV 
 its `arm`, `item` (the data need in plain words), `where` (scenario, quintile or sex),
 `output_value`, `literature` (value, source, and tab and row in the literature workbook), the
 `decision` (ID, status and rationale) and a `what_to_do` hint. IDs and positions are at the
-end. Rows are sorted by arm, then issue.
+end. Rows are sorted by arm, then issue. Literature values for 2035 targets that GF supplies
+(fortifiability, intervention coverage and effectiveness) aren't reported: they describe the
+current state, so they're expected to differ.
 
 | issue | what to do |
 |---|---|

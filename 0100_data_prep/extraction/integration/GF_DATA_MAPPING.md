@@ -187,7 +187,9 @@ If it trips again, weight that mean (or loosen `rtol`).
    PR #53 run; rejecting them switches to the literature's (small changes to the rice
    national mean and the wheat Total and U5 SDs). D027 keeps the rice U5 means at NFCMS ×
    0.536; if the rice basis changes (P007), revisit it too.
-9. **Decisions that only restate GF targets.** Since GF comes first for 2035 targets,
-   D011–D018 (GF fortifiability and intervention coverage/effectiveness for Nigeria rice,
-   bouillon and wheat) no longer change anything. They are kept for their rationale and
-   could be retired.
+9. **2035 targets where the literature differs.** GF's targets are used by default and
+   the literature's current-state values for these rows aren't reported. The ones that
+   differ: Nigeria rice fortifiability (GF 0.90 vs M4N 0.54, GFDx 0.30); Nigeria bouillon
+   fortifiability (GF 1.0 vs Dashboard 0.95); Nigeria wheat intervention coverage (GF
+   √0.85 = 0.92 vs the literature extraction's 100%). These were decisions D011–D018 before
+   GF came first for targets.

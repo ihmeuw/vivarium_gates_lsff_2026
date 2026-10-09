@@ -36,15 +36,6 @@ Nothing open.
 
 ## Nigeria Bouillon
 
-**Decisions in effect**
-
-- **D016** Nigeria Bouillon Iron: intervention: coverage of fortifiable → Intervention 0.92 | Nigeria Bouillon Folate: intervention: coverage of fortifiable → Intervention 0.92  
-  Source: GF. Why: Use GF 2035 compliance (85%, up from 50%), equal sqrt split
-- **D017** Nigeria Bouillon Iron: intervention: effective share of fortified → Intervention 0.92 | Nigeria Bouillon Folate: intervention: effective share of fortified → Intervention 0.92  
-  Source: GF. Why: As D016
-- **D018** Nigeria Bouillon: fortifiability (consolidation) → Total 1; Lowest 1; Second 1; Middle 1; Fourth 1; Highest 1  
-  Source: GF. Why: Use GF 2035 consolidation (100%) rather than the Dashboard 95%
-
 **Still open**
 
 *literature row needs attention*: Fix the row in the literature workbook
@@ -57,12 +48,6 @@ Nothing open.
 
 - **D006** Nigeria Rice: WRA consumption: g/day mean → Total not set (GF has no value); Lowest 11.46; Second 23.48; Middle 33.14; Fourth 46.65; Highest 53.74  
   Source: GF, then times_coverage. Why: Keep Nigeria rice on the among-consumers basis used in earlier runs (JG email 8/31), so results stay comparable. NFCMS usual intake is probably population-wide (literature review, Oct 2026); revisit with P007
-- **D013** Nigeria Rice: fortifiability (consolidation) → 0.9  
-  Source: GF. Why: Use GF 2035 consolidation (0.90) for the intervention target; literature values (M4N 0.54, GFDx 0.30) are current-state
-- **D014** Nigeria Rice Iron: intervention: coverage of fortifiable → Intervention 0.92 | Nigeria Rice Folate: intervention: coverage of fortifiable → Intervention 0.92  
-  Source: GF. Why: Use GF 2035 compliance (85%), equal sqrt split
-- **D015** Nigeria Rice Iron: intervention: effective share of fortified → Intervention 0.92 | Nigeria Rice Folate: intervention: effective share of fortified → Intervention 0.92  
-  Source: GF. Why: As D014
 - **D025** Nigeria Rice: WRA consumption: share eating the vehicle → Total 0.54  
   Source: GF. Why: Keep GF's national coverage (0.54), as in the PR #53 run, rather than the literature default (NFCMS 0.536). The Total only sanity-checks the quintiles, but it also sets the national mean (D028). Reject to use the literature value
 - **D027** Nigeria Rice: U5 consumption: g/day mean → Total base value kept; Female base value kept; Male base value kept  
@@ -83,24 +68,10 @@ Nothing open.
 
 **Decisions in effect**
 
-- **D001** Nigeria Wheat Iron: intervention: concentration (mcg/g) → Intervention 40  
-  Source: 40.0 ppm from TechnoServe, 2019; Table 2 (literature workbook 'MN intervention fortification' row 5). Why: Nigeria mandatory standard for iron in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder
-- **D002** Nigeria Wheat Folate: intervention: concentration (mcg/g) → Intervention 2.6  
-  Source: 2.6 ppm from TechnoServe, 2019; Table 2 (literature workbook 'MN intervention fortification' row 6). Why: Nigeria mandatory standard for folic acid in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder (1.69)
-- **D003** Nigeria Wheat: U5 consumption: g/day mean → Total 26  
-  Source: 26.0 g/day from NFCMS, Table 148, p 194 (literature workbook 'Vehicle Consumption' row 22). Why: NFCMS Table 148 U5 wheat intake replaces the value derived from rice
-- **D004** Nigeria Wheat: U5 consumption: g/day mean → Female 25.1  
-  Source: 25.1 g/day from NFCMS, Table 148, p 194 (literature workbook 'Vehicle Consumption' row 24). Why: NFCMS Table 148 U5 wheat intake (girls) replaces the value derived from rice
-- **D005** Nigeria Wheat: U5 consumption: g/day mean → Male 26.9  
-  Source: 26.9 g/day from NFCMS, Table 148, p 194 (literature workbook 'Vehicle Consumption' row 23). Why: NFCMS Table 148 U5 wheat intake (boys) replaces the value derived from rice
 - **D007** Nigeria Wheat: WRA consumption: g/day SD → Total 87.58; Lowest 44.93; Second 55.12; Middle 76.17; Fourth 88.41; Highest 101.1  
   Source: computed (consumer_cv). Why: NFCMS usual-intake SDs are incompatible with the zero-inflated model at 19-35% coverage; give consumers the NFCMS CV (CONSUMPTION_DISTRIBUTION.md section 4)
 - **D008** Nigeria Wheat: U5 consumption: g/day SD → Total 58.09; Female 53.98; Male 62.19  
   Source: computed (consumer_cv). Why: As D007, for U5 rows
-- **D011** Nigeria Wheat Iron: intervention: coverage of fortifiable → Intervention 0.92 | Nigeria Wheat Folate: intervention: coverage of fortifiable → Intervention 0.92  
-  Source: GF. Why: Keep the equal sqrt(2035 compliance) split used for all arms (0.92), not 100%
-- **D012** Nigeria Wheat Iron: intervention: effective share of fortified → Intervention 0.92 | Nigeria Wheat Folate: intervention: effective share of fortified → Intervention 0.92  
-  Source: GF. Why: As D011
 - **D019** Nigeria Wheat Iron: baseline: concentration (mcg/g) → 40  
   Source: 40.0 ppm from NFCMS,Table (literature workbook 'MN baseline fortification' row 4). Why: Assume current concentration is at Nigeria standard
 - **D020** Nigeria Wheat Folate: baseline: concentration (mcg/g) → 2.6  

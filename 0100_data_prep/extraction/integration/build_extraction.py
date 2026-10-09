@@ -747,6 +747,8 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
             by_target.setdefault((sheet, row), []).append(r)
 
     for (sheet, row), lits in sorted(by_target.items()):
+        if need_alias(wb.get(sheet, row, "data need")) in TARGET_NEEDS and (sheet, row) in gf_values:
+            continue  # a 2035 target that GF supplies; the literature's current-state values don't compete
         current = wb.current(sheet, row)
         current = float(current) if isinstance(current, (int, float)) else current
         entry = wb.plan.get((sheet, row))
