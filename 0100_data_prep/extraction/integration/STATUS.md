@@ -8,8 +8,6 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 - India Rice: fortifiability (consolidation) [Total]. GF 2035 consolidation 0.528711 is market-wide; ours applies only to purchased non-PDS rice. Needs a decision
 - Nigeria Rice: WRA consumption: g/day mean [Total]. GF national g/cap 38 differs from the quintile mean 60.1 (GF national is from M4N, strata from NFCMS); kept the base Total so the pipeline's totals check passes (this row is now covered by decision D028)
-- India Rice Iron: baseline: effective share of fortified. India baseline coverage comes from HCES; GF's market-wide numbers don't map onto it
-- India Rice Folate: baseline: effective share of fortified. India baseline coverage comes from HCES; GF's market-wide numbers don't map onto it
 
 ## Ethiopia Salt
 
@@ -17,10 +15,15 @@ Nothing open.
 
 ## India Rice
 
+**Decisions in effect**
+
+- **D029** India Rice Iron: baseline: effective share of fortified → 0.71 | India Rice Folate: baseline: effective share of fortified → 0.71  
+  Source: GF. Why: sqrt split of GF current compliance (0.5, government rice), as for the other arms: effectiveness = sqrt(0.5) = 0.71. The literature's 50% is the compliance itself, not the split
+- **D030** India Rice Iron: baseline: share fortified → 0.71 | India Rice Folate: baseline: share fortified → 0.71  
+  Source: GF. Why: Share of PDS rice fortified = sqrt(GF current compliance 0.5) = 0.71, replacing the 0.8 formerly hard-coded in the HCES notebook; data prep multiplies it by the HCES shares eating PDS rice (PDS stands in for consolidation). GFDx's 26% is a market-wide share of rice fortified, a different measure (ours: about 0.31 of WRA rice fortified before effectiveness, 0.22 effective)
+
 **Proposed, not applied** (set status to active or rejected)
 
-- **P010** would set India Rice Iron: baseline: effective share of fortified → 0.625 | India Rice Folate: baseline: effective share of fortified → 0.625  
-  Source: typed value. Why: Match GF current India rice compliance (50%): HCES notebook fixes the share of PDS rice fortified at GOVERNMENT_BASELINE_COVERAGE = 0.8, so effectiveness = 0.5 / 0.8. National effective baseline coverage would go from 0.277 to about 0.22 (GF 0.247; the gap is HCES PDS share 0.45 vs GF consolidation 0.50). Shrinks the '80% PDS vs none' comparison by about 22%
 - **P011** would set India Rice: fortifiability (consolidation) → Total 0.175  
   Source: typed value. Why: Calibrate the industry consolidation (applied to purchased non-PDS rice) so national fortifiability matches GF 2035 consolidation 0.529: PDS share + (1 - PDS share) x purchased x 0.175, averaged over WRA strata from the HCES files. Intervention effective coverage would go from about 0.54 to about 0.44 (GF 2035: 0.444)
 
@@ -29,15 +32,11 @@ Nothing open.
 *literature disagrees with output*: Decide which is right; a 'gf', 'keep' or 'lit:' decision records the choice
 
 - India Rice: fortifiability (consolidation) [Total]. output 0.45; literature: 50.0 % from M4N Database (literature workbook 'Vehicle Consumption' row 118)
-- India Rice Folate: baseline: effective share of fortified. output 0.8; literature: 50.0 % from nan (literature workbook 'MN baseline fortification' row 54)
-- India Rice Iron: baseline: effective share of fortified. output 0.8; literature: 50.0 % from nan (literature workbook 'MN baseline fortification' row 50)
 
 *literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
 
-- India Rice Folate: baseline: share fortified [Total]. literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 52)
 - India Rice Folate: intervention: concentration (mcg/g) [Intervention - 2016 FA standard]. literature: 1.3 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 42)
 - India Rice Folate: intervention: concentration (mcg/g) [Intervention - curernt standard]. literature: 0.125 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 41)
-- India Rice Iron: baseline: share fortified [Total]. literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 48)
 
 ## Nigeria Bouillon
 

@@ -70,7 +70,9 @@ TARGET_YEAR = "2035"
 # the literature's values for them describe the current state.
 TARGET_NEEDS = {"fortifiability", "intervention_coverage", "intervention_effectiveness"}
 # Arms whose consumption, fortifiability and baseline coverage come from HCES microdata
-# (0100_data_prep/hces); only their intervention rows take default values.
+# (0100_data_prep/hces). They take no literature defaults except for intervention rows; GF
+# defaults apply to intervention rows and, as the share of PDS rice fortified, to baseline
+# any and effectiveness (gf_baseline).
 HCES_ARMS = {("India", "Rice")}
 TOTALS_RTOL = 0.1  # check_totals_reasonable in prep_extracted.ipynb
 AGREE_RTOL = 0.01  # literature and workbook values closer than this "agree"
@@ -310,9 +312,18 @@ def gf_baseline(gf, wb, arm, fortificant):
     cons, cons_ref, _ = gf.national(c, v, "consolidation")
     compl, compl_ref, _ = gf.national(c, v, "compliance")
     if arm["hces"]:
+        # India rice: HCES gives who eats PDS rice, which stands in for consolidation (PDS rice is
+        # all fortifiable). Baseline any is then the share of PDS rice fortified, so both rows take
+        # the sqrt(compliance) split, applied to GF's current compliance (government rice).
+        if compl is None or len(any_rows) != 1:
+            return
+        split = round2(math.sqrt(compl))
+        wb.propose(CVF, any_rows[0], split, origin="gf", ref=compl_ref,
+                   method=f"sqrt(current compliance {compl}), 2 d.p.: share of PDS rice fortified; "
+                          "data prep multiplies it by the HCES shares eating PDS rice")
         for row in eff_rows:
-            wb.keep(CVF, row, origin="gf", ref=compl_ref,
-                    method="India baseline coverage comes from HCES; GF's market-wide numbers don't map onto it")
+            wb.propose(CVF, row, split, origin="gf", ref=compl_ref,
+                       method=f"sqrt(current compliance {compl}), 2 d.p.")
         return
     if cons is None or compl is None or len(any_rows) != 1:
         return  # GF n/a (or quintile-specific rows we don't overwrite with a national number)
@@ -666,14 +677,18 @@ def run_checks(wb, arms, unresolved=None):
 
 
 def intervention_problems(wb, arm):
-    """The coverage notebook's check: intervention coverage x fortifiability >= baseline coverage."""
+    """The coverage notebook's check: intervention coverage x fortifiability >= baseline coverage.
+    For HCES arms, intervention coverage >= the share of PDS rice fortified at baseline."""
     c, v = arm["country"], arm["vehicle"]
     problems = []
     fort = {wb.get(CV, r, "quintile"): wb.current(CV, r) for r in wb.find(CV, country=c, vehicle=v, need="fortifiability")}
     for f in arm["fortificants"]:
         for row in wb.find(CVF, country=c, vehicle=v, fortificant=f, need="baseline_any"):
             q = wb.get(CVF, row, "quintile")
-            fv = fort.get(q, fort.get(ALL_SAME, fort.get("Total")))
+            # HCES arms: baseline any is the share of PDS rice fortified, and PDS rice is fully
+            # fortifiable, so the intervention must reach at least that share of PDS rice. (The
+            # coverage notebook checks the full HCES-based coverage.)
+            fv = 1.0 if arm["hces"] else fort.get(q, fort.get(ALL_SAME, fort.get("Total")))
             baseline = wb.current(CVF, row)
             for irow in wb.find(SCEN, country=c, vehicle=v, fortificant=f, need="intervention_coverage"):
                 coverage = wb.current(SCEN, irow)

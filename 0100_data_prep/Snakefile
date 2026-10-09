@@ -136,6 +136,13 @@ location_vehicle_fortificant_intervention_scenario_specific_data_needs = [
 
 extracted_output_files = []
 hces_output_files = []
+# Written by the HCES notebook into hces/ (committed) and read by prep_extracted
+hces_local_files = [
+    "0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv",
+    "0100_data_prep/hces/india_proportion_government_rice.csv",
+    "0100_data_prep/hces/india_share_eating_any_government_rice.csv",
+    "0100_data_prep/hces/india_share_eating_only_government_rice.csv",
+]
 
 location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
 
@@ -151,7 +158,9 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
 for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"]):
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
-        if (location, vehicle) == ("india", "rice") and (("baseline_fortification" in data_need) and ("concentration" not in data_need) and ("effectiveness" not in data_need)):
+        # India rice: HCES gives the partial-coverage amounts directly; any/full coverage are
+        # the HCES PDS shares scaled in prep_extracted by the share of PDS rice fortified.
+        if (location, vehicle) == ("india", "rice") and "partial_coverage_amount" in data_need:
             hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
@@ -169,7 +178,7 @@ rule prep_hces:
         ], frozen)
     log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
     output: 
-        hces_output_files + ['0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv', '0100_data_prep/hces/india_proportion_government_rice.csv']
+        hces_output_files + hces_local_files
     shell:
         """
         {common_setup}
@@ -185,10 +194,8 @@ rule prep_extracted:
             "0100_data_prep/extraction/generated/country_vehicle.csv",
             "0100_data_prep/extraction/generated/country_vehicle_fortificant.csv",
             "0100_data_prep/extraction/generated/scenario_definition.csv",
-            '0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv',
-            '0100_data_prep/hces/india_proportion_government_rice.csv',
             '0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv',
-        ], frozen) + extraction_check
+        ] + hces_local_files, frozen) + extraction_check
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 
         extracted_output_files

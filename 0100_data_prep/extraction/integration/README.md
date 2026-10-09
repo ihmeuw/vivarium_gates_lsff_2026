@@ -94,8 +94,9 @@ touches keeps its base value.
    arms too), and `comparison.csv` shows GF's and the literature's values for them. Adding
    an arm to `0050_config/location_fortificant_vehicles.csv` fills it in on the next build.
    Effect sizes (`vehicle.csv`) take no defaults; they change only through decisions. For
-   India rice, whose consumption, fortifiability and baseline coverage come from HCES
-   microdata, only intervention rows take defaults (`HCES_ARMS` in `build_extraction.py`).
+   India rice, whose consumption, fortifiability and PDS shares come from HCES microdata,
+   only intervention rows and GF's baseline split take defaults (`HCES_ARMS` in
+   `build_extraction.py`; see `GF_DATA_MAPPING.md`).
 2. **Value decisions**: active decisions whose source is `lit:`, `value:`, `gf` or `keep`.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a
@@ -111,7 +112,8 @@ touches keeps its base value.
    - for the arms the model runs, apart from India rice (HCES) and arms without amount rows:
      consumer variance is > 0 (needed by the pregnancy sim); each amount Total is within 10%
      of its quintile mean (prep_extracted's check); intervention coverage × fortifiability ≥
-     baseline coverage (the coverage notebook's check).
+     baseline coverage (the coverage notebook's check; for India rice, intervention coverage
+     ≥ the share of PDS rice fortified).
 
 A row the build sets gets a `Data source` naming where its value came from, `Notes` with the
 reference, the method or rationale and the base value, and (in `country_vehicle`) a
