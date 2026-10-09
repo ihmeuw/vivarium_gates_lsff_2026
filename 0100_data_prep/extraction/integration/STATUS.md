@@ -24,7 +24,7 @@ Nothing open.
 - **D030** India Rice Iron: baseline: share fortified → 0.71 | India Rice Folate: baseline: share fortified → 0.71  
   Source: GF. Why: Share of PDS rice fortified = sqrt(GF current compliance 0.5) = 0.71, replacing the 0.8 formerly hard-coded in the HCES notebook; data prep multiplies it by the HCES shares eating PDS rice (PDS stands in for consolidation). GFDx's 26% is a market-wide share of rice fortified, a different measure (ours: about 0.31 of WRA rice fortified before effectiveness, 0.22 effective)
 - **D031** India Rice Folate: intervention: concentration (mcg/g) → Intervention base value kept  
-  Source: base extraction table. Why: Single India rice intervention scenario with folic acid at 1.3 mcg/g (130 mcg/100 g, from the NYAS paper cited in the base table), the base value. The literature extraction's rows for 'current standard' (0.125) and '2016 FA standard' (1.3) don't match the scenario name and aren't used; no current-standard scenario is modelled (adding one: docs/adding_intervention_scenarios.md)
+  Source: base extraction table. Why: Single India rice intervention scenario with folic acid at 1.3 mcg/g (130 mcg/100 g, from the NYAS paper cited in the base table), the base value. The literature extraction's rows for 'current standard' (0.125) and '2016 FA standard' (1.3) don't match the scenario name and aren't used; no current-standard scenario is modelled (adding one: docs/scenarios.md)
 
 **Still open**
 

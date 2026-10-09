@@ -6,7 +6,7 @@ all_fortificants: ["folate", "iron"]
 # Scenario names must match the extraction sheet's Scenario column, lowercased
 # with non-word characters collapsed to "_" ("Intervention - 25% NRV" ->
 # intervention_25_nrv). Before adding one to an arm with iron, read
-# docs/adding_intervention_scenarios.md: the Vivarium sims only run "intervention".
+# docs/scenarios.md: the Vivarium sims only run "intervention".
 custom_intervention_scenarios:
   ethiopia:
     salt:
