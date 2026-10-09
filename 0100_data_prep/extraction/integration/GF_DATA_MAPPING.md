@@ -31,8 +31,9 @@ India rice is special. Its consumption and who eats PDS (government) rice come f
 microdata (`0100_data_prep/hces`). PDS rice stands in for consolidation, so its baseline any
 row is the share of PDS rice fortified, and it and baseline effectiveness each take √(GF
 current compliance) like other arms; `prep_extracted` multiplies the HCES shares eating any /
-only PDS rice by the share fortified. Its fortifiability is left alone: GF's figure is
-market-wide, while ours applies to purchased non-PDS rice.
+only PDS rice by the share fortified. Its fortifiability isn't taken from GF automatically:
+GF's figure is market-wide, while ours is the industry consolidation applied to purchased
+non-PDS rice. Decision P011 calibrates it (0.175) so national fortifiability matches GF's.
 
 ## Which extraction rows the model actually reads
 
@@ -116,12 +117,13 @@ overridden with a decision.
 6. **Nigeria bouillon 2035 compliance** rose from 50% (April workbook) to 85%. This roughly
    doubles the modelled intervention effect, so it is worth confirming.
 7. **India rice.** GF's 2035 consolidation (0.53) is market-wide; our model applies
-   consolidation only to purchased rice outside the PDS, so we haven't used it. We apply GF's
+   consolidation only to purchased rice outside the PDS, so P011 calibrates ours (0.175) to
+   reproduce GF's level. Is GF's current 0.50 the PDS share? If so, the gap to our HCES PDS
+   share (0.45) is a measurement difference and only GF's increase should count (0.065). We apply GF's
    current compliance (50%) to PDS rice only (the literature extraction notes it is for
    government rice). Is that GF's meaning?
 8. **India rice consolidation path.** Current consolidation is 0.50, 2031 is 0.48 and 2035 is
-   0.53, so it falls before it rises. Is the 2031 value intended? (Proposed decision P011
-   would align India rice with GF's 2035 consolidation.)
+   0.53, so it falls before it rises. Is the 2031 value intended?
 9. **Minor transcription differences** spotted in the literature extraction: Nigeria wheat
    coverage 28.0 vs NFCMS 28.2; salt 99.2 vs 99.3; rice poorest-quintile g/cap 34.1 vs NFCMS
    34.2.
@@ -179,8 +181,10 @@ If it trips again, weight that mean (or loosen `rtol`).
    baseline coverage (WRA) fell from 0.277 to 0.218. The HCES notebook now writes unscaled
    shares (`hces/india_share_eating_{any,only}_government_rice.csv`); the committed files were
    derived from the previous outputs (÷ 0.8) and need confirming by one HCES rerun on the
-   cluster. Fortifiability (0.45, applied to purchased non-PDS rice) is still under review
-   (P011).
+   cluster. Industry consolidation (applied to purchased non-PDS rice) is 0.175 (P011),
+   calibrated so national fortifiability matches GF's 2035 consolidation (0.529); intervention
+   effective coverage (WRA) is 0.44, as in GF. The base 0.45 was probably a market-wide
+   figure and double-counted the PDS. Sensitivity: 0.065 matches only GF's increase.
 7. **Literature row IDs** are hashes of each row's content, so editing key fields in the
    literature workbook (e.g. fixing a scenario label) changes the ID and breaks decisions that
    use it. The build stops and suggests replacements. `extract_lit.py` already reads an `ID`
