@@ -2,8 +2,8 @@
 
 generated/ is written only by 0100_data_prep/extraction/integration/build_extraction.py.
 A commit that changes its inputs (the base tables in data/, lit_long.csv, gf_long.csv,
-arms.csv, decisions.csv or the build code) without rebuilding, or that edits generated/
-by hand, fails here. Fix it by rebuilding:
+decisions.csv, 0050_config/location_fortificant_vehicles.csv or the build code) without
+rebuilding, or that edits generated/ by hand, fails here. Fix it by rebuilding:
 
     cd 0100_data_prep/extraction/integration && python build_extraction.py
 """

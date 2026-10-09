@@ -1,5 +1,5 @@
 from lsff_utils import config_utils, snakemake_utils
-from snakemake.io import directory
+from snakemake.io import directory, touch
 
 debug = config["debug"]
 
@@ -55,22 +55,26 @@ rule dhs_mm:
         papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3 {papermill_engine}
         """
 
-# The extraction tables the data prep notebooks read are generated from the base tables
-# (hand-entered values), the literature and GF snapshots and decisions.csv. See
-# 0100_data_prep/extraction/README.md. The build is cheap and deterministic;
-# tests/test_extraction_build.py checks that the committed output is up to date.
-extraction_generated = [
-    f"0100_data_prep/extraction/generated/{table}.csv"
-    for table in ["country_vehicle", "country_vehicle_fortificant", "scenario_definition", "vehicle"]
-]
+# The extraction tables the data prep notebooks read (extraction/generated/) are built from
+# the base tables, the literature and GF snapshots, decisions.csv and the model's list of
+# arms, by extraction/integration/build_extraction.py. Snakemake does NOT run the build: it
+# only checks that the committed tables are up to date, and stops if they aren't. Run the
+# build by hand, review what changed and commit it (see 0100_data_prep/extraction/README.md).
+# That way a failed build can't delete the committed tables, and the model only ever runs
+# on tables someone has reviewed. tests/test_extraction_build.py runs the same check.
+#
+# The check joins the DAG only when data prep runs: with skip_data_prep=true, a missing
+# check marker would otherwise make data prep rerun.
+extraction_check_marker = "0100_data_prep/extraction/integration/.extraction_checked"
+extraction_check = [] if frozen else [extraction_check_marker]
 
-rule build_extraction:
+rule check_extraction:
     input:
-        snakemake_utils.freeze([
-            "0100_data_prep/extraction/data/country_vehicle.csv",
-            "0100_data_prep/extraction/data/country_vehicle_fortificant.csv",
-            "0100_data_prep/extraction/data/scenario_definition.csv",
-            "0100_data_prep/extraction/data/vehicle.csv",
+        [
+            f"0100_data_prep/extraction/{layer}/{table}.csv"
+            for layer in ["data", "generated"]
+            for table in ["country_vehicle", "country_vehicle_fortificant", "scenario_definition", "vehicle"]
+        ] + [
             "0100_data_prep/extraction/integration/lit_long.csv",
             "0100_data_prep/extraction/integration/gf_long.csv",
             "0050_config/location_fortificant_vehicles.csv",
@@ -78,14 +82,14 @@ rule build_extraction:
             "0100_data_prep/extraction/integration/build_extraction.py",
             "0100_data_prep/extraction/integration/common.py",
             "0100_data_prep/extraction/integration/report.py",
-        ], frozen)
+        ]
     output:
-        extraction_generated
+        touch(extraction_check_marker)
     shell:
         """
         {common_setup}
         cd extraction/integration
-        python build_extraction.py
+        python build_extraction.py --check
         """
 
 rule prep_vehicle:
@@ -93,7 +97,7 @@ rule prep_vehicle:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_vehicle.ipynb",
             "0100_data_prep/extraction/generated/vehicle.csv",
-        ], frozen)
+        ], frozen) + extraction_check
     log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
     output: 
         [
@@ -184,7 +188,7 @@ rule prep_extracted:
             '0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv',
             '0100_data_prep/hces/india_proportion_government_rice.csv',
             '0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv',
-        ], frozen)
+        ], frozen) + extraction_check
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 
         extracted_output_files

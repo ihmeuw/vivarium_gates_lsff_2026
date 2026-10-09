@@ -81,9 +81,9 @@ overridden with a decision.
 |---|---|---|
 | If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the base Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
 | For arms in `HCES_ARMS` (India rice), consumption, fortifiability and baseline effectiveness are not taken from GF (nor from the literature). | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based values. |
-| Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`) take no defaults. | `read_arms`, `default_scope` | They keep their base values; `comparison.csv` shows GF's numbers for them. |
+| Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`) take no defaults. | `read_arms`, `default_scope` | They keep their base values unless a decision targets them; `comparison.csv` shows GF's numbers for them. |
 | Effect sizes take no defaults, from the literature or GF. | `default_scope` | They change only through decisions. |
-| Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) keep the base baseline. |
+| Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) take their baseline from the literature or, failing that, keep the base value. |
 | Compliance is split equally: coverage = effectiveness = √compliance, rounded to 2 d.p. | `gf_baseline`, `gf_intervention` | All arms. |
 | GF compliance is per vehicle, so iron and folate get the same baseline and intervention values. | `gf_baseline`, `gf_intervention` | Wrong if a vehicle is fortified with only one nutrient today; override with a decision for the other fortificant. |
 | CI and SE are cleared when a value changes by more than 1%. | `common.Workbook.outputs` | The base uncertainty no longer describes the new value. |

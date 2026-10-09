@@ -8,7 +8,7 @@ two layers, one CSV per table and one data point per row:
 data/*.csv (base, hand-edited)                  ─┐
 integration/lit_long.csv (literature snapshot)  ─┤
 integration/gf_long.csv (GF snapshot)           ─┼─► integration/build_extraction.py ─► generated/*.csv ─► prep notebooks
-integration/decisions.csv                       ─┤   (Snakemake rule build_extraction)   (never edit)
+integration/decisions.csv                       ─┤   (run by hand; Snakemake checks it)  (never edit)
 0050_config/location_fortificant_vehicles.csv   ─┘
 ```
 
@@ -43,9 +43,10 @@ To rebuild:
 
     cd integration && python build_extraction.py
 
-Snakemake also runs the build (rule `build_extraction`) before data prep, unless
-`skip_data_prep=true`. Commit the generated tables and the build's reports together with the
-change that caused them.
+The build prints every value that changed. Review the diffs, then commit the generated
+tables and the build's reports together with the change that caused them. Snakemake doesn't
+run the build; before data prep (unless `skip_data_prep=true`) it checks that the committed
+tables are up to date, and stops with a message if they aren't.
 
 ## Editing the CSVs
 

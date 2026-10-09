@@ -210,6 +210,10 @@ def _parse_value(text):
         return text
 
 
+# Columns that identify a data point; no two rows of a table may share all of them
+KEY_COLUMNS = ["Country", "Vehicle", "Fortificant", "Scenario", "Quintile", "Sex", "Data need", "Data point name"]
+
+
 class Workbook:
     """Read access to the base extraction tables plus a write plan.
 
@@ -222,6 +226,13 @@ class Workbook:
     def __init__(self, base_dir=BASE_DIR):
         self.base_dir = pathlib.Path(base_dir)
         self.frames = {t: read_table(self.base_dir / f"{t}.csv") for t in TABLES}
+        for t, df in self.frames.items():
+            key = [c for c in KEY_COLUMNS if c in df.columns]
+            dup = df[df.duplicated(key, keep=False)]
+            if len(dup):
+                rows = ", ".join(str(i + 2) for i in dup.index)
+                raise ValueError(f"{t}.csv: rows {rows} have the same {', '.join(key)}; each data point "
+                                 "must appear once")
         self.plan = {}
         self._headers = {t: {norm(c): c for c in df.columns} for t, df in self.frames.items()}
 

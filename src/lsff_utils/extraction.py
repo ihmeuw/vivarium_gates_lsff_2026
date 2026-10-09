@@ -68,6 +68,9 @@ IDENTIFIER_COLUMNS = [
 
 TABLES = tuple(NUMERIC_COLUMNS)
 
+# Columns that identify a data point in the tables the build manages
+KEY_COLUMNS = ["Country", "Vehicle", "Fortificant", "Scenario", "Quintile", "Sex", "Data need", "Data point name"]
+
 
 def extraction_path(table: str, base: bool = False) -> Path:
     """The file a table is read from: generated/ for built tables, unless base=True."""
@@ -120,6 +123,14 @@ def validate_extraction(table: str, df: pd.DataFrame, path: Path | None = None) 
             bad = df[df[column].notna() & ~df[column].isin(allowed)]
             for idx, value in bad[column].items():
                 problems.append(f"{column!r} has unexpected value {value!r} in row {_csv_rows([idx])}")
+
+    # Each data point must appear once in the tables the build manages (two rows with the
+    # same key would be matched together by the build and the notebooks).
+    if table in GENERATED_TABLES:
+        key = [c for c in KEY_COLUMNS if c in df.columns]
+        duplicated = df.index[df.duplicated(key, keep=False)]
+        if len(duplicated):
+            problems.append(f"rows {_csv_rows(duplicated)} share the same {', '.join(key)}")
 
     # Stray spaces in the columns code filters on make rows silently not match.
     # (Not checked in `universal`, which indents sub-items on purpose.)

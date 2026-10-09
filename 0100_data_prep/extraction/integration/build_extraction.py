@@ -54,7 +54,7 @@ import pandas as pd
 
 from report import enrich_review, write_status
 from common import (
-    ALL_SAME, BASE_DIR, MODEL_ARMS_FILE, CV, CVF, DECISIONS_FILE, GENERATED_DIR, GF_LONG, HERE, LIT_LONG,
+    ALL_SAME, BASE_DIR, COUNTRIES, FORTIFICANTS, MODEL_ARMS_FILE, VEHICLES, canonical, CV, CVF, DECISIONS_FILE, GENERATED_DIR, GF_LONG, HERE, LIT_LONG,
     NEEDS, QUINTILES, SCEN, TABLES, VEH, Workbook, consumer_moments, format_number, mixture_sd,
     need_alias, norm, round2, table_text,
 )
@@ -96,7 +96,7 @@ class GF:
     """Lookups into gf_long.csv."""
 
     def __init__(self, path):
-        self.df = pd.read_csv(path, dtype={"year": str})
+        self.df = pd.read_csv(path, dtype={"year": str}, float_precision="round_trip")
 
     def _rows(self, **criteria):
         d = self.df
@@ -148,12 +148,21 @@ def read_arms(wb, model_arms_file=MODEL_ARMS_FILE):
                 forts.add(wb.get(sheet, row, "fortificant"))
     config = pd.read_csv(model_arms_file, dtype=str).fillna("")
     modeled = {}
-    for _, a in config.iterrows():
-        key = (a.location.strip().title(), a.vehicle.strip().title())
+    for i, a in config.iterrows():
+        where = f"{pathlib.Path(model_arms_file).name} row {i + 2}"
+        country, vehicle = canonical(COUNTRIES, a.location)[0], canonical(VEHICLES, a.vehicle)[0]
+        key = (country, vehicle)
         if key not in in_tables:
-            raise ValueError(f"{model_arms_file.name}: {key[0]} {key[1]} has no rows in the extraction tables")
-        f = a.fortificant.strip().lower()
-        modeled.setdefault(key, set()).update(in_tables[key] if f == "all" else {f.title()})
+            raise ValueError(f"{where}: {a.location} {a.vehicle} has no rows in the extraction tables")
+        if norm(a.fortificant) == "all":
+            forts = in_tables[key]
+        else:
+            fort = canonical(FORTIFICANTS, a.fortificant)[0]
+            if fort not in in_tables[key]:
+                raise ValueError(f"{where}: fortificant '{a.fortificant}' has no rows for {country} {vehicle} "
+                                 f"(found: {', '.join(sorted(in_tables[key])) or 'none'})")
+            forts = {fort}
+        modeled.setdefault(key, set()).update(forts)
     return [{"country": c, "vehicle": v, "fortificants": sorted(modeled.get((c, v), forts)),
              "modeled": (c, v) in modeled, "hces": (c, v) in HCES_ARMS}
             for (c, v), forts in sorted(in_tables.items())]
@@ -210,6 +219,8 @@ def apply_lit_defaults(wb, lit, arms, gf_values):
             continue
         if need_alias(wb.get(sheet, row, "data need")) in TARGET_NEEDS and (sheet, row) in gf_values:
             continue  # a 2035 target: GF's value comes first
+        if all(c.use_in_model == "no" for c in candidates):
+            continue  # every candidate rejected: the literature offers no value, so GF fills the row
         x, ids = lit_pick(candidates)
         if x is None:
             ambiguous[(sheet, row)] = candidates
@@ -448,23 +459,19 @@ def resolve_decision(wb, lit, d, gf_values):
 # Methods: how a value is computed from others (see CONSUMPTION_DISTRIBUTION.md)
 # --------------------------------------------------------------------------------------
 
-WOMEN_POPULATIONS = {"non-pregnant wra", "wra", "all", ""}
 
 
-def lit_one(lit, *, country, vehicle, need, point, quintile=None, sex=None):
-    """The single literature row for a consumption statistic ('Use in model' pick if several)."""
-    d = lit[(lit.status == "ok") & (lit.country == country) & (lit.vehicle == vehicle) & (lit.need == need)
-            & (lit.data_point_name == point)]
-    if need == "amount":
-        d = d[d.population.fillna("").str.lower().isin(WOMEN_POPULATIONS) & (d.quintile == quintile)]
-    else:
-        d = d[d.sex == sex]
-    if len(d) > 1 and (d.use_in_model == "yes").sum() == 1:
-        d = d[d.use_in_model == "yes"]
-    if len(d) != 1:
-        raise ValueError(f"expected one literature {point} for {country} {vehicle} {need} "
-                         f"{quintile or sex}, found {len(d)} ({', '.join(d.lit_id)})")
-    return d.iloc[0]
+def lit_one(wb, lit, sheet, row):
+    """The literature row that gives a table row its value, by the same rules as the
+    literature defaults (placement, then 'Use in model'); an error if there isn't exactly one."""
+    candidates = [r for _, r in lit[lit.status == "ok"].iterrows()
+                  if r.need in NEEDS and NEEDS[r.need][0] == sheet and row in lit_workbook_rows(wb, r)]
+    x, _ = lit_pick(candidates)
+    if x is None:
+        label = " ".join(str(v) for v in wb.describe(sheet, row).values() if not blank(v))
+        found = ", ".join(f"{r.lit_id} = {r.value:g}" for r in candidates) or "none"
+        raise ValueError(f"expected one literature value for {sheet} row {row} ({label}), found: {found}")
+    return x
 
 
 def matching_row(wb, sheet, row, **changes):
@@ -487,10 +494,8 @@ def method_consumer_cv(wb, lit, sheet, row, d):
     need = need_alias(wb.get(sheet, row, "data need"))
     if need not in ("amount", "u5_amount") or norm(wb.get(sheet, row, "data point name")) != "standard deviation":
         raise ValueError(f"decision {d['decision_id']}: method consumer_cv applies only to amount SD rows")
-    c, v = wb.get(sheet, row, "country"), wb.get(sheet, row, "vehicle")
-    key = {"quintile": wb.get(sheet, row, "quintile")} if need == "amount" else {"sex": wb.get(sheet, row, "sex")}
-    lit_mean = lit_one(lit, country=c, vehicle=v, need=need, point="mean", **key)
-    lit_sd = lit_one(lit, country=c, vehicle=v, need=need, point="standard deviation", **key)
+    lit_mean = lit_one(wb, lit, sheet, matching_row(wb, sheet, row, data_point_name="mean"))
+    lit_sd = lit_one(wb, lit, sheet, row)
     cv = float(lit_sd.value) / float(lit_mean.value)
     m = wb.current(sheet, matching_row(wb, sheet, row, data_point_name="mean"))
     p = wb.current(CV, coverage_row(wb, sheet, row))
@@ -628,8 +633,11 @@ def run_checks(wb, arms, unresolved=None):
 
     for arm in arms:
         c, v = arm["country"], arm["vehicle"]
-        if not arm["modeled"] or arm["hces"] or not wb.find(CV, country=c, vehicle=v, need="amount"):
+        if not arm["modeled"]:
             continue
+        problems += intervention_problems(wb, arm)
+        if arm["hces"] or not wb.find(CV, country=c, vehicle=v, need="amount"):
+            continue  # consumption comes from HCES, or there are no amount rows to check
         # Pregnancy sim: consumers' variance must be positive (intervention.py)
         for row in wb.find(CV, country=c, vehicle=v, need="amount", data_point_name="mean"):
             q = wb.get(CV, row, "quintile")
@@ -654,17 +662,28 @@ def run_checks(wb, arms, unresolved=None):
             if not np.isclose(q_mean, total, rtol=TOTALS_RTOL, atol=0):
                 problems.append(f"{c} {v}: amount Total {total:.3g} vs quintile mean {q_mean:.3g} fails the "
                                 "prep_extracted totals check")
-        # Coverage notebook: intervention target >= baseline coverage
-        fort = {wb.get(CV, r, "quintile"): wb.current(CV, r) for r in wb.find(CV, country=c, vehicle=v, need="fortifiability")}
-        for f in arm["fortificants"]:
-            for row in wb.find(CVF, country=c, vehicle=v, fortificant=f, need="baseline_any"):
-                q = wb.get(CVF, row, "quintile")
-                fv = fort.get(q, fort.get(ALL_SAME, fort.get("Total")))
-                for irow in wb.find(SCEN, country=c, vehicle=v, fortificant=f, need="intervention_coverage"):
-                    target = wb.current(SCEN, irow) * fv
-                    baseline = wb.current(CVF, row)
-                    if target < baseline and not np.isclose(target, baseline):
-                        problems.append(f"{c} {v} {f} {q}: intervention target {target:.3g} < baseline {baseline:.3g}")
+    return problems
+
+
+def intervention_problems(wb, arm):
+    """The coverage notebook's check: intervention coverage x fortifiability >= baseline coverage."""
+    c, v = arm["country"], arm["vehicle"]
+    problems = []
+    fort = {wb.get(CV, r, "quintile"): wb.current(CV, r) for r in wb.find(CV, country=c, vehicle=v, need="fortifiability")}
+    for f in arm["fortificants"]:
+        for row in wb.find(CVF, country=c, vehicle=v, fortificant=f, need="baseline_any"):
+            q = wb.get(CVF, row, "quintile")
+            fv = fort.get(q, fort.get(ALL_SAME, fort.get("Total")))
+            baseline = wb.current(CVF, row)
+            for irow in wb.find(SCEN, country=c, vehicle=v, fortificant=f, need="intervention_coverage"):
+                coverage = wb.current(SCEN, irow)
+                if not all(isinstance(x, float) for x in (fv, coverage, baseline)):
+                    problems.append(f"{c} {v} {f} {q}: can't check intervention target >= baseline: "
+                                    f"fortifiability {fv!r}, intervention coverage {coverage!r}, baseline {baseline!r}")
+                    continue
+                target = coverage * fv
+                if target < baseline and not np.isclose(target, baseline):
+                    problems.append(f"{c} {v} {f} {q}: intervention target {target:.3g} < baseline {baseline:.3g}")
     return problems
 
 
@@ -674,7 +693,33 @@ def run_checks(wb, arms, unresolved=None):
 
 
 def lit_workbook_rows(wb, r):
-    """Workbook rows a literature row speaks to (for comparison only)."""
+    """The table rows a literature row gives a value for ([] if none; see lit_placement)."""
+    return lit_placement(wb, r)[0]
+
+
+def lit_placement(wb, r):
+    """(rows, problem): the table rows a literature row gives a value for.
+
+    rows is [] when the row can't be placed. problem is None when the tables simply have no
+    matching row, or says why a matching row was refused: a blank scenario where the arm
+    has several intervention scenarios, or units that differ from the table's.
+    """
+    rows = _lit_matching_rows(wb, r)
+    if not rows:
+        return [], None
+    sheet = NEEDS[r.need][0]
+    if sheet == SCEN and blank(r.scenario):
+        scenarios = sorted({wb.get(sheet, x, "scenario") for x in rows})
+        if len(scenarios) > 1:
+            return [], (f"no scenario given, but the arm has several ({'; '.join(scenarios)}); "
+                        "fill in the Scenario column")
+    units = sorted({str(wb.get(sheet, x, "units")) for x in rows})
+    if any(norm(u) != norm(r.units) for u in units):
+        return [], f"units '{r.units}' differ from the table's ('{', '.join(units)}')"
+    return rows, None
+
+
+def _lit_matching_rows(wb, r):
     if r.need not in NEEDS:
         return []
     sheet = NEEDS[r.need][0]
@@ -736,7 +781,11 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
 
     by_target = {}
     for _, r in lit[lit.status == "ok"].iterrows():
-        rows = lit_workbook_rows(wb, r)
+        rows, problem = lit_placement(wb, r)
+        if problem:
+            add("literature row can't be matched", f"{r.need} {r.country} {r.vehicle} {r.quintile or ''} "
+                f"{r.data_point_name}: {r.value:g}: {problem}", lit_id=r.lit_id)
+            continue
         if not rows:
             if r.need in NEEDS and NEEDS[r.need][0] != VEH:
                 add("literature value has no row in the extraction sheet", f"{r.need} {r.country} {r.vehicle} {r.quintile or ''} "
@@ -836,11 +885,12 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
 # --------------------------------------------------------------------------------------
 
 
-def gf_only(gf, base_dir, arms, modeled_only=False):
+def gf_only(gf, base_dir, arms, modeled_only=False, strict=False):
     """What the GF mapping alone would put in every row.
 
     By default this covers every arm in the tables, so you can see GF's numbers for arms the
-    model doesn't run yet. Rows the mapping can't place are skipped.
+    model doesn't run yet, and rows the mapping can't place are skipped. With strict=True
+    (the build's own defaults), a row the mapping can't place is an error.
     """
     wb = Workbook(base_dir)
     for arm in arms:
@@ -851,14 +901,17 @@ def gf_only(gf, base_dir, arms, modeled_only=False):
         for step in steps + [gf_fortifiability]:
             try:
                 step(gf, wb, arm)
-            except (LookupError, TypeError):
-                pass
+            except (LookupError, TypeError) as e:
+                if strict:
+                    raise ValueError(f"GF defaults for {arm['country']} {arm['vehicle']} ({step.__name__}): {e}")
         for f in arm["fortificants"]:
             for step in (gf_baseline, gf_intervention):
                 try:
                     step(gf, wb, arm, f)
-                except (LookupError, TypeError):
-                    pass
+                except (LookupError, TypeError) as e:
+                    if strict:
+                        raise ValueError(f"GF defaults for {arm['country']} {arm['vehicle']} {f} "
+                                         f"({step.__name__}): {e}")
     return wb
 
 
@@ -987,11 +1040,49 @@ def write_comparison_xlsx(df, path):
 # --------------------------------------------------------------------------------------
 
 
+STATUSES = {"active", "proposed", "rejected"}
+TRANSFORMS = {"", "sqrt", "times_coverage"}
+
+
 def read_decisions(path):
+    """decisions.csv, with whitespace stripped and status/transform lower-cased.
+
+    Raises on anything malformed, so a typo can't silently drop or change a decision.
+    Problems that depend on the data (e.g. a lit: ID that no longer exists) are found when
+    the decision is resolved: they stop the build for active decisions and are reported
+    for proposed ones.
+    """
     d = pd.read_csv(path, dtype=str, encoding="utf-8-sig").fillna("")
     d.columns = [c.strip() for c in d.columns]
+    d = d.apply(lambda col: col.str.strip())
+    d["status"], d["transform"] = d["status"].str.lower(), d["transform"].str.lower()
     if d.decision_id.duplicated().any():
         raise ValueError(f"duplicate decision_id: {d.decision_id[d.decision_id.duplicated()].tolist()}")
+    problems = []
+    for _, r in d.iterrows():
+        who = f"decision {r.decision_id or '(no ID)'}"
+        transform = r["transform"]
+        if not r.decision_id:
+            problems.append(f"{who}: decision_id is blank")
+        if r.status not in STATUSES:
+            problems.append(f"{who}: status '{r.status}' is not one of {sorted(STATUSES)}")
+        if transform not in TRANSFORMS:
+            problems.append(f"{who}: transform '{transform}' is not one of sqrt, times_coverage or blank")
+        if need_alias(r.need) is None:
+            problems.append(f"{who}: unknown need '{r.need}'")
+        src = r.source
+        if src.startswith("value:"):
+            try:
+                float(src.split(":", 1)[1])
+            except ValueError:
+                problems.append(f"{who}: '{src}' is not a number")
+        elif not (src in ("gf", "keep") or (src.startswith(("lit:", "method:")) and len(src.split(":", 1)[1]) > 0)):
+            problems.append(f"{who}: unknown source '{src}' (expected lit:<id>, value:<number>, gf, keep or "
+                            "method:<name>)")
+        if transform and (src == "keep" or src.startswith("method:")):
+            problems.append(f"{who}: transform '{transform}' can't be used with source '{src}'")
+    if problems:
+        raise ValueError("decisions.csv:\n  " + "\n  ".join(problems))
     return d
 
 
@@ -1004,7 +1095,9 @@ def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, model_arms_file
     """Run phases 1 to 4 and the reports. Writes nothing."""
     global GF_DATA
     b = Build()
-    gf, lit = GF(gf_long), pd.read_csv(lit_long)
+    # round_trip: parse numbers exactly as Python's float() does. pandas' default parser
+    # can be off in the last digit, which would make the generated text depend on it.
+    gf, lit = GF(gf_long), pd.read_csv(lit_long, float_precision="round_trip")
     GF_DATA = gf
     if "use_in_model" not in lit.columns:
         lit["use_in_model"] = None
@@ -1012,10 +1105,12 @@ def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, model_arms_file
     wb = Workbook(base_dir)
     arms = read_arms(wb, model_arms_file)
 
-    # Phase 1: defaults. gf_values holds every GF default, used or not, so that 'gf'
-    # decisions can choose GF over the literature.
-    gfw = gf_only(gf, base_dir, arms, modeled_only=True)
-    gf_values = {key: (e["value"], e["ref"]) for key, e in gfw.plan.items() if e["action"] == "set"}
+    # Phase 1: defaults. gfw is GF's defaults for the arms the model runs (strict: a mapping
+    # error stops the build). gf_values is GF's value for every row of every arm, used or
+    # not, so that 'gf' decisions can choose GF over the literature anywhere.
+    gfw = gf_only(gf, base_dir, arms, modeled_only=True, strict=True)
+    gf_values = {key: (e["value"], e["ref"]) for key, e in gf_only(gf, base_dir, arms).plan.items()
+                 if e["action"] == "set"}
     # The literature first (except for 2035 targets that GF gives)...
     ambiguous = apply_lit_defaults(wb, lit, arms, gf_values)
     # ...then GF for every row the literature left unset

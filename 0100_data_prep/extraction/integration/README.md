@@ -21,8 +21,9 @@ Rebuild whenever a base table, a snapshot, `decisions.csv` or the model's list o
 changes, and commit the generated tables and reports with the change: their git diffs show
 exactly what changed. The build also prints every value that differs from the generated
 tables on disk before overwriting them.
-Snakemake runs the build too (rule `build_extraction`), and
-`tests/test_extraction_build.py` checks that the committed tables equal a fresh build.
+Snakemake doesn't run the build: before data prep (unless `skip_data_prep=true`), its rule
+`check_extraction` runs `build_extraction.py --check` and stops the run if the committed
+tables are out of date. `tests/test_extraction_build.py` makes the same check.
 `build_extraction.py --lit-long <file>` lets you try a draft snapshot without replacing
 `lit_long.csv`.
 
@@ -88,8 +89,9 @@ touches keeps its base value.
    unless a decision covers the row, so a row never switches source silently because a
    candidate was added.
 
-   Arms the model doesn't run keep their base values, so a half-extracted arm can't break
-   the build; `comparison.csv` still shows GF's and the literature's values for them. Adding
+   Arms the model doesn't run take no defaults and aren't checked, so a half-extracted arm
+   can't break the build; decisions that target them still apply (STATUS.md lists those
+   arms too), and `comparison.csv` shows GF's and the literature's values for them. Adding
    an arm to `0050_config/location_fortificant_vehicles.csv` fills it in on the next build.
    Effect sizes (`vehicle.csv`) take no defaults; they change only through decisions. For
    India rice, whose consumption, fortifiability and baseline coverage come from HCES
@@ -98,25 +100,33 @@ touches keeps its base value.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a
    value from others already in place.
-4. **Checks**, for the arms the model runs. If any fail, the build stops without writing
-   the tables (`review.csv` is still written). The checks are:
+4. **Checks**. If any fail, the build stops without writing the tables (`review.csv` is
+   still written, except with `--check`). Before any phase, malformed input also stops the
+   build: a duplicated data point in a base table, an unknown arm or fortificant in the
+   model config, or a malformed decision (unknown status, need, source or transform). The
+   checks are:
    - every row whose literature candidates disagree is resolved, by a `Use in model` mark
      or a decision;
-   - percentages are in [0, 1];
-   - consumer variance is > 0 (needed by the pregnancy sim);
-   - each amount Total is within 10% of its quintile mean (prep_extracted's check);
-   - intervention coverage × fortifiability ≥ baseline coverage (the coverage notebook's check).
+   - percentages are in [0, 1] (every row the build sets);
+   - for the arms the model runs, apart from India rice (HCES) and arms without amount rows:
+     consumer variance is > 0 (needed by the pregnancy sim); each amount Total is within 10%
+     of its quintile mean (prep_extracted's check); intervention coverage × fortifiability ≥
+     baseline coverage (the coverage notebook's check).
 
 A row the build sets gets a `Data source` naming where its value came from, `Notes` with the
 reference, the method or rationale and the base value, and (in `country_vehicle`) a
 `Derivation` when the value was computed. This happens even when the value equals the base
 value, so a placeholder label never survives on a real value. Its CI and SE are cleared if
-the value moved by more than 1%. Every other cell is copied from the base table unchanged.
+the value moved by more than 1%, and a base `Derivation` is cleared if the value changed
+without one. Every other cell is copied from the base table unchanged.
 
 ## decisions.csv
 
-One row per choice. Blank target fields match any value, so one decision can cover, for
-example, all three Ethiopia scenarios or both fortificants.
+One row per choice. Status, transform and surrounding spaces are normalised, and anything
+malformed stops the build. Blank target fields match any value, so one decision can cover,
+for example, all three Ethiopia scenarios or both fortificants. For effect sizes
+(`vehicle.csv`), only `vehicle` and `data_point_name` are used to match rows; other target
+fields are ignored.
 
 | column | meaning |
 |---|---|
@@ -177,6 +187,7 @@ current state, so they're expected to differ.
 | conflicting literature recommendations | More than one candidate with different values is marked yes. |
 | proposed decision (not applied) / is invalid | Set its status to active or rejected, or fix it. |
 | literature row needs attention | Fix the row in the literature workbook, or add a typo fix to `common.py`. |
+| literature row can't be matched | A literature row matches table rows but isn't used: its scenario is blank where the arm has several intervention scenarios, or its units differ from the table's. Fix it in the literature workbook. |
 | literature value has no row in the extraction sheet | There's nowhere to put it (e.g. U5 SDs by sex where the table has only a Total row). |
 
 **changelog.csv** lists every row the build planned: `old_value` (base) and `new_value`
@@ -212,13 +223,20 @@ Literature values with no row in the tables are listed at the bottom.
   `Sheet1` are skipped.
 - **Columns:** found by header name. Synonyms are in `COLUMN_SYNONYMS` in `extract_lit.py`.
 - **Labels:** normalised to our vocabulary. Typo fixes are in `TYPO_FIXES` in `common.py`.
+  An unrecognised population (see `POPULATIONS` in `extract_lit.py`) makes the row "needs
+  attention", so it isn't used.
 - **Units:** `%` on a 0–100 scale becomes a fraction, `ppm` becomes mcg/g, and `g/dL`
   becomes g/L (flagged for checking).
 - **Row IDs:** an `ID` column (any unique text, never reused; headed `ID`, `Lit ID` or
-  `Row ID`) gives each row a permanent ID, `lit:<ID>`. Without one, each row's ID is a hash
-  of its key fields and data source, so editing those fields changes the ID and breaks the
-  decisions that use it. Adding the `ID` column is recommended; when it is added, decisions
-  that use hash IDs need updating once.
+  `Row ID`) gives each row a permanent ID, `lit:<ID>`; a duplicated ID stops the extract.
+  Without one, each row's ID is a hash of its key fields and data source, so editing those
+  fields changes the ID and breaks the decisions that use it. Adding the `ID` column is
+  recommended; when it is added, decisions that use hash IDs need updating once.
+- **Matching to table rows:** by country, vehicle, fortificant, data need, data point name,
+  quintile (a national value also matches an `All (assumed same)` row) and sex; by scenario
+  for intervention rows. A row is not used if its scenario is blank and the arm has several
+  intervention scenarios, or if its units differ from the table's ("literature row can't be
+  matched" in `review.csv`).
 
 ### The `Use in model` column
 
@@ -235,5 +253,5 @@ It decides the literature default when candidates disagree (see phase 1 above), 
 what is reported: the recommended candidate is listed first, a recommendation that differs
 from the output gets its own review item, and candidates marked `no` aren't reported as
 separate disagreements when another candidate is marked `yes`. `comparison.csv` compares
-against the recommended value. `method:consumer_cv` also uses it to choose between candidate
-means or SDs.
+against the recommended value. `method:consumer_cv` picks its literature mean and SD by the
+same rules as the defaults.

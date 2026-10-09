@@ -19,8 +19,9 @@ Built to survive the source workbook being edited and reformatted:
 
 * An optional 'Use in model' column holds the extractor's recommendation when there are several
   candidate values for the same thing: yes / no / blank (also y, n, true, false, 1, 0, x).
-  It is advisory: build_extraction shows it in review.csv and comparison.xlsx, but only
-  decisions.csv changes what goes into the workbook.
+  When candidates disagree, build_extraction uses it to pick the literature default ('no'
+  candidates are ignored; if any are 'yes', only those count), and shows it in review.csv
+  and comparison.csv.
 
 Rows that can't be mapped onto one of our data needs are kept, with status
 'needs_attention' and the reason, so nothing disappears silently.
@@ -94,15 +95,20 @@ def find_columns(ws):
 
 
 def convert_units(value, units):
-    """Return (value, units, issue) in the workbook's units."""
+    """Return (value, units, issue) in the workbook's units.
+
+    Converted values are rounded to 12 significant digits, so that e.g. 33.3% becomes 0.333
+    rather than 0.33299999999999996 (floating-point noise that would otherwise end up in the
+    generated tables).
+    """
     u = norm(units)
     if u == "%":
         issue = "percentage below 1 on a 0-100 scale; check it isn't already a fraction" if 0 < value < 1 else ""
-        return value / 100, "%", issue
+        return float(f"{value / 100:.12g}"), "%", issue
     if u == "ppm":
         return value, "mcg/g", ""
     if u == "g/dl":
-        return value * 10, "g/L", "converted from g/dL; check the source really is g/dL"
+        return float(f"{value * 10:.12g}"), "g/L", "converted from g/dL; check the source really is g/dL"
     return value, units, ""
 
 
@@ -134,6 +140,8 @@ def normalise(sheet_name, r, raw):
 
     population = norm(raw.get("population"))
     age_group, sex = POPULATIONS.get(population, (None, None))
+    if population and population not in POPULATIONS:
+        issues.append(f"unknown population '{raw.get('population')}' (known: {', '.join(POPULATIONS)})")
     rec["population"] = raw.get("population")
 
     alias = need_alias(raw.get("data_need"))
@@ -190,6 +198,7 @@ def normalise(sheet_name, r, raw):
         issues.append(f"'Use in model' should be yes, no or blank, not '{use}'")
 
     explicit = " ".join(str(raw.get("id") or "").split())
+    rec["_explicit_id"] = bool(explicit)
     rec["lit_id"] = (explicit if explicit.startswith("lit:") else f"lit:{explicit}") if explicit else stable_id(
         "lit", rec["country"], rec["vehicle"], rec["fortificant"], rec["scenario"], rec["quintile"],
         rec["population"], rec["need"] or rec["data_need"], rec["data_point_name"], rec["data_source"],
@@ -226,6 +235,11 @@ def main():
         records += [normalise(ws.title, r, raw) for r, raw in rows]
 
     df = pd.DataFrame(records)
+    explicit = df[df.pop("_explicit_id")]
+    if explicit.lit_id.duplicated().any():
+        dups = explicit[explicit.lit_id.duplicated(keep=False)]
+        raise SystemExit("Duplicate IDs in the literature workbook: " + "; ".join(
+            f"{r.lit_id} ({r.source_sheet} row {r.source_row})" for r in dups.itertuples()))
     # Identical keys (e.g. two 'Assumption' rows) would share an ID; make them unique
     dup = df.groupby("lit_id").cumcount()
     df.loc[dup > 0, "lit_id"] = df.loc[dup > 0, "lit_id"] + "-" + dup[dup > 0].astype(str)

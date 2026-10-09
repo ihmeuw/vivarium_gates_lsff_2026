@@ -167,3 +167,4 @@ model_spec_int.yaml
 # Also ignores the retired Data Extraction Sheet and its old build output.
 0100_data_prep/extraction/*.xlsx
 0100_data_prep/extraction/integration/comparison.xlsx
+0100_data_prep/extraction/integration/.extraction_checked
