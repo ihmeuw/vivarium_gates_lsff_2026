@@ -33,7 +33,8 @@ row is the share of PDS rice fortified, and it and baseline effectiveness each t
 current compliance) like other arms; `prep_extracted` multiplies the HCES shares eating any /
 only PDS rice by the share fortified. Its fortifiability isn't taken from GF automatically:
 GF's figure is market-wide, while ours is the industry consolidation applied to purchased
-non-PDS rice. Decision P011 calibrates it (0.175) so national fortifiability matches GF's.
+non-PDS rice. Decision P011 calibrates it (0.175) so national fortifiability matches GF's. How the
+India rice model works is described in `docs/india_rice.md`.
 
 ## Which extraction rows the model actually reads
 
