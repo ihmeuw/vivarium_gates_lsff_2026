@@ -1,8 +1,9 @@
 # How GF background data maps onto the extraction tables
 
-This is the reference for phase 1b of `build_extraction.py`, the GF defaults. GF values fill
-the rows the literature extraction leaves unset (phase 1a); a `gf` decision uses GF's value
-where the literature has one too. This document covers the translation between GF's terms
+This is the reference for the GF part of phase 1 of `build_extraction.py`, the defaults.
+For 2035 targets (fortifiability, intervention coverage and effectiveness) GF's value comes
+first; for measurements GF fills the rows the literature extraction leaves unset, and a `gf`
+decision uses GF's value where the literature has one too. This document covers the translation between GF's terms
 and ours, which extraction rows the model actually reads, and the questions that are still
 open. For how to run the scripts, see `README.md`.
 
@@ -79,7 +80,8 @@ overridden with a decision.
 | Rule | Where | Effect |
 |---|---|---|
 | If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the base Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
-| For `consumption_source = hces` arms, consumption, fortifiability and baseline effectiveness are not taken from GF (nor from the literature). | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based values. |
+| For arms in `HCES_ARMS` (India rice), consumption, fortifiability and baseline effectiveness are not taken from GF (nor from the literature). | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based values. |
+| Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`) take no defaults. | `read_arms`, `default_scope` | They keep their base values; `comparison.csv` shows GF's numbers for them. |
 | Effect sizes take no defaults, from the literature or GF. | `default_scope` | They change only through decisions. |
 | Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) keep the base baseline. |
 | Compliance is split equally: coverage = effectiveness = √compliance, rounded to 2 d.p. | `gf_baseline`, `gf_intervention` | All arms. |
@@ -161,13 +163,14 @@ If it trips again, weight that mean (or loosen `rtol`).
    wheat flour as already fortified with both today, which reduces the modelled intervention
    effect. The literature alternatives (NFCMS 12.6% coverage, 73% compliance, 53.9 mcg/g) were
    rejected (P001–P004); question 5 above affects the folate part.
-5. **Arms not taking GF values yet** (Nigeria salt, India wheat, India salt, Ethiopia wheat)
-   have `apply_defaults = no` in `arms.csv` while their data are reviewed or extracted.
-   `comparison.csv` still shows GF's numbers for them. India wheat already has baseline
-   decisions (D023, D024). These four arms are also left out of the model config for now
-   (`0050_config/location_fortificant_vehicles.csv`, `location_vehicle_scenario_comparisons.csv`,
-   and the Nigeria salt scenarios in `config.yaml`, which are commented out); restore them
-   together when an arm is ready.
+5. **Arms not in the model yet** (Nigeria salt, India wheat, India salt, Ethiopia wheat) keep
+   their base values while their data are reviewed or extracted; `comparison.csv` still shows
+   GF's numbers for them. India wheat already has baseline decisions (D023, D024). To add one,
+   restore it in `0050_config/location_fortificant_vehicles.csv`,
+   `location_vehicle_scenario_comparisons.csv` and (for Nigeria salt) the commented-out
+   scenarios in `config.yaml`. The next build fills it in from the literature and GF and runs
+   the checks on it; expect to need decisions (e.g. Ethiopia wheat's DUMMY SDs fail the
+   consumer-variance check against GF's means).
 6. **India rice** handling is under review: fortifiability (0.45, applied to purchased non-PDS
    rice), baseline effectiveness (0.8) and the HCES-based baseline coverage
    (`GOVERNMENT_BASELINE_COVERAGE = 0.8`). Proposed decisions P010 (baseline effectiveness 0.625,
@@ -184,3 +187,7 @@ If it trips again, weight that mean (or loosen `rtol`).
    PR #53 run; rejecting them switches to the literature's (small changes to the rice
    national mean and the wheat Total and U5 SDs). D027 keeps the rice U5 means at NFCMS ×
    0.536; if the rice basis changes (P007), revisit it too.
+9. **Decisions that only restate GF targets.** Since GF comes first for 2035 targets,
+   D011–D018 (GF fortifiability and intervention coverage/effectiveness for Nigeria rice,
+   bouillon and wheat) no longer change anything. They are kept for their rationale and
+   could be retired.

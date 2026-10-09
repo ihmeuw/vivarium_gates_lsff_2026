@@ -6,7 +6,8 @@ notebooks read) from:
 - the base tables, `../data/*.csv`: hand-entered values with no other source;
 - the literature extraction, a snapshot in `lit_long.csv`;
 - the Gates Foundation (GF) background data, a snapshot in `gf_long.csv`;
-- `arms.csv` (scope) and `decisions.csv` (choices), both edited by hand.
+- `decisions.csv` (choices), edited by hand;
+- the model config's list of arms, `0050_config/location_fortificant_vehicles.csv` (scope).
 
 ```
 python extract_lit.py --lit <LSFF_effect_sizes.xlsx>   # literature workbook -> lit_long.csv
@@ -16,8 +17,10 @@ python build_extraction.py           # -> ../generated/*.csv, STATUS.md, review.
 python build_extraction.py --check   # exit 1 if ../generated/ is out of date
 ```
 
-Rebuild whenever a base table, a snapshot, `arms.csv` or `decisions.csv` changes, and commit
-the generated tables and reports with the change: their git diffs show exactly what changed.
+Rebuild whenever a base table, a snapshot, `decisions.csv` or the model's list of arms
+changes, and commit the generated tables and reports with the change: their git diffs show
+exactly what changed. The build also prints every value that differs from the generated
+tables on disk before overwriting them.
 Snakemake runs the build too (rule `build_extraction`), and
 `tests/test_extraction_build.py` checks that the committed tables equal a fresh build.
 `build_extraction.py --lit-long <file>` lets you try a draft snapshot without replacing
@@ -44,15 +47,15 @@ reads. `sources.csv` records, for each snapshot, the source file's name, its sav
 SHA-256, and when it was extracted. The extract scripts update it.
 
 To take in a new version of either workbook: download it, run its extract script with the
-file's path, rebuild, and review the diffs of the snapshot, `STATUS.md` and `../generated/`. The extract scripts
-need `openpyxl`; the build itself needs only pandas and numpy.
+file's path, rebuild, and review the diffs of the snapshot, `STATUS.md` and `../generated/`.
+The extract scripts need `openpyxl`; the build itself needs only pandas and numpy.
 
 ## Where to start: STATUS.md
 
 `STATUS.md` is regenerated on every build. It lists:
 - **Automatic choices made by the build**: rows where a rule built into the GF defaults
   (not a decision) stopped a GF number being used;
-- for each arm with `apply_defaults = yes`: the decisions in effect (what each targets, the
+- for each arm the model runs: the decisions in effect (what each targets, the
   value it sets, where the value comes from, and its rationale), proposed decisions with what
   they would set, and what is still open, with output and literature values side by side.
 
@@ -62,52 +65,53 @@ No IDs need looking up. It is the current state of the build, so this README doe
 
 Each input file has one job:
 - the base tables hold **values with no other source**;
-- `arms.csv` is **scope**: which arms take default values, and where their data come from;
+- the model's list of arms is **scope**: which arms take default values and are checked;
 - `build_extraction.py` holds the **methods**: how values are converted or computed;
 - `decisions.csv` holds the **choices**: which value or method applies where, and why.
 
 The build has four phases. Each phase can override the one before it, and a row no phase
 touches keeps its base value.
 
-1. **Defaults**, for arms with `apply_defaults = yes`:
-   1. **Literature.** Where the literature extraction gives a value for a row, it is used.
-      If several literature rows match, candidates marked `Use in model` = no are ignored, and
-      if any are marked yes only those count; the rest must agree, or the row is left for GF
-      and reported as "several literature candidates".
-   2. **GF**, for rows the literature left unset: GF values as published, following the
-      mapping in `GF_DATA_MAPPING.md`, apart from a few built-in rules listed there under
-      "Automatic rules".
+1. **Defaults**, for the arms the model runs, from two sources whose order depends on the
+   kind of data:
+   - **Measurements** (consumption, baseline fortification, concentrations): the literature
+     first, then GF for rows the literature leaves unset. The literature cites the primary
+     sources, which GF often rounds.
+   - **2035 targets** (fortifiability, intervention coverage and effectiveness): GF first,
+     then the literature. GF's consolidation and compliance targets define the scenarios;
+     the literature's values for these describe the current state.
 
+   GF values are used as published, following the mapping in `GF_DATA_MAPPING.md`, apart
+   from a few built-in rules listed there under "Automatic rules". A literature value is used
+   only if its candidates agree: candidates marked `Use in model` = no are ignored, and if
+   any are marked yes only those count. If the rest disagree, the build fails (phase 4)
+   unless a decision covers the row, so a row never switches source silently because a
+   candidate was added.
+
+   Arms the model doesn't run keep their base values, so a half-extracted arm can't break
+   the build; `comparison.csv` still shows GF's and the literature's values for them. Adding
+   an arm to `0050_config/location_fortificant_vehicles.csv` fills it in on the next build.
    Effect sizes (`vehicle.csv`) take no defaults; they change only through decisions. For
-   `consumption_source = hces` arms, only intervention rows take defaults.
+   India rice, whose consumption, fortifiability and baseline coverage come from HCES
+   microdata, only intervention rows take defaults (`HCES_ARMS` in `build_extraction.py`).
 2. **Value decisions**: active decisions whose source is `lit:`, `value:`, `gf` or `keep`.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a
    value from others already in place.
-4. **Checks**: the constraints the pipeline relies on. If any fail, the build stops without
-   writing the tables (`review.csv` is still written). The checks are:
+4. **Checks**, for the arms the model runs. If any fail, the build stops without writing
+   the tables (`review.csv` is still written). The checks are:
+   - every row whose literature candidates disagree is resolved, by a `Use in model` mark
+     or a decision;
    - percentages are in [0, 1];
    - consumer variance is > 0 (needed by the pregnancy sim);
    - each amount Total is within 10% of its quintile mean (prep_extracted's check);
    - intervention coverage × fortifiability ≥ baseline coverage (the coverage notebook's check).
 
-A row the build changes gets the new `Value`, a `Data source` naming where it came from,
-`Notes` with the reference, the method or rationale and the base value, and (in
-`country_vehicle`) a `Derivation` when the value was computed. Its CI and SE are cleared if the
-value moved by more than 1%. Every other cell is copied from the base table unchanged.
-
-## arms.csv
-
-| column | meaning |
-|---|---|
-| `country`, `vehicle`, `fortificants` | The arm. Fortificants are separated by `;`. |
-| `apply_defaults` | `yes` to take literature and GF defaults. `comparison.csv` shows GF values for every listed arm either way. Decisions apply whatever this says. |
-| `consumption_source` | `sheet` (the default), or `hces` when consumption and baseline coverage come from HCES microdata instead (India rice). For `hces` arms, only intervention rows take defaults. |
-| `notes` | Free text. |
-
-How to interpret data (per capita or among consumers, how to compute SDs) is not set here;
-those are decisions. Which arms the model actually runs is set separately, in
-`0050_config/location_fortificant_vehicles.csv`.
+A row the build sets gets a `Data source` naming where its value came from, `Notes` with the
+reference, the method or rationale and the base value, and (in `country_vehicle`) a
+`Derivation` when the value was computed. This happens even when the value equals the base
+value, so a placeholder label never survives on a real value. Its CI and SE are cleared if
+the value moved by more than 1%. Every other cell is copied from the base table unchanged.
 
 ## decisions.csv
 
@@ -161,13 +165,13 @@ end. Rows are sorted by arm, then issue.
 
 | issue | what to do |
 |---|---|
-| placeholder remains | A `DUMMY`/`DERIVED` value is still in an arm listed in `arms.csv`. Give it a real value, or a `keep` decision if the placeholder is deliberate. |
+| placeholder remains | A `DUMMY`/`DERIVED` value is still in an arm the model runs, or in an effect size. Give it a real value, or a `keep` decision if the placeholder is deliberate. |
 | GF national inconsistent with GF quintiles | The base Total was kept by the automatic rule. Rescale with `method:scale_to_gf_total`, or record a `keep` decision. |
 | GF disagrees with literature default | The literature value is in use and GF's differs. Use GF with a `gf` decision, or confirm the literature with a `lit:` decision. |
 | recommended literature value differs from output | A value marked `Use in model` = yes isn't what the output uses. Adopt it, or record why not. |
 | literature could replace placeholder | Usually adopt it with a `lit:` decision. |
 | literature disagrees with output | Decide which is right. The detail says whether the output value is the base value, a literature or GF default, a derived placeholder, or a decision. Where a decision converts an arm's amounts with `times_coverage`, the literature value is converted the same way before comparing. |
-| several literature candidates | The literature has more than one value for the same thing, so no literature default was used. Pick one with a decision, or mark one `Use in model` in the literature workbook. Marked candidates are listed first and tagged [recommended] or [not recommended]. |
+| several literature candidates | The literature has more than one value for the same thing (in an arm the model runs, the build fails until this is resolved, unless a decision covers the row). Pick one with a decision, or mark one `Use in model` in the literature workbook. Marked candidates are listed first and tagged [recommended] or [not recommended]. |
 | conflicting literature recommendations | More than one candidate with different values is marked yes. |
 | proposed decision (not applied) / is invalid | Set its status to active or rejected, or fix it. |
 | literature row needs attention | Fix the row in the literature workbook, or add a typo fix to `common.py`. |
@@ -183,8 +187,9 @@ and `overrides` (what it replaced).
 installed; gitignored) has one row per data row of the extraction tables, with these side by
 side:
 - `base_value`, `base_source`: the base table;
-- `gf_value`, `gf_reference`: GF as published, through the GF mapping. Shown for every arm in
-  `arms.csv`, including those with `apply_defaults = no`;
+- `arm_modeled`: whether the model runs this arm;
+- `gf_value`, `gf_reference`: GF as published, through the GF mapping. Shown for every arm,
+  including those the model doesn't run;
 - `lit_value`, `lit_as_published`, `lit_ids`: the matching literature value(s). `lit_value`
   is on the table's basis (e.g. × coverage where a decision converts the arm's amounts; % as
   fractions). Several candidates are separated by `;`, with `*` on the recommended one;

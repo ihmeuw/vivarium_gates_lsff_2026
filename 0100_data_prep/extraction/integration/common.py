@@ -30,7 +30,8 @@ LIT_FILE = EXTRACTION_DIR / "LSFF_effect_sizes.xlsx"
 GF_LONG = HERE / "gf_long.csv"
 LIT_LONG = HERE / "lit_long.csv"
 SOURCES = HERE / "sources.csv"
-ARMS_FILE = HERE / "arms.csv"
+# The arms the model runs; the build fills in and checks these (see README.md)
+MODEL_ARMS_FILE = EXTRACTION_DIR.parent.parent / "0050_config" / "location_fortificant_vehicles.csv"
 DECISIONS_FILE = HERE / "decisions.csv"
 
 # --------------------------------------------------------------------------------------
@@ -326,25 +327,29 @@ class Workbook:
             }
             if entry["action"] == "keep":
                 record["status"] = "kept"
-            elif isinstance(old, float) and np.isclose(old, entry["value"], rtol=1e-9, atol=1e-12):
-                record["status"] = "unchanged"
-            else:
-                record["status"] = "changed"
-                rel = (entry["value"] - old) / old if isinstance(old, float) and old else None
+                records.append(record)
+                continue
+            same = isinstance(old, float) and np.isclose(old, entry["value"], rtol=1e-9, atol=1e-12)
+            record["status"] = "unchanged" if same else "changed"
+            rel = (entry["value"] - old) / old if isinstance(old, float) and old else None
+            if not same:
                 record["relative_change"] = rel
-                cols = self._headers[sheet]
-                df, i = frames[sheet], row - 2
+            # The row's provenance always names the source that set it, even when the number
+            # happens to equal the base value (e.g. a literature value replacing a placeholder).
+            cols = self._headers[sheet]
+            df, i = frames[sheet], row - 2
+            if not same:
                 df.at[i, "Value"] = format_number(entry["value"])
-                df.at[i, cols["data source"]] = entry.get("source_label") or source_labels[entry["origin"]]
-                df.at[i, cols["notes"]] = (
-                    f"{entry['ref']}; {entry['method']}"
-                    + (f" [decision {entry['decision_id']}]" if entry["decision_id"] else "")
-                    + f" (base: {old!r} from {self.get(sheet, row, 'data source')!r})")
-                if "derivation" in cols:
-                    df.at[i, cols["derivation"]] = entry["derivation"] or ""
-                if rel is None or abs(rel) > 0.01:  # the base CI/SE no longer describe the value
-                    for c in ("ci", "se"):
-                        if c in cols:
-                            df.at[i, cols[c]] = ""
+            df.at[i, cols["data source"]] = entry.get("source_label") or source_labels[entry["origin"]]
+            df.at[i, cols["notes"]] = (
+                f"{entry['ref']}; {entry['method']}"
+                + (f" [decision {entry['decision_id']}]" if entry["decision_id"] else "")
+                + f" (base: {old!r} from {self.get(sheet, row, 'data source')!r})")
+            if "derivation" in cols and (entry["derivation"] or not same):
+                df.at[i, cols["derivation"]] = entry["derivation"] or ""
+            if not same and (rel is None or abs(rel) > 0.01):  # the base CI/SE no longer fit
+                for c in ("ci", "se"):
+                    if c in cols:
+                        df.at[i, cols[c]] = ""
             records.append(record)
         return records, frames

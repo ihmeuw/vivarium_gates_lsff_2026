@@ -73,7 +73,7 @@ rule build_extraction:
             "0100_data_prep/extraction/data/vehicle.csv",
             "0100_data_prep/extraction/integration/lit_long.csv",
             "0100_data_prep/extraction/integration/gf_long.csv",
-            "0100_data_prep/extraction/integration/arms.csv",
+            "0050_config/location_fortificant_vehicles.csv",
             "0100_data_prep/extraction/integration/decisions.csv",
             "0100_data_prep/extraction/integration/build_extraction.py",
             "0100_data_prep/extraction/integration/common.py",

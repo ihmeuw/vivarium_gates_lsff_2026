@@ -4,22 +4,26 @@ Inputs (all in this directory unless noted):
     ../data/*.csv    the base extraction tables: hand-entered values with no other source
     lit_long.csv     the literature extraction, from extract_lit.py
     gf_long.csv      the GF background data, from extract_gf.py
-    arms.csv         scope: which arms take default values, and where their consumption
-                     data come from
+    ../../../0050_config/location_fortificant_vehicles.csv
+                     the arms the model runs: these take default values and are checked
     decisions.csv    every interpretive choice: values to use, conversions and computation
                      methods, with rationale (see README.md)
 
 Phases, each of which can override the one before:
-    1. defaults          for arms with apply_defaults = yes:
-                         a. literature: rows where the literature gives a single value
-                            (or a single 'Use in model' pick);
-                         b. GF: rows the literature left unset, using GF values as published
-                            (the mapping in GF_DATA_MAPPING.md)
+    1. defaults          for the arms the model runs, from the literature and GF:
+                         - measurements (consumption, baseline): literature first, then GF
+                           for rows the literature leaves unset;
+                         - 2035 targets (fortifiability, intervention coverage and
+                           effectiveness): GF first, then the literature.
+                         The literature gives a row a value only if its candidates agree (or
+                         one is marked 'Use in model'); disagreeing candidates fail the build
+                         unless a decision covers the row.
     2. value decisions   active decisions whose source is lit:, value:, gf or keep
                          (times_coverage ones run last, after coverage is final)
     3. method decisions  active decisions whose source is method:<name>; values computed from
                          others already in place (e.g. consumption SDs, CONSUMPTION_DISTRIBUTION.md)
-    4. checks            the constraints the pipeline relies on (fails the build)
+    4. checks            the constraints the pipeline relies on, and unresolved literature
+                         candidates (either fails the build)
 
 Methods (how a value is computed) live in this file, in run_method. Which method applies
 where, and why, lives in decisions.csv.
@@ -40,6 +44,7 @@ Usage:
 """
 
 import argparse
+import io
 import math
 import pathlib
 import sys
@@ -49,7 +54,7 @@ import pandas as pd
 
 from report import enrich_review, write_status
 from common import (
-    ALL_SAME, ARMS_FILE, BASE_DIR, CV, CVF, DECISIONS_FILE, GENERATED_DIR, GF_LONG, HERE, LIT_LONG,
+    ALL_SAME, BASE_DIR, MODEL_ARMS_FILE, CV, CVF, DECISIONS_FILE, GENERATED_DIR, GF_LONG, HERE, LIT_LONG,
     NEEDS, QUINTILES, SCEN, TABLES, VEH, Workbook, consumer_moments, format_number, mixture_sd,
     need_alias, norm, round2, table_text,
 )
@@ -61,6 +66,12 @@ COMPARISON = HERE / "comparison.csv"
 COMPARISON_XLSX = HERE / "comparison.xlsx"
 
 TARGET_YEAR = "2035"
+# Data needs that are 2035 targets rather than measurements. GF is their primary source;
+# the literature's values for them describe the current state.
+TARGET_NEEDS = {"fortifiability", "intervention_coverage", "intervention_effectiveness"}
+# Arms whose consumption, fortifiability and baseline coverage come from HCES microdata
+# (0100_data_prep/hces); only their intervention rows take default values.
+HCES_ARMS = {("India", "Rice")}
 TOTALS_RTOL = 0.1  # check_totals_reasonable in prep_extracted.ipynb
 AGREE_RTOL = 0.01  # literature and workbook values closer than this "agree"
 
@@ -120,26 +131,36 @@ class GF:
         return self._out(d.iloc[0])
 
 
-def read_arms(path):
-    # utf-8-sig: tolerate the byte-order mark Excel adds when saving "CSV UTF-8"
-    arms = pd.read_csv(path, dtype=str, skipinitialspace=True, encoding="utf-8-sig").fillna("")
-    arms = arms.apply(lambda col: col.str.strip())
-    out = []
-    for _, a in arms.iterrows():
-        source = norm(a.get("consumption_source", "")) or "sheet"
-        if source not in ("sheet", "hces"):
-            raise ValueError(f"arms.csv: consumption_source must be sheet or hces, not '{source}'")
-        out.append({
-            "country": a.country, "vehicle": a.vehicle,
-            "fortificants": [f.strip() for f in a.fortificants.split(";") if f.strip()],
-            "apply_defaults": norm(a.apply_defaults) == "yes",
-            "hces": source == "hces",
-        })
-    return out
+def read_arms(wb, model_arms_file=MODEL_ARMS_FILE):
+    """Every arm in the base tables, marking the ones the model runs.
+
+    Each arm is a dict: country, vehicle, fortificants (those the model runs, or all in the
+    tables for arms it doesn't run), modeled, hces.
+    """
+    in_tables = {}
+    for sheet in (CV, CVF, SCEN):
+        for row in wb.rows(sheet):
+            key = (wb.get(sheet, row, "country"), wb.get(sheet, row, "vehicle"))
+            if None in key:
+                continue
+            forts = in_tables.setdefault(key, set())
+            if sheet != CV and wb.get(sheet, row, "fortificant"):
+                forts.add(wb.get(sheet, row, "fortificant"))
+    config = pd.read_csv(model_arms_file, dtype=str).fillna("")
+    modeled = {}
+    for _, a in config.iterrows():
+        key = (a.location.strip().title(), a.vehicle.strip().title())
+        if key not in in_tables:
+            raise ValueError(f"{model_arms_file.name}: {key[0]} {key[1]} has no rows in the extraction tables")
+        f = a.fortificant.strip().lower()
+        modeled.setdefault(key, set()).update(in_tables[key] if f == "all" else {f.title()})
+    return [{"country": c, "vehicle": v, "fortificants": sorted(modeled.get((c, v), forts)),
+             "modeled": (c, v) in modeled, "hces": (c, v) in HCES_ARMS}
+            for (c, v), forts in sorted(in_tables.items())]
 
 
 # --------------------------------------------------------------------------------------
-# Phase 1a: literature defaults
+# Phase 1: defaults (literature part)
 # --------------------------------------------------------------------------------------
 
 
@@ -169,7 +190,7 @@ def default_scope(wb, sheet, row, arms):
     """The arm a row belongs to, if it takes default values (None otherwise)."""
     if sheet == VEH:
         return None  # effect sizes are model-wide; they change only through decisions
-    arm = next((a for a in arms if a["apply_defaults"] and a["country"] == wb.get(sheet, row, "country")
+    arm = next((a for a in arms if a["modeled"] and a["country"] == wb.get(sheet, row, "country")
                 and a["vehicle"] == wb.get(sheet, row, "vehicle")), None)
     if arm is None:
         return None
@@ -180,13 +201,15 @@ def default_scope(wb, sheet, row, arms):
     return arm
 
 
-def apply_lit_defaults(wb, lit, arms):
-    """Phase 1a. Returns {(table, line): candidates} for rows left unset because the
-    literature candidates disagree."""
+def apply_lit_defaults(wb, lit, arms, gf_values):
+    """Phase 1, literature part. Returns {(table, line): candidates} for rows where the
+    literature would be the default but its candidates disagree (left unset here)."""
     ambiguous = {}
     for (sheet, row), candidates in sorted(lit_candidates(wb, lit).items(), key=lambda kv: kv[0]):
         if default_scope(wb, sheet, row, arms) is None:
             continue
+        if need_alias(wb.get(sheet, row, "data need")) in TARGET_NEEDS and (sheet, row) in gf_values:
+            continue  # a 2035 target: GF's value comes first
         x, ids = lit_pick(candidates)
         if x is None:
             ambiguous[(sheet, row)] = candidates
@@ -200,7 +223,7 @@ def apply_lit_defaults(wb, lit, arms):
 
 
 # --------------------------------------------------------------------------------------
-# Phase 1b: GF defaults (the mapping documented in GF_DATA_MAPPING.md)
+# Phase 1: defaults (GF part; the mapping documented in GF_DATA_MAPPING.md)
 # --------------------------------------------------------------------------------------
 
 
@@ -305,7 +328,7 @@ def gf_intervention(gf, wb, arm, fortificant):
 
 def apply_gf_defaults(gf, wb, arms):
     for arm in arms:
-        if not arm["apply_defaults"]:
+        if not arm["modeled"]:
             continue
         if not arm["hces"]:
             gf_consumption_any(gf, wb, arm)
@@ -566,6 +589,8 @@ def apply_decisions(wb, lit, decisions, gf_values):
     for _, d in ordered.iterrows():
         effects = resolve_decision(wb, lit, d, gf_values)  # all rows resolved before any is applied
         for e in effects:
+            if e["action"] == "skip":
+                continue  # the decision doesn't apply to this row (e.g. GF has no value)
             decided[(e["sheet"], e["row"])] = d.decision_id
             if e["action"] == "set":
                 wb.propose(e["sheet"], e["row"], e["value"], origin=e["origin"], ref=e["ref"], method=e["method"],
@@ -589,15 +614,21 @@ def among_consumers_arms(decisions):
 # --------------------------------------------------------------------------------------
 
 
-def run_checks(wb, arms):
+def run_checks(wb, arms, unresolved=None):
+    """Problems that stop the build: broken constraints, and unresolved literature candidates."""
     problems = []
+    for (sheet, row), candidates in sorted((unresolved or {}).items()):
+        label = " ".join(str(v) for v in wb.describe(sheet, row).values() if not blank(v))
+        problems.append(f"{sheet} row {row} ({label}): the literature has disagreeing candidates "
+                        + ", ".join(f"{x.lit_id} = {x.value:g} ({x.data_source})" for x in candidates)
+                        + ". Mark one 'Use in model' in the literature workbook, or add a decision")
     for (sheet, row), entry in wb.plan.items():
         if entry["action"] == "set" and norm(wb.get(sheet, row, "units")) == "%" and not 0 <= entry["value"] <= 1:
             problems.append(f"{sheet} row {row}: percentage {entry['value']} outside [0, 1]")
 
     for arm in arms:
         c, v = arm["country"], arm["vehicle"]
-        if arm["hces"] or not wb.find(CV, country=c, vehicle=v, need="amount"):
+        if not arm["modeled"] or arm["hces"] or not wb.find(CV, country=c, vehicle=v, need="amount"):
             continue
         # Pregnancy sim: consumers' variance must be positive (intervention.py)
         for row in wb.find(CV, country=c, vehicle=v, need="amount", data_point_name="mean"):
@@ -780,7 +811,7 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
                 decision_id=d.decision_id, tab=sheet, row=row, output_value=now,
                 lit_id=d.source if str(d.source).startswith("lit:") else None, lit_value=value)
 
-    modeled = {(a["country"], a["vehicle"]) for a in arms}
+    modeled = {(a["country"], a["vehicle"]) for a in arms if a["modeled"]}
     for sheet in (CV, CVF, SCEN, VEH):
         for row in wb.rows(sheet):
             entry = wb.plan.get((sheet, row))
@@ -803,17 +834,17 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
 # --------------------------------------------------------------------------------------
 
 
-def gf_only(gf, base_dir, arms, ignore_apply=True):
-    """What the GF mapping alone would put in every row, for every arm in arms.csv.
+def gf_only(gf, base_dir, arms, modeled_only=False):
+    """What the GF mapping alone would put in every row.
 
-    By default this ignores apply_defaults, so you can see GF's numbers for arms that don't
-    take them yet. Rows the mapping can't place are skipped.
+    By default this covers every arm in the tables, so you can see GF's numbers for arms the
+    model doesn't run yet. Rows the mapping can't place are skipped.
     """
     wb = Workbook(base_dir)
     for arm in arms:
-        if not (ignore_apply or arm["apply_defaults"]):
+        if modeled_only and not arm["modeled"]:
             continue
-        arm = dict(arm, apply_defaults=True)
+        arm = dict(arm, modeled=True)
         steps = [] if arm["hces"] else [gf_consumption_any, gf_consumption_amount]
         for step in steps + [gf_fortifiability]:
             try:
@@ -840,7 +871,7 @@ def compare(a, b):
 def build_comparison(gf, wb, lit, arms, decisions, base_dir):
     gfw = gf_only(gf, base_dir, arms)
     consumer_basis = among_consumers_arms(decisions)
-    listed = {(a["country"], a["vehicle"]): ("yes" if a["apply_defaults"] else "listed, defaults off") for a in arms}
+    listed = {(a["country"], a["vehicle"]): ("yes" if a["modeled"] else "no") for a in arms}
 
     lit_by_row, lit_unplaced = {}, []
     for _, r in lit[lit.status.isin(["ok", "needs_attention"])].iterrows():
@@ -890,7 +921,7 @@ def build_comparison(gf, wb, lit, arms, decisions, base_dir):
                 "tab": sheet, "row": row, "need": alias,
                 **{k: d[k] for k in ["country", "vehicle", "fortificant", "scenario", "quintile", "sex", "data_point_name"]},
                 "units": wb.get(sheet, row, "units"),
-                "arm_in_arms_csv": listed.get((d["country"], d["vehicle"]), "" if sheet == VEH else "no"),
+                "arm_modeled": listed.get((d["country"], d["vehicle"]), "" if sheet == VEH else "no"),
                 "base_value": existing,
                 "base_source": wb.get(sheet, row, "data source"),
                 "gf_value": gf_value,
@@ -913,7 +944,7 @@ def build_comparison(gf, wb, lit, arms, decisions, base_dir):
         records.append({"tab": None, "row": None, "need": x.need, "country": x.country, "vehicle": x.vehicle,
                         "fortificant": x.fortificant, "scenario": x.scenario, "quintile": x.quintile, "sex": x.sex,
                         "data_point_name": x.data_point_name, "units": x.units,
-                        "arm_in_arms_csv": listed.get((x.country, x.vehicle), "no"),
+                        "arm_modeled": listed.get((x.country, x.vehicle), "no"),
                         "lit_value": x.value, "lit_as_published": x.raw_value, "lit_ids": x.lit_id,
                         "lit_source": x.data_source,
                         "output_source": "(no row in the extraction sheet)" if x.status == "ok"
@@ -966,7 +997,7 @@ class Build:
     """Everything one build produces (see build())."""
 
 
-def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, arms_file=ARMS_FILE,
+def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, model_arms_file=MODEL_ARMS_FILE,
           decisions_file=DECISIONS_FILE):
     """Run phases 1 to 4 and the reports. Writes nothing."""
     global GF_DATA
@@ -975,15 +1006,17 @@ def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, arms_file=ARMS_
     GF_DATA = gf
     if "use_in_model" not in lit.columns:
         lit["use_in_model"] = None
-    arms, decisions = read_arms(arms_file), read_decisions(decisions_file)
+    decisions = read_decisions(decisions_file)
     wb = Workbook(base_dir)
+    arms = read_arms(wb, model_arms_file)
 
-    # Phase 1a: literature defaults
-    apply_lit_defaults(wb, lit, arms)
-    # Phase 1b: GF defaults, only where the literature set nothing. gf_values holds every GF
-    # default, used or not, so that 'gf' decisions can choose GF over the literature.
-    gfw = gf_only(gf, base_dir, arms, ignore_apply=False)
+    # Phase 1: defaults. gf_values holds every GF default, used or not, so that 'gf'
+    # decisions can choose GF over the literature.
+    gfw = gf_only(gf, base_dir, arms, modeled_only=True)
     gf_values = {key: (e["value"], e["ref"]) for key, e in gfw.plan.items() if e["action"] == "set"}
+    # The literature first (except for 2035 targets that GF gives)...
+    ambiguous = apply_lit_defaults(wb, lit, arms, gf_values)
+    # ...then GF for every row the literature left unset
     gf_automatic = []  # places where a GF rule deliberately did NOT use GF's number
     for key, e in sorted(gfw.plan.items()):
         if key in wb.plan:
@@ -998,12 +1031,37 @@ def build(base_dir=BASE_DIR, lit_long=LIT_LONG, gf_long=GF_LONG, arms_file=ARMS_
     b.gf_values, b.gf_automatic = gf_values, gf_automatic
     b.review = enrich_review(build_review(wb, lit, arms, decisions, decided, gf_values), wb, lit, decisions)
     b.comparison = build_comparison(gf, wb, lit, arms, decisions, base_dir)
-    # Phase 4: checks
-    b.problems = run_checks(wb, arms)
+    # Phase 4: checks. Disagreeing literature candidates that no decision resolves fail the
+    # build, so a row never silently switches source when a candidate is added.
+    unresolved = {key: c for key, c in ambiguous.items() if key not in decided}
+    b.problems = run_checks(wb, arms, unresolved)
     records, frames = wb.outputs(SOURCE_LABELS)
     b.changelog = pd.DataFrame(records)
     b.tables = {t: table_text(df) for t, df in frames.items()}
     return b
+
+
+def value_changes(tables, generated_dir=GENERATED_DIR):
+    """Rows whose Value differs from the generated tables on disk, as readable lines."""
+    from common import read_table
+    out = []
+    for t, text in tables.items():
+        path = pathlib.Path(generated_dir) / f"{t}.csv"
+        if not path.exists():
+            continue
+        old = read_table(path)
+        new = read_table(io.StringIO(text))
+        if len(old) != len(new):
+            out.append(f"{t}: {len(old)} -> {len(new)} rows")
+            continue
+        keys = [c for c in ["Country", "Vehicle", "Fortificant", "Scenario", "Quintile", "Sex", "Data need",
+                            "Data point name"] if c in new.columns]
+        for i in range(len(new)):
+            if old.at[i, "Value"] != new.at[i, "Value"]:
+                label = " ".join(new.at[i, k] for k in keys if new.at[i, k])
+                out.append(f"{t} row {i + 2} ({label}): {old.at[i, 'Value'] or '(blank)'} -> "
+                           f"{new.at[i, 'Value'] or '(blank)'}")
+    return out
 
 
 def stale_tables(tables, generated_dir=GENERATED_DIR):
@@ -1022,7 +1080,8 @@ def main():
     parser.add_argument("--output-dir", type=pathlib.Path, default=GENERATED_DIR,
                         help="where to write the generated tables")
     parser.add_argument("--decisions", type=pathlib.Path, default=DECISIONS_FILE)
-    parser.add_argument("--arms", type=pathlib.Path, default=ARMS_FILE)
+    parser.add_argument("--model-arms", type=pathlib.Path, default=MODEL_ARMS_FILE,
+                        help="the arms the model runs (default: 0050_config/location_fortificant_vehicles.csv)")
     parser.add_argument("--lit-long", type=pathlib.Path, default=LIT_LONG)
     parser.add_argument("--check", action="store_true",
                         help="write nothing; exit 1 if the generated tables are out of date")
@@ -1030,7 +1089,7 @@ def main():
     if args.output_dir.resolve() == args.base.resolve():
         sys.exit("Refusing to overwrite the base tables; choose another --output-dir")
 
-    b = build(args.base, args.lit_long, GF_LONG, args.arms, args.decisions)
+    b = build(args.base, args.lit_long, GF_LONG, args.model_arms, args.decisions)
     if b.problems:
         print("Checks failed; tables NOT written:")
         for p in b.problems:
@@ -1046,6 +1105,13 @@ def main():
         print("Generated tables are up to date.")
         return
 
+    changes = value_changes(b.tables, args.output_dir)
+    if changes:
+        print(f"VALUES CHANGED in {args.output_dir.name}/ ({len(changes)}):")
+        for c in changes:
+            print("  " + c)
+    else:
+        print(f"No values changed in {args.output_dir.name}/.")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for t, text in b.tables.items():
         (args.output_dir / f"{t}.csv").write_text(text, encoding="utf-8")

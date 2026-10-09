@@ -5,17 +5,19 @@ fortifiability, baseline and intervention fortification, and effect sizes. They 
 two layers, one CSV per table and one data point per row:
 
 ```
-data/*.csv (base, hand-edited) ───┐
-integration/lit_long.csv          ─┤
-integration/gf_long.csv           ─┼─► integration/build_extraction.py ─► generated/*.csv ─► prep notebooks
-integration/decisions.csv, arms.csv┘     (Snakemake rule build_extraction)   (never edit)
+data/*.csv (base, hand-edited)                  ─┐
+integration/lit_long.csv (literature snapshot)  ─┤
+integration/gf_long.csv (GF snapshot)           ─┼─► integration/build_extraction.py ─► generated/*.csv ─► prep notebooks
+integration/decisions.csv                       ─┤   (Snakemake rule build_extraction)   (never edit)
+0050_config/location_fortificant_vehicles.csv   ─┘
 ```
 
 - **`data/`, the base layer**: hand-entered values that have no other source (effect sizes,
   concentrations, HCES-related values, assumptions), plus the tables nothing builds.
 - **`generated/`, the generated layer**: the four tables the notebooks read, written only by
-  the build. The build starts from the base tables and fills in the literature extraction's
-  values, then GF's values where the literature has none, then applies `decisions.csv`.
+  the build. For the arms the model runs, it starts from the base tables, fills in values
+  from the literature extraction and GF (literature first for measurements, GF first for
+  the 2035 targets), then applies `decisions.csv`.
   See `integration/README.md`.
 
 | File | Layer | Was tab | Read by |
