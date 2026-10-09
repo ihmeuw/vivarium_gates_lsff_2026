@@ -87,7 +87,7 @@ RESCALED_CHILD_RESULTS_ROOT = (
 # ---------------------------------------------------------------------------
 
 #: Label the archive files this iteration under. Bump it to start a new one.
-MODEL_NUMBER = "model2.5.0"
+MODEL_NUMBER = "model2.6.0"
 
 #: Team-drive root that ``archive_last_run.sh`` publishes to.
 TEAM_ARCHIVE_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
