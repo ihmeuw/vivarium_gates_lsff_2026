@@ -12,7 +12,7 @@ P005,rejected,amount,Nigeria,Wheat,,,Lowest,,standard deviation,lit:5415905e,,"N
 P006,rejected,intervention_coverage,Nigeria,Wheat,Iron,,,,,lit:91cd553c,,Literature extraction: coverage = effectiveness = 100% of fortifiable; conflicts with the sqrt(0.85) split used for every other arm. Rejected 2026-10-02 in favour of D011/D012,Nathaniel,10/1/26
 P007,proposed,amount,Nigeria,Rice,,,,,mean,gf,,Nigeria rice per capita: NFCMS usual intake as published (would replace D006; also needs P008),Nathaniel,10/2/26
 P008,proposed,amount,Nigeria,Rice,,,,,standard deviation,method:consumer_cv,,"Nigeria rice SDs from the NFCMS CV, needed if rice goes per capita (P007)",Nathaniel,10/2/26
-D019,active,baseline_concentration,Nigeria,Wheat,Iron,,,,,lit:4091afc5,,Assume current concentration is at Nigeria standard,Nathaniel,10/2/26
+D019,active,baseline_concentration,Nigeria,Wheat,Iron,,,,,lit:db01771c,,Assume current concentration is at Nigeria standard,Nathaniel,10/2/26
 D020,active,baseline_concentration,Nigeria,Wheat,Folate,,,,,value:2.6,,2.6 mg/kg from Table 2 premix values from Technoserve,Nathaniel,10/2/26
 D021,active,baseline_effectiveness,Nigeria,Wheat,,,,,,gf,,Defer to GF numbers,Nathaniel,10/2/26
 D022,active,baseline_any,Nigeria,Wheat,,,,,,gf,,Defer to GF numbers,Nathaniel,10/2/26

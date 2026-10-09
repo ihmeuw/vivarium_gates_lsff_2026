@@ -29,10 +29,15 @@ Nothing open.
 *literature disagrees with output*: Decide which is right; a 'gf', 'keep' or 'lit:' decision records the choice
 
 - India Rice: fortifiability (consolidation) [Total]. output 0.45; literature: 50.0 % from M4N Database (literature workbook 'Vehicle Consumption' row 118)
+- India Rice Folate: baseline: effective share of fortified. output 0.8; literature: 50.0 % from nan (literature workbook 'MN baseline fortification' row 54)
+- India Rice Iron: baseline: effective share of fortified. output 0.8; literature: 50.0 % from nan (literature workbook 'MN baseline fortification' row 50)
 
-*literature row needs attention*: Fix the row in the literature workbook
+*literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
 
-- India Rice: baseline: effective share of fortified. literature: 50.0 % from nan (literature workbook 'MN baseline fortification' row 24) Problem: unknown fortificant 'None'.
+- India Rice Folate: baseline: share fortified [Total]. literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 52)
+- India Rice Folate: intervention: concentration (mcg/g) [Intervention - 2016 FA standard]. literature: 1.3 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 42)
+- India Rice Folate: intervention: concentration (mcg/g) [Intervention - curernt standard]. literature: 0.125 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 41)
+- India Rice Iron: baseline: share fortified [Total]. literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 48)
 
 ## Nigeria Bouillon
 
@@ -41,6 +46,14 @@ Nothing open.
 *literature row needs attention*: Fix the row in the literature workbook
 
 - Nigeria Bouillon: WRA consumption: share eating the vehicle [Total, Children U5]. literature: 98.8 % from NFCMS, Annex 44, 549 (literature workbook 'Vehicle Consumption' row 66) Problem: population is children U5 but the data need is for WRA.
+
+*literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
+
+- Nigeria Bouillon Folate: baseline: share fortified [Fourth]. literature: 66.93711967545639 % from NFCMS, Table 146, p 191 (literature workbook 'MN baseline fortification' row 15)
+- Nigeria Bouillon Folate: baseline: share fortified [Highest]. literature: 69.97971602434077 % from NFCMS, Table 146, p 191 (literature workbook 'MN baseline fortification' row 16)
+- Nigeria Bouillon Folate: baseline: share fortified [Lowest]. literature: 51.92107995846313 % from NFCMS, Table 146, p 191 (literature workbook 'MN baseline fortification' row 12)
+- Nigeria Bouillon Folate: baseline: share fortified [Middle]. literature: 63.81048387096774 % from NFCMS, Table 146, p 191 (literature workbook 'MN baseline fortification' row 14)
+- Nigeria Bouillon Folate: baseline: share fortified [Second]. literature: 58.40978593272171 % from NFCMS, Table 146, p 191 (literature workbook 'MN baseline fortification' row 13)
 
 ## Nigeria Rice
 
@@ -73,7 +86,7 @@ Nothing open.
 - **D008** Nigeria Wheat: U5 consumption: g/day SD → Total 58.09; Female 53.98; Male 62.19  
   Source: computed (consumer_cv). Why: As D007, for U5 rows
 - **D019** Nigeria Wheat Iron: baseline: concentration (mcg/g) → 40  
-  Source: 40.0 ppm from NFCMS,Table (literature workbook 'MN baseline fortification' row 4). Why: Assume current concentration is at Nigeria standard
+  Source: 40.0 ppm from NFCMS,Table 177, p 228 (literature workbook 'MN baseline fortification' row 29). Why: Assume current concentration is at Nigeria standard
 - **D020** Nigeria Wheat Folate: baseline: concentration (mcg/g) → 2.6  
   Source: typed value. Why: 2.6 mg/kg from Table 2 premix values from Technoserve
 - **D021** Nigeria Wheat Iron: baseline: effective share of fortified → 0.79 | Nigeria Wheat Folate: baseline: effective share of fortified → 0.79  
@@ -92,6 +105,20 @@ Nothing open.
 - **D024** India Wheat Iron: baseline: share fortified → 0.0335 | India Wheat Folate: baseline: share fortified → 0.0335  
   Source: typed value. Why: India wheat baseline share fortified = consolidation 0.15 x sqrt(5% compliance) = 0.15 x 0.2236; see D023. Confirm with GF
 
+**Still open**
+
+*literature could replace placeholder*: Usually adopt it with a lit: decision
+
+- India Wheat Folate: baseline: concentration (mcg/g). output 0; literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN baseline fortification' row 61)
+- India Wheat Iron: baseline: concentration (mcg/g). output 0; literature: 42.5 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN baseline fortification' row 57)
+
+*literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
+
+- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 46)
+- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 0.075 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 45)
+- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 42.5 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 44)
+- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 28.0 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 43)
+
 ## Effect sizes (all countries)
 
 **Decisions in effect**
@@ -106,3 +133,7 @@ Nothing open.
 *placeholder remains*: Needs a real value, or a 'keep' decision if the placeholder is deliberate
 
 - (all countries) Salt: birthweight effect (g per mg/day). output 1.67
+
+*literature disagrees with output*: Decide which is right; a 'gf', 'keep' or 'lit:' decision records the choice
+
+- (all countries) Salt: hemoglobin effect (g/L). output 4.4; literature: 4.8 g/L from Lall et al. The Effects of Salt Fortified with Multiple Nutrients on Health Outcomes in Children, Adolescents, and Adults: A Systematic Review and Meta-Analysis (literature workbook 'Effect Sizes' row 4)
