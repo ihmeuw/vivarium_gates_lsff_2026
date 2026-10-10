@@ -30,8 +30,8 @@ Nothing open.
 
 *literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
 
-- India Rice Folate: intervention: concentration (mcg/g) [Intervention - 2016 FA standard]. literature: 1.3 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 42)
-- India Rice Folate: intervention: concentration (mcg/g) [Intervention - curernt standard]. literature: 0.125 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 41)
+- India Rice Folate: intervention: concentration (mcg/g) [Intervention - 2016 FA standard]. literature: 1.3 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 44)
+- India Rice Folate: intervention: concentration (mcg/g) [Intervention - current standard]. literature: 0.125 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 43)
 
 ## Nigeria Bouillon
 
@@ -53,13 +53,11 @@ Nothing open.
 
 **Decisions in effect**
 
-- **P008** Nigeria Rice: WRA consumption: g/day SD → Total 78.51; Lowest 64.37; Second 76.57; Middle 72.88; Fourth 73.51; Highest 72.69  
+- **P008** Nigeria Rice: WRA consumption: g/day SD → Total 78.98; Lowest 64.37; Second 76.57; Middle 72.88; Fourth 73.51; Highest 72.69  
   Source: computed (consumer_cv). Why: Nigeria rice SDs from the NFCMS CV applied to consumers (CONSUMPTION_DISTRIBUTION.md section 4): per capita, the NFCMS SDs as published make consumer variance negative (e.g. poorest quintile needs SD >= 48.1, NFCMS 24.8)
-- **D025** Nigeria Rice: WRA consumption: share eating the vehicle → Total 0.54  
-  Source: GF. Why: Keep GF's national coverage (0.54), as in the PR #53 run, rather than the literature default (NFCMS 0.536). The Total only sanity-checks the quintiles, but it also sets the coverage for the national SD (P008). Reject to use the literature value
 - **D028** Nigeria Rice: WRA consumption: g/day mean → Total 61.2  
   Source: 61.2 g/day from NFCMS, Table 172, p 224 (literature workbook 'Vehicle Consumption' row 96). Why: NFCMS national usual intake (61.2, Table 172), per capita as published. Resolves the two literature candidates (NFCMS 61.2, M4N 38; see P009). Also supplies the national mean for P008's consumer CV
-- **D032** Nigeria Rice: U5 consumption: g/day SD → Total 49.66; Female 46.26; Male 53.06  
+- **D032** Nigeria Rice: U5 consumption: g/day SD → Total 49.95; Female 46.54; Male 53.38  
   Source: computed (consumer_cv). Why: As P008, for U5 rows: per capita, the NFCMS U5 SDs (Table 173) make consumer variance negative at national WRA coverage
 
 **Proposed, not applied** (set status to active or rejected)
@@ -71,9 +69,9 @@ Nothing open.
 
 **Decisions in effect**
 
-- **D007** Nigeria Wheat: WRA consumption: g/day SD → Total 87.58; Lowest 44.93; Second 55.12; Middle 76.17; Fourth 88.41; Highest 101.1  
+- **D007** Nigeria Wheat: WRA consumption: g/day SD → Total 87.21; Lowest 44.93; Second 55.12; Middle 76.17; Fourth 88.41; Highest 101.1  
   Source: computed (consumer_cv). Why: NFCMS usual-intake SDs are incompatible with the zero-inflated model at 19-35% coverage; give consumers the NFCMS CV (CONSUMPTION_DISTRIBUTION.md section 4)
-- **D008** Nigeria Wheat: U5 consumption: g/day SD → Total 58.09; Female 53.98; Male 62.19  
+- **D008** Nigeria Wheat: U5 consumption: g/day SD → Total 57.85; Female 53.75; Male 61.93  
   Source: computed (consumer_cv). Why: As D007, for U5 rows
 - **D019** Nigeria Wheat Iron: baseline: concentration (mcg/g) → 40  
   Source: 40.0 ppm from NFCMS,Table 177, p 228 (literature workbook 'MN baseline fortification' row 29). Why: Assume current concentration is at Nigeria standard
@@ -83,15 +81,13 @@ Nothing open.
   Source: GF. Why: Defer to GF numbers
 - **D022** Nigeria Wheat Iron: baseline: share fortified → 0.79 | Nigeria Wheat Folate: baseline: share fortified → 0.79  
   Source: GF. Why: Defer to GF numbers
-- **D026** Nigeria Wheat: WRA consumption: share eating the vehicle → Total 0.28  
-  Source: GF. Why: Keep GF's national coverage (0.28), as in the PR #53 run, rather than the literature default (NFCMS 0.282). It sets the consumer CV conversion for the Total and U5 SDs (D007, D008). Reject to use the literature value
 
 ## India Wheat (not in the model)
 
 **Decisions in effect**
 
 - **D023** India Wheat Iron: baseline: effective share of fortified → 0.22 | India Wheat Folate: baseline: effective share of fortified → 0.22  
-  Source: typed value, then sqrt. Why: GF cover sheet gives India wheat current compliance 5%, Coverage Over Time says 50% (GF update log 28 Sep says it was changed from 5% to 50%). 5% judged more plausible; confirm with GF. sqrt split
+  Source: typed value, then sqrt. Why: GF cover sheet gives India wheat current compliance 5%, Coverage Over Time says 50% (GF change log, 'Sources' tab row 29, says it was changed from 5% to 50%). 5% judged more plausible; confirm with GF. sqrt split
 - **D024** India Wheat Iron: baseline: share fortified → 0.0335 | India Wheat Folate: baseline: share fortified → 0.0335  
   Source: typed value. Why: India wheat baseline share fortified = consolidation 0.15 x sqrt(5% compliance) = 0.15 x 0.2236; see D023. Confirm with GF
 
@@ -104,10 +100,10 @@ Nothing open.
 
 *literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
 
-- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 46)
-- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 0.075 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 45)
-- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 42.5 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 44)
-- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 28.0 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 43)
+- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 48)
+- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 0.075 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 47)
+- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 42.5 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 46)
+- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 28.0 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 45)
 
 ## Effect sizes (all countries)
 

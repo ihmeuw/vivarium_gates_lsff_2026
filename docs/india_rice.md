@@ -115,6 +115,11 @@ plus a small rise in consolidation (0.50 → 0.529).
 | 0.065 (GF's increase only) | 0.479 | 0.400 | 0.535 |
 | 0 (PDS only) | 0.450 | 0.376 | 0.517 |
 
+GF's 0.529 is itself a reach-weighted blend of two channels in GF's source data, "Rice w/
+PDS" (0.63 in 2035) and "Rice w/o PDS" (0.35); if the latter is open-market consolidation, it
+would map directly onto our industry consolidation (about 0.35, national fortifiability about
+0.61). See GF question 7 in `GF_DATA_MAPPING.md`.
+
 GF's 2035 effective coverage is 0.444. P011 attributes the gap between our PDS share (0.45) and
 GF's current consolidation (0.50) to industry; if that gap is a measurement difference, 0.065
 (matching only GF's increase) is the alternative. Open-market rice is bought mostly by richer

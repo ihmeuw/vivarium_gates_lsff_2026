@@ -103,8 +103,9 @@ overridden with a decision.
    Proposed decision P009
    would rescale the quintiles to 38 (× 0.63).
 2. **India wheat current compliance.** The cover sheet (R7) says 5%; Coverage Over Time (E20) says
-   50%. GF's update log for 28 Sep says current wheat flour compliance was changed from 5% to
-   50%, but only Coverage Over Time was changed. We are using 5% (D023, D024), which seems more
+   50%. GF's change log (the workbook's 'Sources' tab, row 29: an undated entry for the India
+   update by Kathy and Ruchika) says current wheat flour compliance was changed from 5% to 50%,
+   but only Coverage Over Time was changed. We are using 5% (D023, D024), which seems more
    plausible. Which is intended?
 3. **Basis of the consumption figures.** Are the g/cap figures (NFCMS usual intake) means over
    all women, or among consumers? An earlier email (JG, 8/31) said among consumers for rice;
@@ -122,14 +123,23 @@ overridden with a decision.
    wheat flour currently fortified with folic acid, or only iron?
 6. **Nigeria bouillon 2035 compliance** rose from 50% (April workbook) to 85%. This roughly
    doubles the modelled intervention effect, so it is worth confirming.
-7. **India rice.** GF's 2035 consolidation (0.53) is market-wide; our model applies
-   consolidation only to purchased rice outside the PDS, so P011 calibrates ours (0.175) to
-   reproduce GF's level. Is GF's current 0.50 the PDS share? If so, the gap to our HCES PDS
-   share (0.45) is a measurement difference and only GF's increase should count (0.065). We apply GF's
-   current compliance (50%) to PDS rice only (the literature extraction notes it is for
-   government rice). Is that GF's meaning?
+7. **India rice.** GF's consolidation for India rice is a blend. A comment on 'Coverage Over
+   Time'!H22 says the 2031 and 2035 values blend two rows of GF's 25 Sep vehicle-data file,
+   weighted by each channel's reach: "Rice w/ PDS" (2031 0.5792, 2035 0.6279) and "Rice w/o
+   PDS" (2031 0.2145, 2035 0.3516). The implied PDS weight is 0.73 in 2031 and 0.64 in 2035
+   (HCES: 0.70 of women eat some PDS rice). Our model applies industry consolidation only to
+   purchased non-PDS rice, and P011 (0.175) calibrates it to the blend (0.529). Questions:
+   what do the two channel figures measure (households with/without PDS access, or rice
+   streams)? If "w/o PDS" is the fortifiable share of open-market rice, it maps directly onto
+   our industry consolidation (about 0.35 in 2035, giving national fortifiability about 0.61).
+   What are the current-year channel values? We also apply GF's current compliance (50%) to
+   PDS rice only (the literature extraction notes it is for government rice). Is that GF's
+   meaning?
 8. **India rice consolidation path.** Current consolidation is 0.50, 2031 is 0.48 and 2035 is
-   0.53, so it falls before it rises. Is the 2031 value intended?
+   0.53, so it falls before it rises. The current value comes from the cover sheet (M4N,
+   updated in the India revision), while 2031 and 2035 are reach-weighted blends from the
+   25 Sep file whose PDS weight falls from 0.73 to 0.64, so the dip may be an artifact of
+   mixing sources and weights. Is the 2031 value intended?
 9. **Minor transcription differences** spotted in the literature extraction: Nigeria wheat
    coverage 28.0 vs NFCMS 28.2; salt 99.2 vs 99.3; rice poorest-quintile g/cap 34.1 vs NFCMS
    34.2.
@@ -197,9 +207,9 @@ If it trips again, weight that mean (or loosen `rtol`).
    use it. The build stops and suggests replacements. `extract_lit.py` already reads an `ID`
    column; adding one to the workbook would prevent this.
 8. **Coverage Totals: literature vs GF.** GF's national coverage rounds NFCMS (rice 0.54 vs
-   0.536, wheat 0.28 vs 0.282). D025 and D026 keep GF's figures so the values match the
-   PR #53 run; rejecting them switches to the literature's (small changes to the rice
-   national SD and the wheat Total and U5 SDs).
+   0.536, wheat 0.28 vs 0.282). The literature's figures are used (D025 and D026, which kept
+   GF's to match the PR #53 run, were rejected on 9 Oct 2026). The Totals only sanity-check the
+   quintiles and set the coverage for the national and U5 consumer-CV SDs.
 9. **2035 targets where the literature differs.** GF's targets are used by default and
    the literature's current-state values for these rows aren't reported. The ones that
    differ: Nigeria rice fortifiability (GF 0.90 vs M4N 0.54, GFDx 0.30); Nigeria bouillon
