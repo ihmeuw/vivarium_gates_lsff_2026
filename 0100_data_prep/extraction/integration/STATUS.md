@@ -87,7 +87,7 @@ Nothing open.
 **Decisions in effect**
 
 - **D023** India Wheat Iron: baseline: effective share of fortified → 0.22 | India Wheat Folate: baseline: effective share of fortified → 0.22  
-  Source: typed value, then sqrt. Why: GF cover sheet gives India wheat current compliance 5%, Coverage Over Time says 50% (GF change log, 'Sources' tab row 29, says it was changed from 5% to 50%). 5% judged more plausible; confirm with GF. sqrt split
+  Source: typed value, then sqrt. Why: GF cover sheet gives India wheat current compliance 5%, Coverage Over Time says 50% (GF change log, 'Sources' tab row 29, 28 Sep 2026, says it was changed from 5% to 50%). 5% judged more plausible; confirm with GF. sqrt split
 - **D024** India Wheat Iron: baseline: share fortified → 0.0335 | India Wheat Folate: baseline: share fortified → 0.0335  
   Source: typed value. Why: India wheat baseline share fortified = consolidation 0.15 x sqrt(5% compliance) = 0.15 x 0.2236; see D023. Confirm with GF
 

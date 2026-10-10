@@ -103,10 +103,12 @@ overridden with a decision.
    Proposed decision P009
    would rescale the quintiles to 38 (× 0.63).
 2. **India wheat current compliance.** The cover sheet (R7) says 5%; Coverage Over Time (E20) says
-   50%. GF's change log (the workbook's 'Sources' tab, row 29: an undated entry for the India
+   50%. GF's change log (the workbook's 'Sources' tab, row 29, dated 28 Sep 2026, for the India
    update by Kathy and Ruchika) says current wheat flour compliance was changed from 5% to 50%,
-   but only Coverage Over Time was changed. We are using 5% (D023, D024), which seems more
-   plausible. Which is intended?
+   but only Coverage Over Time was changed (E20 is typed in, while other rows link to the cover
+   sheet). We are using 5% (D023, D024): with consolidation 0.15 it gives a fortified share of
+   0.15 × √0.05 ≈ 3.4%, close to GFDx's 4% of wheat flour fortified, whereas 50% gives about
+   11%. Which is intended? (India wheat isn't in the model yet.)
 3. **Basis of the consumption figures.** Are the g/cap figures (NFCMS usual intake) means over
    all women, or among consumers? An earlier email (JG, 8/31) said among consumers for rice;
    NFCMS's method and Tables 172–173 (Ns are all respondents; 25th percentiles > 0 in every
@@ -132,7 +134,10 @@ overridden with a decision.
    what do the two channel figures measure (households with/without PDS access, or rice
    streams)? If "w/o PDS" is the fortifiable share of open-market rice, it maps directly onto
    our industry consolidation (about 0.35 in 2035, giving national fortifiability about 0.61).
-   What are the current-year channel values? We also apply GF's current compliance (50%) to
+   What are the current-year channel values? Could GF keep the two channels separate in the
+   background data (as the LSFF DALYs 'Input - workbook' tab does), with consolidation,
+   compliance and reach for each, for current, 2031 and 2035? That would fit our HCES-based
+   model better than the blend. We also apply GF's current compliance (50%) to
    PDS rice only (the literature extraction notes it is for government rice). Is that GF's
    meaning?
 8. **India rice consolidation path.** Current consolidation is 0.50, 2031 is 0.48 and 2035 is
