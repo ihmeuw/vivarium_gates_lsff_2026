@@ -31,6 +31,7 @@ NEED_LABELS = {
 ISSUE_ORDER = [
     "placeholder remains",
     "GF national inconsistent with GF quintiles",
+    "GF disagrees with literature default",
     "recommended literature value differs from output",
     "literature could replace placeholder",
     "literature disagrees with output",
@@ -39,20 +40,23 @@ ISSUE_ORDER = [
     "proposed decision (not applied)",
     "proposed decision is invalid",
     "literature row needs attention",
+    "literature row can't be matched",
     "literature value has no row in the extraction sheet",
 ]
 
 WHAT_TO_DO = {
-    "GF national inconsistent with GF quintiles": "The existing Total was kept; rescale with method:scale_to_gf_total, or record a 'keep' decision",
+    "GF national inconsistent with GF quintiles": "The base Total was kept; rescale with method:scale_to_gf_total, or record a 'keep' decision",
+    "GF disagrees with literature default": "The literature value is used; use GF with a 'gf' decision, or confirm the literature with a 'lit:' decision",
     "placeholder remains": "Needs a real value, or a 'keep' decision if the placeholder is deliberate",
     "recommended literature value differs from output": "Adopt it with a lit: decision, or record why not",
     "literature could replace placeholder": "Usually adopt it with a lit: decision",
-    "literature disagrees with output": "Decide which is right; a 'gf' or 'keep' decision records that the output is",
-    "several literature candidates": "Pick one (decision), or mark one 'Use in model' in the literature workbook",
+    "literature disagrees with output": "Decide which is right; a 'gf', 'keep' or 'lit:' decision records the choice",
+    "several literature candidates": "Pick one (decision), or mark one 'Use in model' in the literature workbook (for arms the model runs, the build fails until this is resolved, unless a decision covers the row)",
     "conflicting literature recommendations": "More than one candidate is marked 'Use in model' = yes; resolve in the literature workbook",
     "proposed decision (not applied)": "Set its status to active or rejected",
     "proposed decision is invalid": "Fix the decision (see detail)",
     "literature row needs attention": "Fix the row in the literature workbook",
+    "literature row can't be matched": "Fix the row in the literature workbook (the detail says why); until then it isn't used",
     "literature value has no row in the extraction sheet": "Nothing to do unless the sheet should gain a row",
 }
 
@@ -70,7 +74,7 @@ def fmt(v):
 
 
 def describe_row(wb, tab, row):
-    """(arm, item, stratum) for a row of the extraction sheet."""
+    """(arm, item, stratum) for a row of the extraction tables."""
     d = wb.describe(tab, row)
     alias = need_alias(d["data_need"])
     arm = " ".join(str(d[k]) for k in ["country", "vehicle", "fortificant"] if not blank(d[k]))
@@ -112,7 +116,7 @@ def describe_lit_target(lit, lit_id):
 
 def candidates_text(detail, lit):
     """Each candidate in a 'several literature candidates' item, spelled out."""
-    ids = re.findall(r"lit:[0-9a-f]{8}(?:-\d+)?", detail)
+    ids = re.findall(r"lit:[\w.]+(?:-\d+)?", detail)
     return " OR ".join(describe_lit(lit, i) for i in ids) if ids else detail
 
 
@@ -123,7 +127,7 @@ def source_text(lit, source):
     if source == "gf":
         return "GF"
     if source == "keep":
-        return "existing extraction sheet"
+        return "base extraction table"
     if source.startswith("method:"):
         return f"computed ({source.split(':', 1)[1]})"
     if source.startswith("value:"):
@@ -198,10 +202,10 @@ def decision_effects(wb, lit, decisions, resolve, gf_values):
                 arm = f"(all countries) {arm}"
             if e["action"] == "set":
                 what = fmt(e["value"])
-            elif e["action"] == "accept":
-                what = f"{fmt(e['value'])} (GF, accepted)"
+            elif e["action"] == "skip":
+                what = "not set (GF has no value)"
             else:
-                what = "existing value kept"
+                what = "base value kept"
             groups.setdefault((arm, item), []).append(f"{stratum} {what}".strip() if stratum else what)
         parts = []
         for (arm, item), values in groups.items():
@@ -214,11 +218,16 @@ def decision_effects(wb, lit, decisions, resolve, gf_values):
 def write_status(path, wb, lit, arms, decisions, review, resolve, gf_values, gf_automatic=()):
     """STATUS.md: per arm, the decisions in effect and what is still open."""
     effects = decision_effects(wb, lit, decisions, resolve, gf_values)
-    arm_names = [f"{a['country']} {a['vehicle']}" for a in arms if a["apply_gf"]]
+    arm_names = [f"{a['country']} {a['vehicle']}" for a in arms if a["modeled"]]
+    # Arms the model doesn't run still get the decisions that target them; list those too
+    decided_arms = {f"{d.country} {d.vehicle}" for _, d in decisions.iterrows()
+                    if norm(d.status) in ("active", "proposed") and not blank(d.country) and not blank(d.vehicle)}
+    other_names = sorted(decided_arms - set(arm_names))
     out = ["# Status of the extraction build", "",
            "Generated by `build_extraction.py`; do not edit. For each arm: the decisions in effect, "
            "proposed decisions, and what is still open, with IDs resolved. `review.csv` has the open "
-           "items as a filterable table. Arms with apply_gf = no in `arms.csv` are not listed.", ""]
+           "items as a filterable table. Lists the arms the model runs (0050_config/location_fortificant_vehicles.csv), "
+           "then any other arm a decision targets.", ""]
 
     def section(title, match):
         lines = [f"## {title}", ""]
@@ -276,5 +285,9 @@ def write_status(path, wb, lit, arms, decisions, review, resolve, gf_values, gf_
 
     for name in arm_names:
         out += section(name, lambda arm, name=name: arm.startswith(name))
+    for name in other_names:
+        # Not modeled: no defaults or checks, so only its decisions are shown
+        lines = section(f"{name} (not in the model)", lambda arm, name=name: arm.startswith(name))
+        out += [x for x in lines if x != "Nothing open."]
     out += section("Effect sizes (all countries)", lambda arm: arm.startswith("(all countries)"))
     path.write_text("\n".join(out))

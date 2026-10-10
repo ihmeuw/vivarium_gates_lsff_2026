@@ -33,13 +33,13 @@ Using these directly gives a negative consumer variance and NaN draws; the build
 
 ## Interim fix: survey coefficient of variation (CV) applied to consumers
 
-Keep *p* and the published mean *m*, give consumers the survey CV = *s*/*m*, and write the implied SD over all women to the extraction sheet:
+Keep *p* and the published mean *m*, give consumers the survey CV = *s*/*m*, and write the implied SD over all women to the extraction tables:
 
     μ = m / p
     σ = CV × μ
     SD over all women = sqrt( p σ² + p (1 − p) μ² )
 
-This is decisions D007 and D008 in `decisions.csv` (`source = method:consumer_cv`, Nigeria wheat amount SD rows, WRA and U5). `method_consumer_cv()` in `build_extraction.py` reads the NFCMS mean and SD from `lit_long.csv`, using the literature extraction's `Use in model` pick when there are several candidates, and takes *p* from the output workbook. U5 rows use national WRA coverage, since children get the women's coverage.
+This is decisions D007 and D008 in `decisions.csv` (`source = method:consumer_cv`, Nigeria wheat amount SD rows, WRA and U5). `method_consumer_cv()` in `build_extraction.py` reads the NFCMS mean and SD from `lit_long.csv`, using the literature extraction's `Use in model` pick when there are several candidates, and takes *p* from the build's current coverage values. U5 rows use national WRA coverage, since children get the women's coverage.
 
 It keeps the published mean (birthweight) and GF's coverage (effective coverage, hemoglobin), and consumer variance is always positive. It gives up the NFCMS SD over all women (45–101 for wheat vs. 13–33), assumes the usual-intake CV carries over to consumers, and still clips 3–12% of wheat consumers.
 
@@ -70,7 +70,7 @@ The redesign removes the clipping loss, uses the survey mean and SD (or CV) with
 
 | Where | Change |
 |---|---|
-| `build_extraction.py` / extraction sheet | Store survey numbers as published with a basis label (e.g. "usual intake mean (all women)"). Add the per-arm option. |
+| `build_extraction.py` / extraction tables | Store survey numbers as published with a basis label (e.g. "usual intake mean (all women)"). Add the per-arm option. |
 | `prep_extracted.ipynb` | Write gamma shape and scale per stratum to `vehicle_consumption/amount/consumer_shape/` and `consumer_scale/`. The Nigeria U5 interpolation (on means and variances) carries over; its "within-group variance > 0" check is dropped. |
 | `intervention.py`, `VehicleConsumption` | Keep the Bernoulli(*p*) "covered" draw. Covered simulants draw from the gamma, or for `covered_are_upper_tail` take its quantile at *U* = 1 − *p* + *p* × uniform. Remove the mixture inversion and clip. Use framework randomness streams so scenarios share draws. |
 | `IronFortification` | Coverage logic unchanged. Optional `minimum_effective_iron_mcg_per_day` (default 0) in `update_hemoglobin_exposure`. |
