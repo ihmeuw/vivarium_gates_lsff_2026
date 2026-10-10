@@ -108,11 +108,16 @@ overridden with a decision.
    plausible. Which is intended?
 3. **Basis of the consumption figures.** Are the g/cap figures (NFCMS usual intake) means over
    all women, or among consumers? An earlier email (JG, 8/31) said among consumers for rice;
-   NFCMS's method and the GHS-Panel cross-check point to all women. Nigeria rice is still
-   treated as among consumers (D006); wheat as per capita.
+   NFCMS's method and Tables 172–173 (Ns are all respondents; 25th percentiles > 0 in every
+   quintile) and the GHS-Panel cross-check point to all women. Both rice and wheat are now
+   treated as per capita.
 4. **What coverage measures.** Nigeria wheat coverage (28%) is home use of wheat flour (NFCMS
    Table 146), and NFCMS notes that most others eat vendor-made bread. Is the 28% meant to be
-   the full reach of fortifiable wheat, or should bread eaters count?
+   the full reach of fortifiable wheat, or should bread eaters count? Nigeria rice coverage
+   (53.6%; 33.6–67.6% by quintile) is not in the NFCMS report: the input workbooks note it was
+   "provided by INTAKE". What does it measure? It can't be the share who eat rice at all (NFCMS
+   usual intake is positive for at least 75% of women in every quintile); it is probably the
+   share eating rice on the recall day. GHS-Panel 2023/24 shows 86.7% eating rice over 7 days.
 5. **Compliance by nutrient.** GF gives one compliance per vehicle. Is Nigerian (and Indian)
    wheat flour currently fortified with folic acid, or only iron?
 6. **Nigeria bouillon 2035 compliance** rose from 50% (April workbook) to 85%. This roughly
@@ -144,14 +149,15 @@ If it trips again, weight that mean (or loosen `rtol`).
 
 1. **What basis is NFCMS consumption on?** It is most likely population-wide. NFCMS's
    NCI usual-intake method produces intake for everyone, and the GHS-Panel cross-check
-   matches for rice. To be confirmed with GF (question 3 above).
+   matches for rice; Tables 172–173 confirm it for rice. To be confirmed with GF (question 3).
    - **Wheat:** treated as per capita. SDs use the NFCMS CV (decisions D007, D008), because NFCMS
      usual-intake SDs are incompatible with our zero-inflated model. See
      `CONSUMPTION_DISTRIBUTION.md`.
-   - **Rice:** deliberately kept as among consumers (D006), for comparability with earlier
-     results. Switching means rejecting D006 and activating P007 and P008. P008 currently
-     reports as invalid because the literature workbook has two candidate national rice means
-     (NFCMS 61.2, M4N 38); marking one `Use in model` = yes fixes that.
+   - **Rice:** switched to per capita on 9 Oct 2026 (D006, P007, D027 rejected): NFCMS means
+     as published, the national mean from D028, and SDs from the NFCMS CV (P008, D032).
+     Coverage *p* is unchanged (question 4), so rice eaters now eat mean / *p* (102–118 g/day
+     for women, 1.5–3.0× before); hemoglobin is nearly unchanged, while birthweight and NTD
+     effects rise.
    - **A redesign** of the consumption model (a non-negative intake distribution, with GF
      coverage unchanged) is described in `CONSUMPTION_DISTRIBUTION.md`, section 5.
 2. **Store published numbers and convert in code.** Label each amount row's basis in the
@@ -193,8 +199,7 @@ If it trips again, weight that mean (or loosen `rtol`).
 8. **Coverage Totals: literature vs GF.** GF's national coverage rounds NFCMS (rice 0.54 vs
    0.536, wheat 0.28 vs 0.282). D025 and D026 keep GF's figures so the values match the
    PR #53 run; rejecting them switches to the literature's (small changes to the rice
-   national mean and the wheat Total and U5 SDs). D027 keeps the rice U5 means at NFCMS ×
-   0.536; if the rice basis changes (P007), revisit it too.
+   national SD and the wheat Total and U5 SDs).
 9. **2035 targets where the literature differs.** GF's targets are used by default and
    the literature's current-state values for these rows aren't reported. The ones that
    differ: Nigeria rice fortifiability (GF 0.90 vs M4N 0.54, GFDx 0.30); Nigeria bouillon

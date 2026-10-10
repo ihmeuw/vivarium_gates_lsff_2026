@@ -39,7 +39,7 @@ Keep *p* and the published mean *m*, give consumers the survey CV = *s*/*m*, and
     σ = CV × μ
     SD over all women = sqrt( p σ² + p (1 − p) μ² )
 
-This is decisions D007 and D008 in `decisions.csv` (`source = method:consumer_cv`, Nigeria wheat amount SD rows, WRA and U5). `method_consumer_cv()` in `build_extraction.py` reads the NFCMS mean and SD from `lit_long.csv`, using the literature extraction's `Use in model` pick when there are several candidates, and takes *p* from the build's current coverage values. U5 rows use national WRA coverage, since children get the women's coverage.
+This is decisions D007 and D008 (Nigeria wheat) and P008 and D032 (Nigeria rice) in `decisions.csv` (`source = method:consumer_cv`, amount SD rows, WRA and U5). `method_consumer_cv()` in `build_extraction.py` reads the NFCMS mean and SD from `lit_long.csv`: the literature row an active `lit:` decision chose for the row, if any, otherwise by the literature extraction's `Use in model` pick when there are several candidates, and takes *p* from the build's current coverage values. U5 rows use national WRA coverage, since children get the women's coverage.
 
 It keeps the published mean (birthweight) and GF's coverage (effective coverage, hemoglobin), and consumer variance is always positive. It gives up the NFCMS SD over all women (45–101 for wheat vs. 13–33), assumes the usual-intake CV carries over to consumers, and still clips 3–12% of wheat consumers.
 
@@ -53,7 +53,17 @@ Nigeria wheat, women 15+:
 | Fourth | 0.333 | 49.3 | 148.0 | 0.64 | 88.4 (72.2) | 6% |
 | Highest | 0.353 | 62.4 | 176.8 | 0.53 | 101.1 (86.6) | 3% |
 
-Nigeria rice still uses the older among-consumers treatment via decision D006 (g/cap × coverage, original NFCMS SDs), which under the population-wide reading understates mean intake by about 1/0.536 ≈ 1.9. Switching it means rejecting D006 and activating P007 (per capita) and P008 (consumer CV SDs); P008 first needs one of the two candidate national rice means in the literature workbook marked `Use in model`.
+Nigeria rice used the older among-consumers treatment (D006: g/cap × coverage, NFCMS SDs as published) until 9 Oct 2026, which understated consumers' intake by 1/*p* (1.5× in the richest quintile to 3.0× in the poorest). It is now per capita with the same CV rule (P008, D032).
+
+Nigeria rice, women 15+:
+
+| quintile | *p* | mean | consumer mean | consumer CV | SD, all women (NFCMS) | clipped (before) |
+|---|---|---|---|---|---|---|
+| Lowest | 0.336 | 34.2 | 101.8 | 0.73 | 64.4 (24.8) | 8% (15%) |
+| Second | 0.448 | 52.4 | 117.0 | 0.64 | 76.6 (33.3) | 6% (5%) |
+| Middle | 0.546 | 60.7 | 111.2 | 0.58 | 72.9 (35.0) | 4% (1%) |
+| Fourth | 0.633 | 73.7 | 116.4 | 0.51 | 73.5 (37.8) | 3% (0%) |
+| Highest | 0.676 | 79.5 | 117.6 | 0.49 | 72.7 (39.0) | 2% (0%) |
 
 ## Proposed redesign: gamma intake for covered women
 

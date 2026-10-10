@@ -256,4 +256,5 @@ what is reported: the recommended candidate is listed first, a recommendation th
 from the output gets its own review item, and candidates marked `no` aren't reported as
 separate disagreements when another candidate is marked `yes`. `comparison.csv` compares
 against the recommended value. `method:consumer_cv` picks its literature mean and SD by the
-same rules as the defaults.
+same rules as the defaults, except that a row set by an active `lit:` decision uses that
+decision's literature row.

@@ -494,6 +494,17 @@ def matching_row(wb, sheet, row, **changes):
     return wb.one(sheet, **keys)
 
 
+def lit_for_row(wb, lit, sheet, row):
+    """The literature row behind a table row: the one an active 'lit:' decision chose for it, if
+    any (so a decision can settle disagreeing candidates for methods too), else lit_one."""
+    entry = wb.plan.get((sheet, row))
+    if entry is not None and entry.get("decision_id") and str(entry.get("ref") or "").startswith("lit:"):
+        match = lit[lit.lit_id == entry["ref"].split()[0]]
+        if len(match) == 1:
+            return match.iloc[0]
+    return lit_one(wb, lit, sheet, row)
+
+
 def method_consumer_cv(wb, lit, sheet, row, d):
     """SD over all women when consumers get the literature's coefficient of variation.
 
@@ -505,8 +516,8 @@ def method_consumer_cv(wb, lit, sheet, row, d):
     need = need_alias(wb.get(sheet, row, "data need"))
     if need not in ("amount", "u5_amount") or norm(wb.get(sheet, row, "data point name")) != "standard deviation":
         raise ValueError(f"decision {d['decision_id']}: method consumer_cv applies only to amount SD rows")
-    lit_mean = lit_one(wb, lit, sheet, matching_row(wb, sheet, row, data_point_name="mean"))
-    lit_sd = lit_one(wb, lit, sheet, row)
+    lit_mean = lit_for_row(wb, lit, sheet, matching_row(wb, sheet, row, data_point_name="mean"))
+    lit_sd = lit_for_row(wb, lit, sheet, row)
     cv = float(lit_sd.value) / float(lit_mean.value)
     m = wb.current(sheet, matching_row(wb, sheet, row, data_point_name="mean"))
     p = wb.current(CV, coverage_row(wb, sheet, row))

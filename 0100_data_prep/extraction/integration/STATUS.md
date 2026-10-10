@@ -53,22 +53,18 @@ Nothing open.
 
 **Decisions in effect**
 
-- **D006** Nigeria Rice: WRA consumption: g/day mean → Total not set (GF has no value); Lowest 11.46; Second 23.48; Middle 33.14; Fourth 46.65; Highest 53.74  
-  Source: GF, then times_coverage. Why: Keep Nigeria rice on the among-consumers basis used in earlier runs (JG email 8/31), so results stay comparable. NFCMS usual intake is probably population-wide (literature review, Oct 2026); revisit with P007
+- **P008** Nigeria Rice: WRA consumption: g/day SD → Total 78.51; Lowest 64.37; Second 76.57; Middle 72.88; Fourth 73.51; Highest 72.69  
+  Source: computed (consumer_cv). Why: Nigeria rice SDs from the NFCMS CV applied to consumers (CONSUMPTION_DISTRIBUTION.md section 4): per capita, the NFCMS SDs as published make consumer variance negative (e.g. poorest quintile needs SD >= 48.1, NFCMS 24.8)
 - **D025** Nigeria Rice: WRA consumption: share eating the vehicle → Total 0.54  
-  Source: GF. Why: Keep GF's national coverage (0.54), as in the PR #53 run, rather than the literature default (NFCMS 0.536). The Total only sanity-checks the quintiles, but it also sets the national mean (D028). Reject to use the literature value
-- **D027** Nigeria Rice: U5 consumption: g/day mean → Total base value kept; Female base value kept; Male base value kept  
-  Source: base extraction table. Why: Keep the base values: NFCMS U5 means (38.3, 35.5, 41.0) x 0.536, the national WRA coverage when they were entered, i.e. the among-consumers basis of D006. A lit: decision with times_coverage would use the current national coverage (0.54, D025) instead
-- **D028** Nigeria Rice: WRA consumption: g/day mean → Total 33.05  
-  Source: 61.2 g/day from NFCMS, Table 172, p 224 (literature workbook 'Vehicle Consumption' row 96), then times_coverage. Why: NFCMS national mean (61.2) on the among-consumers basis of D006, as in the PR #53 run. Resolves the two literature candidates (NFCMS 61.2, M4N 38; see P009)
+  Source: GF. Why: Keep GF's national coverage (0.54), as in the PR #53 run, rather than the literature default (NFCMS 0.536). The Total only sanity-checks the quintiles, but it also sets the coverage for the national SD (P008). Reject to use the literature value
+- **D028** Nigeria Rice: WRA consumption: g/day mean → Total 61.2  
+  Source: 61.2 g/day from NFCMS, Table 172, p 224 (literature workbook 'Vehicle Consumption' row 96). Why: NFCMS national usual intake (61.2, Table 172), per capita as published. Resolves the two literature candidates (NFCMS 61.2, M4N 38; see P009). Also supplies the national mean for P008's consumer CV
+- **D032** Nigeria Rice: U5 consumption: g/day SD → Total 49.66; Female 46.26; Male 53.06  
+  Source: computed (consumer_cv). Why: As P008, for U5 rows: per capita, the NFCMS U5 SDs (Table 173) make consumer variance negative at national WRA coverage
 
 **Proposed, not applied** (set status to active or rejected)
 
-- **P007** would set Nigeria Rice: WRA consumption: g/day mean → Total not set (GF has no value); Lowest 34.1; Second 52.4; Middle 60.7; Fourth 73.7; Highest 79.5  
-  Source: GF. Why: Nigeria rice per capita: NFCMS usual intake as published (would replace D006; also needs P008)
-- **P008** is invalid: expected one literature value for country_vehicle row 57 (Nigeria Rice Total Female Vehicle consumption by WRA -- amount mean), found: lit:5caac3a0 = 38, lit:799bacd6 = 61.2  
-  Source: computed (consumer_cv). Why: Nigeria rice SDs from the NFCMS CV, needed if rice goes per capita (P007)
-- **P009** would set Nigeria Rice: WRA consumption: g/day mean → Total 21.31; Lowest 7.247; Second 14.85; Middle 20.96; Fourth 29.51; Highest 33.99  
+- **P009** would set Nigeria Rice: WRA consumption: g/day mean → Total 38.01; Lowest 21.63; Second 33.14; Middle 38.39; Fourth 46.61; Highest 50.28  
   Source: computed (scale_to_gf_total). Why: Use GF's national rice g/cap (38, M4N) and rescale the NFCMS quintiles (x0.63) to match. Caveat: 38 may be a different measure (industry-based, all ages) rather than an update; NFCMS national 61.2 and GHS-Panel 2023/24 (62.7) agree with the quintiles. Confirm with GF
 
 ## Nigeria Wheat
