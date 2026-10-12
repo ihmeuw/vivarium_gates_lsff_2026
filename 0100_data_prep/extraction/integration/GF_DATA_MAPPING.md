@@ -148,6 +148,15 @@ overridden with a decision.
 9. **Minor transcription differences** spotted in the literature extraction: Nigeria wheat
    coverage 28.0 vs NFCMS 28.2; salt 99.2 vs 99.3; rice poorest-quintile g/cap 34.1 vs NFCMS
    34.2.
+10. **Ethiopia salt intake.** The cover sheet gives national salt intake of 7.8 g/day, but the
+   wealth-quintile values on the Ethiopia tab (7.08, 7.24, 7.70, 7.16, 6.50; from the 2022
+   national survey) average 7.14. Which is right? Our model uses the quintile values. The
+   literature workbook now sets the 25% and 100% NRV folic acid concentrations with 7.8 g/day
+   (12.8 and 51.3 mcg/g, previously 14.1 and 56.3 with 7.1), so those scenarios deliver about
+   9% less folic acid than their labels (about 23% and 91% of the NRV), and NTDs averted fell
+   6% and 4% in the October 2026 run. The 45 ppm scenario is unaffected. Proposed decisions
+   P012/P013 (concentrations from 7.14 g/day) or P014 (quintiles rescaled to 7.8) would make
+   the scenarios deliver their stated NRV.
 
 ## Latent issue in `prep_extracted.ipynb`
 

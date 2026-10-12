@@ -11,7 +11,14 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 ## Ethiopia Salt
 
-Nothing open.
+**Proposed, not applied** (set status to active or rejected)
+
+- **P012** would set Ethiopia Salt Folate: intervention: concentration (mcg/g) → Intervention - 25% NRV 14.01  
+  Source: typed value. Why: 25% of the 400 mcg folic acid NRV at the salt intake the model uses: 100 / 7.137 g/day (mean of the Ethiopia quintile g/cap, which drive intake). The literature workbook now uses GF's national 7.8 g/day (12.8 mcg/g), which isn't the mean of GF's quintiles, so the scenario delivers ~23% NRV. See GF question 10. Alternative to P014
+- **P013** would set Ethiopia Salt Folate: intervention: concentration (mcg/g) → Intervention - 100% NRV 56.05  
+  Source: typed value. Why: As P012, for 100% NRV: 400 / 7.137 g/day (the literature workbook's 51.3 uses 7.8 g/day). Alternative to P014
+- **P014** would set Ethiopia Salt: WRA consumption: g/day mean → Total 7.8; Lowest 7.742; Second 7.907; Middle 8.42; Fourth 7.822; Highest 7.109  
+  Source: computed (scale_to_gf_total). Why: Rescale the Ethiopia salt quintile g/cap (mean 7.14) to GF's national 7.8 g/day (x1.093), keeping the wealth gradient. Makes the literature's NRV concentrations (12.8, 51.3 mcg/g) deliver 25% / 100% NRV; raises intake in the 45 ppm scenario by ~9%. Alternative to P012/P013; see GF question 10
 
 ## India Rice
 
