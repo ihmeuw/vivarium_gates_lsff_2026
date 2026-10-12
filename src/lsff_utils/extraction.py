@@ -29,7 +29,12 @@ EXTRACTION_DATA_DIR = EXTRACTION_DIR / "data"
 EXTRACTION_GENERATED_DIR = EXTRACTION_DIR / "generated"
 
 # Tables the build writes to generated/. load_extraction reads these from there.
-GENERATED_TABLES = ("country_vehicle", "country_vehicle_fortificant", "scenario_definition", "vehicle")
+GENERATED_TABLES = (
+    "country_vehicle",
+    "country_vehicle_fortificant",
+    "scenario_definition",
+    "vehicle",
+)
 
 # Columns parsed as numbers; every other column is read as text. A blank cell is
 # missing (NaN) in either case.
@@ -46,12 +51,39 @@ NUMERIC_COLUMNS = {
 
 # Columns every row must fill in.
 REQUIRED_COLUMNS = {
-    "country_vehicle": ["Country", "Vehicle", "Quintile", "Sex", "Data need", "Data point name", "Units", "Value"],
-    "country_vehicle_fortificant": ["Country", "Vehicle", "Fortificant", "Quintile", "Data need", "Data point name", "Units", "Value"],
+    "country_vehicle": [
+        "Country",
+        "Vehicle",
+        "Quintile",
+        "Sex",
+        "Data need",
+        "Data point name",
+        "Units",
+        "Value",
+    ],
+    "country_vehicle_fortificant": [
+        "Country",
+        "Vehicle",
+        "Fortificant",
+        "Quintile",
+        "Data need",
+        "Data point name",
+        "Units",
+        "Value",
+    ],
     "country": ["Country", "Quintile", "Data need"],
     "vehicle": ["Vehicle", "Data need", "Data point name", "Units", "Value"],
     "universal": ["Data need"],
-    "scenario_definition": ["Country", "Vehicle", "Fortificant", "Scenario", "Data need", "Data point name", "Units", "Value"],
+    "scenario_definition": [
+        "Country",
+        "Vehicle",
+        "Fortificant",
+        "Scenario",
+        "Data need",
+        "Data point name",
+        "Units",
+        "Value",
+    ],
     "data_sources": ["Name"],
     "progress": ["Table", "Data need", "Status"],
 }
@@ -62,14 +94,33 @@ ALLOWED_VALUES = {
 }
 
 IDENTIFIER_COLUMNS = [
-    "Country", "Vehicle", "Fortificant", "Scenario", "Quintile", "Sex",
-    "Data need", "Data point name", "Units", "Table", "Wealth", "Status",
+    "Country",
+    "Vehicle",
+    "Fortificant",
+    "Scenario",
+    "Quintile",
+    "Sex",
+    "Data need",
+    "Data point name",
+    "Units",
+    "Table",
+    "Wealth",
+    "Status",
 ]
 
 TABLES = tuple(NUMERIC_COLUMNS)
 
 # Columns that identify a data point in the tables the build manages
-KEY_COLUMNS = ["Country", "Vehicle", "Fortificant", "Scenario", "Quintile", "Sex", "Data need", "Data point name"]
+KEY_COLUMNS = [
+    "Country",
+    "Vehicle",
+    "Fortificant",
+    "Scenario",
+    "Quintile",
+    "Sex",
+    "Data need",
+    "Data point name",
+]
 
 
 def extraction_path(table: str, base: bool = False) -> Path:
@@ -122,7 +173,9 @@ def validate_extraction(table: str, df: pd.DataFrame, path: Path | None = None) 
         if column in df.columns:
             bad = df[df[column].notna() & ~df[column].isin(allowed)]
             for idx, value in bad[column].items():
-                problems.append(f"{column!r} has unexpected value {value!r} in row {_csv_rows([idx])}")
+                problems.append(
+                    f"{column!r} has unexpected value {value!r} in row {_csv_rows([idx])}"
+                )
 
     # Each data point must appear once in the tables the build manages (two rows with the
     # same key would be matched together by the build and the notebooks).
@@ -139,7 +192,9 @@ def validate_extraction(table: str, df: pd.DataFrame, path: Path | None = None) 
             text = df[column].dropna()
             padded = text[text != text.str.strip()]
             for idx, value in padded.items():
-                problems.append(f"{column!r} has leading/trailing whitespace ({value!r}) in row {_csv_rows([idx])}")
+                problems.append(
+                    f"{column!r} has leading/trailing whitespace ({value!r}) in row {_csv_rows([idx])}"
+                )
 
     if problems:
         name = path if path is not None else extraction_path(table)
