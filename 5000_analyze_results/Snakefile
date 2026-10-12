@@ -7,21 +7,34 @@ debug = config["debug"]
 artifact_setup = config["artifact_env_setup"]
 papermill_engine = "--engine debug" if debug else ""
 
-# Simulation output lives on the team drive in per-run, timestamp-named
-# directories, so these rules depend on the markers naming the runs rather than
-# on parquet paths. The notebooks resolve the same runs through
-# lsff_utils.paths.latest_results, which keeps the Snakefile and the notebooks
-# from having to agree on a layout twice over.
+# Upstream output is read from LSFF_DATA_SOURCE, the same setting the notebooks
+# read: this working tree by default, or an archived model number on the team
+# drive. Archived inputs have no producing rule, so nothing upstream is rerun.
+DATA_SOURCE = paths.data_source(default=paths.LOCAL_SOURCE)
+
+
+def source_path(in_repo_root, *parts):
+    return snakemake_utils.source_path(in_repo_root, *parts, source=DATA_SOURCE)
+
+
+# Simulation output lives in per-run, timestamp-named directories, so these
+# rules depend on the markers naming the runs rather than on parquet paths. The
+# notebooks resolve the same runs through lsff_utils.paths.latest_results.
 MATERNAL_RUN_MARKER = snakemake_utils.run_marker(
-    paths.MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"
+    paths.source_root(paths.MATERNAL_RESULTS_ROOT, DATA_SOURCE), "{location}", "{vehicle}"
 )
 CHILD_RUN_MARKER = snakemake_utils.run_marker(
-    paths.CHILD_RESULTS_ROOT, "{location}", "{vehicle}"
+    paths.source_root(paths.CHILD_RESULTS_ROOT, DATA_SOURCE), "{location}", "{vehicle}"
 )
 
 pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls", "person_time_anemia", "transition_count_maternal_disorders"]
 rescaled_pregnancy_results = [
     f"5000_analyze_results/results/rescaled_pregnancy_results/{{vehicle}}/{{location}}/{result}.parquet"
+    for result in pregnancy_results_of_interest
+]
+
+rescaled_pregnancy_inputs = [
+    source_path(paths.RESCALED_PREGNANCY_RESULTS_ROOT, "{vehicle}", "{location}", f"{result}.parquet")
     for result in pregnancy_results_of_interest
 ]
 
@@ -45,6 +58,11 @@ rule rescale_pregnancy_results:
 child_results_of_interest = ["deaths", "ylds", "ylls"]
 rescaled_child_results = [
     f"5000_analyze_results/results/rescaled_child_results/{{vehicle}}/{{location}}/{result}.parquet"
+    for result in child_results_of_interest
+]
+
+rescaled_child_inputs = [
+    source_path(paths.RESCALED_CHILD_RESULTS_ROOT, "{vehicle}", "{location}", f"{result}.parquet")
     for result in child_results_of_interest
 ]
 
@@ -76,7 +94,7 @@ rule rescale_child_results:
 TEMPLATE_WILDCARDS = {"location": "india", "vehicle": "rice"}
 template_rescaled_results = [
     path.format(**TEMPLATE_WILDCARDS)
-    for path in rescaled_pregnancy_results + rescaled_child_results
+    for path in rescaled_pregnancy_inputs + rescaled_child_inputs
 ]
 
 
@@ -84,8 +102,12 @@ template_rescaled_results = [
 # the template combo's file only for its index structure and set every value
 # to 0, so these are declared as inputs to keep Snakemake from starting a job
 # before the template exists.
-TEMPLATE_ANEMIA_YLDS = "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet".format(**TEMPLATE_WILDCARDS)
-TEMPLATE_ANEMIA_CASES = "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet".format(**TEMPLATE_WILDCARDS)
+def anemia_input(name):
+    return source_path(paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT, "{vehicle}", "{location}", name)
+
+
+TEMPLATE_ANEMIA_YLDS = anemia_input("ylds.parquet").format(**TEMPLATE_WILDCARDS)
+TEMPLATE_ANEMIA_CASES = anemia_input("anemia_cases.parquet").format(**TEMPLATE_WILDCARDS)
 TEMPLATE_NTD_YLLS = "0500_neural_tube_defects_model/results/{location}/{vehicle}/ylls_by_scenario.csv".format(**TEMPLATE_WILDCARDS)
 TEMPLATE_NTD_CASES = "0500_neural_tube_defects_model/results/{location}/{vehicle}/ntd_cases_by_scenario.csv".format(**TEMPLATE_WILDCARDS)
 
@@ -114,11 +136,11 @@ def dalys_by_scenario_inputs(wildcards):
     pathways = combo_pathways(wildcards)
     result = ["5000_analyze_results/dalys_by_scenario.ipynb"]
     if pathways["has_simulations"]:
-        result += rescaled_pregnancy_results + rescaled_child_results
+        result += rescaled_pregnancy_inputs + rescaled_child_inputs
     else:
         result += template_rescaled_results
     if pathways["has_anemia_model"]:
-        result += ["0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet"]
+        result += [anemia_input("ylds.parquet")]
     else:
         result += [TEMPLATE_ANEMIA_YLDS]
     if pathways["has_ntd_model"]:
@@ -145,13 +167,13 @@ def cases_by_scenario_inputs(wildcards):
     pathways = combo_pathways(wildcards)
     result = ["5000_analyze_results/cases_by_scenario.ipynb"]
     if pathways["has_simulations"]:
-        result += rescaled_pregnancy_results + rescaled_child_results
+        result += rescaled_pregnancy_inputs + rescaled_child_inputs
     else:
         result += template_rescaled_results
     if pathways["has_anemia_model"]:
         result += [
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
+            anemia_input("anemia_cases.parquet"),
+            anemia_input("anemia_prevalence.parquet"),
         ]
     else:
         result += [TEMPLATE_ANEMIA_CASES]

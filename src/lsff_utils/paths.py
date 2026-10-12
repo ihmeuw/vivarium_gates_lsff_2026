@@ -14,8 +14,10 @@ produces each thing::
     0300_child_sim/sim_results/<vehicle>/<location>/<run>/
     0300_child_sim/lbwsg_paf_mean_draw_artifacts/<location>.hdf
     0300_child_sim/lbwsg_pafs/<location>/<run>/
+    0400_non_pregnant_anemia_model/results/<vehicle>/<location>/
+    5000_analyze_results/results/rescaled_{pregnancy,child}_results/<vehicle>/<location>/
 
-All six are gitignored: they hold large binaries and psimulate's per-run
+All of them are gitignored: they hold large binaries and psimulate's per-run
 metadata, none of which belongs in version control.
 
 Nothing here carries a model iteration number. The repository holds the run you
@@ -25,7 +27,9 @@ are working on; ``archive_last_run.sh`` publishes it to the team drive under
     /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/
     |-- artifacts/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>.hdf
     |-- data/<MODEL_NUMBER>/{lbwsg_paf_artifacts,lbwsg_pafs}/
-    `-- results/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>/<run>/
+    `-- results/<MODEL_NUMBER>/
+        |-- {maternal,child}/<vehicle>/<location>/<run>/
+        `-- {non_pregnant_anemia,rescaled_pregnancy,rescaled_child}/<vehicle>/<location>/
 
 :func:`archive_root` maps an in-repo root to its archived counterpart, so a
 reader of a published iteration -- the V&V notebooks -- names the root it wants
@@ -47,6 +51,7 @@ out of the same ``results/`` directory the maternal simulation wrote to.
 """
 
 import fnmatch
+import os
 from pathlib import Path
 
 #: Repository root, derived from this file's location: <repo>/src/lsff_utils/paths.py.
@@ -66,6 +71,15 @@ CHILD_RESULTS_ROOT = CHILD_PKG_ROOT / "sim_results"
 # never share a path with the full child artifact.
 LBWSG_PAF_ARTIFACT_ROOT = CHILD_PKG_ROOT / "lbwsg_paf_mean_draw_artifacts"
 LBWSG_PAF_RESULTS_ROOT = CHILD_PKG_ROOT / "lbwsg_pafs"
+
+NON_PREGNANT_ANEMIA_RESULTS_ROOT = REPO_ROOT / "0400_non_pregnant_anemia_model" / "results"
+
+RESCALED_PREGNANCY_RESULTS_ROOT = (
+    REPO_ROOT / "5000_analyze_results" / "results" / "rescaled_pregnancy_results"
+)
+RESCALED_CHILD_RESULTS_ROOT = (
+    REPO_ROOT / "5000_analyze_results" / "results" / "rescaled_child_results"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +107,9 @@ ARCHIVE_DESTINATIONS = {
     LBWSG_PAF_RESULTS_ROOT: ("data", "lbwsg_pafs"),
     MATERNAL_RESULTS_ROOT: ("results", "maternal"),
     CHILD_RESULTS_ROOT: ("results", "child"),
+    NON_PREGNANT_ANEMIA_RESULTS_ROOT: ("results", "non_pregnant_anemia"),
+    RESCALED_PREGNANCY_RESULTS_ROOT: ("results", "rescaled_pregnancy"),
+    RESCALED_CHILD_RESULTS_ROOT: ("results", "rescaled_child"),
 }
 
 #: Roots holding timestamped simulation runs, archived one run at a time.
@@ -116,6 +133,37 @@ def archive_root(in_repo_root: Path, model_number: str = MODEL_NUMBER) -> Path:
             f"ARCHIVE_DESTINATIONS: {[str(root) for root in ARCHIVE_DESTINATIONS]}."
         ) from None
     return TEAM_ARCHIVE_ROOT / kind / model_number / subpath
+
+
+#: Environment variable choosing where the 5000 notebooks read pipeline output from.
+DATA_SOURCE_ENV_VAR = "LSFF_DATA_SOURCE"
+
+#: The :func:`source_root` value meaning this working tree.
+LOCAL_SOURCE = "local"
+
+
+def data_source(default: str) -> str:
+    """``LSFF_DATA_SOURCE`` if set, else ``default``.
+
+    ``default`` is ``"local"`` for the notebooks Snakemake runs and
+    :data:`MODEL_NUMBER` for the validation notebooks.
+    """
+    return os.environ.get(DATA_SOURCE_ENV_VAR) or default
+
+
+def source_root(in_repo_root: Path, source: str) -> Path:
+    """``in_repo_root`` for ``"local"``, otherwise its archive under model number ``source``."""
+    if source == LOCAL_SOURCE:
+        return in_repo_root
+    root = archive_root(in_repo_root, source)
+    if not root.is_dir():
+        raise FileNotFoundError(
+            f"'{root}' does not exist. Check that {DATA_SOURCE_ENV_VAR}='{source}' is "
+            f"a published model number (published: {archived_model_numbers()}), "
+            f"and that it was archived after this output was added to "
+            f"ARCHIVE_DESTINATIONS."
+        )
+    return root
 
 
 def archived_model_numbers(kind: str = "results") -> list[str]:
