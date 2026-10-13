@@ -45,7 +45,7 @@ cluster = [
     "jobmon_installer_ihme>=10.12.2",
 ]
 data = [
-    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@pnast/feature/mic-6303-drop-get-draws",
+    "vivarium-inputs>=9.0.0,<10.0.0",
     "vivarium_gates_lsff_2026[cluster]",
     # Automated V&V (5000_analyze_results/validation) runs in the artifact env, so it
     # belongs on this path -- see the [validation] extra below.
@@ -95,10 +95,6 @@ lint = ["vivarium-dependencies[lint]"]
 # synthesize the wildcards for its Ethiopia-folate variant, so the workflow fails
 # to parse on 9.x. Lifting the cap means rewriting that rule first.
 workflow = ["snakemake>=8.16,<9"]
-# NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
-# The artifact env is hard-capped to pandas<2.0 via vivarium-inputs -> vivarium-gbd-access
-# -> ihme-cc-dependencies, so a floor on either path is unresolvable. build-env installs
-# [dev] for type=simulation and [data] for type=artifact.
 simulation = [
     "pandas>=2.2.1",
     # Live-sim V&V (5000_analyze_results/validation/child_model/child_lbwsg.ipynb) runs

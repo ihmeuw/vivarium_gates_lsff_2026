@@ -49,6 +49,9 @@ IN_REPO_ROOTS = {
     "CHILD_RESULTS_ROOT": paths.CHILD_RESULTS_ROOT,
     "LBWSG_PAF_ARTIFACT_ROOT": paths.LBWSG_PAF_ARTIFACT_ROOT,
     "LBWSG_PAF_RESULTS_ROOT": paths.LBWSG_PAF_RESULTS_ROOT,
+    "NON_PREGNANT_ANEMIA_RESULTS_ROOT": paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT,
+    "RESCALED_PREGNANCY_RESULTS_ROOT": paths.RESCALED_PREGNANCY_RESULTS_ROOT,
+    "RESCALED_CHILD_RESULTS_ROOT": paths.RESCALED_CHILD_RESULTS_ROOT,
 }
 
 
@@ -171,6 +174,52 @@ def test_archive_root_rejects_an_unarchived_root() -> None:
         paths.archive_root(paths.REPO_ROOT / "not_a_pipeline_output")
 
 
+def test_data_source_prefers_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(paths.DATA_SOURCE_ENV_VAR, raising=False)
+    assert paths.data_source(default="local") == "local"
+    assert paths.data_source(default=paths.MODEL_NUMBER) == paths.MODEL_NUMBER
+
+    monkeypatch.setenv(paths.DATA_SOURCE_ENV_VAR, "model9.9")
+    assert paths.data_source(default="local") == "model9.9"
+    assert paths.data_source(default=paths.MODEL_NUMBER) == "model9.9"
+
+
+def test_source_root_reads_the_working_tree_or_the_archive(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+    root = paths.RESCALED_CHILD_RESULTS_ROOT
+    assert paths.source_root(root, "local") == root
+
+    archived = paths.archive_root(root, "model9.9")
+    archived.mkdir(parents=True)
+    assert paths.source_root(root, "model9.9") == archived
+
+
+def test_source_root_rejects_an_unpublished_model_number(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+    with pytest.raises(FileNotFoundError, match="model9.9"):
+        paths.source_root(paths.CHILD_RESULTS_ROOT, "model9.9")
+
+
+def test_snakemake_local_inputs_match_rule_outputs() -> None:
+    """Rules name their outputs repo-relative; a local input must be the same string."""
+    from lsff_utils import snakemake_utils
+
+    assert (
+        snakemake_utils.source_path(
+            lsff_utils.paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT,
+            "{vehicle}",
+            "{location}",
+            "ylds.parquet",
+            source="local",
+        )
+        == "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet"
+    )
+
+
 def test_run_lookup_works_against_the_archive(tmp_path: Path) -> None:
     """The notebooks call ``latest_run`` on an archived root, not an in-repo one.
 
@@ -226,3 +275,43 @@ def test_specs_do_not_hardcode_an_artifact(spec_path: Path) -> None:
         f"{spec_path.relative_to(REPO_ROOT)} hardcodes an artifact_path. Pass the "
         f"artifact with -i instead."
     )
+
+
+def test_latest_run_ignores_non_timestamped_directories(tmp_path: Path) -> None:
+    """An old folder left in the run root must not be taken as the newest run.
+
+    Letters sort after digits, so a leftover `ylls/` would otherwise win the
+    "newest sorts last" fallback over every real, timestamp-named run.
+    """
+    root = paths.run_root(tmp_path, "India", "rice")
+    run = root / "2026_09_24_19_45_57"
+    (run / "results").mkdir(parents=True)
+    (root / "2026_08_01_10_00_00" / "results").mkdir(parents=True)
+    (root / "ylls").mkdir()
+    (root / "_old").mkdir()
+
+    assert paths.run_dirs(root)[-1] == run
+    assert paths.latest_run(tmp_path, "India", "rice") == run
+
+
+def test_write_run_marker_ignores_non_timestamped_directories(tmp_path: Path) -> None:
+    """The recipe the simulation rules run must pick the same run `latest_run` does."""
+    from lsff_utils import snakemake_utils
+
+    root = lsff_utils.paths.run_root(tmp_path, "India", "rice")
+    run = root / "2026_09_24_19_45_57"
+    (run / "results").mkdir(parents=True)
+    (run / "results" / "births.parquet").touch()
+    (root / "ylls").mkdir()
+    # The recipe records the commit it ran from, so it needs a repository with one.
+    git = ["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "init"], check=True)
+
+    script = "set -eo pipefail\n" + snakemake_utils.write_run_marker(
+        tmp_path, "India", "rice"
+    )
+    subprocess.run(["bash", "-c", script], cwd=tmp_path, check=True, capture_output=True)
+
+    marker = lsff_utils.paths.run_marker(tmp_path, "India", "rice")
+    assert marker.read_text().strip() == run.name

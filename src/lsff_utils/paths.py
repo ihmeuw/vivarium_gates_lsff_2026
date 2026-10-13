@@ -14,8 +14,10 @@ produces each thing::
     0300_child_sim/sim_results/<vehicle>/<location>/<run>/
     0300_child_sim/lbwsg_paf_mean_draw_artifacts/<location>.hdf
     0300_child_sim/lbwsg_pafs/<location>/<run>/
+    0400_non_pregnant_anemia_model/results/<vehicle>/<location>/
+    5000_analyze_results/results/rescaled_{pregnancy,child}_results/<vehicle>/<location>/
 
-All six are gitignored: they hold large binaries and psimulate's per-run
+All of them are gitignored: they hold large binaries and psimulate's per-run
 metadata, none of which belongs in version control.
 
 Nothing here carries a model iteration number. The repository holds the run you
@@ -25,7 +27,9 @@ are working on; ``archive_last_run.sh`` publishes it to the team drive under
     /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/
     |-- artifacts/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>.hdf
     |-- data/<MODEL_NUMBER>/{lbwsg_paf_artifacts,lbwsg_pafs}/
-    `-- results/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>/<run>/
+    `-- results/<MODEL_NUMBER>/
+        |-- {maternal,child}/<vehicle>/<location>/<run>/
+        `-- {non_pregnant_anemia,rescaled_pregnancy,rescaled_child}/<vehicle>/<location>/
 
 :func:`archive_root` maps an in-repo root to its archived counterpart, so a
 reader of a published iteration -- the V&V notebooks -- names the root it wants
@@ -38,7 +42,7 @@ rebuilds a stage just because a number was bumped -- it reruns on changed inputs
 or changed recipe code, which is what its staleness tracking is for. Starting a
 new iteration therefore means: archive what you have, bump MODEL_NUMBER, then
 clear the in-repo roots (or ``--forcerun`` the stages you want rebuilt). See the
-"Starting a New Model Iteration" section of the README.
+"What to delete" section of the README.
 
 These constants live in ``lsff_utils`` rather than in either simulation package
 because the two packages have to agree on them. The child model's population
@@ -46,6 +50,8 @@ comes from the maternal model's birth records, so the child artifact build reads
 out of the same ``results/`` directory the maternal simulation wrote to.
 """
 
+import fnmatch
+import os
 from pathlib import Path
 
 #: Repository root, derived from this file's location: <repo>/src/lsff_utils/paths.py.
@@ -66,13 +72,22 @@ CHILD_RESULTS_ROOT = CHILD_PKG_ROOT / "sim_results"
 LBWSG_PAF_ARTIFACT_ROOT = CHILD_PKG_ROOT / "lbwsg_paf_mean_draw_artifacts"
 LBWSG_PAF_RESULTS_ROOT = CHILD_PKG_ROOT / "lbwsg_pafs"
 
+NON_PREGNANT_ANEMIA_RESULTS_ROOT = REPO_ROOT / "0400_non_pregnant_anemia_model" / "results"
+
+RESCALED_PREGNANCY_RESULTS_ROOT = (
+    REPO_ROOT / "5000_analyze_results" / "results" / "rescaled_pregnancy_results"
+)
+RESCALED_CHILD_RESULTS_ROOT = (
+    REPO_ROOT / "5000_analyze_results" / "results" / "rescaled_child_results"
+)
+
 
 # ---------------------------------------------------------------------------
 # Archive
 # ---------------------------------------------------------------------------
 
 #: Label the archive files this iteration under. Bump it to start a new one.
-MODEL_NUMBER = "model1.6.0"
+MODEL_NUMBER = "model2.5.0"
 
 #: Team-drive root that ``archive_last_run.sh`` publishes to.
 TEAM_ARCHIVE_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
@@ -92,6 +107,9 @@ ARCHIVE_DESTINATIONS = {
     LBWSG_PAF_RESULTS_ROOT: ("data", "lbwsg_pafs"),
     MATERNAL_RESULTS_ROOT: ("results", "maternal"),
     CHILD_RESULTS_ROOT: ("results", "child"),
+    NON_PREGNANT_ANEMIA_RESULTS_ROOT: ("results", "non_pregnant_anemia"),
+    RESCALED_PREGNANCY_RESULTS_ROOT: ("results", "rescaled_pregnancy"),
+    RESCALED_CHILD_RESULTS_ROOT: ("results", "rescaled_child"),
 }
 
 #: Roots holding timestamped simulation runs, archived one run at a time.
@@ -115,6 +133,37 @@ def archive_root(in_repo_root: Path, model_number: str = MODEL_NUMBER) -> Path:
             f"ARCHIVE_DESTINATIONS: {[str(root) for root in ARCHIVE_DESTINATIONS]}."
         ) from None
     return TEAM_ARCHIVE_ROOT / kind / model_number / subpath
+
+
+#: Environment variable choosing where the 5000 notebooks read pipeline output from.
+DATA_SOURCE_ENV_VAR = "LSFF_DATA_SOURCE"
+
+#: The :func:`source_root` value meaning this working tree.
+LOCAL_SOURCE = "local"
+
+
+def data_source(default: str) -> str:
+    """``LSFF_DATA_SOURCE`` if set, else ``default``.
+
+    ``default`` is ``"local"`` for the notebooks Snakemake runs and
+    :data:`MODEL_NUMBER` for the validation notebooks.
+    """
+    return os.environ.get(DATA_SOURCE_ENV_VAR) or default
+
+
+def source_root(in_repo_root: Path, source: str) -> Path:
+    """``in_repo_root`` for ``"local"``, otherwise its archive under model number ``source``."""
+    if source == LOCAL_SOURCE:
+        return in_repo_root
+    root = archive_root(in_repo_root, source)
+    if not root.is_dir():
+        raise FileNotFoundError(
+            f"'{root}' does not exist. Check that {DATA_SOURCE_ENV_VAR}='{source}' is "
+            f"a published model number (published: {archived_model_numbers()}), "
+            f"and that it was archived after this output was added to "
+            f"ARCHIVE_DESTINATIONS."
+        )
+    return root
 
 
 def archived_model_numbers(kind: str = "results") -> list[str]:
@@ -148,6 +197,24 @@ def artifact_path(artifact_root: Path, location: str, vehicle: str | None = None
 
 RUN_MARKER_NAME = "latest_run.txt"
 
+#: Shell/fnmatch pattern for a psimulate run directory, `YYYY_MM_DD_HH_MM_SS`.
+#: "Newest run sorts last" only holds among names of this shape: anything else
+#: sharing the run root -- an old flat results folder like `ylls/`, a hand-made
+#: `old/` -- sorts after every digit-led timestamp and would be taken as the
+#: latest run. Every lookup of the newest run filters on this first; it is a
+#: glob rather than a regex so the shell recipe in snakemake_utils can use it too.
+RUN_DIR_GLOB = "[0-9][0-9][0-9][0-9]" + "_[0-9][0-9]" * 5
+
+
+def is_run_dir(path: Path) -> bool:
+    """Whether `path` is a timestamp-named psimulate run directory."""
+    return path.is_dir() and fnmatch.fnmatchcase(path.name, RUN_DIR_GLOB)
+
+
+def run_dirs(root: Path) -> list[Path]:
+    """Timestamped run directories directly under `root`, oldest first."""
+    return sorted(p for p in root.glob("*") if is_run_dir(p))
+
 
 def run_root(results_root: Path, location: str, vehicle: str | None = None) -> Path:
     """The directory holding every run for one location (and vehicle, if any)."""
@@ -165,7 +232,8 @@ def latest_run(results_root: Path, location: str, vehicle: str | None = None) ->
 
     The fallback matters because runs launched by hand -- outside Snakemake, which
     is how a single location usually gets rerun -- leave no marker. Run
-    directories are timestamp-named, so the newest sorts last.
+    directories are timestamp-named, so the newest sorts last -- among the
+    directories that match :data:`RUN_DIR_GLOB`; anything else is ignored.
     """
     root = run_root(results_root, location, vehicle)
     marker = root / RUN_MARKER_NAME
@@ -174,7 +242,7 @@ def latest_run(results_root: Path, location: str, vehicle: str | None = None) ->
         if run.exists():
             return run
 
-    runs = sorted(p for p in root.glob("*") if p.is_dir())
+    runs = run_dirs(root)
     if not runs:
         raise FileNotFoundError(
             f"No simulation runs found under '{root}'. Expected at least one "

@@ -16,5 +16,5 @@ DATA_PREP_RESULTS_ROOT = BASE_DIR / ".." / ".." / ".." / "0100_data_prep" / "res
 
 # Stored release-33 hemoglobin pulls, shared with vivarium_gates_mncnh (MIC-7476).
 HEMOGLOBIN_RELEASE_33_DATA_DIR = Path(
-    "/mnt/team/simulation_science/pub/models/vivarium_gates_mncnh/data/hemoglobin_release33"
+    "/mnt/team/simulation_science/pub/data/hemoglobin_release33"
 )

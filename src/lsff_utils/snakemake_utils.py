@@ -128,10 +128,25 @@ def run_marker(results_root: Path, location: str, vehicle: str = None) -> str:
     return str(paths.run_marker(results_root, location, vehicle))
 
 
+def source_path(in_repo_root: Path, *parts: str, source: str) -> str:
+    """A pipeline output as a rule input, read from ``source`` (see :func:`paths.source_root`).
+
+    Local paths stay repo-relative so they match the rule that produces them;
+    archived ones are absolute, and no rule produces them.
+    """
+    root = paths.source_root(in_repo_root, source)
+    if source == paths.LOCAL_SOURCE:
+        root = root.relative_to(paths.REPO_ROOT)
+    return str(root.joinpath(*parts))
+
+
 def write_run_marker(results_root: Path, location: str, vehicle: str = None) -> str:
     """Shell that records the run just produced, for the end of a rule's recipe.
 
     Run directories are timestamp-named, so the one this run created sorts last.
+    Only names matching :data:`paths.RUN_DIR_GLOB` are considered: an old,
+    non-timestamped folder left in the run root (e.g. `ylls/`) would otherwise
+    sort after every timestamp and be checked -- and marked -- instead.
 
     `psimulate` exiting successfully is not enough to go on: it exits 0 even when
     every one of its jobmon tasks failed, logging the failure rather than raising.
@@ -159,7 +174,7 @@ def write_run_marker(results_root: Path, location: str, vehicle: str = None) -> 
     # leaves the `-d` test as the loop's last command, so the loop -- and, under
     # `pipefail`, the whole pipeline -- exits non-zero; without this the rule's
     # `set -e` would abort at the assignment and the message would never print.
-    return f"""run=$(for candidate in {quote(str(root))}/*/; do
+    return f"""run=$(for candidate in {quote(str(root))}/{paths.RUN_DIR_GLOB}/; do
             [ -d "$candidate" ] && basename "$candidate"
         done | sort | tail -1) || true
         if [ -z "$run" ]; then
