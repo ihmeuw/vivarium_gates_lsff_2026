@@ -1,4 +1,7 @@
-from lsff_utils import config_utils, snakemake_utils
+import os
+import sys
+
+from lsff_utils import config_utils, paths, snakemake_utils
 
 configfile: "0050_config/config.yaml"
 
@@ -25,6 +28,11 @@ config = {
     # prep -- and everything downstream of it -- over a timestamp rather than a
     # change. See "Snakemake flags" in the README.
     "skip_data_prep": "false",
+    # Write artifacts and simulation, anemia and rescaled results straight to the
+    # team drive under MODEL_NUMBER, instead of to the repository for
+    # archive_last_run.sh to publish. See "Writing straight to the team drive"
+    # in the README.
+    "output_to_team": "false",
     **config,
 }
 
@@ -67,6 +75,22 @@ config["debug"] = str(config.get("debug", "false")).lower() in ("t", "true", "y"
 config["local"] = str(config.get("local", "false")).lower() in ("t", "true", "y", "yes")
 config["full_scale"] = str(config.get("full_scale", "false")).lower() in ("t", "true", "y", "yes")
 config["skip_data_prep"] = str(config.get("skip_data_prep", "false")).lower() in ("t", "true", "y", "yes")
+config["output_to_team"] = str(config.get("output_to_team", "false")).lower() in ("t", "true", "y", "yes")
+
+# "local" or MODEL_NUMBER. Every Snakefile resolves its output roots against
+# this, and the environment variables carry it to the notebooks and to
+# make_artifacts, which resolve the same roots on their own. A run that writes
+# to the team drive also reads its own upstream output from there.
+config["output_target"] = snakemake_utils.resolve_output_target(
+    config["output_to_team"], config["debug"]
+)
+os.environ[paths.OUTPUT_TARGET_ENV_VAR] = config["output_target"]
+if config["output_to_team"]:
+    os.environ[paths.DATA_SOURCE_ENV_VAR] = config["output_target"]
+
+onstart:
+    if config["output_to_team"]:
+        snakemake_utils.record_team_run(config["output_target"], sys.argv)
 
 # The end-to-end pipeline: the spreadsheet and the plots are the only things
 # nothing else consumes, so requiring them pulls every stage in behind them.

@@ -9,12 +9,18 @@ papermill_engine = "--engine debug" if debug else ""
 
 # Upstream output is read from LSFF_DATA_SOURCE, the same setting the notebooks
 # read: this working tree by default, or an archived model number on the team
-# drive. Archived inputs have no producing rule, so nothing upstream is rerun.
+# drive. Archived inputs have no producing rule, so nothing upstream is rerun,
+# unless output_to_team=true, which sets LSFF_DATA_SOURCE to the model number
+# this run writes to.
 DATA_SOURCE = paths.data_source(default=paths.LOCAL_SOURCE)
 
 
 def source_path(in_repo_root, *parts):
     return snakemake_utils.source_path(in_repo_root, *parts, source=DATA_SOURCE)
+
+
+def output_path(in_repo_root, *parts):
+    return snakemake_utils.output_path(in_repo_root, *parts, target=config["output_target"])
 
 
 # Simulation output lives in per-run, timestamp-named directories, so these
@@ -29,7 +35,7 @@ CHILD_RUN_MARKER = snakemake_utils.run_marker(
 
 pregnancy_results_of_interest = ["pregnancy_outcome_count", "ylds", "ylls", "person_time_anemia", "transition_count_maternal_disorders"]
 rescaled_pregnancy_results = [
-    f"5000_analyze_results/results/rescaled_pregnancy_results/{{vehicle}}/{{location}}/{result}.parquet"
+    output_path(paths.RESCALED_PREGNANCY_RESULTS_ROOT, "{vehicle}", "{location}", f"{result}.parquet")
     for result in pregnancy_results_of_interest
 ]
 
@@ -57,7 +63,7 @@ rule rescale_pregnancy_results:
 
 child_results_of_interest = ["deaths", "ylds", "ylls"]
 rescaled_child_results = [
-    f"5000_analyze_results/results/rescaled_child_results/{{vehicle}}/{{location}}/{result}.parquet"
+    output_path(paths.RESCALED_CHILD_RESULTS_ROOT, "{vehicle}", "{location}", f"{result}.parquet")
     for result in child_results_of_interest
 ]
 

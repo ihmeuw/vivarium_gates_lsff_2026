@@ -48,13 +48,39 @@ Running the model
      ./archive_last_run.sh -n    # show what would be copied
      ./archive_last_run.sh
 
+Writing straight to the team drive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add ``output_to_team=true`` to steps 4 and 5 to skip step 6. The artifacts, the
+simulation runs, the LBWSG PAFs, the non-pregnant anemia results and the rescaled
+results are then written to the team drive under ``MODEL_NUMBER``, in the same
+layout ``archive_last_run.sh`` produces::
+
+  snakemake -c1 -k --config full_scale=true skip_data_prep=true output_to_team=true
+
+Data prep, the NTD model, the per-location CSVs, the spreadsheet and the executed
+notebooks stay in your working tree, the same as in a normal run.
+
+* Use a ``MODEL_NUMBER`` that nobody has archived yet. Snakemake stops with an
+  error if ``archive_last_run.sh`` has already published it.
+* Rerunning with the same command resumes the run. Snakemake checks the files on
+  the team drive, so finished stages are not redone.
+* Each run appends who started it, from which commit, and with what command to
+  ``pipeline_run_info.txt`` under each ``MODEL_NUMBER`` directory.
+* Every run directory that a rerun or a failure leaves behind stays on the team
+  drive. The ``latest_run.txt`` files name the runs the results came from.
+* To redo a stage, bump ``MODEL_NUMBER`` and start again rather than deleting on the
+  team drive, because other people may already be reading that iteration.
+* ``debug=true`` cannot be combined with it.
+
 Reading someone else's run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default the pipeline notebooks in ``5000_analyze_results`` read your working
 tree, and the validation notebooks read the team drive under ``MODEL_NUMBER``. To
 point all of them at an archived run instead, set this before starting Jupyter or
-Snakemake, and check out the commit recorded in that run's ``archive_info.txt``::
+Snakemake, and check out the commit recorded in that run's ``archive_info.txt``
+(``pipeline_run_info.txt`` if it was written with ``output_to_team=true``)::
 
     export LSFF_DATA_SOURCE=model2.5.0
 
@@ -99,6 +125,9 @@ Flag                                            Effect
                                                 only if you changed the extraction sheet or a data prep
                                                 notebook.
 ``--config debug=true``                         One draw and one seed, in the foreground, with a debugger.
+``--config output_to_team=true``                Write the run to the team drive under ``MODEL_NUMBER``
+                                                instead of the working tree. See "Writing straight to the
+                                                team drive".
 ``-c1`` (short for ``--cores 1``)               Run one Snakemake job at a time. Include it in every command.
                                                 The simulations still run in parallel on the cluster through
                                                 ``psimulate``.

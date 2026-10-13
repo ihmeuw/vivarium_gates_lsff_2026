@@ -315,3 +315,92 @@ def test_write_run_marker_ignores_non_timestamped_directories(tmp_path: Path) ->
 
     marker = lsff_utils.paths.run_marker(tmp_path, "India", "rice")
     assert marker.read_text().strip() == run.name
+
+
+def test_output_root_follows_the_target(monkeypatch: pytest.MonkeyPatch) -> None:
+    root = paths.CHILD_RESULTS_ROOT
+    monkeypatch.delenv(paths.OUTPUT_TARGET_ENV_VAR, raising=False)
+    assert paths.output_root(root) == root
+    assert paths.output_root(root, "model9.9") == paths.archive_root(root, "model9.9")
+
+    monkeypatch.setenv(paths.OUTPUT_TARGET_ENV_VAR, "model9.9")
+    assert paths.output_root(root) == paths.archive_root(root, "model9.9")
+    assert paths.output_root(root, "local") == root
+
+
+def test_source_root_accepts_the_archive_this_run_writes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A first run to the team drive reads upstream output that does not exist yet."""
+    monkeypatch.setattr(paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+    monkeypatch.setenv(paths.OUTPUT_TARGET_ENV_VAR, "model9.9")
+    root = paths.CHILD_RESULTS_ROOT
+    assert paths.source_root(root, "model9.9") == paths.archive_root(root, "model9.9")
+    with pytest.raises(FileNotFoundError, match="model9.8"):
+        paths.source_root(root, "model9.8")
+
+
+@pytest.mark.parametrize("target", ["local", "model9.9"])
+def test_snakemake_inputs_match_rule_outputs_for_either_target(
+    target: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With output_to_team, the 5000 inputs must name the paths the upstream rules write."""
+    from lsff_utils import snakemake_utils
+
+    monkeypatch.setenv(paths.OUTPUT_TARGET_ENV_VAR, target)
+    root = lsff_utils.paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT
+    parts = ("{vehicle}", "{location}", "ylds.parquet")
+    assert snakemake_utils.source_path(root, *parts, source=target) == (
+        snakemake_utils.output_path(root, *parts, target=target)
+    )
+
+
+class TestResolveOutputTarget:
+    @pytest.fixture(autouse=True)
+    def team_root(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+        monkeypatch.setattr(lsff_utils.paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+        monkeypatch.delenv(lsff_utils.paths.DATA_SOURCE_ENV_VAR, raising=False)
+        return tmp_path
+
+    def test_local_by_default(self) -> None:
+        from lsff_utils import snakemake_utils
+
+        assert snakemake_utils.resolve_output_target(False, debug=True) == "local"
+
+    def test_team_writes_the_model_number(self) -> None:
+        from lsff_utils import snakemake_utils
+
+        target = snakemake_utils.resolve_output_target(True, debug=False)
+        assert target == lsff_utils.paths.MODEL_NUMBER
+
+    def test_refuses_debug(self) -> None:
+        from lsff_utils import snakemake_utils
+
+        with pytest.raises(ValueError, match="debug"):
+            snakemake_utils.resolve_output_target(True, debug=True)
+
+    def test_refuses_a_different_data_source(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from lsff_utils import snakemake_utils
+
+        monkeypatch.setenv(lsff_utils.paths.DATA_SOURCE_ENV_VAR, "model0.0")
+        with pytest.raises(ValueError, match="model0.0"):
+            snakemake_utils.resolve_output_target(True, debug=False)
+
+    def test_refuses_an_archived_iteration(self, team_root: Path) -> None:
+        from lsff_utils import snakemake_utils
+
+        published = team_root / "results" / lsff_utils.paths.MODEL_NUMBER
+        published.mkdir(parents=True)
+        (published / snakemake_utils.ARCHIVE_INFO_NAME).touch()
+        with pytest.raises(ValueError, match="append-only"):
+            snakemake_utils.resolve_output_target(True, debug=False)
+
+    def test_resumes_an_iteration_written_directly(self, team_root: Path) -> None:
+        from lsff_utils import snakemake_utils
+
+        target = lsff_utils.paths.MODEL_NUMBER
+        snakemake_utils.record_team_run(target, ["snakemake", "-c1"])
+        for kind in snakemake_utils.ARCHIVE_KINDS:
+            info = team_root / kind / target / snakemake_utils.TEAM_RUN_INFO_NAME
+            assert "command:   snakemake -c1" in info.read_text()
+        assert snakemake_utils.resolve_output_target(True, debug=False) == target

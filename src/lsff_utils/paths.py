@@ -37,6 +37,11 @@ and lets :data:`MODEL_NUMBER` supply the rest::
 
     results = latest_results(archive_root(CHILD_RESULTS_ROOT), location, vehicle)
 
+``snakemake --config output_to_team=true`` skips the repository and writes these
+outputs straight to the archive layout under :data:`MODEL_NUMBER`, through
+:func:`output_root`. Data prep, the NTD model, the summary CSVs and the executed
+notebooks stay in the repository either way.
+
 Because the in-repo paths do not move between iterations, Snakemake no longer
 rebuilds a stage just because a number was bumped -- it reruns on changed inputs
 or changed recipe code, which is what its staleness tracking is for. Starting a
@@ -138,7 +143,12 @@ def archive_root(in_repo_root: Path, model_number: str = MODEL_NUMBER) -> Path:
 #: Environment variable choosing where the 5000 notebooks read pipeline output from.
 DATA_SOURCE_ENV_VAR = "LSFF_DATA_SOURCE"
 
-#: The :func:`source_root` value meaning this working tree.
+#: Environment variable naming where the pipeline writes: ``"local"`` or a model
+#: number. The root Snakefile sets it from ``--config output_to_team``, so the
+#: notebooks and ``make_artifacts`` it starts write where the rules expect.
+OUTPUT_TARGET_ENV_VAR = "LSFF_OUTPUT_TARGET"
+
+#: The :func:`source_root` and :func:`output_root` value meaning this working tree.
 LOCAL_SOURCE = "local"
 
 
@@ -151,11 +161,32 @@ def data_source(default: str) -> str:
     return os.environ.get(DATA_SOURCE_ENV_VAR) or default
 
 
-def source_root(in_repo_root: Path, source: str) -> Path:
-    """``in_repo_root`` for ``"local"``, otherwise its archive under model number ``source``."""
-    if source == LOCAL_SOURCE:
+def output_target() -> str:
+    """``LSFF_OUTPUT_TARGET`` if set, else ``"local"``."""
+    return os.environ.get(OUTPUT_TARGET_ENV_VAR) or LOCAL_SOURCE
+
+
+def output_root(in_repo_root: Path, target: str | None = None) -> Path:
+    """Where the pipeline writes what ``in_repo_root`` holds.
+
+    ``in_repo_root`` for ``"local"``, otherwise its archive under model number
+    ``target``. ``target`` defaults to :func:`output_target`.
+    """
+    target = target or output_target()
+    if target == LOCAL_SOURCE:
         return in_repo_root
-    root = archive_root(in_repo_root, source)
+    return archive_root(in_repo_root, target)
+
+
+def source_root(in_repo_root: Path, source: str) -> Path:
+    """``in_repo_root`` for ``"local"``, otherwise its archive under model number ``source``.
+
+    An archive the current run is writing to may not exist yet, so it is not
+    checked for.
+    """
+    root = output_root(in_repo_root, source)
+    if source in (LOCAL_SOURCE, output_target()):
+        return root
     if not root.is_dir():
         raise FileNotFoundError(
             f"'{root}' does not exist. Check that {DATA_SOURCE_ENV_VAR}='{source}' is "
