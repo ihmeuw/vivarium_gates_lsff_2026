@@ -8,7 +8,7 @@ artifact_setup = config["artifact_env_setup"]
 papermill_engine = "--engine debug" if debug else ""
 
 
-# In the repository, or on the team drive with output_to_team=true. The notebooks
+# On the team drive, or in the repository with write_local=true. The notebooks
 # resolve the same root through LSFF_OUTPUT_TARGET.
 def anemia_output(location, name):
     return snakemake_utils.output_path(

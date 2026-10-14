@@ -33,8 +33,8 @@ branches_file = (
 )
 branches_arg = "" if debug else branches_file
 
-# Artifacts and simulation output go to the repository, or to the team drive
-# under MODEL_NUMBER with output_to_team=true -- see lsff_utils.paths.
+# Artifacts and simulation output go to the team drive under MODEL_NUMBER, or
+# to the repository with write_local=true -- see lsff_utils.paths.
 MATERNAL_ARTIFACT_ROOT = paths.output_root(paths.MATERNAL_ARTIFACT_ROOT, config["output_target"])
 MATERNAL_RESULTS_ROOT = paths.output_root(paths.MATERNAL_RESULTS_ROOT, config["output_target"])
 MATERNAL_ARTIFACT =str(MATERNAL_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")

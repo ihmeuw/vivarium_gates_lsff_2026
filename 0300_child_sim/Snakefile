@@ -38,7 +38,7 @@ child_branches_file = (
 child_branches_arg = "" if debug else child_branches_file
 
 # See lsff_utils.paths for the layout these resolve against. They are in the
-# repository, or on the team drive under MODEL_NUMBER with output_to_team=true.
+# team drive under MODEL_NUMBER, or in the repository with write_local=true.
 CHILD_ARTIFACT_ROOT = paths.output_root(paths.CHILD_ARTIFACT_ROOT, config["output_target"])
 CHILD_RESULTS_ROOT = paths.output_root(paths.CHILD_RESULTS_ROOT, config["output_target"])
 LBWSG_PAF_ARTIFACT_ROOT = paths.output_root(paths.LBWSG_PAF_ARTIFACT_ROOT, config["output_target"])

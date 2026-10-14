@@ -4,6 +4,8 @@ Kept out of the Snakefiles themselves so the rules stay readable and so the
 same path logic is importable from tests and notebooks.
 """
 
+import builtins
+import sys
 from pathlib import Path
 from shlex import quote
 
@@ -164,28 +166,29 @@ ARCHIVE_INFO_NAME = "archive_info.txt"
 ARCHIVE_KINDS = ("artifacts", "data", "results")
 
 
-def resolve_output_target(to_team: bool, debug: bool) -> str:
-    """The output target for ``--config output_to_team``, after checking it is safe.
+def resolve_output_target(write_local: bool, debug: bool) -> str:
+    """Where a run writes: the working tree, or the team drive under MODEL_NUMBER.
 
-    The archive script never overwrites an archived iteration, so a run cannot
-    write into one. It also refuses a debug run, and an ``LSFF_DATA_SOURCE``
-    that names a different iteration from the one being written.
+    The team drive is the default. A debug run always writes to the working
+    tree. The archive script never overwrites an archived iteration, so a run
+    cannot write into one, and it refuses an ``LSFF_DATA_SOURCE`` that names a
+    different iteration from the one being written.
     """
-    if not to_team:
+    if write_local or debug:
         return paths.LOCAL_SOURCE
 
     target = paths.MODEL_NUMBER
-    if debug:
+    if not paths.TEAM_ARCHIVE_ROOT.is_dir():
         raise ValueError(
-            "output_to_team=true cannot be combined with debug=true. A debug run "
-            "would write one draw and one seed into the published iteration."
+            f"{paths.TEAM_ARCHIVE_ROOT} is not reachable from this machine. Pass "
+            f"--config write_local=true to write to the working tree instead."
         )
     source = paths.data_source(default=target)
     if source != target:
         raise ValueError(
-            f"output_to_team=true writes {target}, but {paths.DATA_SOURCE_ENV_VAR}="
-            f"'{source}'. Unset {paths.DATA_SOURCE_ENV_VAR}, so the analysis reads "
-            f"the run it belongs to."
+            f"This run writes {target}, but {paths.DATA_SOURCE_ENV_VAR}='{source}'. "
+            f"Unset {paths.DATA_SOURCE_ENV_VAR}, so the analysis reads the run it "
+            f"belongs to."
         )
     archived = [
         str(info)
@@ -199,6 +202,49 @@ def resolve_output_target(to_team: bool, debug: bool) -> str:
             f"src/lsff_utils/paths.py to write a new iteration."
         )
     return target
+
+
+def existing_team_output(target: str) -> str | None:
+    """A description of what is already written under ``target``, or None if nothing is."""
+    used = [
+        directory
+        for kind in ARCHIVE_KINDS
+        if (directory := paths.TEAM_ARCHIVE_ROOT / kind / target).is_dir()
+        and any(directory.iterdir())
+    ]
+    if not used:
+        return None
+    info = used[0] / TEAM_RUN_INFO_NAME
+    if not info.exists():
+        return f"{', '.join(str(d) for d in used)} already has output."
+    records = [r.strip() for r in info.read_text().split("---") if r.strip()]
+    last = records[-1] if records else "(no record)"
+    return f"{target} was already written to. Its last run was:\n{last}"
+
+
+def confirm_model_number_reuse(target: str, reuse: bool) -> None:
+    """Ask before a run writes into a model number that already has output.
+
+    ``reuse_model_number=true`` skips the question, for resumed runs and for
+    runs with no terminal to answer it.
+    """
+    existing = existing_team_output(target)
+    if existing is None or reuse:
+        return
+
+    message = (
+        f"{existing}\n\nThis run would rebuild stale outputs in place. Bump "
+        f"MODEL_NUMBER in src/lsff_utils/paths.py to start a new iteration instead."
+    )
+    if not sys.stdin.isatty():
+        raise SystemExit(
+            f"{message}\nNo terminal to confirm from. Pass --config "
+            f"reuse_model_number=true to write into {target} anyway."
+        )
+    print(message, file=sys.stderr)
+    answer = builtins.input(f"Write into {target}? [y/N] ")
+    if answer.strip().lower() not in ("y", "yes"):
+        raise SystemExit(f"Stopped. Nothing was written to {target}.")
 
 
 def record_team_run(target: str, command: list[str]) -> None:

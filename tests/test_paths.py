@@ -344,7 +344,7 @@ def test_source_root_accepts_the_archive_this_run_writes(
 def test_snakemake_inputs_match_rule_outputs_for_either_target(
     target: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """With output_to_team, the 5000 inputs must name the paths the upstream rules write."""
+    """Writing to the team drive, the 5000 inputs must name the paths the upstream rules write."""
     from lsff_utils import snakemake_utils
 
     monkeypatch.setenv(paths.OUTPUT_TARGET_ENV_VAR, target)
@@ -362,29 +362,35 @@ class TestResolveOutputTarget:
         monkeypatch.delenv(lsff_utils.paths.DATA_SOURCE_ENV_VAR, raising=False)
         return tmp_path
 
-    def test_local_by_default(self) -> None:
+    def test_team_drive_by_default(self) -> None:
         from lsff_utils import snakemake_utils
 
-        assert snakemake_utils.resolve_output_target(False, debug=True) == "local"
-
-    def test_team_writes_the_model_number(self) -> None:
-        from lsff_utils import snakemake_utils
-
-        target = snakemake_utils.resolve_output_target(True, debug=False)
+        target = snakemake_utils.resolve_output_target(False, debug=False)
         assert target == lsff_utils.paths.MODEL_NUMBER
 
-    def test_refuses_debug(self) -> None:
+    @pytest.mark.parametrize("write_local, debug", [(True, False), (False, True)])
+    def test_write_local_and_debug_use_the_working_tree(
+        self, write_local: bool, debug: bool
+    ) -> None:
         from lsff_utils import snakemake_utils
 
-        with pytest.raises(ValueError, match="debug"):
-            snakemake_utils.resolve_output_target(True, debug=True)
+        assert snakemake_utils.resolve_output_target(write_local, debug) == "local"
+
+    def test_refuses_an_unreachable_team_drive(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from lsff_utils import snakemake_utils
+
+        monkeypatch.setattr(lsff_utils.paths, "TEAM_ARCHIVE_ROOT", tmp_path / "missing")
+        with pytest.raises(ValueError, match="write_local=true"):
+            snakemake_utils.resolve_output_target(False, debug=False)
 
     def test_refuses_a_different_data_source(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from lsff_utils import snakemake_utils
 
         monkeypatch.setenv(lsff_utils.paths.DATA_SOURCE_ENV_VAR, "model0.0")
         with pytest.raises(ValueError, match="model0.0"):
-            snakemake_utils.resolve_output_target(True, debug=False)
+            snakemake_utils.resolve_output_target(False, debug=False)
 
     def test_refuses_an_archived_iteration(self, team_root: Path) -> None:
         from lsff_utils import snakemake_utils
@@ -393,7 +399,7 @@ class TestResolveOutputTarget:
         published.mkdir(parents=True)
         (published / snakemake_utils.ARCHIVE_INFO_NAME).touch()
         with pytest.raises(ValueError, match="append-only"):
-            snakemake_utils.resolve_output_target(True, debug=False)
+            snakemake_utils.resolve_output_target(False, debug=False)
 
     def test_resumes_an_iteration_written_directly(self, team_root: Path) -> None:
         from lsff_utils import snakemake_utils
@@ -403,4 +409,77 @@ class TestResolveOutputTarget:
         for kind in snakemake_utils.ARCHIVE_KINDS:
             info = team_root / kind / target / snakemake_utils.TEAM_RUN_INFO_NAME
             assert "command:   snakemake -c1" in info.read_text()
-        assert snakemake_utils.resolve_output_target(True, debug=False) == target
+        assert snakemake_utils.resolve_output_target(False, debug=False) == target
+
+
+class TestConfirmModelNumberReuse:
+    TARGET = "model9.9"
+
+    @pytest.fixture(autouse=True)
+    def team_root(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+        monkeypatch.setattr(lsff_utils.paths, "TEAM_ARCHIVE_ROOT", tmp_path)
+        return tmp_path
+
+    @pytest.fixture
+    def used(self) -> None:
+        from lsff_utils import snakemake_utils
+
+        snakemake_utils.record_team_run(self.TARGET, ["snakemake", "-c1"])
+
+    @pytest.fixture
+    def terminal(self, monkeypatch: pytest.MonkeyPatch):
+        """Answer the prompt with whatever the test sets."""
+        import sys
+
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+        answers = []
+        monkeypatch.setattr("builtins.input", lambda prompt: answers.pop())
+        return answers
+
+    def test_a_new_model_number_is_not_questioned(self) -> None:
+        from lsff_utils import snakemake_utils
+
+        assert snakemake_utils.existing_team_output(self.TARGET) is None
+        snakemake_utils.confirm_model_number_reuse(self.TARGET, reuse=False)
+
+    def test_describes_the_last_run(self, used: None) -> None:
+        from lsff_utils import snakemake_utils
+
+        existing = snakemake_utils.existing_team_output(self.TARGET)
+        assert "command:   snakemake -c1" in existing
+
+    @pytest.mark.parametrize("answer", ["y", "yes", " Y "])
+    def test_proceeds_when_confirmed(self, used: None, terminal: list, answer: str) -> None:
+        from lsff_utils import snakemake_utils
+
+        terminal.append(answer)
+        snakemake_utils.confirm_model_number_reuse(self.TARGET, reuse=False)
+
+    @pytest.mark.parametrize("answer", ["", "n", "no"])
+    def test_stops_otherwise(self, used: None, terminal: list, answer: str) -> None:
+        from lsff_utils import snakemake_utils
+
+        terminal.append(answer)
+        with pytest.raises(SystemExit, match="Nothing was written"):
+            snakemake_utils.confirm_model_number_reuse(self.TARGET, reuse=False)
+
+    def test_stops_without_a_terminal(
+        self, used: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import sys
+
+        from lsff_utils import snakemake_utils
+
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+        with pytest.raises(SystemExit, match="reuse_model_number=true"):
+            snakemake_utils.confirm_model_number_reuse(self.TARGET, reuse=False)
+
+    def test_reuse_flag_skips_the_question(
+        self, used: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import sys
+
+        from lsff_utils import snakemake_utils
+
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+        snakemake_utils.confirm_model_number_reuse(self.TARGET, reuse=True)

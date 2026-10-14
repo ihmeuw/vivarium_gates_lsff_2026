@@ -5,8 +5,7 @@ Paths
 
 Filesystem locations for the LSFF modeling pipeline.
 
-The pipeline reads and writes inside the repository, beside the package that
-produces each thing::
+Each output has an in-repo root, beside the package that produces it::
 
     0200_pregnancy_sim/mean_draw_artifacts/<vehicle>/<location>.hdf
     0200_pregnancy_sim/sim_results/<vehicle>/<location>/<run>/
@@ -20,9 +19,9 @@ produces each thing::
 All of them are gitignored: they hold large binaries and psimulate's per-run
 metadata, none of which belongs in version control.
 
-Nothing here carries a model iteration number. The repository holds the run you
-are working on; ``archive_last_run.sh`` publishes it to the team drive under
-:data:`MODEL_NUMBER`, and that archive is the versioned record::
+Nothing here carries a model iteration number. On the team drive, the same
+outputs are grouped by kind under :data:`MODEL_NUMBER`, and that is the
+versioned record::
 
     /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/
     |-- artifacts/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>.hdf
@@ -37,17 +36,13 @@ and lets :data:`MODEL_NUMBER` supply the rest::
 
     results = latest_results(archive_root(CHILD_RESULTS_ROOT), location, vehicle)
 
-``snakemake --config output_to_team=true`` skips the repository and writes these
-outputs straight to the archive layout under :data:`MODEL_NUMBER`, through
-:func:`output_root`. Data prep, the NTD model, the summary CSVs and the executed
-notebooks stay in the repository either way.
-
-Because the in-repo paths do not move between iterations, Snakemake no longer
-rebuilds a stage just because a number was bumped -- it reruns on changed inputs
-or changed recipe code, which is what its staleness tracking is for. Starting a
-new iteration therefore means: archive what you have, bump MODEL_NUMBER, then
-clear the in-repo roots (or ``--forcerun`` the stages you want rebuilt). See the
-"What to delete" section of the README.
+By default ``snakemake`` writes these outputs straight to the team drive under
+:data:`MODEL_NUMBER`, through :func:`output_root`, so a new number starts from
+nothing and rebuilds every stage. ``--config write_local=true`` writes them to
+the in-repo roots instead, and ``archive_last_run.sh`` publishes them later. The
+in-repo roots do not move between iterations, so there Snakemake reruns only on
+changed inputs or recipe code. Data prep, the NTD model, the summary CSVs and
+the executed notebooks stay in the repository either way.
 
 These constants live in ``lsff_utils`` rather than in either simulation package
 because the two packages have to agree on them. The child model's population
@@ -144,7 +139,7 @@ def archive_root(in_repo_root: Path, model_number: str = MODEL_NUMBER) -> Path:
 DATA_SOURCE_ENV_VAR = "LSFF_DATA_SOURCE"
 
 #: Environment variable naming where the pipeline writes: ``"local"`` or a model
-#: number. The root Snakefile sets it from ``--config output_to_team``, so the
+#: number. The root Snakefile sets it from ``--config write_local``, so the
 #: notebooks and ``make_artifacts`` it starts write where the rules expect.
 OUTPUT_TARGET_ENV_VAR = "LSFF_OUTPUT_TARGET"
 

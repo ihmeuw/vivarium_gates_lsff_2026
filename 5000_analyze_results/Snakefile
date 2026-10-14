@@ -8,10 +8,10 @@ artifact_setup = config["artifact_env_setup"]
 papermill_engine = "--engine debug" if debug else ""
 
 # Upstream output is read from LSFF_DATA_SOURCE, the same setting the notebooks
-# read: this working tree by default, or an archived model number on the team
-# drive. Archived inputs have no producing rule, so nothing upstream is rerun,
-# unless output_to_team=true, which sets LSFF_DATA_SOURCE to the model number
-# this run writes to.
+# read. A run that writes to the team drive sets it to the model number it
+# writes, so the upstream rules produce these inputs. With write_local=true it
+# is this working tree, unless it names an archived model number, whose inputs
+# have no producing rule, so nothing upstream is rerun.
 DATA_SOURCE = paths.data_source(default=paths.LOCAL_SOURCE)
 
 
