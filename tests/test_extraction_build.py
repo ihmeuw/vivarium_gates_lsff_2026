@@ -9,11 +9,14 @@ rebuilding, or that edits generated/ by hand, fails here. Fix it by rebuilding:
 """
 
 import sys
+from pathlib import Path
 
 import pytest
 
-from lsff_utils.extraction import EXTRACTION_DIR, EXTRACTION_GENERATED_DIR
-
+# Relative to this file, not paths.REPO_ROOT: CI installs lsff_utils
+# non-editable, so REPO_ROOT points into site-packages.
+EXTRACTION_DIR = Path(__file__).resolve().parents[1] / "0100_data_prep" / "extraction"
+EXTRACTION_GENERATED_DIR = EXTRACTION_DIR / "generated"
 INTEGRATION_DIR = EXTRACTION_DIR / "integration"
 
 
