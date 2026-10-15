@@ -115,6 +115,7 @@ class Hemoglobin(Component):
             self.distribution_parameters_name,
             source=distribution_parameters,
             required_resources=[distribution_parameters],
+            description="The mean and standard deviation of the hemoglobin distribution",
         )
 
         # Fix resource dependency cycle
@@ -126,6 +127,10 @@ class Hemoglobin(Component):
                 "hemoglobin_distribution_propensity",
                 "hemoglobin_percentile",
             ],
+            description=(
+                "Hemoglobin sampled from the distribution parameters and the simulant's "
+                "propensities, before any modifiers"
+            ),
         )
 
         # Sourced from the raw attribute by name: the modifiers below apply on top of it.
@@ -133,6 +138,9 @@ class Hemoglobin(Component):
             self.hemoglobin_name,
             source=[self.raw_hemoglobin_name],
             required_resources=[self.raw_hemoglobin_name],
+            description=(
+                "Hemoglobin after all modifiers, starting from the raw hemoglobin value"
+            ),
         )
 
         builder.value.register_attribute_modifier(
@@ -143,6 +151,10 @@ class Hemoglobin(Component):
                 self.maternal_disorders_population_attributable_fraction_table,
                 self.maternal_disorders_relative_risk_table,
             ],
+            description=(
+                "Scale the maternal disorders probability by one minus the PAF and by the "
+                "simulant's hemoglobin relative risk"
+            ),
         )
         builder.value.register_attribute_modifier(
             "maternal_hemorrhage.transition_proportion",
@@ -152,12 +164,20 @@ class Hemoglobin(Component):
                 self.hemorrhage_population_attributable_fraction_table,
                 self.hemorrhage_relative_risk_table,
             ],
+            description=(
+                "Scale the maternal hemorrhage probability by one minus the PAF, and by the "
+                "relative risk for simulants with severe anemia"
+            ),
         )
 
         builder.value.register_attribute_modifier(
             self.hemoglobin_name,
             self.adjust_hemoglobin_exposure,
             required_resources=["maternal_hemorrhage", "is_alive", "hemoglobin_scale_factor"],
+            description=(
+                "Scale hemoglobin by the simulant's hemorrhage scale factor once maternal "
+                "hemorrhage has occurred"
+            ),
         )
 
         builder.population.register_initializer(
@@ -279,17 +299,28 @@ class Anemia(Component):
             "anemia_levels",
             source=self.anemia_source,
             required_resources=[self.hemoglobin_name, self.anemia_thresholds_table],
+            description=(
+                "The simulant's anemia severity (not anemic, mild, moderate or severe) from "
+                "hemoglobin thresholds"
+            ),
         )
 
         builder.value.register_attribute_producer(
             "anemia.disability_weight",
             source=self.compute_disability_weight,
             required_resources=["is_alive", "pregnancy", "anemia_levels"],
+            description=(
+                "The disability weight for the simulant's anemia severity, zero during "
+                "parturition"
+            ),
         )
 
         builder.value.register_attribute_modifier(
             "all_causes.disability_weight",
             modifier="anemia.disability_weight",
+            description=(
+                "Include the anemia disability weight in the all-cause disability weight"
+            ),
         )
 
         builder.population.register_initializer(

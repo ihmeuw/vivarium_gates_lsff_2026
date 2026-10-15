@@ -18,8 +18,8 @@ dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
     "vivarium-build-utils>=4.4.2,<5.0.0",
     "vivarium-gbd-mapping>=6.0.7",
-    "vivarium-engine>=5.5.3",
-    "vivarium-public-health>=6.4.5",
+    "vivarium-engine>=5.11.0",
+    "vivarium-public-health>=6.6.4",
     "jinja2",
     "pyyaml",
 ]

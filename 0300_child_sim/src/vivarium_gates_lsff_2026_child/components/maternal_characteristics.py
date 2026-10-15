@@ -61,6 +61,10 @@ class MaternalIronConsumptionFromFortification(Component):
                 "baseline_2021_maternal_iron_consumption_from_fortification_mcg",
                 "maternal_iron_consumption_from_fortification_mcg",
             ],
+            description=(
+                "Shift birth weight by the effect of the change in maternal iron intake "
+                "from fortification since 2021"
+            ),
         )
 
         builder.population.register_initializer(
@@ -145,6 +149,10 @@ class WealthQuintile(Component):
             required_resources=[
                 "wealth_quintile",
             ],
+            description=(
+                "Scale birth weight by the wealth quintile multiplier, holding the "
+                "population mean fixed"
+            ),
         )
 
         builder.population.register_initializer(

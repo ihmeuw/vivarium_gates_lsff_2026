@@ -53,6 +53,7 @@ class VehicleConsumption(Component):
             self.any_consumed_name,
             source=any_consumed_table,
             required_resources=[any_consumed_table],
+            description="The probability that the simulant consumes any of the vehicle",
         )
 
         mean = (
@@ -76,6 +77,7 @@ class VehicleConsumption(Component):
             self.distribution_parameters_name,
             source=distribution_parameters,
             required_resources=[distribution_parameters],
+            description="The mean and standard deviation of vehicle consumption in grams",
         )
 
         builder.population.register_initializer(
@@ -282,6 +284,10 @@ class IronFortification(Component):
                 "baseline_2021_iron_consumption_from_fortification_mcg",
                 "iron_consumption_from_fortification_mcg",
             ],
+            description=(
+                "Remove the 2021 baseline fortification effect from hemoglobin and add the "
+                "effect of the simulant's current fortified iron intake"
+            ),
         )
 
         builder.population.register_initializer(
