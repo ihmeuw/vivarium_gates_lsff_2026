@@ -4,7 +4,7 @@ project = "vivarium_gates_lsff_2026"
 author = "IHME Simulation Science"
 copyright = f"2026, {author}"
 
-extensions = ["myst_parser"]
+extensions = ["myst_parser", "sphinx.ext.doctest"]
 
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 master_doc = "index"
