@@ -1,4 +1,7 @@
-from lsff_utils import config_utils, snakemake_utils
+import os
+import sys
+
+from lsff_utils import config_utils, paths, snakemake_utils
 
 configfile: "0050_config/config.yaml"
 
@@ -25,6 +28,12 @@ config = {
     # prep -- and everything downstream of it -- over a timestamp rather than a
     # change. See "Snakemake flags" in the README.
     "skip_data_prep": "false",
+    # Artifacts and simulation, anemia and rescaled results go to the team drive
+    # under MODEL_NUMBER. write_local=true puts them in the working tree instead,
+    # for archive_last_run.sh to publish. See "Where a run writes" in the README.
+    "write_local": "false",
+    # Write into a MODEL_NUMBER that already has output without being asked.
+    "reuse_model_number": "false",
     **config,
 }
 
@@ -67,6 +76,28 @@ config["debug"] = str(config.get("debug", "false")).lower() in ("t", "true", "y"
 config["local"] = str(config.get("local", "false")).lower() in ("t", "true", "y", "yes")
 config["full_scale"] = str(config.get("full_scale", "false")).lower() in ("t", "true", "y", "yes")
 config["skip_data_prep"] = str(config.get("skip_data_prep", "false")).lower() in ("t", "true", "y", "yes")
+config["write_local"] = str(config.get("write_local", "false")).lower() in ("t", "true", "y", "yes")
+config["reuse_model_number"] = str(config.get("reuse_model_number", "false")).lower() in ("t", "true", "y", "yes")
+
+# "local" or MODEL_NUMBER. Every Snakefile resolves its output roots against
+# this, and the environment variables carry it to the notebooks and to
+# make_artifacts, which resolve the same roots on their own. A run that writes
+# to the team drive also reads its own upstream output from there.
+config["output_target"] = snakemake_utils.resolve_output_target(
+    config["write_local"], config["debug"]
+)
+to_team = config["output_target"] != paths.LOCAL_SOURCE
+os.environ[paths.OUTPUT_TARGET_ENV_VAR] = config["output_target"]
+if to_team:
+    os.environ[paths.DATA_SOURCE_ENV_VAR] = config["output_target"]
+
+# onstart runs only for a real run, after the DAG is built and before any job.
+onstart:
+    if to_team:
+        snakemake_utils.confirm_model_number_reuse(
+            config["output_target"], config["reuse_model_number"]
+        )
+        snakemake_utils.record_team_run(config["output_target"], sys.argv)
 
 # The end-to-end pipeline: the spreadsheet and the plots are the only things
 # nothing else consumes, so requiring them pulls every stage in behind them.
