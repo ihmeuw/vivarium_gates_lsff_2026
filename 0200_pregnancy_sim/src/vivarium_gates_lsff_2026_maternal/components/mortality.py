@@ -54,7 +54,11 @@ class MaternalMortality(Mortality):
         self.life_expectancy_table = self.build_lookup_table(builder, "life_expectancy")
         self.register_mortality_probability(builder)
 
-        builder.value.register_attribute_modifier("exit_time", self.update_exit_times)
+        builder.value.register_attribute_modifier(
+            "exit_time",
+            self.update_exit_times,
+            description="Set the exit time of simulants who died on this time step",
+        )
 
         builder.population.register_initializer(
             initializer=self.on_initialize_simulants,
@@ -84,6 +88,10 @@ class MaternalMortality(Mortality):
             self.mortality_probability_pipeline_name,
             source=probability_pipeline_source,
             required_resources=[probability_pipeline_source],
+            description=(
+                "The probability of death from maternal disorders, applied to simulants "
+                "with maternal disorders"
+            ),
         )
 
     ########################

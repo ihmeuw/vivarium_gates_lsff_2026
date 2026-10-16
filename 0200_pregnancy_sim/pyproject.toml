@@ -15,8 +15,8 @@ authors = [{name = "The vivarium developers", email = "vivarium.dev@gmail.com"}]
 dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
     "vivarium-gbd-mapping>=6.0.7",
-    "vivarium-engine>=5.5.3",
-    "vivarium-public-health>=6.4.5",
+    "vivarium-engine>=5.11.0",
+    "vivarium-public-health>=6.6.4",
     "jinja2",
     "pyyaml",
 ]

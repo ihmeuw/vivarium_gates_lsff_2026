@@ -42,6 +42,10 @@ class NewChildren(Component):
             self.male_sex_percentage_name,
             source=male_sex_percentage_table,
             required_resources=[male_sex_percentage_table],
+            description=(
+                "The probability that a new child is male, used to draw the child's sex "
+                "at birth"
+            ),
         )
 
     def empty(self, index: pd.Index) -> pd.DataFrame:
