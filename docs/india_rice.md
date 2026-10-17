@@ -6,17 +6,38 @@ extraction tables. Rice is fortified mainly through the Public Distribution Syst
 government rice handed out with ration cards, which is fortified centrally. Rice bought on the
 open market is mostly unfortified today.
 
-This note explains how the baseline and intervention are built. Numbers are for women aged
-15–50 (an equal-weight average over the HCES quintile and age strata) as of the October 2026
-build.
+This note explains how the baseline and intervention are built. Everything below applies to
+every sex and age group: HCES gives values for each sex, age group (0–5, 5–15, 15–30, 30–50,
+50+) and wealth quintile, and data prep writes coverage for all of them. Worked numbers are for
+women aged 15–50 (an equal-weight average over their quintile and age strata) as of the October
+2026 build; other groups are similar (see below).
+
+## Who uses which groups
+
+| Model | Groups |
+|---|---|
+| Pregnancy sim (`0200`) | Women 10–54, using the HCES values for their age group |
+| Child sim (`0300`) | None directly: children's outcomes come through their mothers' iron intake |
+| Non-pregnant anemia (`0400`) | All sexes and ages (far more people than the pregnancy sim) |
+| NTD model (`0500`) | Women 15–50 |
+
+| Group | Any PDS rice | Fortifiability | Effective baseline | Effective intervention |
+|---|---|---|---|---|
+| Under 5 (F/M) | 0.67 | 0.52 | 0.18 | 0.38 |
+| 5–15 (F/M) | 0.75–0.76 | 0.57 | 0.24 | 0.48 |
+| Women 15–50 | 0.70 | 0.53 | 0.22 | 0.44 |
+| Adults 15+ (all) | 0.68–0.71 | 0.52–0.53 | 0.21–0.22 | 0.44 |
+| All groups | 0.70 | 0.53 | 0.215 | 0.436 |
+
+(Equal-weight averages over each group's wealth quintiles.)
 
 ## Data sources
 
 | Quantity | Source |
 |---|---|
 | Rice consumption (share eating rice, g/day mean and SD) | HCES, `0100_data_prep/hces/01_extract_hces.ipynb` |
-| Shares of women eating *any* / *only* PDS rice | HCES → `hces/india_share_eating_{any,only}_government_rice.csv` |
-| PDS share of each woman's rice, among those eating some (mean, SD) | HCES → `results/{fortificant}/rice/baseline_fortification/partial_coverage_amount/` |
+| Shares of people eating *any* / *only* PDS rice | HCES → `hces/india_share_eating_{any,only}_government_rice.csv` |
+| PDS share of each person's rice, among those eating some (mean, SD) | HCES → `results/{fortificant}/rice/baseline_fortification/partial_coverage_amount/` |
 | PDS share of rice volume; purchased share of non-PDS rice | HCES → `hces/india_proportion_government_rice.csv`, `hces/india_non_government_rice_proportion_purchased.csv` |
 | Share of PDS rice fortified, baseline effectiveness | Extraction tables: √(GF current compliance 0.5) = 0.71 (decisions D030, D029) |
 | Industry consolidation (applied to purchased non-PDS rice) | Extraction tables: 0.175 (decision P011) |
@@ -39,9 +60,9 @@ method.
 
 ## Baseline: fortification today
 
-HCES puts each woman in one of three groups:
+HCES puts each person in one of three groups (shares shown for women 15–50):
 
-| Group | Share of women | Fortified share of her rice, if covered |
+| Group | Share of women 15–50 | Fortified share of their rice, if covered |
 |---|---|---|
 | Eats only PDS rice | 0.147 | all of it |
 | Eats some PDS rice | 0.550 | her PDS share (mean 0.526) |
@@ -56,9 +77,9 @@ Two assumptions turn this into baseline fortification, each √(GF current compl
 - **Effectiveness.** The sim then sets fortification to zero for a random 29% of everyone
   (ineffective means totally ineffective).
 
-Fortification therefore lands only on PDS rice: a covered, effective woman in the "some PDS
-rice" group has her PDS share fortified and her other rice unfortified. In the pregnancy sim,
-her iron intake = fortified share × rice consumption × concentration.
+Fortification therefore lands only on PDS rice: a covered, effective person in the "some PDS
+rice" group has their PDS share fortified and their other rice unfortified. In the pregnancy
+sim, a woman's iron intake = fortified share × rice consumption × concentration.
 
 The 0.71 replaces `GOVERNMENT_BASELINE_COVERAGE = 0.8`, formerly hard-coded in the HCES
 notebook (with baseline effectiveness also 0.8). GF's compliance of 50% applies to government
@@ -68,7 +89,8 @@ so the 0.71 is better read as part of compliance than as roll-out.
 ### Effective coverage
 
 The coverage notebook (`calculate_effective_coverage_by_quintile_and_scenario.ipynb`), whose
-output the NTD and folate anemia models read, computes:
+output the NTD and non-pregnant anemia models read, computes for each group (women 15–50
+shown):
 
 - fortified share of rice = full + (any − full) × partial mean = 0.71 × (0.147 + 0.550 × 0.526)
   = 0.71 × 0.439. The 0.439 is close to the PDS share of rice volume (0.45), a check that
@@ -77,8 +99,8 @@ output the NTD and folate anemia models read, computes:
   = 0.986 × 0.71 × 0.439 × 0.71 ≈ **0.218**.
 
 This is a share of rice, which suits folate and birthweight (where the amount matters). The
-hemoglobin effect is all-or-nothing, so for hemoglobin what matters is the share of women with
-*any* effective fortified rice: 0.697 × 0.71 × 0.71 ≈ **0.35**. Both are right for their models;
+hemoglobin effect is all-or-nothing, so for hemoglobin in the pregnancy sim what matters is the
+share of women with *any* effective fortified rice: 0.697 × 0.71 × 0.71 ≈ **0.35**. Both are right for their models;
 "effective coverage" is not a single number for India.
 
 ### Fortification built into the input data
@@ -92,23 +114,24 @@ coverage in the folate models are set to 0. Nothing is subtracted from the input
 
 ### Fortifiability
 
-Fortifiability is the share of a woman's rice that *could* be fortified by 2035. It is computed
+Fortifiability is the share of a person's rice that *could* be fortified by 2035. It is computed
 per stratum in `prep_extracted.ipynb`:
 
 fortifiability = PDS share + (1 − PDS share) × purchased share of non-PDS rice × **industry
 consolidation**
 
 PDS rice is all fortifiable; open-market rice is fortifiable in proportion to industry
-consolidation; home-grown rice never is. Fortifiability averages 0.529 (by wealth quintile,
-poorest to richest: 0.56, 0.58, 0.56, 0.53, 0.41).
+consolidation; home-grown rice never is. Fortifiability averages 0.529 for women 15–50 (by
+wealth quintile, poorest to richest: 0.56, 0.58, 0.56, 0.53, 0.41) and 0.534 over all groups.
 
-**Industry consolidation = 0.175 (P011)**, chosen so national fortifiability matches GF's 2035
-consolidation (0.529). The previous value, 0.45, was labelled "industry consolidation" but was
+**Industry consolidation = 0.175 (P011)**, chosen so fortifiability for women 15–50 matches
+GF's 2035 consolidation (0.529). GF's figure is market-wide; over all groups ours is 0.534, so
+the calibration holds to within about 1%. The previous value, 0.45, was labelled "industry consolidation" but was
 probably market-wide (about the PDS share), so applying it to open-market rice counted the PDS
 twice (national 0.65). GF's own scenario is mostly better compliance on PDS rice (0.50 → 0.85)
 plus a small rise in consolidation (0.50 → 0.529).
 
-| Industry consolidation | National fortifiability | Intervention effective coverage | Women with any effective fortified rice |
+| Industry consolidation (women 15–50) | Fortifiability | Intervention effective coverage | Women with any effective fortified rice |
 |---|---|---|---|
 | 0.45 (previous) | 0.652 | 0.544 | 0.642 |
 | **0.175 (P011, GF's 2035 level)** | **0.529** | **0.441** | **0.565** |
@@ -136,28 +159,29 @@ households, so a larger industry consolidation flattens the wealth gradient.
 - **Coverage notebook:** intervention effective coverage = share eating rice × target ×
   effectiveness ≈ **0.441**. It checks that the target is at least current coverage.
 
-Because newly covered women are drawn at random, the intervention does not target open-market
-or PDS rice specifically; fortifiability only sets how many women are covered. The code itself
-notes this "max out" choice is less clear-cut for India than for Nigeria.
+In the pregnancy sim, newly covered women are drawn at random, so the intervention does not
+target open-market or PDS rice specifically; fortifiability only sets how many women are
+covered. The code itself notes this "max out" choice is less clear-cut for India than for
+Nigeria.
 
 ## Comparisons
 
-Both India comparisons are against `zero` (`0050_config/location_vehicle_scenario_comparisons.csv`):
+India has three comparisons (`0050_config/location_vehicle_scenario_comparisons.csv`):
 
 - **Current PDS fortification vs none** (`zero` vs `baseline`);
 - **Scaled-up PDS and industry fortification with increased folate vs none** (`zero` vs
-  `intervention`).
+  `intervention`);
+- **Scale-up beyond current PDS fortification** (`baseline` vs `intervention`).
 
-Because they are against `zero`, the intervention level itself (not its gain over baseline) is
-the effect size.
+The first two match the 2024 targets (vs none), where the intervention level itself is the
+effect size; GF's updated baseline values barely affect the second. The third is the gain over
+today's program and is where the baseline values matter.
 
 ## Open questions
 
 - GF questions 7 and 8 (`GF_DATA_MAPPING.md`): is GF's current consolidation of 0.50 the PDS
   share, and is compliance meant for government rice only? Why does consolidation dip to 0.48
   in 2031?
-- The HCES any/only PDS files were derived from the previous outputs (÷ 0.8, exact). The next
-  HCES run on the cluster should reproduce them up to floating-point error.
 - Iron concentration uses the top of the national standard (28–42.5 mg/kg). This doesn't affect
   hemoglobin (all-or-nothing) but scales the birthweight effect.
 
