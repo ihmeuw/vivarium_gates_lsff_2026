@@ -30,27 +30,27 @@ Country-Vehicle Progress,E9,"=IF(COUNTIFS('Country-Vehicle Extraction'!$A$2:$A$9
 Country-Vehicle Progress,F9,"=IF(COUNTIFS('Country-Vehicle Extraction'!$A$2:$A$979, D$1,  'Country-Vehicle Extraction'!$B$2:$B$979, F$2,  'Country-Vehicle Extraction'!$C$2:$C$979, ""Total"",  'Country-Vehicle Extraction'!$E$2:$E$979, $A9, 'Country-Vehicle Extraction'!$J$2:$J$979, ""<>"") = 0, ""Missing"", ""Complete"")",Missing
 Country-Vehicle Progress,G9,"=IF(COUNTIFS('Country-Vehicle Extraction'!$A$2:$A$979, D$1,  'Country-Vehicle Extraction'!$B$2:$B$979, F$2,  'Country-Vehicle Extraction'!$C$2:$C$979, ""<>All"",  'Country-Vehicle Extraction'!$E$2:$E$979, $A9, 'Country-Vehicle Extraction'!$J$2:$J$979, ""<>"") = 0, ""Missing"", ""Complete"")",Complete
 Country-Vehicle Progress,H9,"=IF(COUNTIFS('Country-Vehicle Extraction'!$A$2:$A$979, H$1,  'Country-Vehicle Extraction'!$B$2:$B$979, H$2,  'Country-Vehicle Extraction'!$C$2:$C$979, ""Total"",  'Country-Vehicle Extraction'!$E$2:$E$979, $A9, 'Country-Vehicle Extraction'!$J$2:$J$979, ""<>"") = 0, ""Missing"", ""Complete"")",Complete
-Country-Vehicle Extraction,J46,=(5.5-2.5)/1.35,2.222222222222222
-Country-Vehicle Extraction,J47,=(5.4-2.4)/1.35,2.2222222222222223
-Country-Vehicle Extraction,J48,=(5.6-2.5)/1.35,2.296296296296296
-Country-Vehicle Extraction,J57,=61.2*J63,32.803200000000004
-Country-Vehicle Extraction,J58,=34.2*J64,11.491200000000001
+Country-Vehicle Extraction,J46,=(5.5-2.5)/1.35,2.22222222222222
+Country-Vehicle Extraction,J47,=(5.4-2.4)/1.35,2.22222222222222
+Country-Vehicle Extraction,J48,=(5.6-2.5)/1.35,2.2962962962963
+Country-Vehicle Extraction,J57,=61.2*J63,33.048
+Country-Vehicle Extraction,J58,=34.1*J64,11.4576
 Country-Vehicle Extraction,J59,=52.4*J65,23.4752
 Country-Vehicle Extraction,J60,=60.7*J66,33.1422
-Country-Vehicle Extraction,J61,=73.7*J67,46.652100000000004
-Country-Vehicle Extraction,J62,=79.5*J68,53.742000000000004
-Country-Vehicle Extraction,J69,=(84.6-30.5)/1.35,40.07407407407407
-Country-Vehicle Extraction,J70,=(47.2-13.7)/1.35,24.814814814814813
-Country-Vehicle Extraction,J71,=(71.4-26.4)/1.35,33.333333333333336
-Country-Vehicle Extraction,J72,=(81.1-33.8)/1.35,35.03703703703703
-Country-Vehicle Extraction,J73,=(96.3-45.3)/1.35,37.77777777777778
-Country-Vehicle Extraction,J74,=(103.1-50.4)/1.35,39.03703703703703
+Country-Vehicle Extraction,J61,=73.7*J67,46.6521
+Country-Vehicle Extraction,J62,=79.5*J68,53.742
+Country-Vehicle Extraction,J69,=(84.6-30.5)/1.35,40.0740740740741
+Country-Vehicle Extraction,J70,=(47.2-13.7)/1.35,24.8148148148148
+Country-Vehicle Extraction,J71,=(71.4-26.4)/1.35,33.3333333333333
+Country-Vehicle Extraction,J72,=(81.1-33.8)/1.35,35.037037037037
+Country-Vehicle Extraction,J73,=(96.3-45.3)/1.35,37.7777777777778
+Country-Vehicle Extraction,J74,=(103.1-50.4)/1.35,39.037037037037
 Country-Vehicle Extraction,J75,=38.3*J81,20.5288
-Country-Vehicle Extraction,J76,=35.5*J81,19.028000000000002
-Country-Vehicle Extraction,J77,=41*J81,21.976000000000003
-Country-Vehicle Extraction,J78,=(53.6-19)/1.35,25.62962962962963
-Country-Vehicle Extraction,J79,=(49.5-17.1)/1.35,23.999999999999996
-Country-Vehicle Extraction,J80,=(57.6-20.7)/1.35,27.333333333333336
+Country-Vehicle Extraction,J76,=35.5*J81,19.028
+Country-Vehicle Extraction,J77,=41*J81,21.976
+Country-Vehicle Extraction,J78,=(53.6-19)/1.35,25.6296296296296
+Country-Vehicle Extraction,J79,=(49.5-17.1)/1.35,24
+Country-Vehicle Extraction,J80,=(57.6-20.7)/1.35,27.3333333333333
 Country-Vehicle-Fortif Progress,H6,"=IF(COUNTIFS('Country-Vehicle-Fort Extraction'!$A$2:$A$944, F$1,  'Country-Vehicle-Fort Extraction'!$B$2:$B$944, F$2,  'Country-Vehicle-Fort Extraction'!$C$2:$C$944, H$3, 'Country-Vehicle-Fort Extraction'!$D$2:$D$944, ""Total"",  'Country-Vehicle-Fort Extraction'!$E$2:$E$944, $A6, 'Country-Vehicle-Fort Extraction'!$J$2:$J$944, ""<>"") = 0, ""Missing"", ""Complete"")",Complete
 Country-Vehicle-Fortif Progress,I6,"=IF(COUNTIFS('Country-Vehicle-Fort Extraction'!$A$2:$A$944, F$1,  'Country-Vehicle-Fort Extraction'!$B$2:$B$944, F$2,  'Country-Vehicle-Fort Extraction'!$C$2:$C$944, H$3, 'Country-Vehicle-Fort Extraction'!$D$2:$D$944, ""<>All"",  'Country-Vehicle-Fort Extraction'!$E$2:$E$944, $A6, 'Country-Vehicle-Fort Extraction'!$J$2:$J$944, ""<>"") < 5, ""Missing"", ""Complete"")",Complete
 Country-Vehicle-Fortif Progress,H7,"=IF(COUNTIFS('Country-Vehicle-Fort Extraction'!$A$2:$A$944, F$1,  'Country-Vehicle-Fort Extraction'!$B$2:$B$944, F$2,  'Country-Vehicle-Fort Extraction'!$C$2:$C$944, H$3, 'Country-Vehicle-Fort Extraction'!$D$2:$D$944, ""Total"",  'Country-Vehicle-Fort Extraction'!$E$2:$E$944, $A7, 'Country-Vehicle-Fort Extraction'!$J$2:$J$944, ""<>"") = 0, ""Missing"", ""Complete"")",Missing
