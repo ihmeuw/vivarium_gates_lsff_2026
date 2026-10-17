@@ -86,7 +86,7 @@ Flag                                            Effect
 ==============================================  ==========================================================
 ``--config full_scale=true``                    Real run with 200 seeds. Without it you get 10 seeds.
 ``--config skip_data_prep=true``                Use the committed data prep CSVs as they are. Leave it off
-                                                only if you changed the extraction sheet or a data prep
+                                                only if you changed the extraction inputs or a data prep
                                                 notebook.
 ``--config debug=true``                         One draw and one seed, in the foreground, with a debugger.
 ``-c1`` (short for ``--cores 1``)               Run one Snakemake job at a time. Include it in every command.

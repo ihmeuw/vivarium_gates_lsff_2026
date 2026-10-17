@@ -66,8 +66,8 @@ data = [
 notebooks = [
     "papermill",
     "ploomber-engine",  # Provides papermill's `--engine debug`, used by the debug profile.
-    "openpyxl",  # Reads the extraction workbook.
     "xlsxwriter",  # Writes results_spreadsheet.xlsx.
+    "openpyxl",  # extraction/integration/extract_*.py read the GF and literature workbooks.
     "statsmodels",
     "scikit-learn",
     "vivarium_gates_lsff_2026[interactive]",

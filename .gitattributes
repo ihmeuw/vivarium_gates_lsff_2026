@@ -2,3 +2,5 @@
 # Excel (which writes CRLF) doesn't show every line as changed in git diffs.
 0100_data_prep/extraction/integration/*.csv text eol=lf
 0050_config/*.csv text eol=lf
+0100_data_prep/extraction/data/*.csv text eol=lf
+0100_data_prep/extraction/generated/*.csv text eol=lf
