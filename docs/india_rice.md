@@ -65,17 +65,20 @@ HCES puts each person in one of three groups (shares shown for women 15–50):
 | Group | Share of women 15–50 | Fortified share of their rice, if covered |
 |---|---|---|
 | Eats only PDS rice | 0.147 | all of it |
-| Eats some PDS rice | 0.550 | her PDS share (mean 0.526) |
+| Eats some PDS rice | 0.550 | their PDS share (mean 0.526) |
 | Eats no PDS rice | 0.303 | none |
 
-Two assumptions turn this into baseline fortification, each √(GF current compliance 0.5) = 0.71:
+In the pregnancy simulation, two assumptions turn this into baseline fortification, each √(GF current compliance 0.5) = 0.71:
 
 - **Coverage (share of PDS rice fortified).** A random 71% of PDS eaters receive fortified PDS
   rice; the rest receive none ("maximum heterogeneity": people are missed entirely, not 29% of
   each person's rice). `prep_extracted.ipynb` multiplies the HCES any/only shares by 0.71 to
   write `baseline_fortification/any_coverage` and `full_coverage`.
-- **Effectiveness.** The sim then sets fortification to zero for a random 29% of everyone
-  (ineffective means totally ineffective).
+- **Effectiveness.** The sim then sets fortification to zero for a
+  random 29% of everyone (independently of whether they were covered;
+  only people who are covered will be affected). This is also
+  maximum heterogeneity: a person’s fortified rice is either all
+  effective or all ineffective, not 71% effective for everyone.
 
 Fortification therefore lands only on PDS rice: a covered, effective person in the "some PDS
 rice" group has their PDS share fortified and their other rice unfortified. In the pregnancy
