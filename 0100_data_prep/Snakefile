@@ -159,7 +159,8 @@ for (location, vehicle, fortificant) in config_utils.get_configured_combos(["loc
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
         # India rice: HCES gives the partial-coverage amounts directly; any/full coverage are
-        # the HCES PDS shares scaled in prep_extracted by the share of PDS rice fortified.
+        # the HCES government-rice shares scaled in prep_extracted by the share of government rice
+        # fortified.
         if (location, vehicle) == ("india", "rice") and "partial_coverage_amount" in data_need:
             hces_output_files.append(file_name)
         else:

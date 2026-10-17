@@ -28,8 +28,8 @@ the GBD or survey inputs. Each model first subtracts that built-in effect:
 
 - **Pregnancy sim** (`components/intervention.py`): in `zero`, each simulant's fortification
   and concentration are 0. Separately, a "2021" fortification status is drawn (always 0 for
-  India, whose PDS roll-out came later), and its hemoglobin benefit is subtracted from GBD 2021
-  hemoglobin. `baseline` and `intervention` then add their own benefit back. The component's
+  India, whose government rice fortification roll-out came later), and its hemoglobin benefit
+  is subtracted from GBD 2021 hemoglobin. `baseline` and `intervention` then add their own benefit back. The component's
   default scenario is `baseline`.
 - **Child sim:** `zero` uses the maternal iron intake from the pregnancy sim's `zero`
   scenario. The child sim has no fortification of its own.

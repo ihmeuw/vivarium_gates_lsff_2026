@@ -27,13 +27,13 @@ same current value is typed in two places, the GF defaults use the cover sheet (
 Vehicle Matrix'). The one place they disagree (India wheat compliance) is listed under
 "Questions to raise with GF" below, and `extract_gf.py` prints a warning for it.
 
-India rice is special. Its consumption and who eats PDS (government) rice come from HCES
-microdata (`0100_data_prep/hces`). PDS rice stands in for consolidation, so its baseline any
-row is the share of PDS rice fortified, and it and baseline effectiveness each take √(GF
-current compliance) like other arms; `prep_extracted` multiplies the HCES shares eating any /
-only PDS rice by the share fortified. Its fortifiability isn't taken from GF automatically:
-GF's figure is market-wide, while ours is the industry consolidation applied to purchased
-non-PDS rice. Decision P011 calibrates it (0.175) so national fortifiability matches GF's. How the
+India rice is special. Its consumption and who eats government rice (PDS, school and
+anganwadi meals) come from HCES microdata (`0100_data_prep/hces`). Government rice stands in
+for consolidation, so its baseline any row is the share of government rice fortified, and it
+and baseline effectiveness each take √(GF current compliance) like other arms;
+`prep_extracted` multiplies the HCES shares eating any / only government rice by the share
+fortified. Its fortifiability isn't taken from GF automatically: GF's figure is market-wide,
+while ours is the industry consolidation applied to purchased non-government rice. Decision P011 calibrates it (0.175) so national fortifiability matches GF's. How the
 India rice model works is described in `docs/india_rice.md`.
 
 ## Which extraction rows the model actually reads
@@ -44,8 +44,8 @@ India rice model works is described in `docs/india_rice.md`.
 | WRA amount mean / SD | pregnancy sim (iron arms); NTD and folate anemia (mean only) | Not used for India (HCES). The Ethiopia salt SD is never read. Total rows are used only in a sanity check. |
 | U5 amount | Nigeria only | Feeds the 5–15 age row (as 0.5 × adult + 0.5 × U5), which the pregnancy sim uses for ages 10–15. The 0–5 rows are read by nothing; the child sim reads no consumption data. |
 | U5 any | **nothing** | not listed in `prep_extracted` `data_needs` |
-| Fortifiability | coverage calc, pregnancy sim (intervention only) | For India, applied only to purchased non-PDS rice |
-| Baseline any / concentration / effectiveness | coverage calc, pregnancy sim, NTD, folate anemia | For India, baseline coverage = HCES shares eating PDS rice × the baseline any row (share of PDS rice fortified), and the "2021" baseline is forced to 0 in the models. |
+| Fortifiability | coverage calc, pregnancy sim (intervention only) | For India, applied only to purchased non-government rice |
+| Baseline any / concentration / effectiveness | coverage calc, pregnancy sim, NTD, folate anemia | For India, baseline coverage = HCES shares eating government rice × the baseline any row (share of government rice fortified), and the "2021" baseline is forced to 0 in the models. |
 | Intervention rows | coverage calc, pregnancy sim (`intervention` scenario only), NTD, folate anemia | |
 | Vehicle Extraction (Hb, birthweight) | pregnancy sim, non-pregnant anemia model, child sim | The salt row is never read |
 | Country Extraction, Universal | **nothing** | |
@@ -84,7 +84,7 @@ overridden with a decision.
 | Rule | Where | Effect |
 |---|---|---|
 | If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the base Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
-| For arms in `HCES_ARMS` (India rice), consumption and fortifiability are not taken from GF, and only intervention rows take literature defaults. Baseline any (share of PDS rice fortified) and effectiveness are both √(current compliance), with no consolidation factor. | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based consumption and PDS shares. |
+| For arms in `HCES_ARMS` (India rice), consumption and fortifiability are not taken from GF, and only intervention rows take literature defaults. Baseline any (share of government rice fortified) and effectiveness are both √(current compliance), with no consolidation factor. | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based consumption and government-rice shares. |
 | Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`) take no defaults. | `read_arms`, `default_scope` | They keep their base values unless a decision targets them; `comparison.csv` shows GF's numbers for them. |
 | Effect sizes take no defaults, from the literature or GF. | `default_scope` | They change only through decisions. |
 | Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) take their baseline from the literature or, failing that, keep the base value. |
@@ -129,16 +129,17 @@ overridden with a decision.
    Time'!H22 says the 2031 and 2035 values blend two rows of GF's 25 Sep vehicle-data file,
    weighted by each channel's reach: "Rice w/ PDS" (2031 0.5792, 2035 0.6279) and "Rice w/o
    PDS" (2031 0.2145, 2035 0.3516). The implied PDS weight is 0.73 in 2031 and 0.64 in 2035
-   (HCES: 0.70 of women eat some PDS rice). Our model applies industry consolidation only to
-   purchased non-PDS rice, and P011 (0.175) calibrates it to the blend (0.529). Questions:
+   (HCES: 0.70 of women eat some government rice). Our model applies industry consolidation
+   only to purchased non-government rice, and P011 (0.175) calibrates it to the blend (0.529). Questions:
    what do the two channel figures measure (households with/without PDS access, or rice
-   streams)? If "w/o PDS" is the fortifiable share of open-market rice, it maps directly onto
+   streams), and does "PDS" mean the PDS alone or all government schemes (school and
+   anganwadi meals too)? If "w/o PDS" is the fortifiable share of open-market rice, it maps directly onto
    our industry consolidation (about 0.35 in 2035, giving national fortifiability about 0.61).
    What are the current-year channel values? Could GF keep the two channels separate in the
    background data (as the LSFF DALYs 'Input - workbook' tab does), with consolidation,
    compliance and reach for each, for current, 2031 and 2035? That would fit our HCES-based
-   model better than the blend. We also apply GF's current compliance (50%) to
-   PDS rice only (the literature extraction notes it is for government rice). Is that GF's
+   model better than the blend. We also apply GF's current compliance (50%) to government
+   rice only (the literature extraction notes it is for government rice). Is that GF's
    meaning?
 8. **India rice consolidation path.** Current consolidation is 0.50, 2031 is 0.48 and 2035 is
    0.53, so it falls before it rises. The current value comes from the cover sheet (M4N,
@@ -206,16 +207,16 @@ If it trips again, weight that mean (or loosen `rtol`).
    scenarios in `config.yaml`. The next build fills it in from the literature and GF and runs
    the checks on it; expect to need decisions (e.g. Ethiopia wheat's DUMMY SDs fail the
    consumer-variance check against GF's means).
-6. **India rice.** The share of PDS rice fortified, formerly hard-coded in the HCES notebook
+6. **India rice.** The share of government rice fortified, formerly hard-coded in the HCES notebook
    (`GOVERNMENT_BASELINE_COVERAGE = 0.8`), is now the baseline any row, and with baseline
    effectiveness takes √(GF current compliance 0.5) = 0.71 (D029, D030). National effective
    baseline coverage (WRA) fell from 0.277 to 0.218. The HCES notebook now writes unscaled
    shares (`hces/india_share_eating_{any,only}_government_rice.csv`); the committed files were
-   derived from the previous outputs (÷ 0.8) and need confirming by one HCES rerun on the
-   cluster. Industry consolidation (applied to purchased non-PDS rice) is 0.175 (P011),
+   derived from the previous outputs (÷ 0.8), and the October 2026 HCES rerun reproduced them.
+   Industry consolidation (applied to purchased non-government rice) is 0.175 (P011),
    calibrated so national fortifiability matches GF's 2035 consolidation (0.529); intervention
    effective coverage (WRA) is 0.44, as in GF. The base 0.45 was probably a market-wide
-   figure and double-counted the PDS. Sensitivity: 0.065 matches only GF's increase.
+   figure and double-counted government rice. Sensitivity: 0.065 matches only GF's increase.
 7. **Literature row IDs** are hashes of each row's content, so editing key fields in the
    literature workbook (e.g. fixing a scenario label) changes the ID and breaks decisions that
    use it. The build stops and suggests replacements. `extract_lit.py` already reads an `ID`
