@@ -9,7 +9,7 @@ reads, and the questions that are still open. For how to run the scripts, see `R
 | GF term (Definitions tab) | Our data need | Conversion |
 |---|---|---|
 | Coverage (Cov): % using the vehicle | `Vehicle consumption by WRA -- any` | None. Quintiles come from the country's stratified tab, the Total from the cover sheet. |
-| g/cap | `Vehicle consumption by WRA -- amount` (mean) | Our mean is over **all** women, including non-consumers; the sim treats it as a zero-inflated normal. The GF default uses it as published, i.e. per capita. Exceptions are decisions: Nigeria rice is multiplied by coverage, treating g/cap as among consumers (decision D006, JG 8/31). |
+| g/cap | `Vehicle consumption by WRA -- amount` (mean) | None. Our mean, like the GF number, is per capita (including non-consumers). |
 | Consolidation (2035) | `Vehicle "fortifiability"` | None; the 2035 value is used. Fortifiability is used only for the intervention target. |
 | Compliance (2035) | `Intervention coverage % of fortifiable` and `Intervention effective % of fortified` | Each = √compliance, rounded to 2 d.p. This is the equal split agreed with KB on 9/9. |
 | Current consolidation × compliance | `Vehicle fortification at baseline -- any` × `Baseline effective % of fortified` | any = consolidation × √compliance; effectiveness = √compliance. Applied only when GF gives both numbers. |
