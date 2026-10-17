@@ -38,7 +38,6 @@ from vivarium_inputs.globals import DEMOGRAPHIC_COLUMNS, DRAW_COLUMNS
 from vivarium_inputs.mapping_extension import AlternativeRiskFactor
 
 from lsff_utils import paths as shared_paths
-
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, metadata, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import ARTIFACT_INDEX_COLUMNS
 from vivarium_gates_lsff_2026_child.data import utilities
