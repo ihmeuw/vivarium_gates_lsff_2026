@@ -90,8 +90,11 @@ sim, a woman's iron intake = fortified share × rice consumption × concentratio
 
 The 0.71 replaces `GOVERNMENT_BASELINE_COVERAGE = 0.8`, formerly hard-coded in the HCES
 notebook (with baseline effectiveness also 0.8). GF's compliance of 50% applies to government
-rice (literature extraction). The government reports rice in all its schemes fortified since
-March 2024, so the 0.71 is better read as part of compliance than as roll-out.
+rice (literature extraction). The government reports that custom-milled rice was replaced with
+fortified rice in all its schemes (TPDS, ICDS, PM POSHAN and others), reaching 100% coverage by
+March 2024 ([PIB, Department of Food and Public Distribution, 11 Oct
+2024](https://static.pib.gov.in/WriteReadData/specificdocs/documents/2024/oct/doc20241011414401.pdf)),
+so the 0.71 is better read as part of compliance than as roll-out.
 
 ### Effective coverage
 
