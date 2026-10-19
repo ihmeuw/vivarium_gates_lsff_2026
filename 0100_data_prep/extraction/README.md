@@ -83,3 +83,25 @@ python check_completeness.py --strict   # exit 1 if anything is Missing
 every table (generated versions where they exist) on its own tab, plus the progress grids,
 for reading or sending to collaborators. Changes made in that file are not read by the
 pipeline.
+
+## AI use
+
+The entire system for combining data sources was developed by Claude
+under human direction. As such, the code in the following ten python
+files is completely AI-generated and has not been carefully reviewed by
+a human:
+
+- `0100_data_prep/extraction/`:
+  - `build_workbook.py` and `check_completeness.py`
+- `0100_data_prep/extraction/integration/`:
+  - `build_extraction.py`, `common.py`, `extract_gf.py`, `extract_lit.py` and `report.py`
+- `src/lsff_utils/extraction.py`
+- `tests/`
+  - `test_extraction.py` and `test_extraction_build.py`
+
+The following four related markdown files are also AI-generated. They have been
+reviewed but not thoroughly revised, and they may contain errors:
+
+- `0100_data_prep/extraction/README.md`
+- `0100_data_prep/extraction/integration/`:
+  - `README.md`, `GF_DATA_MAPPING.md`, and `CONSUMPTION_DISTRIBUTION.md`
