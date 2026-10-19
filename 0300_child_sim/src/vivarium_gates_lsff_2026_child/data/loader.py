@@ -1502,7 +1502,8 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
 def _resolve_lbwsg_paf_path(location: str) -> Path:
     """Locate the output of the LBWSG PAF calculation simulation.
 
-    Results live under :data:`paths.LBWSG_PAF_RESULTS_ROOT`. Both layouts are handled:
+    Results live under :data:`paths.LBWSG_PAF_RESULTS_ROOT`, or its team-drive
+    counterpart when ``LSFF_OUTPUT_TARGET`` names a model number. Both layouts are handled:
 
     - ``simulate run`` writes ``<measure>.parquet``.
     - ``psimulate`` writes ``<measure>/<task_id>.parquet``, and nests the whole lot
@@ -1515,7 +1516,8 @@ def _resolve_lbwsg_paf_path(location: str) -> Path:
     picked up silently.
     """
     measure = paths.LBWSG_PAF_MEASURE_NAME
-    location_dir = paths.LBWSG_PAF_RESULTS_ROOT / location.lower().replace(" ", "_")
+    results_root = shared_paths.output_root(paths.LBWSG_PAF_RESULTS_ROOT)
+    location_dir = results_root / location.lower().replace(" ", "_")
 
     if not location_dir.exists():
         raise FileNotFoundError(

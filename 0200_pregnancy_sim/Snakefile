@@ -33,12 +33,13 @@ branches_file = (
 )
 branches_arg = "" if debug else branches_file
 
-# Artifacts and simulation output live on the team drive under the current model
-# iteration, not in the repository -- see lsff_utils.paths. Both are named here
-# from the constants so that bumping MODEL_NUMBER repoints these rules too.
-MATERNAL_ARTIFACT = str(paths.MATERNAL_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
+# Artifacts and simulation output go to the team drive under MODEL_NUMBER, or
+# to the repository with write_local=true -- see lsff_utils.paths.
+MATERNAL_ARTIFACT_ROOT = paths.output_root(paths.MATERNAL_ARTIFACT_ROOT, config["output_target"])
+MATERNAL_RESULTS_ROOT = paths.output_root(paths.MATERNAL_RESULTS_ROOT, config["output_target"])
+MATERNAL_ARTIFACT =str(MATERNAL_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
 MATERNAL_RUN_MARKER = snakemake_utils.run_marker(
-    paths.MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"
+    MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"
 )
 
 data_inputs = [
@@ -71,7 +72,7 @@ rule pregnancy_artifacts:
         """
         {artifact_setup}
         rm -f {output}
-        make_artifacts -p maternal -o {paths.MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} -a --mean {artifact_debug}
+        make_artifacts -p maternal -o {MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} -a --mean {artifact_debug}
         """
 
 code_inputs = glob.glob("0200_pregnancy_sim/src/vivarium_gates_lsff_2026_maternal/**/*.py", recursive=True)
@@ -91,14 +92,14 @@ rule pregnancy_simulations:
     output: [MATERNAL_RUN_MARKER]
     params:
         write_marker=lambda wildcards: snakemake_utils.write_run_marker(
-            paths.MATERNAL_RESULTS_ROOT, wildcards.location, wildcards.vehicle
+            MATERNAL_RESULTS_ROOT, wildcards.location, wildcards.vehicle
         ),
     shell:
         """
         {simulation_setup}
         cd 0200_pregnancy_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {branches_arg} -i {paths.MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {paths.MATERNAL_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
+        {simulate_command} src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {branches_arg} -i {MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {MATERNAL_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
         rm -f dump.rdb
         {params.write_marker}
         """

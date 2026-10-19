@@ -37,15 +37,21 @@ child_branches_file = (
 )
 child_branches_arg = "" if debug else child_branches_file
 
-# See lsff_utils.paths for the layout these four resolve against. None of them
-# carries a model iteration number: the archive supplies the versioning.
-CHILD_ARTIFACT = str(paths.CHILD_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
+# See lsff_utils.paths for the layout these resolve against. They are in the
+# team drive under MODEL_NUMBER, or in the repository with write_local=true.
+CHILD_ARTIFACT_ROOT = paths.output_root(paths.CHILD_ARTIFACT_ROOT, config["output_target"])
+CHILD_RESULTS_ROOT = paths.output_root(paths.CHILD_RESULTS_ROOT, config["output_target"])
+LBWSG_PAF_ARTIFACT_ROOT = paths.output_root(paths.LBWSG_PAF_ARTIFACT_ROOT, config["output_target"])
+LBWSG_PAF_RESULTS_ROOT = paths.output_root(paths.LBWSG_PAF_RESULTS_ROOT, config["output_target"])
+MATERNAL_RESULTS_ROOT = paths.output_root(paths.MATERNAL_RESULTS_ROOT, config["output_target"])
+
+CHILD_ARTIFACT =str(CHILD_ARTIFACT_ROOT / "{vehicle}" / "{location}.hdf")
 CHILD_RUN_MARKER = snakemake_utils.run_marker(
-    paths.CHILD_RESULTS_ROOT, "{location}", "{vehicle}"
+    CHILD_RESULTS_ROOT, "{location}", "{vehicle}"
 )
 
-LBWSG_PAF_ARTIFACT = str(paths.LBWSG_PAF_ARTIFACT_ROOT / "{location}.hdf")
-LBWSG_PAF_RUN_MARKER = snakemake_utils.run_marker(paths.LBWSG_PAF_RESULTS_ROOT, "{location}")
+LBWSG_PAF_ARTIFACT = str(LBWSG_PAF_ARTIFACT_ROOT / "{location}.hdf")
+LBWSG_PAF_RUN_MARKER = snakemake_utils.run_marker(LBWSG_PAF_RESULTS_ROOT, "{location}")
 
 # The PAF calculation is the most expensive step in the pipeline and its inputs
 # move far less often than the model does, so everything the two PAF rules read
@@ -60,7 +66,7 @@ rule artifact_for_lbwsg_pafs:
         """
         {artifact_setup}
         rm -f {output}
-        make_artifacts -p child -o {paths.LBWSG_PAF_ARTIFACT_ROOT} -l {wildcards.location} --for-lbwsg-pafs --national -a --mean {artifact_debug}
+        make_artifacts -p child -o {LBWSG_PAF_ARTIFACT_ROOT} -l {wildcards.location} --for-lbwsg-pafs --national -a --mean {artifact_debug}
         """
 
 rule lbwsg_pafs:
@@ -73,14 +79,14 @@ rule lbwsg_pafs:
     output: [LBWSG_PAF_RUN_MARKER]
     params:
         write_marker=lambda wildcards: snakemake_utils.write_run_marker(
-            paths.LBWSG_PAF_RESULTS_ROOT, wildcards.location
+            LBWSG_PAF_RESULTS_ROOT, wildcards.location
         ),
     shell:
         """
         {simulation_setup}
         cd 0300_child_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {lbwsg_paf_branches_arg} -i {paths.LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf -o {paths.LBWSG_PAF_RESULTS_ROOT} {cluster_args} {psimulate_debug}
+        {simulate_command} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {lbwsg_paf_branches_arg} -i {LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf -o {LBWSG_PAF_RESULTS_ROOT} {cluster_args} {psimulate_debug}
         rm -f dump.rdb
         {params.write_marker}
         """
@@ -88,26 +94,27 @@ rule lbwsg_pafs:
 # The child model's population comes from the maternal simulation's birth
 # records, so this reads the maternal run the marker names. `--fertility-data-path`
 # accepts the run root and finds the births data under it, and the loader
-# resolves the PAF results out of LBWSG_PAF_RESULTS_ROOT on its own.
+# resolves the PAF results out of LBWSG_PAF_RESULTS_ROOT on its own, through
+# LSFF_OUTPUT_TARGET.
 rule child_artifacts:
     input:
         [
             LBWSG_PAF_RUN_MARKER,
             "0300_child_sim/src/vivarium_gates_lsff_2026_child/data/loader.py",
-            snakemake_utils.run_marker(paths.MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"),
+            snakemake_utils.run_marker(MATERNAL_RESULTS_ROOT, "{location}", "{vehicle}"),
             "0100_data_prep/results/birth_weight_disparities/{location}.csv",
             "0100_data_prep/results/iron/fortification_birthweight_effects.csv",
         ]
     output: [CHILD_ARTIFACT]
     params:
         maternal_run=lambda wildcards: snakemake_utils.read_run_marker(
-            paths.MATERNAL_RESULTS_ROOT, wildcards.location, wildcards.vehicle
+            MATERNAL_RESULTS_ROOT, wildcards.location, wildcards.vehicle
         ),
     shell:
         """
         {artifact_setup}
         rm -f {output}
-        make_artifacts -p child -o {paths.CHILD_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} --fertility-data-path {params.maternal_run}/results --national -a --mean {artifact_debug}
+        make_artifacts -p child -o {CHILD_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} --fertility-data-path {params.maternal_run}/results --national -a --mean {artifact_debug}
         """
 
 code_inputs = glob.glob("0300_child_sim/src/vivarium_gates_lsff_2026_child/**/*.py", recursive=True)
@@ -122,14 +129,14 @@ rule child_simulations:
     output: [CHILD_RUN_MARKER]
     params:
         write_marker=lambda wildcards: snakemake_utils.write_run_marker(
-            paths.CHILD_RESULTS_ROOT, wildcards.location, wildcards.vehicle
+            CHILD_RESULTS_ROOT, wildcards.location, wildcards.vehicle
         ),
     shell:
         """
         {simulation_setup}
         cd 0300_child_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {child_branches_arg} -i {paths.CHILD_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {paths.CHILD_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
+        {simulate_command} src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {child_branches_arg} -i {CHILD_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {CHILD_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
         rm -f dump.rdb
         {params.write_marker}
         """

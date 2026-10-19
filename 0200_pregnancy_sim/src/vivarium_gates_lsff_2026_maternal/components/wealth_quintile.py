@@ -53,6 +53,7 @@ class WealthQuintile(Component):
             self.quintile_probabilities_name,
             source=quintile_probabilities_table,
             required_resources=[quintile_probabilities_table],
+            description="The probability that the simulant belongs to each wealth quintile",
         )
 
         builder.population.register_initializer(

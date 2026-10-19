@@ -41,6 +41,10 @@ class ParturitionSelectionTransition(ProportionTransition):
             self.proportion_pipeline_name,
             source=self.compute_transition_proportion,
             required_resources=["age", "sex", "is_alive", "pregnancy"],
+            description=(
+                "The probability that a simulant in parturition develops "
+                f"{self.output_state.state_id}, zero for all other simulants"
+            ),
         )
 
     ###################
@@ -83,6 +87,10 @@ class ParturitionExclusionState(DiseaseState):
                 self.model,
                 "pregnancy",
             ],
+            description=(
+                f"The {self.state_id} disability weight, zero while the simulant is in "
+                "parturition"
+            ),
         )
 
     ##################################

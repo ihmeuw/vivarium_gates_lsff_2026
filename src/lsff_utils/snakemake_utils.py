@@ -4,6 +4,8 @@ Kept out of the Snakefiles themselves so the rules stay readable and so the
 same path logic is importable from tests and notebooks.
 """
 
+import builtins
+import sys
 from pathlib import Path
 from shlex import quote
 
@@ -128,16 +130,157 @@ def run_marker(results_root: Path, location: str, vehicle: str = None) -> str:
     return str(paths.run_marker(results_root, location, vehicle))
 
 
+def output_path(in_repo_root: Path, *parts: str, target: str) -> str:
+    """A pipeline output as a rule output, written to ``target`` (see :func:`paths.output_root`).
+
+    Local paths are repo-relative and team-drive paths are absolute, the same
+    as :func:`source_path` renders them, so an input matches the rule that
+    produces it.
+    """
+    root = paths.output_root(in_repo_root, target)
+    if target == paths.LOCAL_SOURCE:
+        root = root.relative_to(paths.REPO_ROOT)
+    return str(root.joinpath(*parts))
+
+
 def source_path(in_repo_root: Path, *parts: str, source: str) -> str:
     """A pipeline output as a rule input, read from ``source`` (see :func:`paths.source_root`).
 
-    Local paths stay repo-relative so they match the rule that produces them;
-    archived ones are absolute, and no rule produces them.
+    An archived input has a producing rule only when this run writes to the
+    same model number. Otherwise it is read as it is.
     """
-    root = paths.source_root(in_repo_root, source)
-    if source == paths.LOCAL_SOURCE:
-        root = root.relative_to(paths.REPO_ROOT)
-    return str(root.joinpath(*parts))
+    paths.source_root(in_repo_root, source)
+    return output_path(in_repo_root, *parts, target=source)
+
+
+# ---------------------------------------------------------------------------
+# Writing to the team drive
+# ---------------------------------------------------------------------------
+
+#: Written into each ``<kind>/<MODEL_NUMBER>`` directory that a run writes to directly.
+TEAM_RUN_INFO_NAME = "pipeline_run_info.txt"
+
+#: Written by ``archive_last_run.sh``. Its presence marks an archived iteration.
+ARCHIVE_INFO_NAME = "archive_info.txt"
+
+ARCHIVE_KINDS = ("artifacts", "data", "results")
+
+
+def resolve_output_target(write_local: bool, debug: bool) -> str:
+    """Where a run writes: the working tree, or the team drive under MODEL_NUMBER.
+
+    The team drive is the default. A debug run always writes to the working
+    tree. The archive script never overwrites an archived iteration, so a run
+    cannot write into one, and it refuses an ``LSFF_DATA_SOURCE`` that names a
+    different iteration from the one being written.
+    """
+    if write_local or debug:
+        return paths.LOCAL_SOURCE
+
+    target = paths.MODEL_NUMBER
+    if not paths.TEAM_ARCHIVE_ROOT.is_dir():
+        raise ValueError(
+            f"{paths.TEAM_ARCHIVE_ROOT} is not reachable from this machine. Pass "
+            f"--config write_local=true to write to the working tree instead."
+        )
+    source = paths.data_source(default=target)
+    if source != target:
+        raise ValueError(
+            f"This run writes {target}, but {paths.DATA_SOURCE_ENV_VAR}='{source}'. "
+            f"Unset {paths.DATA_SOURCE_ENV_VAR}, so the analysis reads the run it "
+            f"belongs to."
+        )
+    archived = [
+        str(info)
+        for kind in ARCHIVE_KINDS
+        if (info := paths.TEAM_ARCHIVE_ROOT / kind / target / ARCHIVE_INFO_NAME).exists()
+    ]
+    if archived:
+        raise ValueError(
+            f"{target} was published by archive_last_run.sh ({', '.join(archived)}), "
+            f"and the archive is append-only. Bump MODEL_NUMBER in "
+            f"src/lsff_utils/paths.py to write a new iteration."
+        )
+    return target
+
+
+def existing_team_output(target: str) -> str | None:
+    """A description of what is already written under ``target``, or None if nothing is."""
+    used = [
+        directory
+        for kind in ARCHIVE_KINDS
+        if (directory := paths.TEAM_ARCHIVE_ROOT / kind / target).is_dir()
+        and any(directory.iterdir())
+    ]
+    if not used:
+        return None
+    info = used[0] / TEAM_RUN_INFO_NAME
+    if not info.exists():
+        return f"{', '.join(str(d) for d in used)} already has output."
+    records = [r.strip() for r in info.read_text().split("---") if r.strip()]
+    last = records[-1] if records else "(no record)"
+    return f"{target} was already written to. Its last run was:\n{last}"
+
+
+def confirm_model_number_reuse(target: str, reuse: bool) -> None:
+    """Ask before a run writes into a model number that already has output.
+
+    ``reuse_model_number=true`` skips the question, for resumed runs and for
+    runs with no terminal to answer it.
+    """
+    existing = existing_team_output(target)
+    if existing is None or reuse:
+        return
+
+    message = (
+        f"{existing}\n\nThis run would rebuild stale outputs in place. Bump "
+        f"MODEL_NUMBER in src/lsff_utils/paths.py to start a new iteration instead."
+    )
+    if not sys.stdin.isatty():
+        raise SystemExit(
+            f"{message}\nNo terminal to confirm from. Pass --config "
+            f"reuse_model_number=true to write into {target} anyway."
+        )
+    print(message, file=sys.stderr)
+    answer = builtins.input(f"Write into {target}? [y/N] ")
+    if answer.strip().lower() not in ("y", "yes"):
+        raise SystemExit(f"Stopped. Nothing was written to {target}.")
+
+
+def record_team_run(target: str, command: list[str]) -> None:
+    """Append who started this run, when, from what tree, and with what command.
+
+    This is the direct-write counterpart of ``archive_info.txt``. Each run
+    directory also gets its own ``git_commit.txt``.
+    """
+    import datetime
+    import getpass
+    import socket
+    import subprocess
+
+    def git(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(paths.REPO_ROOT), *args], capture_output=True, text=True
+        )
+
+    clean = git("diff", "--quiet", "HEAD").returncode == 0
+    record = "\n".join(
+        [
+            f"started:   {datetime.datetime.now().astimezone():%Y-%m-%d %H:%M:%S %z}",
+            f"by:        {getpass.getuser()}@{socket.gethostname()}",
+            f"from:      {paths.REPO_ROOT}",
+            f"commit:    {git('rev-parse', 'HEAD').stdout.strip()}",
+            f"tree:      {'clean' if clean else 'DIRTY (see each run git_commit.txt for its diff)'}",
+            f"command:   {' '.join(quote(arg) for arg in command)}",
+            "---",
+            "",
+        ]
+    )
+    for kind in ARCHIVE_KINDS:
+        dest = paths.TEAM_ARCHIVE_ROOT / kind / target
+        dest.mkdir(parents=True, exist_ok=True)
+        with (dest / TEAM_RUN_INFO_NAME).open("a") as f:
+            f.write(record)
 
 
 def write_run_marker(results_root: Path, location: str, vehicle: str = None) -> str:

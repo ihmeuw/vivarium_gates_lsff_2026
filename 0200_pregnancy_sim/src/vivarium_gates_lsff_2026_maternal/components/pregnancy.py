@@ -74,6 +74,10 @@ class PregnantState(DiseaseState):
             self.birth_outcome_probabilities_name,
             source=self.birth_outcome_probabilities_table,
             required_resources=[self.birth_outcome_probabilities_table],
+            description=(
+                "The probabilities of a live birth, a partial term pregnancy and a "
+                "stillbirth"
+            ),
         )
 
         # The dwell time in the pregnant state is the sampled pregnancy duration
@@ -82,6 +86,10 @@ class PregnantState(DiseaseState):
             self.dwell_time_pipeline,
             self.get_pregnancy_dwell_time,
             required_resources=["pregnancy_duration"],
+            description=(
+                "Set the pregnant state's dwell time to the simulant's sampled pregnancy "
+                "duration in days"
+            ),
         )
 
         builder.population.register_initializer(
@@ -261,7 +269,14 @@ class UntrackNotPregnant(Component):
     def setup(self, builder: Builder) -> None:
         self.clock = builder.time.clock()
         self.step_size = builder.time.step_size()
-        builder.value.register_attribute_modifier("exit_time", self.update_exit_times)
+        builder.value.register_attribute_modifier(
+            "exit_time",
+            self.update_exit_times,
+            description=(
+                "Set the exit time of simulants untracked on their return to the not "
+                "pregnant state"
+            ),
+        )
         builder.population.register_tracked_query(f"{self.UNTRACKED_COLUMN} == False")
         builder.population.register_initializer(
             initializer=self.on_initialize_simulants,
