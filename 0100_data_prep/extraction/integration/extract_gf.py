@@ -15,14 +15,20 @@ are derived from the tabs above and are not extracted.
 
 GF metric names are kept, lightly normalised (vehicle columns: consolidation, coverage,
 g_per_capita, compliance). Translating them into our data needs is build_extraction's job.
+
+The GF workbook is a partner deliverable and is not kept in the repo; archive each version
+received (e.g. on SharePoint) and pass its path with --gf. The file's date and SHA-256 are
+recorded in sources.csv next to the snapshot.
 """
 
+import argparse
+import pathlib
 import re
 
 import openpyxl
 import pandas as pd
 
-from common import GF_FILE, GF_LONG, VEHICLES, QUINTILE_LABELS, norm
+from common import GF_FILE, GF_LONG, VEHICLES, QUINTILE_LABELS, norm, record_source
 
 VEHICLE_METRICS = {"cons": "consolidation", "cov": "coverage", "g/cap": "g_per_capita", "compl": "compliance"}
 
@@ -141,7 +147,10 @@ def extract_coverage_over_time(wb, rows, skipped):
 
 
 def main():
-    wb = openpyxl.load_workbook(GF_FILE)  # formulas, not cached values
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--gf", type=pathlib.Path, default=GF_FILE, help="the GF background data workbook")
+    args = parser.parse_args()
+    wb = openpyxl.load_workbook(args.gf)  # formulas, not cached values
     rows, skipped = [], []
     extract_matrix(wb, rows, skipped)
     extract_stratified(wb, rows, skipped)
@@ -157,7 +166,8 @@ def main():
             cells = ", ".join(f"{s}!{c}={v}" for s, c, v in zip(group.source_sheet, group.source_cell, group.raw))
             print(f"WARNING: GF disagrees with itself: {cells}")
 
-    df.to_csv(GF_LONG, index=False)
+    df.to_csv(GF_LONG, index=False, lineterminator="\n")
+    record_source(GF_LONG, args.gf)
     print(f"Wrote {GF_LONG.name}: {len(df)} values "
           f"({df.value.notna().sum()} numeric); skipped {len(skipped)} formula cells")
 

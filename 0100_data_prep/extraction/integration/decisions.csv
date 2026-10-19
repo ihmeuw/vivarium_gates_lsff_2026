@@ -1,22 +1,9 @@
 decision_id,status,need,country,vehicle,fortificant,scenario,quintile,sex,data_point_name,source,transform,rationale,decided_by,date
-D001,active,intervention_concentration,Nigeria,Wheat,Iron,,,,,lit:648bd708,,Nigeria mandatory standard for iron in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder,Nathaniel,10/1/26
-D002,active,intervention_concentration,Nigeria,Wheat,Folate,,,,,lit:f2b3831d,,Nigeria mandatory standard for folic acid in wheat flour (TechnoServe 2019 Table 2); replaces the rice placeholder (1.69),Nathaniel,10/1/26
-D003,active,u5_amount,Nigeria,Wheat,,,,Total,mean,lit:09d00f55,,NFCMS Table 148 U5 wheat intake replaces the value derived from rice,Nathaniel,10/1/26
-D004,active,u5_amount,Nigeria,Wheat,,,,Female,mean,lit:4ebcf9f8,,NFCMS Table 148 U5 wheat intake (girls) replaces the value derived from rice,Nathaniel,10/1/26
-D005,active,u5_amount,Nigeria,Wheat,,,,Male,mean,lit:abec9d3d,,NFCMS Table 148 U5 wheat intake (boys) replaces the value derived from rice,Nathaniel,10/1/26
 D006,active,amount,Nigeria,Rice,,,,,mean,gf,times_coverage,"Keep Nigeria rice on the among-consumers basis used in earlier runs (JG email 8/31), so results stay comparable. NFCMS usual intake is probably population-wide (literature review, Oct 2026); revisit with P007",Nathaniel,10/2/26
 D007,active,amount,Nigeria,Wheat,,,,,standard deviation,method:consumer_cv,,NFCMS usual-intake SDs are incompatible with the zero-inflated model at 19-35% coverage; give consumers the NFCMS CV (CONSUMPTION_DISTRIBUTION.md section 4),Nathaniel,10/2/26
 D008,active,u5_amount,Nigeria,Wheat,,,,,standard deviation,method:consumer_cv,,"As D007, for U5 rows",Nathaniel,10/2/26
 D009,active,hb_effect,,Wheat,,,,,,keep,,Keep the rice-copied hemoglobin effect for wheat until a wheat-specific estimate is available,Nathaniel,10/2/26
 D010,active,bw_effect,,Wheat,,,,,,keep,,Keep the birthweight effect used for every vehicle (Haider 2013),Nathaniel,10/2/26
-D011,active,intervention_coverage,Nigeria,Wheat,,,,,,gf,,"Keep the equal sqrt(2035 compliance) split used for all arms (0.92), not 100%",Nathaniel,10/2/26
-D012,active,intervention_effectiveness,Nigeria,Wheat,,,,,,gf,,As D011,Nathaniel,10/2/26
-D013,active,fortifiability,Nigeria,Rice,,,,,,gf,,"Use GF 2035 consolidation (0.90) for the intervention target; literature values (M4N 0.54, GFDx 0.30) are current-state",Nathaniel,10/2/26
-D014,active,intervention_coverage,Nigeria,Rice,,,,,,gf,,"Use GF 2035 compliance (85%), equal sqrt split",Nathaniel,10/2/26
-D015,active,intervention_effectiveness,Nigeria,Rice,,,,,,gf,,As D014,Nathaniel,10/2/26
-D016,active,intervention_coverage,Nigeria,Bouillon,,,,,,gf,,"Use GF 2035 compliance (85%, up from 50%), equal sqrt split",Nathaniel,10/2/26
-D017,active,intervention_effectiveness,Nigeria,Bouillon,,,,,,gf,,As D016,Nathaniel,10/2/26
-D018,active,fortifiability,Nigeria,Bouillon,,,,,,gf,,Use GF 2035 consolidation (100%) rather than the Dashboard 95%,Nathaniel,10/2/26
 P001,rejected,baseline_any,Nigeria,Wheat,Folate,,,,,lit:5d79bd1d,,Nigeria wheat flour is not currently fortified with folic acid (literature extraction); GF compliance is per vehicle so the GF default gives folate the iron coverage,Nathaniel,10/1/26
 P002,rejected,baseline_any,Nigeria,Wheat,Iron,,,,,lit:8ab2783f,,NFCMS Table 146: 12.6% (any level of iron fortification). Check its denominator: all women or wheat consumers? Ours is a share of consumers,Nathaniel,10/1/26
 P003,rejected,baseline_concentration,Nigeria,Wheat,Iron,,,,,lit:878cf880,,NFCMS Table 178 mean iron in fortified wheat samples; baseline is otherwise 0 mcg/g despite non-zero baseline coverage,Nathaniel,10/1/26
@@ -34,3 +21,7 @@ D023,active,baseline_effectiveness,India,Wheat,,,,,,value:0.05,sqrt,"GF cover sh
 D024,active,baseline_any,India,Wheat,,,,,,value:0.0335,,India wheat baseline share fortified = consolidation 0.15 x sqrt(5% compliance) = 0.15 x 0.2236; see D023. Confirm with GF,Nathaniel,10/3/26
 P010,proposed,baseline_effectiveness,India,Rice,,,,,,value:0.625,,"Match GF current India rice compliance (50%): HCES notebook fixes the share of PDS rice fortified at GOVERNMENT_BASELINE_COVERAGE = 0.8, so effectiveness = 0.5 / 0.8. National effective baseline coverage would go from 0.277 to about 0.22 (GF 0.247; the gap is HCES PDS share 0.45 vs GF consolidation 0.50). Shrinks the '80% PDS vs none' comparison by about 22%",Claude,10/5/26
 P011,proposed,fortifiability,India,Rice,,,,,,value:0.175,,"Calibrate the industry consolidation (applied to purchased non-PDS rice) so national fortifiability matches GF 2035 consolidation 0.529: PDS share + (1 - PDS share) x purchased x 0.175, averaged over WRA strata from the HCES files. Intervention effective coverage would go from about 0.54 to about 0.44 (GF 2035: 0.444)",Claude,10/5/26
+D025,active,any,Nigeria,Rice,,,Total,,,gf,,"Keep GF's national coverage (0.54), as in the PR #53 run, rather than the literature default (NFCMS 0.536). The Total only sanity-checks the quintiles, but it also sets the national mean (D028). Reject to use the literature value",Claude,10/8/26
+D026,active,any,Nigeria,Wheat,,,Total,,,gf,,"Keep GF's national coverage (0.28), as in the PR #53 run, rather than the literature default (NFCMS 0.282). It sets the consumer CV conversion for the Total and U5 SDs (D007, D008). Reject to use the literature value",Claude,10/8/26
+D027,active,u5_amount,Nigeria,Rice,,,,,mean,keep,,"Keep the base values: NFCMS U5 means (38.3, 35.5, 41.0) x 0.536, the national WRA coverage when they were entered, i.e. the among-consumers basis of D006. A lit: decision with times_coverage would use the current national coverage (0.54, D025) instead",Claude,10/8/26
+D028,active,amount,Nigeria,Rice,,,Total,,mean,lit:799bacd6,times_coverage,"NFCMS national mean (61.2) on the among-consumers basis of D006, as in the PR #53 run. Resolves the two literature candidates (NFCMS 61.2, M4N 38; see P009)",Claude,10/8/26

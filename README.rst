@@ -125,7 +125,7 @@ Flag                                            Effect
 ==============================================  ==========================================================
 ``--config full_scale=true``                    Real run with 200 seeds. Without it you get 10 seeds.
 ``--config skip_data_prep=true``                Use the committed data prep CSVs as they are. Leave it off
-                                                only if you changed the extraction sheet or a data prep
+                                                only if you changed the extraction inputs or a data prep
                                                 notebook.
 ``--config debug=true``                         One draw and one seed, in the foreground, with a debugger.
 ``--config write_local=true``                   Write the run to the working tree instead of the team
