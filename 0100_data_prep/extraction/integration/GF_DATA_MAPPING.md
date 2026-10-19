@@ -40,10 +40,10 @@ India rice model works is described in `docs/india_rice.md`.
 
 | Data need | Read by | Notes |
 |---|---|---|
-| WRA any | coverage calc, pregnancy sim, NTD, folate anemia | Not used for India, which takes it from HCES. Total rows are used only in a sanity check. |
+| WRA any | coverage calc, pregnancy sim, NTD, folate anemia; through the coverage calc, the non-pregnant (iron) anemia model | Applied to every age and sex: `prep_extracted` writes it for women 15–50 only, and the coverage notebook (and the folate anemia notebook) then use that single value for everyone, including children. Not used for India, which has age- and sex-specific values from HCES. Total rows are used only in a sanity check. |
 | WRA amount mean / SD | pregnancy sim (iron arms); NTD and folate anemia (mean only) | Not used for India (HCES). The Ethiopia salt SD is never read. Total rows are used only in a sanity check. |
 | U5 amount | Nigeria only | Feeds the 5–15 age row (as 0.5 × adult + 0.5 × U5), which the pregnancy sim uses for ages 10–15. The 0–5 rows are read by nothing; the child sim reads no consumption data. |
-| U5 any | **nothing** | not listed in `prep_extracted` `data_needs` |
+| U5 any | **nothing** | Not listed in `prep_extracted` `data_needs`, so children's coverage in the anemia models is the WRA value (see above). For the arms the model runs, the U5 rows equal the WRA rows except Ethiopia salt (0.97 vs 0.98) and the Nigeria bouillon Total (0.988 vs 0.981), so the effect is small. **Question:** Is this intentionally unused, or should we edit the code? |
 | Fortifiability | coverage calc, pregnancy sim (intervention only) | For India, applied only to purchased non-government rice |
 | Baseline any / concentration / effectiveness | coverage calc, pregnancy sim, NTD, folate anemia | For India, baseline coverage = HCES shares eating government rice × the baseline any row (share of government rice fortified), and the "2021" baseline is forced to 0 in the models. |
 | Intervention rows | coverage calc, pregnancy sim (`intervention` scenario only), NTD, folate anemia | |
