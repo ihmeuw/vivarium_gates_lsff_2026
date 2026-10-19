@@ -1,5 +1,10 @@
 # India rice fortification
 
+**NOTE:** This document is AI-generated. Its content needs to be revised and
+ported over to Vivarium Research.
+
+---
+
 India rice is modelled differently from every other arm. Its consumption, and who receives
 government rice, come from household survey microdata (HCES 2023–24), not from the
 extraction tables. Rice is fortified mainly through government schemes: the Public

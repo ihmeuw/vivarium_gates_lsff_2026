@@ -1,4 +1,9 @@
-# Scenarios
+# Scenario setup
+
+**NOTE:** This document is AI-generated and hasn't been thoroughly
+reviewed. It documents how scenarios are handled in the code.
+
+---
 
 Each model produces results for three kinds of scenario:
 
