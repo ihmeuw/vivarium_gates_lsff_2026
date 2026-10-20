@@ -85,6 +85,8 @@ validation = [
     "jupyterlab",
 ]
 lint = ["vivarium-dependencies[lint]"]
+# Builds the Markdown notes in docs/ (make build-docs).
+docs = ["vivarium-dependencies[sphinx]", "myst-parser"]
 # Snakemake drives the pipeline. It lives in the simulation environment rather
 # than one of its own because it does not need one: a rule's recipe activates the
 # environment that stage needs in its own subshell, so the environment Snakemake
@@ -106,7 +108,7 @@ simulation = [
     # the artifact path.
     "vivarium-fuzzy-checker>=0.3.0",
 ]
-dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,simulation,notebooks,workflow]"]
+dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,docs,simulation,notebooks,workflow]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
