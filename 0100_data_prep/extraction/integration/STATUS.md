@@ -29,7 +29,7 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 **Decisions in effect**
 
-- **D037** Ethiopia Wheat: WRA consumption: g/day SD → Lowest 106.8; Second 49.28; Middle 38.89; Fourth 52.98; Highest 49.49  
+- **D037** Ethiopia Wheat: WRA consumption: g/day SD → Total 56.95; Lowest 106.8; Second 49.28; Middle 38.89; Fourth 52.98; Highest 49.49  
   Source: computed (assumed_consumer_cv:0.7). Why: PLACEHOLDER - REMOVE when real Ethiopia wheat consumption SDs are available. No SD source yet (GF has none; the literature has no Ethiopia wheat SD). Consumers get CV 0.7, about the middle of Nigeria wheat's consumer CVs (0.53-0.83 by quintile, from NFCMS via D007); SDs follow each quintile's GF mean and the 0.4 national coverage. Reported as 'placeholder remains' in review.csv
 
 **Still open**
@@ -41,6 +41,7 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 - Ethiopia Wheat: WRA consumption: g/day SD [Lowest]. output 106.8
 - Ethiopia Wheat: WRA consumption: g/day SD [Middle]. output 38.89
 - Ethiopia Wheat: WRA consumption: g/day SD [Second]. output 49.28
+- Ethiopia Wheat: WRA consumption: g/day SD [Total]. output 56.95
 
 *GF disagrees with literature default*: The literature value is used; use GF with a 'gf' decision, or confirm the literature with a 'lit:' decision
 

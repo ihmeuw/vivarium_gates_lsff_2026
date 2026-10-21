@@ -175,11 +175,12 @@ country_vehicle,174.0,amount,Ethiopia,Wheat,,,Middle,Female,mean,g/day,yes,33.14
 country_vehicle,175.0,amount,Ethiopia,Wheat,,,Fourth,Female,mean,g/day,yes,46.652100000000004,DUMMY (MIC-7585),32.09161,GF 'Ethiopia (stratified)'!Q26,,,,,,,differs (-31%),,,32.09161,GF,
 country_vehicle,176.0,amount,Ethiopia,Wheat,,,Highest,Female,mean,g/day,yes,53.742000000000004,DUMMY (MIC-7585),29.97842,GF 'Ethiopia (stratified)'!Q27,,,,,,,differs (-44%),,,29.97842,GF,
 country_vehicle,177.0,any,Ethiopia,Wheat,,,All (assumed same),Female,percentage,%,yes,0.536,DUMMY (MIC-7585),0.4,GF 'Burden x Vehicle Matrix'!P6,,,,,,,differs (-25%),,,0.4,GF,
-country_vehicle,178.0,amount,Ethiopia,Wheat,,,Lowest,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,106.80816381300093,placeholder: assumed consumer CV 0.7,D037
-country_vehicle,179.0,amount,Ethiopia,Wheat,,,Second,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,49.278492500043185,placeholder: assumed consumer CV 0.7,D037
-country_vehicle,180.0,amount,Ethiopia,Wheat,,,Middle,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,38.889879987972094,placeholder: assumed consumer CV 0.7,D037
-country_vehicle,181.0,amount,Ethiopia,Wheat,,,Fourth,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,52.97546274709144,placeholder: assumed consumer CV 0.7,D037
-country_vehicle,182.0,amount,Ethiopia,Wheat,,,Highest,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,49.48709871292406,placeholder: assumed consumer CV 0.7,D037
+country_vehicle,178.0,amount,Ethiopia,Wheat,,,Total,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,56.95113036630616,placeholder: assumed consumer CV 0.7,D037
+country_vehicle,179.0,amount,Ethiopia,Wheat,,,Lowest,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,106.80816381300093,placeholder: assumed consumer CV 0.7,D037
+country_vehicle,180.0,amount,Ethiopia,Wheat,,,Second,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,49.278492500043185,placeholder: assumed consumer CV 0.7,D037
+country_vehicle,181.0,amount,Ethiopia,Wheat,,,Middle,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,38.889879987972094,placeholder: assumed consumer CV 0.7,D037
+country_vehicle,182.0,amount,Ethiopia,Wheat,,,Fourth,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,52.97546274709144,placeholder: assumed consumer CV 0.7,D037
+country_vehicle,183.0,amount,Ethiopia,Wheat,,,Highest,Female,standard deviation,g/day,yes,40.07407407407407,DUMMY (MIC-7585),,,,,,,,,,,,49.48709871292406,placeholder: assumed consumer CV 0.7,D037
 country_vehicle_fortificant,2.0,baseline_any,Ethiopia,Salt,Folate,,All (assumed same),,percentage,%,yes,0.0,Assumption,0.0,GF 'Burden x Vehicle Matrix'!AE6 x GF 'Burden x Vehicle Matrix'!AH6,0.0,,,0.0,lit:184a09a2,nan,same,same,same,0.0,literature,
 country_vehicle_fortificant,3.0,baseline_concentration,Ethiopia,Salt,Folate,,All (assumed same),,concentration,mcg/g,yes,0.0,Assumption,,,0.0,,,0.0,lit:e0aacce5,nan,,same,,0.0,literature,
 country_vehicle_fortificant,4.0,baseline_any,Nigeria,Rice,Folate,,All (assumed same),,percentage,%,yes,0.0,Assumption,,,,,,,,,,,,0.0,typed value,D033
