@@ -48,7 +48,7 @@ ISSUE_ORDER = [
 ]
 
 WHAT_TO_DO = {
-    "GF national inconsistent with GF quintiles": "The base Total was kept; rescale with method:scale_to_gf_total, or record a 'keep' decision",
+    "GF national inconsistent with GF quintiles": "GF didn't set the Total; set it with the literature or a decision, or rescale with method:scale_to_gf_total",
     "GF disagrees with literature default": "The literature value is used; use GF with a 'gf' decision, or confirm the literature with a 'lit:' decision",
     "placeholder remains": "Needs a real value, or a 'keep' decision if the placeholder is deliberate",
     "recommended literature value differs from output": "Adopt it with a lit: decision, or record why not",

@@ -204,6 +204,14 @@ def format_number(x):
     return repr(x)
 
 
+def _is_number(x):
+    try:
+        float(x)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
 def _parse_value(text):
     if text == "":
         return None
@@ -213,22 +221,31 @@ def _parse_value(text):
         return text
 
 
+# Columns lsff_utils.extraction parses as numbers (its NUMERIC_COLUMNS), by lower-cased name
+NUMERIC_COLUMNS = {CV: {"year", "value", "se"}, CVF: {"year", "value", "ci"}, VEH: {"value"}, SCEN: {"value"}}
+
 # Columns that identify a data point; no two rows of a table may share all of them
 KEY_COLUMNS = ["Country", "Vehicle", "Fortificant", "Scenario", "Quintile", "Sex", "Data need", "Data point name"]
 
 
 class Workbook:
-    """Read access to the base extraction tables plus a write plan.
+    """The rows of the extraction tables plus a write plan.
 
-    Rows are addressed as (table, line), where line is the row's line number in the CSV
-    (the header is line 1), as an editor shows it. Nothing is written until ``outputs``.
-    ``plan`` maps (table, line) to the planned entry, so later phases (decisions, derived
-    values) can supersede earlier ones and the change log can show what was overridden.
+    The rows come from the data needs spec (data_needs.skeleton), with blank values; with
+    ``base_dir`` instead, from tables on disk. Rows are addressed as (table, line), where
+    line is the row's line number in the CSV (the header is line 1). Nothing is written
+    until ``outputs``. ``plan`` maps (table, line) to the planned entry, so later phases
+    (decisions, derived values) can supersede earlier ones and the change log can show what
+    was overridden.
     """
 
-    def __init__(self, base_dir=BASE_DIR):
-        self.base_dir = pathlib.Path(base_dir)
-        self.frames = {t: read_table(self.base_dir / f"{t}.csv") for t in TABLES}
+    def __init__(self, base_dir=BASE_DIR, frames=None):
+        if frames is not None:
+            self.base_dir = None
+            self.frames = {t: df.copy() for t, df in frames.items()}
+        else:
+            self.base_dir = pathlib.Path(base_dir)
+            self.frames = {t: read_table(self.base_dir / f"{t}.csv") for t in TABLES}
         for t, df in self.frames.items():
             key = [c for c in KEY_COLUMNS if c in df.columns]
             dup = df[df.duplicated(key, keep=False)]
@@ -299,18 +316,19 @@ class Workbook:
         return self.get(sheet, row, "value")
 
     def propose(self, sheet, row, value, *, origin, ref, method, derivation=None, decision_id=None,
-                source_label=None, source=None):
+                source_label=None, source=None, extra=None):
         """Plan a value. A later proposal replaces an earlier one (recorded as superseded).
 
         origin is the build step that set it (lit, gf, decision, derived); source is where
         the number came from (literature, GF, typed value, derived from ...). derivation,
         if given, says how the value was computed (the Derivation column, where there is one).
+        extra: other columns to fill from the same source ({'year': ..., 'ci': ..., 'se': ...}).
         """
         previous = self.plan.get((sheet, row))
         self.plan[(sheet, row)] = {
             "action": "set", "value": float(value), "derivation": derivation, "origin": origin, "ref": ref,
             "method": method, "decision_id": decision_id, "source_label": source_label,
-            "source": source or DEFAULT_SOURCE[origin], "superseded": previous,
+            "source": source or DEFAULT_SOURCE[origin], "superseded": previous, "extra": extra or {},
         }
 
     def keep(self, sheet, row, *, origin, ref, method, decision_id=None):
@@ -355,15 +373,24 @@ class Workbook:
             if not same:
                 df.at[i, "Value"] = format_number(entry["value"])
             df.at[i, cols["data source"]] = entry.get("source_label") or source_labels[entry["origin"]]
+            base_source = self.get(sheet, row, "data source")
             df.at[i, cols["notes"]] = (
                 f"{entry['ref']}; {entry['method']}"
                 + (f" [decision {entry['decision_id']}]" if entry["decision_id"] else "")
-                + f" (base: {old!r} from {self.get(sheet, row, 'data source')!r})")
+                + (f" (base: {old!r} from {base_source!r})" if old is not None or base_source else ""))
             if "derivation" in cols and (entry["derivation"] or not same):
                 df.at[i, cols["derivation"]] = entry["derivation"] or ""
             if not same and (rel is None or abs(rel) > 0.01):  # the base CI/SE no longer fit
                 for c in ("ci", "se"):
                     if c in cols:
                         df.at[i, cols[c]] = ""
+            for c, v in (entry.get("extra") or {}).items():  # e.g. the literature's year and CI
+                if c not in cols or v is None or not str(v).strip() or str(v) == "nan":
+                    continue
+                if c in NUMERIC_COLUMNS.get(sheet, ()):
+                    if not _is_number(v):
+                        continue  # lsff_utils.extraction reads this column as numbers
+                    v = format_number(v)
+                df.at[i, cols[c]] = str(v)
             records.append(record)
         return records, frames

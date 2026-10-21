@@ -1,9 +1,8 @@
 # Proposal: build the extraction tables from GF and the literature only
 
-Status: agreed; being implemented in steps (see "Implementation plan"). Companion files in
-this folder: `data_needs_spec.csv` (draft spec of what the pipeline reads; to be replaced by a
-Python module in step 3) and `old_values_in_use.csv` (values the model still took from the old
-extraction sheet in October 2026).
+Status: agreed; being implemented in steps (see "Implementation plan"; steps 0-3 done). The
+spec is `data_needs.py` (readable version: `DATA_NEEDS.md`). `old_values_in_use.csv` lists the
+values the model still took from the old extraction sheet in October 2026.
 
 ## Summary
 
