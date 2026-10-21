@@ -199,11 +199,11 @@ country_vehicle_fortificant,16.0,baseline_concentration,Nigeria,Bouillon,Folate,
 country_vehicle_fortificant,17.0,baseline_any,India,Rice,Iron,,All (assumed same),,percentage,%,yes,0.8,HCES notebook (GOVERNMENT_BASELINE_COVERAGE),0.71,GF 'Burden x Vehicle Matrix'!Z7,0.26,,,26.0,lit:f4151005,GFDx,differs (-11%),differs (-68%),differs (-63%),0.71,GF,D030
 country_vehicle_fortificant,18.0,baseline_concentration,India,Rice,Iron,,All (assumed same),,concentration,mcg/g,yes,42.5,"slide deck JG shared to ADF, credited to 
 Helena.Pachon@emory.edu
-",,,42.5,,,42.5,lit:248daab8,Indian Standard: Fortified Rice -- Specification,,same,,42.5,base extraction table,
+",,,42.5,,,42.5,lit:248daab8,Indian Standard: Fortified Rice -- Specification,,same,,42.5,literature,
 country_vehicle_fortificant,19.0,baseline_any,India,Rice,Folate,,All (assumed same),,percentage,%,yes,0.8,HCES notebook (GOVERNMENT_BASELINE_COVERAGE),0.71,GF 'Burden x Vehicle Matrix'!Z7,0.26,,,26.0,lit:bdcac3bc,GFDx,differs (-11%),differs (-68%),differs (-63%),0.71,GF,D030
 country_vehicle_fortificant,20.0,baseline_concentration,India,Rice,Folate,,All (assumed same),,concentration,mcg/g,yes,0.125,"slide deck JG shared to ADF, credited to 
 Helena.Pachon@emory.edu
-",,,0.125,,,0.125,lit:590e7853,Indian Standard: Fortified Rice -- Specification,,same,,0.125,base extraction table,
+",,,0.125,,,0.125,lit:590e7853,Indian Standard: Fortified Rice -- Specification,,same,,0.125,literature,
 country_vehicle_fortificant,21.0,baseline_effectiveness,Nigeria,Bouillon,Iron,,All (assumed same),,percentage,%,yes,0.0,Assumption,,,0.0,,,0.0,lit:14962169,nan,,same,,0.0,literature,
 country_vehicle_fortificant,22.0,baseline_effectiveness,Nigeria,Bouillon,Folate,,All (assumed same),,percentage,%,yes,0.0,Assumption,,,0.0,,,0.0,lit:4960448a,Assumption,,same,,0.0,literature,
 country_vehicle_fortificant,23.0,baseline_effectiveness,India,Rice,Iron,,All (assumed same),,percentage,%,yes,0.8,,0.71,GF 'Burden x Vehicle Matrix'!Z7,0.5,,,50.0,lit:cf697247,nan,differs (-11%),differs (-38%),differs (-30%),0.71,GF,D029
