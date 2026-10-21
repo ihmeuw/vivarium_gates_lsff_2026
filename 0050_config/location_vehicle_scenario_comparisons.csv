@@ -2,8 +2,7 @@ location,vehicle,baseline,intervention,custom_name
 india,salt,baseline,intervention,
 india,rice,zero,baseline,Current fortification vs none
 india,rice,zero,intervention,Scaled-up fortification with increased folate vs none
-india,rice,baseline,intervention,Scaled-up fortification with increased
-folate vs current fortification
+india,rice,baseline,intervention,Scaled-up fortification with increased folate vs current fortification
 india,wheat,baseline,intervention,
 nigeria,salt,baseline,intervention,
 nigeria,bouillon,baseline,intervention,

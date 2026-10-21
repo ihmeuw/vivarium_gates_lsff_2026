@@ -91,8 +91,10 @@ touches keeps its base value.
 
    Arms the model doesn't run take no defaults and aren't checked, so a half-extracted arm
    can't break the build; decisions that target them still apply (STATUS.md lists those
-   arms too), and `comparison.csv` shows GF's and the literature's values for them. Adding
-   an arm to `0050_config/location_fortificant_vehicles.csv` fills it in on the next build.
+   arms too), and `comparison.csv` shows GF's and the literature's values for them. An arm
+   the model runs is a row of `0050_config/location_fortificant_vehicles.csv` whose
+   `run_through` is `data_prep` or `results`; rows at `none` are listed but treated as not
+   run. Changing an arm from `none` fills it in on the next build.
    Effect sizes (`vehicle.csv`) take no defaults; they change only through decisions. For
    India rice, whose consumption, fortifiability and government-rice shares come from HCES
    microdata, only intervention rows and GF's baseline split take defaults (`HCES_ARMS` in

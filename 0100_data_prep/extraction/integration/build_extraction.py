@@ -5,7 +5,8 @@ Inputs (all in this directory unless noted):
     lit_long.csv     the literature extraction, from extract_lit.py
     gf_long.csv      the GF background data, from extract_gf.py
     ../../../0050_config/location_fortificant_vehicles.csv
-                     the arms the model runs: these take default values and are checked
+                     the arms the model runs (those whose run_through isn't "none"):
+                     these take default values and are checked
     decisions.csv    every interpretive choice: values to use, conversions and computation
                      methods, with rationale (see README.md)
 
@@ -77,6 +78,9 @@ TARGET_NEEDS = {"fortifiability", "intervention_coverage", "intervention_effecti
 # defaults apply to intervention rows and, as the share of government rice fortified, to baseline
 # any and effectiveness (gf_baseline).
 HCES_ARMS = {("India", "Rice")}
+# The run_through values of 0050_config/location_fortificant_vehicles.csv; keep in step with
+# lsff_utils.config_utils.RUN_THROUGH_STAGES. Every value but "none" makes an arm modeled.
+RUN_THROUGH_STAGES = ["none", "data_prep", "results"]
 TOTALS_RTOL = 0.1  # check_totals_reasonable in prep_extracted.ipynb
 AGREE_RTOL = 0.01  # literature and workbook values closer than this "agree"
 
@@ -152,9 +156,20 @@ def read_arms(wb, model_arms_file=MODEL_ARMS_FILE):
             if sheet != CV and wb.get(sheet, row, "fortificant"):
                 forts.add(wb.get(sheet, row, "fortificant"))
     config = pd.read_csv(model_arms_file, dtype=str).fillna("")
+    if "run_through" not in config.columns:
+        config["run_through"] = ""
     modeled = {}
     for i, a in config.iterrows():
         where = f"{pathlib.Path(model_arms_file).name} row {i + 2}"
+        # How far the pipeline runs this arm (lsff_utils.config_utils.RUN_THROUGH_STAGES;
+        # blank means results). Arms at "none" are listed but not run, so here they are
+        # treated like arms that aren't listed: unmodeled, not checked.
+        run_through = norm(a.run_through) or "results"
+        if run_through not in RUN_THROUGH_STAGES:
+            raise ValueError(f"{where}: unknown run_through '{a.run_through}' "
+                             f"(expected one of {', '.join(RUN_THROUGH_STAGES)}, or blank)")
+        if run_through == "none":
+            continue
         country, vehicle = canonical(COUNTRIES, a.location)[0], canonical(VEHICLES, a.vehicle)[0]
         key = (country, vehicle)
         if key not in in_tables:

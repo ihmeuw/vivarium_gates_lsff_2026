@@ -146,8 +146,11 @@ hces_local_files = [
 
 location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
 
+# Data prep builds every arm whose run_through (0050_config/location_fortificant_vehicles.csv)
+# is data_prep or results; see config_utils.RUN_THROUGH_STAGES.
+#
 # HCES microdata covers India rice only; every other arm comes from the workbook.
-for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"]):
+for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"], stage="data_prep"):
     for data_need in vehicle_specific_data_needs:
         file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
         if (location, vehicle) == ("india", "rice") and ("vehicle_consumption" in data_need) and data_need != "vehicle_consumption/fortifiability":
@@ -155,7 +158,7 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
         else:
             extracted_output_files.append(file_name)
 
-for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"]):
+for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"], stage="data_prep"):
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
         # India rice: HCES gives the partial-coverage amounts directly; any/full coverage are
@@ -166,7 +169,7 @@ for (location, vehicle, fortificant) in config_utils.get_configured_combos(["loc
         else:
             extracted_output_files.append(file_name)
 
-for (location, vehicle, fortificant, intervention_scenario) in config_utils.get_configured_combos(["location", "vehicle", "fortificant", "intervention_scenario"]):
+for (location, vehicle, fortificant, intervention_scenario) in config_utils.get_configured_combos(["location", "vehicle", "fortificant", "intervention_scenario"], stage="data_prep"):
     for data_need in location_vehicle_fortificant_intervention_scenario_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{intervention_scenario}/{data_need}/{location}.csv"
         extracted_output_files.append(file_name)
@@ -220,7 +223,7 @@ rule prep_extracted:
 # depend on a wildcard and each pair has its own intervention scenarios.
 # Location and vehicle reach the recipe through params: a loop variable named
 # in a shell string would be read when the job runs, after the loop has ended.
-for coverage_location, coverage_vehicle in config_utils.get_configured_combos(["location", "vehicle"]):
+for coverage_location, coverage_vehicle in config_utils.get_configured_combos(["location", "vehicle"], stage="data_prep"):
     rule:
         name: f"calculate_effective_coverage_{coverage_location}_{coverage_vehicle}"
         input:
@@ -246,6 +249,22 @@ for coverage_location, coverage_vehicle in config_utils.get_configured_combos(["
             mkdir -p ../executed/coverage_calculation/{wildcards.fortificant}/{params.vehicle}/{params.location}/
             papermill calculate_effective_coverage_by_quintile_and_scenario.ipynb ../executed/coverage_calculation/{wildcards.fortificant}/{params.vehicle}/{params.location}/calculate_effective_coverage_by_quintile_and_scenario.ipynb -k python3 -p location {params.location} -p fortificant {wildcards.fortificant} -p vehicle {params.vehicle} {papermill_engine}
             """
+
+# Data prep's end products for every arm it builds: effective coverage, which pulls in
+# everything before it. The root Snakefile's `rule all` asks for these, so arms whose
+# run_through is data_prep get built even though no results rule needs them. (Arms that
+# run through results are pulled in by the results anyway; listing them too is harmless.)
+data_prep_targets = [
+    f"0100_data_prep/results/{fortificant}/{vehicle}/baseline_fortification/effective_coverage/{location}.csv"
+    for location, vehicle, fortificant in config_utils.get_configured_combos(
+        ["location", "vehicle", "fortificant"], stage="data_prep"
+    )
+] + [
+    f"0100_data_prep/results/{fortificant}/{vehicle}/{intervention_scenario}/intervention_fortification/effective_coverage/{location}.csv"
+    for location, vehicle, fortificant, intervention_scenario in config_utils.get_configured_combos(
+        ["location", "vehicle", "fortificant", "intervention_scenario"], stage="data_prep"
+    )
+]
 
 rule population_with_pregnancy_status:
     input: snakemake_utils.freeze(["0100_data_prep/population/population_with_pregnancy_status.ipynb", "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv"], frozen)
