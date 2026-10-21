@@ -75,9 +75,7 @@ DEFAULT_RUN_THROUGH = "results"
 
 def _check_stage(stage):
     if stage not in RUN_THROUGH_STAGES:
-        raise ValueError(
-            f"unknown stage {stage!r}; expected one of {RUN_THROUGH_STAGES}"
-        )
+        raise ValueError(f"unknown stage {stage!r}; expected one of {RUN_THROUGH_STAGES}")
 
 
 def reaches_stage(run_through, stage):
@@ -93,14 +91,16 @@ def get_location_fortificant_vehicles():
     Every row of a (location, vehicle) pair must share one run_through value,
     because the pipeline runs each pair as a unit from coverage onwards.
     """
-    df = pd.read_csv(
-        str(CONFIG_DIR / "location_fortificant_vehicles.csv"), dtype=str
-    ).fillna("")
+    df = pd.read_csv(str(CONFIG_DIR / "location_fortificant_vehicles.csv"), dtype=str).fillna(
+        ""
+    )
     for column in ["location", "fortificant", "vehicle"]:
         df[column] = df[column].str.strip()
     if "run_through" not in df.columns:
         df["run_through"] = ""
-    df["run_through"] = df.run_through.str.strip().str.lower().replace("", DEFAULT_RUN_THROUGH)
+    df["run_through"] = (
+        df.run_through.str.strip().str.lower().replace("", DEFAULT_RUN_THROUGH)
+    )
 
     unknown = sorted(set(df.run_through) - set(RUN_THROUGH_STAGES))
     if unknown:
@@ -179,13 +179,13 @@ def get_location_fortificant_vehicle_intervention_scenarios(stage=None):
 
     if stage is not None:
         _check_stage(stage)
-        location_fortificant_vehicle_intervention_scenarios = (
-            location_fortificant_vehicle_intervention_scenarios[
-                [
-                    reaches_stage(run_through, stage)
-                    for run_through in location_fortificant_vehicle_intervention_scenarios.run_through
-                ]
-            ].reset_index(drop=True)
+        location_fortificant_vehicle_intervention_scenarios = location_fortificant_vehicle_intervention_scenarios[
+            [
+                reaches_stage(run_through, stage)
+                for run_through in location_fortificant_vehicle_intervention_scenarios.run_through
+            ]
+        ].reset_index(
+            drop=True
         )
 
     return location_fortificant_vehicle_intervention_scenarios

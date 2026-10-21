@@ -178,22 +178,29 @@ india,iron,salt,none
 
 def _pairs(stage):
     return sorted(
-        tuple(c) for c in config_utils.get_configured_combos(["location", "vehicle"], stage=stage)
+        tuple(c)
+        for c in config_utils.get_configured_combos(["location", "vehicle"], stage=stage)
     )
 
 
 def test_missing_run_through_column_means_results(config_dir) -> None:
     """Files written before the column existed run everything, as before."""
-    assert _pairs("results") == _pairs("data_prep") == [
-        ("ethiopia", "salt"), ("nigeria", "rice"), ("nigeria", "salt")
-    ]
+    assert (
+        _pairs("results")
+        == _pairs("data_prep")
+        == [("ethiopia", "salt"), ("nigeria", "rice"), ("nigeria", "salt")]
+    )
 
 
 def test_stages_are_cumulative(config_dir) -> None:
     config_dir(combos_csv=STAGED_COMBOS_CSV)
     # blank means results; data_prep arms are prepped but get no results; none runs nothing
     assert _pairs("results") == [("ethiopia", "salt"), ("nigeria", "rice")]
-    assert _pairs("data_prep") == [("ethiopia", "salt"), ("nigeria", "rice"), ("nigeria", "salt")]
+    assert _pairs("data_prep") == [
+        ("ethiopia", "salt"),
+        ("nigeria", "rice"),
+        ("nigeria", "salt"),
+    ]
     assert ("india", "salt") in _pairs("none")
 
 
@@ -212,14 +219,21 @@ def test_unfiltered_table_lists_every_arm(config_dir) -> None:
 
 def test_custom_scenarios_allowed_for_arm_that_does_not_run(config_dir) -> None:
     """config.yaml can keep an arm's scenarios while the arm is at 'none'."""
-    config_dir(combos_csv=STAGED_COMBOS_CSV.replace("nigeria,folate,salt,data_prep", "nigeria,folate,salt,none"))
+    config_dir(
+        combos_csv=STAGED_COMBOS_CSV.replace(
+            "nigeria,folate,salt,data_prep", "nigeria,folate,salt,none"
+        )
+    )
     assert _pairs("data_prep") == [("ethiopia", "salt"), ("nigeria", "rice")]
 
 
 @pytest.mark.parametrize(
     "combos_csv, match",
     [
-        ("location,fortificant,vehicle,run_through\nnigeria,all,rice,simulations\n", "unknown run_through"),
+        (
+            "location,fortificant,vehicle,run_through\nnigeria,all,rice,simulations\n",
+            "unknown run_through",
+        ),
         (
             "location,fortificant,vehicle,run_through\nnigeria,iron,salt,results\nnigeria,folate,salt,none\n",
             "same run_through",
@@ -248,7 +262,8 @@ def test_scenario_comparisons_follow_stage(config_dir, tmp_path) -> None:
     pairs = lambda df: list(zip(df.location, df.vehicle))  # noqa: E731
     assert pairs(config_utils.get_scenario_comparisons()) == [("nigeria", "rice")]
     assert pairs(config_utils.get_scenario_comparisons(stage="data_prep")) == [
-        ("nigeria", "rice"), ("nigeria", "salt")
+        ("nigeria", "rice"),
+        ("nigeria", "salt"),
     ]
 
 
@@ -372,7 +387,9 @@ def test_committed_template_combo_runs_through_results() -> None:
     checkout_config_utils = _load_config_utils_from_checkout()
     pairs = [
         tuple(c)
-        for c in checkout_config_utils.get_configured_combos(["location", "vehicle"], stage="results")
+        for c in checkout_config_utils.get_configured_combos(
+            ["location", "vehicle"], stage="results"
+        )
     ]
     assert ("india", "rice") in pairs
 
