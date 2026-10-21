@@ -95,7 +95,8 @@ touches keeps its base value.
    the model runs is a row of `0050_config/location_fortificant_vehicles.csv` whose
    `run_through` is `data_prep` or `results`; rows at `none` are listed but treated as not
    run. Changing an arm from `none` fills it in on the next build.
-   Effect sizes (`vehicle.csv`) take no defaults; they change only through decisions. For
+   Effect sizes (`vehicle.csv`) take literature defaults for every vehicle, matched on the
+   vehicle name (pooled estimates such as 'Any' need a decision). For
    India rice, whose consumption, fortifiability and government-rice shares come from HCES
    microdata, only intervention rows and GF's baseline split take defaults (`HCES_ARMS` in
    `build_extraction.py`; see `GF_DATA_MAPPING.md`).
@@ -149,6 +150,7 @@ Methods (`source = method:<name>`), implemented in `build_extraction.py`:
 | `consumer_cv` | amount and U5 amount SD rows | SD over all women when consumers get the literature's CV (the literature mean and SD for the same quintile or sex). See `CONSUMPTION_DISTRIBUTION.md`. |
 | `scale_to_gf_total` | amount mean rows | Rescales the quintile means so they agree with GF's national g/cap, keeping the wealth gradient. |
 | `derive_from:<vehicle>` | amount SD rows, U5 mean rows | A placeholder borrowed from another vehicle: its consumer CV, or its U5/WRA ratio. Tagged `DERIVED (MIC-7549)` and reported as a placeholder. |
+| `assumed_consumer_cv:<number>` | amount SD rows | A placeholder SD from an assumed consumer CV (e.g. `method:assumed_consumer_cv:0.7`), converted with the row's mean and coverage as in `consumer_cv`. Tagged `PLACEHOLDER (decision ...)` and reported as a placeholder until replaced. |
 
 Methods run after all value decisions, in file order, so they see the final means and coverage.
 

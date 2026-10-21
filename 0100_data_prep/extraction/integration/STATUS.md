@@ -11,6 +11,11 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 ## Ethiopia Salt
 
+**Decisions in effect**
+
+- **D036** Ethiopia Salt: WRA consumption: g/day SD → 2.2  
+  Source: typed value. Why: Salt intake SD 2.2 g/day from a 24-h recall survey in Addis Ababa, among all adults (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10195378/). Formerly in the old extraction sheet; not yet in the literature workbook
+
 **Proposed, not applied** (set status to active or rejected)
 
 - **P012** would set Ethiopia Salt Folate: intervention: concentration (mcg/g) → Intervention - 25% NRV 14.01  
@@ -19,6 +24,29 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
   Source: typed value. Why: As P012, for 100% NRV: 400 / 7.137 g/day (the literature workbook's 51.3 uses 7.8 g/day). Alternative to P014
 - **P014** would set Ethiopia Salt: WRA consumption: g/day mean → Total 7.8; Lowest 7.742; Second 7.907; Middle 8.42; Fourth 7.822; Highest 7.109  
   Source: computed (scale_to_gf_total). Why: Rescale the Ethiopia salt quintile g/cap (mean 7.14) to GF's national 7.8 g/day (x1.093), keeping the wealth gradient. Makes the literature's NRV concentrations (12.8, 51.3 mcg/g) deliver 25% / 100% NRV; raises intake in the 45 ppm scenario by ~9%. Alternative to P012/P013; see GF question 10
+
+## Ethiopia Wheat
+
+**Decisions in effect**
+
+- **D037** Ethiopia Wheat: WRA consumption: g/day SD → Total 56.95; Lowest 106.8; Second 49.28; Middle 38.89; Fourth 52.98; Highest 49.49  
+  Source: computed (assumed_consumer_cv:0.7). Why: PLACEHOLDER - REMOVE when real Ethiopia wheat consumption SDs are available. No SD source yet (GF has none; the literature has no Ethiopia wheat SD). Consumers get CV 0.7, about the middle of Nigeria wheat's consumer CVs (0.53-0.83 by quintile, from NFCMS via D007); SDs follow each quintile's GF mean and the 0.4 national coverage. Reported as 'placeholder remains' in review.csv
+
+**Still open**
+
+*placeholder remains*: Needs a real value, or a 'keep' decision if the placeholder is deliberate
+
+- Ethiopia Wheat: WRA consumption: g/day SD [Fourth]. output 52.98
+- Ethiopia Wheat: WRA consumption: g/day SD [Highest]. output 49.49
+- Ethiopia Wheat: WRA consumption: g/day SD [Lowest]. output 106.8
+- Ethiopia Wheat: WRA consumption: g/day SD [Middle]. output 38.89
+- Ethiopia Wheat: WRA consumption: g/day SD [Second]. output 49.28
+- Ethiopia Wheat: WRA consumption: g/day SD [Total]. output 56.95
+
+*GF disagrees with literature default*: The literature value is used; use GF with a 'gf' decision, or confirm the literature with a 'lit:' decision
+
+- Ethiopia Wheat Folate: baseline: effective share of fortified. output 0.4; literature: 40.0 % from Assumption (literature workbook 'MN baseline fortification' row 46)
+- Ethiopia Wheat Folate: baseline: share fortified. output 0.65; literature: 65.0 % from GFDx (literature workbook 'MN baseline fortification' row 44)
 
 ## India Rice
 
@@ -30,8 +58,8 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
   Source: GF. Why: sqrt split of GF current compliance (0.5, government rice), as for the other arms: effectiveness = sqrt(0.5) = 0.71. The literature's 50% is the compliance itself, not the split
 - **D030** India Rice Iron: baseline: share fortified → 0.71 | India Rice Folate: baseline: share fortified → 0.71  
   Source: GF. Why: Share of government rice fortified = sqrt(GF current compliance 0.5) = 0.71, replacing the 0.8 formerly hard-coded in the HCES notebook; data prep multiplies it by the HCES shares eating government rice (government rice stands in for consolidation). GFDx's 26% is a market-wide share of rice fortified, a different measure (ours: about 0.31 of WRA rice fortified before effectiveness, 0.22 effective)
-- **D031** India Rice Folate: intervention: concentration (mcg/g) → Intervention base value kept  
-  Source: base extraction table. Why: Single India rice intervention scenario with folic acid at 1.3 mcg/g (130 mcg/100 g, from the NYAS paper cited in the base table), the base value. The literature extraction's rows for 'current standard' (0.125) and '2016 FA standard' (1.3) don't match the scenario name and aren't used; no current-standard scenario is modelled (adding one: docs/scenarios.md)
+- **D031** India Rice Folate: intervention: concentration (mcg/g) → Intervention 1.3  
+  Source: 1.3 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 43). Why: Single India rice intervention scenario with folic acid at 1.3 mcg/g (130 mcg/100 g). Uses the literature's '2016 FA standard' row; its scenario name doesn't match ours, so the row isn't a default. The 'current standard' row (0.125) isn't used; no current-standard scenario is modelled (adding one: docs/scenarios.md)
 
 **Still open**
 
@@ -66,6 +94,12 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
   Source: 61.2 g/day from NFCMS, Table 172, p 224 (literature workbook 'Vehicle Consumption' row 96). Why: NFCMS national usual intake (61.2, Table 172), per capita as published. Resolves the two literature candidates (NFCMS 61.2, M4N 38; see P009). Also supplies the national mean for P008's consumer CV
 - **D032** Nigeria Rice: U5 consumption: g/day SD → Total 49.95; Female 46.54; Male 53.38  
   Source: computed (consumer_cv). Why: As P008, for U5 rows: per capita, the NFCMS U5 SDs (Table 173) make consumer variance negative at national WRA coverage
+- **D033** Nigeria Rice Folate: baseline: share fortified → 0 | Nigeria Rice Iron: baseline: share fortified → 0  
+  Source: typed value. Why: No baseline rice fortification in Nigeria (Jonathan Gorstein, 8/30). Formerly the old extraction sheet's 'Assumption' rows; GF has n/a and the literature has no value
+- **D034** Nigeria Rice Folate: baseline: concentration (mcg/g) → 0 | Nigeria Rice Iron: baseline: concentration (mcg/g) → 0  
+  Source: typed value. Why: No baseline rice fortification in Nigeria (Jonathan Gorstein, 8/30), so no fortificant. Formerly the old extraction sheet's 'Assumption' rows
+- **D035** Nigeria Rice Folate: baseline: effective share of fortified → 0.8 | Nigeria Rice Iron: baseline: effective share of fortified → 0.8  
+  Source: typed value. Why: Irrelevant while baseline coverage is 0 (D033), but the pipeline needs a value. 0.8 as in the old extraction sheet
 
 **Proposed, not applied** (set status to active or rejected)
 
@@ -125,19 +159,4 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 ## Effect sizes (all countries)
 
-**Decisions in effect**
-
-- **D009** (all countries) Wheat: hemoglobin effect (g/L) → base value kept  
-  Source: base extraction table. Why: Keep the rice-copied hemoglobin effect for wheat until a wheat-specific estimate is available
-- **D010** (all countries) Wheat: birthweight effect (g per mg/day) → base value kept  
-  Source: base extraction table. Why: Keep the birthweight effect used for every vehicle (Haider 2013)
-
-**Still open**
-
-*placeholder remains*: Needs a real value, or a 'keep' decision if the placeholder is deliberate
-
-- (all countries) Salt: birthweight effect (g per mg/day). output 1.67
-
-*literature disagrees with output*: Decide which is right; a 'gf', 'keep' or 'lit:' decision records the choice
-
-- (all countries) Salt: hemoglobin effect (g/L). output 4.4; literature: 4.8 g/L from Lall et al. The Effects of Salt Fortified with Multiple Nutrients on Health Outcomes in Children, Adolescents, and Adults: A Systematic Review and Meta-Analysis (literature workbook 'Effect Sizes' row 4)
+Nothing open.
