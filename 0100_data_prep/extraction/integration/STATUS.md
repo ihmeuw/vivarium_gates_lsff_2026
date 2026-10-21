@@ -25,6 +25,28 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 - **P014** would set Ethiopia Salt: WRA consumption: g/day mean → Total 7.8; Lowest 7.742; Second 7.907; Middle 8.42; Fourth 7.822; Highest 7.109  
   Source: computed (scale_to_gf_total). Why: Rescale the Ethiopia salt quintile g/cap (mean 7.14) to GF's national 7.8 g/day (x1.093), keeping the wealth gradient. Makes the literature's NRV concentrations (12.8, 51.3 mcg/g) deliver 25% / 100% NRV; raises intake in the 45 ppm scenario by ~9%. Alternative to P012/P013; see GF question 10
 
+## Ethiopia Wheat
+
+**Decisions in effect**
+
+- **D037** Ethiopia Wheat: WRA consumption: g/day SD → Lowest 106.8; Second 49.28; Middle 38.89; Fourth 52.98; Highest 49.49  
+  Source: computed (assumed_consumer_cv:0.7). Why: PLACEHOLDER - REMOVE when real Ethiopia wheat consumption SDs are available. No SD source yet (GF has none; the literature has no Ethiopia wheat SD). Consumers get CV 0.7, about the middle of Nigeria wheat's consumer CVs (0.53-0.83 by quintile, from NFCMS via D007); SDs follow each quintile's GF mean and the 0.4 national coverage. Reported as 'placeholder remains' in review.csv
+
+**Still open**
+
+*placeholder remains*: Needs a real value, or a 'keep' decision if the placeholder is deliberate
+
+- Ethiopia Wheat: WRA consumption: g/day SD [Fourth]. output 52.98
+- Ethiopia Wheat: WRA consumption: g/day SD [Highest]. output 49.49
+- Ethiopia Wheat: WRA consumption: g/day SD [Lowest]. output 106.8
+- Ethiopia Wheat: WRA consumption: g/day SD [Middle]. output 38.89
+- Ethiopia Wheat: WRA consumption: g/day SD [Second]. output 49.28
+
+*GF disagrees with literature default*: The literature value is used; use GF with a 'gf' decision, or confirm the literature with a 'lit:' decision
+
+- Ethiopia Wheat Folate: baseline: effective share of fortified. output 0.4; literature: 40.0 % from Assumption (literature workbook 'MN baseline fortification' row 46)
+- Ethiopia Wheat Folate: baseline: share fortified. output 0.65; literature: 65.0 % from GFDx (literature workbook 'MN baseline fortification' row 44)
+
 ## India Rice
 
 **Decisions in effect**
@@ -108,22 +130,6 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
   Source: GF. Why: Defer to GF numbers
 - **D022** Nigeria Wheat Iron: baseline: share fortified → 0.79 | Nigeria Wheat Folate: baseline: share fortified → 0.79  
   Source: GF. Why: Defer to GF numbers
-
-## Ethiopia Wheat (not in the model)
-
-**Decisions in effect**
-
-- **D037** Ethiopia Wheat: WRA consumption: g/day SD → Lowest 15.33; Second 31.32; Middle 44.22; Fourth 62.24; Highest 71.7  
-  Source: computed (assumed_consumer_cv:0.7). Why: PLACEHOLDER - REMOVE when real Ethiopia wheat consumption SDs are available. No SD source yet (GF has none; the literature has no Ethiopia wheat SD). Consumers get CV 0.7, about the middle of Nigeria wheat's consumer CVs (0.53-0.83 by quintile, from NFCMS via D007); SDs follow each quintile's GF mean and the 0.4 national coverage. Reported as 'placeholder remains' in review.csv
-
-**Still open**
-
-*literature could replace placeholder*: Usually adopt it with a lit: decision
-
-- Ethiopia Wheat Folate: baseline: concentration (mcg/g). output 0; literature: 2.0 ppm from Zegeye et al., Table 1 (literature workbook 'MN baseline fortification' row 45)
-- Ethiopia Wheat Folate: baseline: effective share of fortified. output 0.8; literature: 40.0 % from Assumption (literature workbook 'MN baseline fortification' row 46)
-- Ethiopia Wheat Folate: baseline: share fortified. output 0; literature: 65.0 % from GFDx (literature workbook 'MN baseline fortification' row 44)
-- Ethiopia Wheat Folate: intervention: concentration (mcg/g) [Intervention]. output 1.69; literature: 2.0 ppm from Zegeye et al., Table 1 (literature workbook 'MN intervention fortification' row 30)
 
 ## India Wheat (not in the model)
 
