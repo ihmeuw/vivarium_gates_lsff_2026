@@ -1,41 +1,39 @@
 # Extraction data
 
 The extraction tables hold the inputs the data prep notebooks read: consumption,
-fortifiability, baseline and intervention fortification, and effect sizes. They come in
-two layers, one CSV per table and one data point per row:
+fortifiability, baseline and intervention fortification, and effect sizes. One CSV per table,
+one data point per row, all in `generated/`, all written by the build:
 
 ```
-data/*.csv (base, hand-edited)                  ─┐
-integration/lit_long.csv (literature snapshot)  ─┤
-integration/gf_long.csv (GF snapshot)           ─┼─► integration/build_extraction.py ─► generated/*.csv ─► prep notebooks
-integration/decisions.csv                       ─┤   (run by hand; Snakemake checks it)  (never edit)
-0050_config/location_fortificant_vehicles.csv   ─┘
+integration/lit_long.csv (literature snapshot)  ─┐
+integration/gf_long.csv (GF snapshot)           ─┤
+integration/decisions.csv                       ─┼─► integration/build_extraction.py ─► generated/*.csv ─► prep notebooks
+integration/data_needs.py (which rows)          ─┤   (run by hand; Snakemake checks it)  (never edit)
+0050_config/ (arms and scenarios)               ─┘
 ```
 
-- **`data/`, the base layer**: hand-entered values that have no other source (effect sizes,
-  concentrations, HCES-related values, assumptions), plus the tables nothing builds.
-- **`generated/`, the generated layer**: the four tables the notebooks read, written only by
-  the build. For the arms the model runs, it starts from the base tables, fills in values
-  from the literature extraction and GF (literature first for measurements, GF first for
-  the 2035 targets), then applies `decisions.csv`.
-  See `integration/README.md`.
+For the arms the model runs, the build lays out the rows each arm needs (`data_needs.py`;
+readable version `integration/DATA_NEEDS.md`), fills them from the literature extraction and
+GF (literature first for measurements, GF first for the 2035 targets), then applies
+`decisions.csv`. A required value nothing provides stops the build. See
+`integration/README.md`.
 
-| File | Layer | Was tab | Read by |
-|---|---|---|---|
-| `country_vehicle.csv` | base → generated | Country-Vehicle Extraction | `prep_extracted.ipynb` |
-| `country_vehicle_fortificant.csv` | base → generated | Country-Vehicle-Fort Extraction | `prep_extracted.ipynb` |
-| `scenario_definition.csv` | base → generated | Scenario Definition Extraction | `prep_extracted.ipynb` |
-| `vehicle.csv` | base → generated | Vehicle Extraction | `prep_vehicle.ipynb` |
-| `country.csv` | base only | Country Extraction | (reference only) |
-| `universal.csv` | base only | Universal | (reference only) |
-| `data_sources.csv` | base only | Data Sources | (reference only) |
-| `progress.csv` | base only | the five "Progress" tabs | `check_completeness.py` |
+| File | Read by |
+|---|---|
+| `generated/country_vehicle.csv` | `prep_extracted.ipynb` |
+| `generated/country_vehicle_fortificant.csv` | `prep_extracted.ipynb` |
+| `generated/scenario_definition.csv` | `prep_extracted.ipynb` |
+| `generated/vehicle.csv` | `prep_vehicle.ipynb` |
+
+The old hand-edited tables (`data/`, the "base layer") and `check_completeness.py` were
+removed in October 2026; they are in git history.
 
 ## Changing a value
 
-- **A value from the literature or GF:** don't edit any table. Update the source and its
-  snapshot, or record a choice in `integration/decisions.csv`, then rebuild (below).
-- **A value with no other source:** edit the table in `data/`, then rebuild.
+- **A value from the literature or GF:** update the source and its snapshot, or record a
+  choice in `integration/decisions.csv`, then rebuild (below).
+- **A value with no published source** (an assumption): add it to the literature workbook,
+  or as a `value:` decision with its rationale.
 - **Never edit `generated/`.** `tests/test_extraction_build.py` fails if it differs from a
   fresh build.
 
@@ -48,60 +46,37 @@ tables and the build's reports together with the change that caused them. Snakem
 run the build; before data prep (unless `skip_data_prep=true`) it checks that the committed
 tables are up to date, and stops with a message if they aren't.
 
-## Editing the CSVs
+## Reading the tables
 
-- Edit them in a text editor, or in Excel. If you use Excel, save with
-  **File > Save As > CSV UTF-8** and look at `git diff` before committing: Excel
-  may turn values into dates, drop precision or change quoting.
-- Put new rows next to related ones (same country / vehicle / data need) so
-  diffs stay readable and two people's additions rarely touch the same lines.
-- Enter values, not formulas. If a value was derived (e.g. SD = IQR / 1.35, or a
-  mean among consumers multiplied by coverage), write the calculation in the
-  `Derivation` column (`country_vehicle.csv`) or in `Notes`.
-- Read tables in code with `lsff_utils.extraction.load_extraction("<table>")`,
-  never `pd.read_csv` directly. It reads the generated version of built tables (pass
-  `base=True` for the base version), fixes column types, and validates required
-  columns, allowed `Quintile`/`Sex` values, and stray whitespace in the columns
-  the notebooks filter on. `pytest tests/test_extraction.py` runs the same checks
-  on both layers.
-
-## Tracking progress
-
-`progress.csv` lists every data need we track, per country / vehicle /
-fortificant / scenario and wealth level. `Status` is either a label typed by
-hand (`Not modeled`, `Microdata: HCES`, `GBD`, `Zero`, ...) or `auto`, which
-`check_completeness.py` resolves to `Complete` or `Missing` from the generated tables:
-
-```
-python check_completeness.py            # print the grids
-python check_completeness.py --strict   # exit 1 if anything is Missing
-```
+Read tables in code with `lsff_utils.extraction.load_extraction("<table>")`, never
+`pd.read_csv` directly. It fixes column types and validates required columns, allowed
+`Quintile`/`Sex` values, duplicated data points and stray whitespace in the columns the
+notebooks filter on. `pytest tests/test_extraction.py` runs the same checks.
 
 ## A workbook for browsing
 
-`python build_workbook.py` writes `extraction_data_view.xlsx` (gitignored) with
-every table (generated versions where they exist) on its own tab, plus the progress grids,
-for reading or sending to collaborators. Changes made in that file are not read by the
-pipeline.
+`python build_workbook.py` writes `extraction_data_view.xlsx` (gitignored) with each
+generated table on its own tab, for reading or sending to collaborators. Changes made in that
+file are not read by the pipeline.
 
 ## AI use
 
-The entire system for combining data sources was developed by Claude
-under human direction. As such, the code in the following ten python
-files is completely AI-generated and has not been carefully reviewed by
-a human:
+The entire system for combining data sources was developed by Claude under human
+direction. As such, the code in the following python files is completely AI-generated and
+has not been carefully reviewed by a human:
 
-- `0100_data_prep/extraction/`:
-  - `build_workbook.py` and `check_completeness.py`
+- `0100_data_prep/extraction/build_workbook.py`
 - `0100_data_prep/extraction/integration/`:
-  - `build_extraction.py`, `common.py`, `extract_gf.py`, `extract_lit.py` and `report.py`
+  - `build_extraction.py`, `common.py`, `data_needs.py`, `extract_gf.py`, `extract_lit.py`
+    and `report.py`
 - `src/lsff_utils/extraction.py`
-- `tests/`
-  - `test_extraction.py` and `test_extraction_build.py`
+- `tests/`:
+  - `test_extraction.py`, `test_extraction_build.py` and `test_data_needs.py`
 
-The following four related markdown files are also AI-generated. They have been
-reviewed but not thoroughly revised, and they may contain errors:
+The following related markdown files are also AI-generated. They have been reviewed but not
+thoroughly revised, and they may contain errors:
 
 - `0100_data_prep/extraction/README.md`
 - `0100_data_prep/extraction/integration/`:
-  - `README.md`, `GF_DATA_MAPPING.md`, and `CONSUMPTION_DISTRIBUTION.md`
+  - `README.md`, `GF_DATA_MAPPING.md`, `CONSUMPTION_DISTRIBUTION.md` and
+    `REDESIGN_PROPOSAL.md`
