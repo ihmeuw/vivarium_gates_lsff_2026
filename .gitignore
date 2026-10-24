@@ -168,3 +168,4 @@ model_spec_int.yaml
 0100_data_prep/extraction/*.xlsx
 0100_data_prep/extraction/integration/comparison.xlsx
 0100_data_prep/extraction/integration/.extraction_checked
+0100_data_prep/.data_prep_results_checked

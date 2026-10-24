@@ -66,6 +66,7 @@ def arm(
     fortificants=("Iron",),
     modeled=True,
     hces=False,
+    government_rice=False,
     scenarios=None,
 ):
     return {
@@ -74,6 +75,7 @@ def arm(
         "fortificants": list(fortificants),
         "modeled": modeled,
         "hces": hces,
+        "government_rice": government_rice,
         "scenarios": scenarios or {"intervention": "Intervention"},
     }
 
@@ -211,7 +213,7 @@ def test_rejected_and_proposed_decisions_dont_shape_rows():
 
 def test_hces_arm_has_no_consumption_rows_and_a_total_fortifiability():
     frames, _ = data_needs.skeleton(
-        [arm("India", "Rice", hces=True)], lit(), None, decisions()
+        [arm("India", "Rice", hces=True, government_rice=True)], lit(), None, decisions()
     )
     assert rows(frames, CV, ANY).empty
     fort = rows(
@@ -309,3 +311,25 @@ def test_keep_decisions_are_rejected_unless_historical(tmp_path):
     path.write_text(header + "D1,active,any,Nigeria,Wheat,,,,,,keep,,old,me,1/1/26\n")
     with pytest.raises(ValueError, match="no longer supported"):
         build_extraction.read_decisions(path)
+
+
+def test_hces_arm_without_government_rice_keeps_normal_fortifiability():
+    """An arm whose consumption comes from HCES (e.g. a future India wheat) isn't government rice."""
+    frames, _ = data_needs.skeleton(
+        [arm("India", "Wheat", hces=True)], lit(), None, decisions()
+    )
+    assert rows(frames, CV, ANY).empty
+    fort = rows(
+        frames, CV, 'Vehicle "fortifiability" (essentially amount industrially produced)'
+    )
+    assert list(fort.Quintile) == [ALL_SAME]
+
+
+def test_hces_consumption_must_name_a_listed_arm(tmp_path):
+    (tmp_path / "config.yaml").write_text(
+        'all_fortificants: ["folate", "iron"]\nhces_consumption:\n  india: [wheat]\n'
+    )
+    arms_file = tmp_path / "location_fortificant_vehicles.csv"
+    arms_file.write_text("location,fortificant,vehicle,run_through\nindia,all,rice,results\n")
+    with pytest.raises(ValueError, match="hces_consumption"):
+        data_needs.read_arms(arms_file, lit(), decisions())

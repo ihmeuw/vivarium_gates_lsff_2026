@@ -151,11 +151,18 @@ location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_sc
 # Data prep builds every arm whose run_through (0050_config/location_fortificant_vehicles.csv)
 # is data_prep or results; see config_utils.RUN_THROUGH_STAGES.
 #
-# HCES microdata covers India rice only; every other arm comes from the workbook.
+# Consumption (coverage, amount mean and SD) comes from the HCES notebook for the arms listed
+# under hces_consumption in config.yaml, and from the extraction tables for every other arm.
+# Fortifiability always comes from the extraction tables.
+hces_consumption_data_needs = [
+    "vehicle_consumption/any",
+    "vehicle_consumption/amount/mean",
+    "vehicle_consumption/amount/sd",
+]
 for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"], stage="data_prep"):
     for data_need in vehicle_specific_data_needs:
         file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
-        if (location, vehicle) == ("india", "rice") and ("vehicle_consumption" in data_need) and data_need != "vehicle_consumption/fortifiability":
+        if config_utils.consumption_from_hces(location, vehicle, config) and data_need in hces_consumption_data_needs:
             hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
@@ -163,10 +170,10 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
 for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"], stage="data_prep"):
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
-        # India rice: HCES gives the partial-coverage amounts directly; any/full coverage are
-        # the HCES government-rice shares scaled in prep_extracted by the share of government rice
-        # fortified.
-        if (location, vehicle) == ("india", "rice") and "partial_coverage_amount" in data_need:
+        # Government rice (India rice): HCES gives the partial-coverage amounts directly; any/full
+        # coverage are the HCES government-rice shares scaled in prep_extracted by the share of
+        # government rice fortified.
+        if (location, vehicle) == config_utils.GOVERNMENT_RICE and "partial_coverage_amount" in data_need:
             hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
@@ -267,6 +274,23 @@ data_prep_targets = [
         ["location", "vehicle", "fortificant", "intervention_scenario"], stage="data_prep"
     )
 ]
+
+# Check every data prep results file of the arms that run (lsff_utils.results_check): finite,
+# non-negative values, shares in [0, 1], and all five wealth quintiles where a file has them.
+# This is where gaps in what HCES or prep_extracted wrote get caught, since the extraction
+# build doesn't see the HCES arms' consumption. The root Snakefile's `rule all` asks for it.
+data_prep_results_checked = "0100_data_prep/.data_prep_results_checked"
+
+rule check_data_prep_results:
+    input:
+        snakemake_utils.freeze(hces_output_files + extracted_output_files + data_prep_targets, frozen)
+    output:
+        touch(data_prep_results_checked)
+    run:
+        from lsff_utils.results_check import check_files
+        problems = check_files(input)
+        if problems:
+            raise ValueError("Data prep results failed their checks:\n  " + "\n  ".join(problems))
 
 rule population_with_pregnancy_status:
     input: snakemake_utils.freeze(["0100_data_prep/population/population_with_pregnancy_status.ipynb", "0100_data_prep/results/wealth_quintile_probabilities/{location}.csv"], frozen)

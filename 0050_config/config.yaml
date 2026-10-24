@@ -30,3 +30,10 @@ custom_intervention_scenarios:
 # docs/adding_nigeria_salt_folate_checklist.md.
 folate_anemia_vehicles:
   ethiopia: [salt]
+# (location, vehicle) pairs whose consumption (coverage, amount mean and SD) comes from
+# HCES microdata (0100_data_prep/hces/01_extract_hces.ipynb) rather than the extraction
+# tables. For these, the extraction build creates no consumption rows, and Snakemake takes
+# the consumption results files from the HCES rule. Adding a pair here also needs the HCES
+# notebook to write its files. See config_utils.consumption_from_hces.
+hces_consumption:
+  india: [rice]

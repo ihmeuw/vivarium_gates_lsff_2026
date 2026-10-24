@@ -191,6 +191,41 @@ def get_location_fortificant_vehicle_intervention_scenarios(stage=None):
     return location_fortificant_vehicle_intervention_scenarios
 
 
+# The one arm modelled through government rice (PDS, school and anganwadi meals). Its
+# partial-coverage amounts come from HCES, and prep_extracted combines its baseline coverage
+# and fortifiability with the HCES government-rice shares. This is specific to India rice's
+# programme, not to HCES consumption in general (config.yaml's hces_consumption).
+GOVERNMENT_RICE = ("india", "rice")
+
+
+def get_hces_consumption_pairs(config=None):
+    """(location, vehicle) pairs whose consumption comes from HCES (config.yaml hces_consumption).
+
+    Every pair must be listed in location_fortificant_vehicles.csv.
+    """
+    if config is None:
+        config = get_config()
+    pairs = {
+        (location, vehicle)
+        for location, vehicles in (config.get("hces_consumption") or {}).items()
+        for vehicle in vehicles
+    }
+    arms = get_location_fortificant_vehicles()
+    listed = set(zip(arms.location, arms.vehicle))
+    unknown = sorted(pairs - listed)
+    if unknown:
+        raise ValueError(
+            "hces_consumption lists (location, vehicle) pairs that are not in "
+            f"location_fortificant_vehicles.csv: {unknown}"
+        )
+    return pairs
+
+
+def consumption_from_hces(location, vehicle, config=None):
+    """Whether an arm's consumption results come from HCES rather than the extraction tables."""
+    return (location, vehicle) in get_hces_consumption_pairs(config)
+
+
 def get_combo_pathways(location, vehicle):
     """Which result pathways a (location, vehicle) pair produces.
 

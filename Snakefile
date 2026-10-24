@@ -104,13 +104,14 @@ onstart:
 # the arms whose run_through is "results". Arms whose run_through is "data_prep"
 # reach no results, so their data-prep products are asked for directly
 # (`data_prep_targets`, defined in 0100_data_prep/Snakefile; a function because
-# that file is included below). See 0050_config/location_fortificant_vehicles.csv.
+# that file is included below), and so is the check of every data prep results
+# file. See 0050_config/location_fortificant_vehicles.csv.
 rule all:
     input:
         lambda wildcards: [
             "5000_analyze_results/results_spreadsheet.xlsx",
             "5000_analyze_results/executed/results_plots.ipynb",
-        ] + data_prep_targets
+        ] + data_prep_targets + [data_prep_results_checked]
 
 include: "0100_data_prep/Snakefile"
 include: "0200_pregnancy_sim/Snakefile"
