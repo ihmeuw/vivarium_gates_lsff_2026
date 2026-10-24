@@ -50,10 +50,10 @@ ISSUE_ORDER = [
 WHAT_TO_DO = {
     "GF national inconsistent with GF quintiles": "GF didn't set the Total; set it with the literature or a decision, or rescale with method:scale_to_gf_total",
     "GF disagrees with literature default": "The literature value is used; use GF with a 'gf' decision, or confirm the literature with a 'lit:' decision",
-    "placeholder remains": "Needs a real value, or a 'keep' decision if the placeholder is deliberate",
+    "placeholder remains": "Needs a real value (literature workbook or a value:/lit: decision)",
     "recommended literature value differs from output": "Adopt it with a lit: decision, or record why not",
     "literature could replace placeholder": "Usually adopt it with a lit: decision",
-    "literature disagrees with output": "Decide which is right; a 'gf', 'keep' or 'lit:' decision records the choice",
+    "literature disagrees with output": "Decide which is right; a 'gf', 'value:' or 'lit:' decision records the choice",
     "several literature candidates": "Pick one (decision), or mark one 'Use in model' in the literature workbook (for arms the model runs, the build fails until this is resolved, unless a decision covers the row)",
     "conflicting literature recommendations": "More than one candidate is marked 'Use in model' = yes; resolve in the literature workbook",
     "proposed decision (not applied)": "Set its status to active or rejected",
@@ -130,7 +130,7 @@ def source_text(lit, source):
     if source == "gf":
         return "GF"
     if source == "keep":
-        return "base extraction table"
+        return "old extraction sheet (no longer supported)"
     if source.startswith("method:"):
         return f"computed ({source.split(':', 1)[1]})"
     if source.startswith("value:"):
@@ -208,7 +208,7 @@ def decision_effects(wb, lit, decisions, resolve, gf_values):
             elif e["action"] == "skip":
                 what = "not set (GF has no value)"
             else:
-                what = "base value kept"
+                what = "not set"
             groups.setdefault((arm, item), []).append(f"{stratum} {what}".strip() if stratum else what)
         parts = []
         for (arm, item), values in groups.items():
