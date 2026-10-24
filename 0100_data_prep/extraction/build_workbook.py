@@ -1,6 +1,5 @@
-"""Bundle the extraction CSVs into one .xlsx for browsing or sharing.
+"""Bundle the generated extraction tables into one .xlsx for browsing or sharing.
 
-Built tables are shown as generated (``generated/``), the rest as in ``data/``.
 This workbook is a read-only convenience copy and is gitignored. Edits made in
 it are NOT read by the pipeline -- see README.md for how to change a value.
 
@@ -17,27 +16,20 @@ from pathlib import Path
 
 import pandas as pd
 
-from check_completeness import DIMENSIONS, grid, resolve_statuses
 from lsff_utils.extraction import TABLES, load_extraction
 
 DEFAULT_OUTPUT = Path(__file__).parent / "extraction_data_view.xlsx"
 
 
 def main(output: Path = DEFAULT_OUTPUT) -> None:
-    progress = resolve_statuses()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         for table in TABLES:
-            if table == "progress":
-                continue
             df = load_extraction(table, validate=False)
             df.to_excel(writer, sheet_name=table[:31], index=False)
             sheet = writer.sheets[table[:31]]
             sheet.freeze_panes(1, 0)
             sheet.autofilter(0, 0, len(df), len(df.columns) - 1)
             sheet.set_column(0, len(df.columns) - 1, 18)
-        for table in DIMENSIONS:
-            name = f"{table} status"[:31]
-            grid(progress, table).fillna("").to_excel(writer, sheet_name=name)
     print(f"Wrote {output}")
 
 
