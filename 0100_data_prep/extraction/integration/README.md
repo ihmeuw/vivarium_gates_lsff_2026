@@ -109,12 +109,15 @@ optional row nothing fills is left out.
    `run_through` is `data_prep` or `results`; rows at `none` are listed but treated as not
    run. Changing an arm from `none` fills it in on the next build.
    Effect sizes (`vehicle.csv`) take literature defaults for every vehicle, matched on the
-   vehicle name (pooled estimates such as 'Any' need a decision). India rice's consumption
-   comes from HCES microdata, so its consumption rows take no defaults. Its fortifiability
-   (consolidation of purchased non-government rice) and baseline any (share of government rice
-   fortified) mean something narrower than the literature's market-wide values, so they take
-   only GF's rules for them; every other India rice row takes defaults as usual (`HCES_ARMS`,
-   `HCES_NEEDS` and `HCES_REDEFINED_NEEDS` in `build_extraction.py`; see `GF_DATA_MAPPING.md`).
+   vehicle name (pooled estimates such as 'Any' need a decision). Arms listed under
+   `hces_consumption` in `0050_config/config.yaml` (India rice) get their consumption from
+   HCES microdata, so the build makes no consumption rows for them (`HCES_NEEDS` in
+   `data_needs.py`); Snakemake takes those results files from the HCES rule instead. India
+   rice is also modelled through government rice: its fortifiability (consolidation of
+   purchased non-government rice) and baseline any (share of government rice fortified) mean
+   something narrower than the literature's market-wide values, so they take only GF's rules
+   for them (`GOVERNMENT_RICE_ARMS` in `data_needs.py`, `GOVERNMENT_RICE_NEEDS` in
+   `build_extraction.py`; see `GF_DATA_MAPPING.md`). Every other row takes defaults as usual.
 2. **Value decisions**: active decisions whose source is `lit:`, `value:` or `gf`.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a
