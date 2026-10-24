@@ -11,15 +11,16 @@ notebooks read) from:
 - the model config's list of arms, `0050_config/location_fortificant_vehicles.csv`, and
   `config.yaml` for each arm's intervention scenarios (scope).
 
-The old extraction sheet's tables (`../data/*.csv`) are no longer an input: they are read
-only to show their values in `comparison.csv` (`base_value`), and are due to be removed (see
-`REDESIGN_PROPOSAL.md`).
+Every value in the output comes from the literature, GF or a decision. (The old extraction
+sheet's tables, `../data/`, were removed in October 2026; they are in git history, and
+`old_values_in_use.csv` lists the ones that were still in use then. See
+`REDESIGN_PROPOSAL.md`.)
 
 ```
 python extract_lit.py --lit <LSFF_effect_sizes.xlsx>   # literature workbook -> lit_long.csv
 python extract_gf.py --gf <Nutrition PST Background Data.xlsx>   # GF workbook -> gf_long.csv
 python build_extraction.py           # -> ../generated/*.csv, STATUS.md, review.csv,
-                                     #    changelog.csv, comparison.csv (and .xlsx)
+                                     #    comparison.csv (and .xlsx), DATA_NEEDS.md
 python build_extraction.py --check   # exit 1 if ../generated/ is out of date
 ```
 
@@ -40,7 +41,6 @@ Other documents here:
   interim fix, and a proposed redesign of the consumption model.
 
 Terms used in the outputs:
-- **base**: the old extraction sheet's tables in `../data/`, shown for comparison only.
 - **output**: the generated tables in `../generated/`.
 - **tab** and **row**: the table and the row's position among the rows the build fills
   (header = row 1). The generated tables hold only the arms the model runs, so positions
@@ -115,14 +115,14 @@ optional row nothing fills is left out.
    fortified) mean something narrower than the literature's market-wide values, so they take
    only GF's rules for them; every other India rice row takes defaults as usual (`HCES_ARMS`,
    `HCES_NEEDS` and `HCES_REDEFINED_NEEDS` in `build_extraction.py`; see `GF_DATA_MAPPING.md`).
-2. **Value decisions**: active decisions whose source is `lit:`, `value:`, `gf` or `keep`.
+2. **Value decisions**: active decisions whose source is `lit:`, `value:` or `gf`.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a
    value from others already in place.
 4. **Checks**. If any fail, the build stops without writing the tables (`review.csv` is
    still written, except with `--check`). Before any phase, malformed input also stops the
-   build: a duplicated data point in a base table, an unknown arm or fortificant in the
-   model config, or a malformed decision (unknown status, need, source or transform). The
+   build: an unknown arm, fortificant or scenario in the model config, or a malformed
+   decision (unknown status, need, source or transform). The
    checks are:
    - every required row of an arm the model runs has a value (`DATA_NEEDS.md` says which
      are required);
@@ -135,12 +135,10 @@ optional row nothing fills is left out.
      baseline coverage (the coverage notebook's check; for India rice, intervention coverage
      ≥ the share of government rice fortified).
 
-A row the build sets gets a `Data source` naming where its value came from, `Notes` with the
-reference, the method or rationale and the base value, and (in `country_vehicle`) a
-`Derivation` when the value was computed. This happens even when the value equals the base
-value, so a placeholder label never survives on a real value. Its CI and SE are cleared if
-the value moved by more than 1%, and a base `Derivation` is cleared if the value changed
-without one. Every other cell is copied from the base table unchanged.
+Each row gets a `Data source` naming where its value came from, `Notes` with the reference
+and the method or rationale, and (in `country_vehicle`) a `Derivation` when the value was
+computed. Values from the literature also bring its Year, CI and SE (where those columns
+exist, and only numbers in the columns `lsff_utils.extraction` reads as numbers).
 
 ## decisions.csv
 
@@ -156,7 +154,7 @@ fields are ignored.
 | `status` | `active` (applied), `proposed` (shown in STATUS.md and review.csv with its effect, not applied), or `rejected` (kept for the record). |
 | `need` | A short alias: `any`, `amount`, `u5_any`, `u5_amount`, `fortifiability`, `baseline_any`, `baseline_concentration`, `baseline_effectiveness`, `intervention_coverage`, `intervention_effectiveness`, `intervention_concentration`, `hb_effect` or `bw_effect`. The full data-need text also works. |
 | `country` … `data_point_name` | Which rows the decision targets. |
-| `source` | One of: `lit:<id>` (a row of lit_long.csv); `value:<number>`; `gf` (GF's value, even where the literature default differs; rows GF has no value for are left as they were); `keep` (the base value); `method:<name>` (compute the value; see below). |
+| `source` | One of: `lit:<id>` (a row of lit_long.csv); `value:<number>`; `gf` (GF's value, even where the literature default differs; rows GF has no value for are left as they were); `method:<name>` (compute the value; see below). (`keep`, the old sheet's value, is no longer accepted, except in rejected decisions kept for the record.) |
 | `transform` | Optional, for `lit:`, `value:` and `gf` sources: `sqrt` (√ rounded to 2 d.p., the compliance split) or `times_coverage` (× the row's WRA coverage, national for U5 rows; turns a mean among consumers into a mean over all women). |
 | `rationale`, `decided_by`, `date` | Why. The rationale is copied into the output's Notes. |
 
@@ -200,12 +198,12 @@ current state, so they're expected to differ.
 
 | issue | what to do |
 |---|---|
-| placeholder remains | A `DUMMY`/`DERIVED` value is still in an arm the model runs, or in an effect size. Give it a real value, or a `keep` decision if the placeholder is deliberate. |
-| GF national inconsistent with GF quintiles | The base Total was kept by the automatic rule. Rescale with `method:scale_to_gf_total`, or record a `keep` decision. |
+| placeholder remains | A value set by a placeholder method (`assumed_consumer_cv`, `derive_from`) is in an arm the model runs. Replace it with real data when there is some. |
+| GF national inconsistent with GF quintiles | GF's Total wasn't used, by the automatic rule. Set the Total from the literature or a decision, or rescale with `method:scale_to_gf_total`. |
 | GF disagrees with literature default | The literature value is in use and GF's differs. Use GF with a `gf` decision, or confirm the literature with a `lit:` decision. |
 | recommended literature value differs from output | A value marked `Use in model` = yes isn't what the output uses. Adopt it, or record why not. |
 | literature could replace placeholder | Usually adopt it with a `lit:` decision. |
-| literature disagrees with output | Decide which is right. The detail says whether the output value is the base value, a literature or GF default, a derived placeholder, or a decision. Where a decision converts an arm's amounts with `times_coverage`, the literature value is converted the same way before comparing. |
+| literature disagrees with output | Decide which is right. The detail says whether the output value is a literature or GF default, a derived placeholder, or a decision. Where a decision converts an arm's amounts with `times_coverage`, the literature value is converted the same way before comparing. |
 | several literature candidates | The literature has more than one value for the same thing (in an arm the model runs, the build fails until this is resolved, unless a decision covers the row). Pick one with a decision, or mark one `Use in model` in the literature workbook. Marked candidates are listed first and tagged [recommended] or [not recommended]. |
 | conflicting literature recommendations | More than one candidate with different values is marked yes. |
 | proposed decision (not applied) / is invalid | Set its status to active or rejected, or fix it. |
@@ -213,16 +211,9 @@ current state, so they're expected to differ.
 | literature row can't be matched | A literature row matches table rows but isn't used: its scenario is blank where the arm has several intervention scenarios, or its units differ from the table's. Fix it in the literature workbook. |
 | literature value has no row in the extraction sheet | There's nowhere to put it: its need isn't in the spec for that arm, or its scenario isn't configured. |
 
-**changelog.csv** lists every row the build planned: `old_value` (base) and `new_value`
-(output); `source` (literature, GF, typed value, literature CV applied to consumers, derived
-from <vehicle>, or base extraction table); `step` (literature default, GF default, decision,
-or derived placeholder) and `decision_id`; `reference` (the exact GF cell or literature row);
-and `overrides` (what it replaced).
-
 **comparison.csv** (and `comparison.xlsx`, the same with colours, written when openpyxl is
 installed; gitignored) has one row per data row of the extraction tables, with these side by
 side:
-- `base_value`, `base_source`: the base table;
 - `arm_modeled`: whether the model runs this arm;
 - `gf_value`, `gf_reference`: GF as published, through the GF mapping. Shown for every arm,
   including those the model doesn't run;
@@ -231,10 +222,19 @@ side:
   fractions). Several candidates are separated by `;`, with `*` on the recommended one;
 - `lit_recommended_value`, `lit_recommended_id`: the candidate marked `Use in model` = yes,
   if exactly one is;
-- `gf_vs_base`, `lit_vs_base`, `lit_vs_gf`: `same` (within 1%) or `differs (±x%)`.
-  `lit_vs_gf` compares both sources as published. The literature comparisons use the
-  recommended value if there is one, otherwise only a single candidate;
-- `output_value`, `output_source`, `decision_id`: what the build wrote.
+- `lit_vs_gf`: `same` (within 1%) or `differs (±x%)`, comparing both sources as
+  published, with the recommended literature value if there is one, otherwise only a
+  single candidate;
+- `output_value`, `output_source` (literature, GF, typed value, literature CV applied to
+  consumers, a placeholder method), `output_step` (literature default, GF default, decision,
+  or derived placeholder) and `decision_id`: what the build wrote and which step set it;
+- `output_reference`, `output_method`: the exact GF cell or literature row, and how the
+  value was taken or computed (or why a GF rule deliberately set nothing);
+- `overrides`: what an earlier step had planned for the row before the final value
+  replaced it (e.g. a literature default replaced by a decision).
+
+How values change from one build to the next is in the git diff of `../generated/` (the build
+also prints every value that changed before writing).
 
 Literature values with no row in the tables are listed at the bottom.
 

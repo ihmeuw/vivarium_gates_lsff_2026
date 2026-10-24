@@ -295,3 +295,17 @@ def test_unnamed_scenario_is_an_error(tmp_path):
     )
     with pytest.raises(ValueError, match="intervention_mystery"):
         data_needs.read_arms(arms_file, lit(), decisions())
+
+
+def test_keep_decisions_are_rejected_unless_historical(tmp_path):
+    """'keep' meant the old extraction sheet's value, which no longer exists."""
+    header = (
+        "decision_id,status,need,country,vehicle,fortificant,scenario,quintile,sex,"
+        "data_point_name,source,transform,rationale,decided_by,date\n"
+    )
+    path = tmp_path / "decisions.csv"
+    path.write_text(header + "D1,rejected,any,Nigeria,Wheat,,,,,,keep,,old,me,1/1/26\n")
+    assert len(build_extraction.read_decisions(path)) == 1
+    path.write_text(header + "D1,active,any,Nigeria,Wheat,,,,,,keep,,old,me,1/1/26\n")
+    with pytest.raises(ValueError, match="no longer supported"):
+        build_extraction.read_decisions(path)
