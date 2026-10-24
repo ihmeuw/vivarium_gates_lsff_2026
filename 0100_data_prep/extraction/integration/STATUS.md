@@ -34,7 +34,7 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 **Still open**
 
-*placeholder remains*: Needs a real value, or a 'keep' decision if the placeholder is deliberate
+*placeholder remains*: Needs a real value (literature workbook or a value:/lit: decision)
 
 - Ethiopia Wheat: WRA consumption: g/day SD [Fourth]. output 52.98
 - Ethiopia Wheat: WRA consumption: g/day SD [Highest]. output 49.49
