@@ -19,6 +19,9 @@ endif
 # Set the package name as the last part of this file's parent directory path
 PACKAGE_NAME = $(notdir $(CURDIR))
 
+# The Sphinx sources live directly in docs/ rather than docs/source/
+DOCS_SOURCE_DIR = docs
+
 # Helper function for validating enum arguments
 validate_arg = $(if $(filter-out $(2),$(1)),$(error Error: '$(3)' must be one of: $(2), got '$(1)'))
 
