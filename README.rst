@@ -30,31 +30,58 @@ Setup
 Running the model
 -----------------
 
-1. Set ``MODEL_NUMBER`` in ``src/lsff_utils/paths.py``. This is the label the run is
-   archived under in step 6.
-2. Delete what you want rebuilt (see the table below).
-3. Start ``tmux`` and an ``srun``. Request enough time for the whole run, because
+1. Set ``MODEL_NUMBER`` in ``src/lsff_utils/paths.py``. The run is written to the
+   team drive under this label.
+2. Start ``tmux`` and an ``srun``. Request enough time for the whole run, because
    the simulations stop early without an error if the ``srun`` runs out of time.
-4. Dry run, and check the job table::
+3. Dry run, and check the job table::
 
      snakemake -n --quiet rules -c1 --config full_scale=true skip_data_prep=true
 
-5. Real run::
+4. Real run::
 
      snakemake -c1 -k --config full_scale=true skip_data_prep=true
 
-6. Archive the results to the team drive::
+Where a run writes
+~~~~~~~~~~~~~~~~~~
+
+The artifacts, the simulation runs, the LBWSG PAFs, the non-pregnant anemia results
+and the rescaled results go to the team drive under ``MODEL_NUMBER``, in the same
+layout ``archive_last_run.sh`` produces. Data prep, the NTD model, the per-location
+CSVs, the spreadsheet and the executed notebooks stay in your working tree.
+
+* A new ``MODEL_NUMBER`` starts empty, so every stage is rebuilt, the LBWSG PAFs
+  included. To keep the PAFs, copy them from the previous iteration with ``cp -a``
+  before you run.
+* If ``MODEL_NUMBER`` already has output, a real run shows who wrote it last and
+  asks before it does anything. Answer ``y`` to resume or rerun into it. Bump
+  ``MODEL_NUMBER`` to start a new iteration instead. Without a terminal to answer
+  from, as in a batch job, add ``reuse_model_number=true`` to ``--config``.
+* Snakemake stops with an error if ``archive_last_run.sh`` has already published
+  ``MODEL_NUMBER``.
+* Each run appends who started it, from which commit, and with what command to
+  ``pipeline_run_info.txt`` under each ``MODEL_NUMBER`` directory.
+* Every run directory that a rerun or a failure leaves behind stays on the team
+  drive. The ``latest_run.txt`` files name the runs the results came from.
+* ``debug=true`` always writes to the working tree.
+
+To write to your working tree instead, add ``write_local=true`` to ``--config``.
+Nothing then leaves your clone until you archive it::
 
      ./archive_last_run.sh -n    # show what would be copied
      ./archive_last_run.sh
 
+Use ``write_local=true`` on a machine that cannot reach ``/mnt/team``. Without it,
+Snakemake stops with an error there.
+
 Reading someone else's run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default the pipeline notebooks in ``5000_analyze_results`` read your working
-tree, and the validation notebooks read the team drive under ``MODEL_NUMBER``. To
-point all of them at an archived run instead, set this before starting Jupyter or
-Snakemake, and check out the commit recorded in that run's ``archive_info.txt``::
+The pipeline notebooks in ``5000_analyze_results`` read wherever the run writes,
+and the validation notebooks read the team drive under ``MODEL_NUMBER``. To point
+all of them at another iteration, set this before starting Jupyter or Snakemake,
+and check out the commit recorded in that iteration's ``pipeline_run_info.txt``
+(``archive_info.txt`` if it was archived)::
 
     export LSFF_DATA_SOURCE=model2.5.0
 
@@ -62,7 +89,9 @@ What to delete
 ~~~~~~~~~~~~~~
 
 Snakemake only rebuilds what is missing, so deleting output is how you ask for
-a stage to be redone.
+a stage to be redone. The paths below are for ``write_local=true``. On the team
+drive, bump ``MODEL_NUMBER`` instead, or delete the matching directories under it
+if nobody else is reading that iteration.
 
 ========================================  =======================================================
 To redo                                   Delete
@@ -104,9 +133,13 @@ Flag                                            Effect
 ==============================================  ==========================================================
 ``--config full_scale=true``                    Real run with 200 seeds. Without it you get 10 seeds.
 ``--config skip_data_prep=true``                Use the committed data prep CSVs as they are. Leave it off
-                                                only if you changed the extraction sheet or a data prep
+                                                only if you changed the extraction inputs or a data prep
                                                 notebook.
 ``--config debug=true``                         One draw and one seed, in the foreground, with a debugger.
+``--config write_local=true``                   Write the run to the working tree instead of the team
+                                                drive. See "Where a run writes".
+``--config reuse_model_number=true``            Write into a ``MODEL_NUMBER`` that already has output
+                                                without being asked.
 ``-c1`` (short for ``--cores 1``)               Run one Snakemake job at a time. Include it in every command.
                                                 The simulations still run in parallel on the cluster through
                                                 ``psimulate``.

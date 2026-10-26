@@ -1,4 +1,4 @@
-from lsff_utils import config_utils
+from lsff_utils import config_utils, paths, snakemake_utils
 
 debug = config["debug"]
 
@@ -6,6 +6,15 @@ debug = config["debug"]
 # f-strings. See "Recipes are not f-strings" in the root Snakefile.
 artifact_setup = config["artifact_env_setup"]
 papermill_engine = "--engine debug" if debug else ""
+
+
+# On the team drive, or in the repository with write_local=true. The notebooks
+# resolve the same root through LSFF_OUTPUT_TARGET.
+def anemia_output(location, name):
+    return snakemake_utils.output_path(
+        paths.NON_PREGNANT_ANEMIA_RESULTS_ROOT, "{vehicle}", location, name, target=config["output_target"]
+    )
+
 
 def non_pregnant_anemia_inputs(wildcards):
     return (
@@ -27,9 +36,9 @@ rule non_pregnant_anemia:
     input: non_pregnant_anemia_inputs
     output:
         [
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/ylds.parquet",
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_prevalence.parquet",
-            "0400_non_pregnant_anemia_model/results/{vehicle}/{location}/anemia_cases.parquet",
+            anemia_output("{location}", "ylds.parquet"),
+            anemia_output("{location}", "anemia_prevalence.parquet"),
+            anemia_output("{location}", "anemia_cases.parquet"),
         ]
     log: "0400_non_pregnant_anemia_model/executed/{vehicle}/{location}/non_pregnant_anemia.ipynb"
     shell:
@@ -49,9 +58,9 @@ rule non_pregnant_anemia_ethiopia_folate:
     input: non_pregnant_anemia_ethiopia_folate_inputs
     output:
         [
-            "0400_non_pregnant_anemia_model/results/{vehicle}/ethiopia/ylds.parquet",
-            "0400_non_pregnant_anemia_model/results/{vehicle}/ethiopia/anemia_prevalence.parquet",
-            "0400_non_pregnant_anemia_model/results/{vehicle}/ethiopia/anemia_cases.parquet",
+            anemia_output("ethiopia", "ylds.parquet"),
+            anemia_output("ethiopia", "anemia_prevalence.parquet"),
+            anemia_output("ethiopia", "anemia_cases.parquet"),
         ]
     log: "0400_non_pregnant_anemia_model/executed/{vehicle}/ethiopia/non_pregnant_anemia_folate.ipynb"
     shell:

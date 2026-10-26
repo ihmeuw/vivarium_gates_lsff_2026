@@ -1,0 +1,238 @@
+# How GF background data maps onto the extraction tables
+
+**NOTE:** This document is AI-generated and could probably use some
+revision.
+
+---
+
+This is the reference for the GF part of phase 1 of `build_extraction.py`, the defaults.
+For 2035 targets (fortifiability, intervention coverage and effectiveness) GF's value comes
+first; for measurements GF fills the rows the literature extraction leaves unset, and a `gf`
+decision uses GF's value where the literature has one too. This document covers the translation between GF's terms
+and ours, which extraction rows the model actually reads, and the questions that are still
+open. For how to run the scripts, see `README.md`.
+
+## Terminology
+
+| GF term (Definitions tab) | Our data need | Conversion |
+|---|---|---|
+| Coverage (Cov): % using the vehicle | `Vehicle consumption by WRA -- any` | None. Quintiles come from the country's stratified tab, the Total from the cover sheet. |
+| g/cap | `Vehicle consumption by WRA -- amount` (mean) | None. Our mean, like the GF number, is per capita (including non-consumers). |
+| Consolidation (2035) | `Vehicle "fortifiability"` | None; the 2035 value is used. Fortifiability is used only for the intervention target. |
+| Compliance (2035) | `Intervention coverage % of fortifiable` and `Intervention effective % of fortified` | Each = √compliance, rounded to 2 d.p. This is the equal split agreed with KB on 9/9. |
+| Current consolidation × compliance | `Vehicle fortification at baseline -- any` × `Baseline effective % of fortified` | any = consolidation × √compliance; effectiveness = √compliance. Applied only when GF gives both numbers. |
+| Effective coverage | output of `coverage_calculation/` | A cross-check, not an input. Our quintile values, weighted by each quintile's share of women aged 15–49, match GF's national figures to within about 0.01. |
+
+Quintile labels: Poorest/Lowest → Lowest, Second/2nd → Second, Third/3rd → Middle,
+Fourth/4th → Fourth, Wealthiest → Highest.
+
+`extract_gf.py` reads only typed-in GF cells. Formula cells are skipped, because the GF
+file's cached formula results may be stale (it was saved with `fullCalcOnLoad`). Where the
+same current value is typed in two places, the GF defaults use the cover sheet ('Burden x
+Vehicle Matrix'). The one place they disagree (India wheat compliance) is listed under
+"Questions to raise with GF" below, and `extract_gf.py` prints a warning for it.
+
+India rice is special. Its consumption and who eats government rice (PDS, school and
+anganwadi meals) come from HCES microdata (`0100_data_prep/hces`). Government rice stands in
+for consolidation, so its baseline any row is the share of government rice fortified, and it
+and baseline effectiveness each take √(GF current compliance) like other arms;
+`prep_extracted` multiplies the HCES shares eating any / only government rice by the share
+fortified. Its fortifiability isn't taken from GF automatically: GF's figure is market-wide,
+while ours is the industry consolidation applied to purchased non-government rice. Decision P011 calibrates it (0.175) so national fortifiability matches GF's. How the
+India rice model works is described in `docs/india_rice.md`.
+
+## Which extraction rows the model actually reads
+
+| Data need | Read by | Notes |
+|---|---|---|
+| WRA any | coverage calc, pregnancy sim, NTD, folate anemia; through the coverage calc, the non-pregnant (iron) anemia model | Applied to every age and sex: `prep_extracted` writes it for women 15–50 only, and the coverage notebook (and the folate anemia notebook) then use that single value for everyone, including children (see below). Not used for India, which has age- and sex-specific values from HCES. Total rows are used only in a sanity check. |
+| WRA amount mean / SD | pregnancy sim (iron arms); NTD and folate anemia (mean only) | Not used for India (HCES). The Ethiopia salt SD is never read. Total rows are used only in a sanity check. |
+| U5 amount | Nigeria only | Feeds the 5–15 age row (as 0.5 × adult + 0.5 × U5), which the pregnancy sim uses for ages 10–15. The 0–5 rows are read by nothing; the child sim reads no consumption data. |
+| U5 any | **nothing** | Not listed in `prep_extracted` `data_needs`, so children's coverage in the anemia models is the WRA value (see above). For the arms the model runs, the U5 rows equal the WRA rows except Ethiopia salt (0.97 vs 0.98) and the Nigeria bouillon Total (0.988 vs 0.981), so the effect is small. **Note:** It seems like this may have been a mistake. We should revisit and probably edit the code in `prep_extracted`. |
+| Fortifiability | coverage calc, pregnancy sim (intervention only) | For India, applied only to purchased non-government rice |
+| Baseline any / concentration / effectiveness | coverage calc, pregnancy sim, NTD, folate anemia | For India, baseline coverage = HCES shares eating government rice × the baseline any row (share of government rice fortified), and the "2021" baseline is forced to 0 in the models. |
+| Intervention rows | coverage calc, pregnancy sim (`intervention` scenario only), NTD, folate anemia | |
+| Vehicle Extraction (Hb, birthweight) | pregnancy sim, non-pregnant anemia model, child sim | The salt row is never read |
+| Country Extraction, Universal | **nothing** | |
+
+## How baseline values affect results
+
+The results are intervention minus baseline. Baseline values matter only through **effective
+baseline coverage**: the share of people already benefiting.
+
+- **Pregnancy sim (iron):** baseline-scenario hemoglobin equals GBD's, whatever baseline
+  values are entered. The sim removes the benefit it assumes is built into the 2021 data and
+  then adds the same benefit back for the same simulants. The intervention's gain is the
+  share benefiting under the intervention minus the share benefiting at baseline.
+  - The hemoglobin effect is all-or-nothing, so baseline concentration matters only as
+    zero vs. non-zero.
+  - The birthweight effect (child sim) is linear in iron intake, so the concentration value
+    itself matters.
+- **Non-pregnant anemia model:** uses baseline effective coverage computed **without**
+  concentration. (This is from the initial code trace and should be verified.)
+- **NTD model:** the folate it treats as already in the baseline is effective coverage ×
+  concentration, so it is zero when the concentration is 0.
+
+Because the anemia model ignores concentration, a baseline with non-zero coverage but a zero
+concentration is treated as fortified by that model and as unfortified by the others. Keep
+baseline coverage and concentration consistent. Nigeria wheat is now consistent: baseline
+coverage 0.79 and effectiveness 0.79 (GF; D021, D022), concentration 40 mcg/g iron and
+2.6 mcg/g folic acid (D019, D020).
+
+## Automatic rules
+
+Most interpretive choices are decisions in `decisions.csv`. A few are built into the GF
+defaults in `build_extraction.py` instead. `STATUS.md` lists, under "Automatic choices made by
+the build", every row where one of these stopped a GF number being used. Any of them can be
+overridden with a decision.
+
+| Rule | Where | Effect |
+|---|---|---|
+| If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the base Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
+| For arms in `HCES_ARMS` (India rice), consumption and fortifiability are not taken from GF, and only intervention rows take literature defaults. Baseline any (share of government rice fortified) and effectiveness are both √(current compliance), with no consolidation factor. | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based consumption and government-rice shares. |
+| Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`) take no defaults. | `read_arms`, `default_scope` | They keep their base values unless a decision targets them; `comparison.csv` shows GF's numbers for them. |
+| Effect sizes take no defaults, from the literature or GF. | `default_scope` | They change only through decisions. |
+| Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) take their baseline from the literature or, failing that, keep the base value. |
+| Compliance is split equally: coverage = effectiveness = √compliance, rounded to 2 d.p. | `gf_baseline`, `gf_intervention` | All arms. |
+| GF compliance is per vehicle, so iron and folate get the same baseline and intervention values. | `gf_baseline`, `gf_intervention` | Wrong if a vehicle is fortified with only one nutrient today; override with a decision for the other fortificant. |
+| CI and SE are cleared when a value changes by more than 1%. | `common.Workbook.outputs` | The base uncertainty no longer describes the new value. |
+| Literature units: % on a 0–100 scale becomes a fraction, ppm becomes mcg/g, g/dL becomes g/L. | `extract_lit.convert_units` | The g/dL conversion is flagged for checking. |
+
+## Questions to raise with GF
+
+1. **Nigeria rice national g/cap.** The cover sheet gives 38 g/day (sourced to M4N). GF's own
+   quintiles (34.1–79.5, mean 60.1) and zones (48.7–73) come from NFCMS and are consistent with
+   NFCMS's national 61.2 and with a GHS-Panel 2023/24 estimate of 62.7. Is 38 an update that
+   should replace the NFCMS values, or a different measure (e.g. industrially milled rice, or all
+   ages)? Currently the NFCMS national mean is used (D028; the literature has both figures).
+   Proposed decision P009
+   would rescale the quintiles to 38 (× 0.63).
+2. **India wheat current compliance.** The cover sheet (R7) says 5%; Coverage Over Time (E20) says
+   50%. GF's change log (the workbook's 'Sources' tab, row 29, dated 28 Sep 2026, for the India
+   update by Kathy and Ruchika) says current wheat flour compliance was changed from 5% to 50%,
+   but only Coverage Over Time was changed (E20 is typed in, while other rows link to the cover
+   sheet). We are using 5% (D023, D024): with consolidation 0.15 it gives a fortified share of
+   0.15 × √0.05 ≈ 3.4%, close to GFDx's 4% of wheat flour fortified, whereas 50% gives about
+   11%. Which is intended? (India wheat isn't in the model yet.)
+3. **Basis of the consumption figures.** Are the g/cap figures (NFCMS usual intake) means over
+   all women, or among consumers? An earlier email (JG, 8/31) said among consumers for rice;
+   NFCMS's method and Tables 172–173 (Ns are all respondents; 25th percentiles > 0 in every
+   quintile) and the GHS-Panel cross-check point to all women. Both rice and wheat are now
+   treated as per capita.
+4. **What coverage measures.** Nigeria wheat coverage (28%) is home use of wheat flour (NFCMS
+   Table 146), and NFCMS notes that most others eat vendor-made bread. Is the 28% meant to be
+   the full reach of fortifiable wheat, or should bread eaters count? Nigeria rice coverage
+   (53.6%; 33.6–67.6% by quintile) is not in the NFCMS report: the input workbooks note it was
+   "provided by INTAKE". What does it measure? It can't be the share who eat rice at all (NFCMS
+   usual intake is positive for at least 75% of women in every quintile); it is probably the
+   share eating rice on the recall day. GHS-Panel 2023/24 shows 86.7% eating rice over 7 days.
+5. **Compliance by nutrient.** GF gives one compliance per vehicle. Is Nigerian (and Indian)
+   wheat flour currently fortified with folic acid, or only iron?
+6. **Nigeria bouillon 2035 compliance** rose from 50% (April workbook) to 85%. This roughly
+   doubles the modelled intervention effect, so it is worth confirming.
+7. **India rice.** GF's consolidation for India rice is a blend. A comment on 'Coverage Over
+   Time'!H22 says the 2031 and 2035 values blend two rows of GF's 25 Sep vehicle-data file,
+   weighted by each channel's reach: "Rice w/ PDS" (2031 0.5792, 2035 0.6279) and "Rice w/o
+   PDS" (2031 0.2145, 2035 0.3516). The implied PDS weight is 0.73 in 2031 and 0.64 in 2035
+   (HCES: 0.70 of women eat some government rice). Our model applies industry consolidation
+   only to purchased non-government rice, and P011 (0.175) calibrates it to the blend (0.529). Questions:
+   what do the two channel figures measure (households with/without PDS access, or rice
+   streams), and does "PDS" mean the PDS alone or all government schemes (school and
+   anganwadi meals too)? If "w/o PDS" is the fortifiable share of open-market rice, it maps directly onto
+   our industry consolidation (about 0.35 in 2035, giving national fortifiability about 0.61).
+   What are the current-year channel values? Could GF keep the two channels separate in the
+   background data (as the LSFF DALYs 'Input - workbook' tab does), with consolidation,
+   compliance and reach for each, for current, 2031 and 2035? That would fit our HCES-based
+   model better than the blend. We also apply GF's current compliance (50%) to government
+   rice only (the literature extraction notes it is for government rice). Is that GF's
+   meaning?
+8. **India rice consolidation path.** Current consolidation is 0.50, 2031 is 0.48 and 2035 is
+   0.53, so it falls before it rises. The current value comes from the cover sheet (M4N,
+   updated in the India revision), while 2031 and 2035 are reach-weighted blends from the
+   25 Sep file whose PDS weight falls from 0.73 to 0.64, so the dip may be an artifact of
+   mixing sources and weights. Is the 2031 value intended?
+9. **Minor transcription differences** spotted in the literature extraction: Nigeria wheat
+   coverage 28.0 vs NFCMS 28.2; salt 99.2 vs 99.3; rice poorest-quintile g/cap 34.1 vs NFCMS
+   34.2.
+10. **Ethiopia salt intake.** The cover sheet gives national salt intake of 7.8 g/day, but the
+   wealth-quintile values on the Ethiopia tab (7.08, 7.24, 7.70, 7.16, 6.50; from the 2022
+   national survey) average 7.14. Which is right? Our model uses the quintile values. The
+   literature workbook now sets the 25% and 100% NRV folic acid concentrations with 7.8 g/day
+   (12.8 and 51.3 mcg/g, previously 14.1 and 56.3 with 7.1), so those scenarios deliver about
+   9% less folic acid than their labels (about 23% and 91% of the NRV), and NTDs averted fell
+   6% and 4% in the October 2026 run. The 45 ppm scenario is unaffected. Proposed decisions
+   P012/P013 (concentrations from 7.14 g/day) or P014 (quintiles rescaled to 7.8) would make
+   the scenarios deliver their stated NRV.
+
+## Latent issue in `prep_extracted.ipynb`
+
+`check_totals_reasonable` compares the U5 sex totals with the **unweighted** mean of the
+quintile values built by the Nigeria interpolation. Those values are scaled to match a total
+**weighted** by U5 wealth probabilities. A steep enough WRA wealth gradient therefore fails
+the 10% tolerance, whatever the U5 inputs are.
+- Wheat treated as among consumers (3 → 22 g/day) failed the check.
+- Treated as per capita (16 → 62 g/day), it passes.
+
+If it trips again, weight that mean (or loosen `rtol`).
+
+## Open questions and planned improvements
+
+1. **What basis is NFCMS consumption on?** It is most likely population-wide. NFCMS's
+   NCI usual-intake method produces intake for everyone, and the GHS-Panel cross-check
+   matches for rice; Tables 172–173 confirm it for rice. To be confirmed with GF (question 3).
+   - **Wheat:** treated as per capita. SDs use the NFCMS CV (decisions D007, D008), because NFCMS
+     usual-intake SDs are incompatible with our zero-inflated model. See
+     `CONSUMPTION_DISTRIBUTION.md`.
+   - **Rice:** switched to per capita on 9 Oct 2026 (D006, P007, D027 rejected): NFCMS means
+     as published, the national mean from D028, and SDs from the NFCMS CV (P008, D032).
+     Coverage *p* is unchanged (question 4), so rice eaters now eat mean / *p* (102–118 g/day
+     for women, 1.5–3.0× before); hemoglobin is nearly unchanged, while birthweight and NTD
+     effects rise.
+   - **A redesign** of the consumption model (a non-negative intake distribution, with GF
+     coverage unchanged) is described in `CONSUMPTION_DISTRIBUTION.md`, section 5.
+2. **Store published numbers and convert in code.** Label each amount row's basis in the
+   tables (e.g. "mean among consumers" vs "mean, all women") and let `prep_extracted` do
+   the conversion, for SDs as well as means.
+3. **Put baseline and intervention coverage on the same basis.**
+   - Baseline "any" coverage is a share of *consumers*, with consolidation already folded in.
+   - Intervention coverage is a share of *fortifiable* product, multiplied by
+     fortifiability in code.
+   - Plan: store current fortifiability too, and compute baseline coverage from it the same
+     way.
+4. **Nigeria wheat baseline** is set (D019–D022): GF coverage and effectiveness (0.79 each),
+   concentrations at the national standard (40 mcg/g iron, 2.6 mcg/g folic acid). This treats
+   wheat flour as already fortified with both today, which reduces the modelled intervention
+   effect. The literature alternatives (NFCMS 12.6% coverage, 73% compliance, 53.9 mcg/g) were
+   rejected (P001–P004); question 5 above affects the folate part.
+5. **Arms not in the model yet** (Nigeria salt, India wheat, India salt, Ethiopia wheat) keep
+   their base values while their data are reviewed or extracted; `comparison.csv` still shows
+   GF's numbers for them. India wheat already has baseline decisions (D023, D024). To add one,
+   restore it in `0050_config/location_fortificant_vehicles.csv`,
+   `location_vehicle_scenario_comparisons.csv` and (for Nigeria salt) the commented-out
+   scenarios in `config.yaml`. The next build fills it in from the literature and GF and runs
+   the checks on it; expect to need decisions (e.g. Ethiopia wheat's DUMMY SDs fail the
+   consumer-variance check against GF's means).
+6. **India rice.** The share of government rice fortified, formerly hard-coded in the HCES notebook
+   (`GOVERNMENT_BASELINE_COVERAGE = 0.8`), is now the baseline any row, and with baseline
+   effectiveness takes √(GF current compliance 0.5) = 0.71 (D029, D030). National effective
+   baseline coverage (WRA) fell from 0.277 to 0.218. The HCES notebook now writes unscaled
+   shares (`hces/india_share_eating_{any,only}_government_rice.csv`); the committed files were
+   derived from the previous outputs (÷ 0.8), and the October 2026 HCES rerun reproduced them.
+   Industry consolidation (applied to purchased non-government rice) is 0.175 (P011),
+   calibrated so national fortifiability matches GF's 2035 consolidation (0.529); intervention
+   effective coverage (WRA) is 0.44, as in GF. The base 0.45 was probably a market-wide
+   figure and double-counted government rice. Sensitivity: 0.065 matches only GF's increase.
+7. **Literature row IDs** are hashes of each row's content, so editing key fields in the
+   literature workbook (e.g. fixing a scenario label) changes the ID and breaks decisions that
+   use it. The build stops and suggests replacements. `extract_lit.py` already reads an `ID`
+   column; adding one to the workbook would prevent this.
+8. **Coverage Totals: literature vs GF.** GF's national coverage rounds NFCMS (rice 0.54 vs
+   0.536, wheat 0.28 vs 0.282). The literature's figures are used (D025 and D026, which kept
+   GF's to match the PR #53 run, were rejected on 9 Oct 2026). The Totals only sanity-check the
+   quintiles and set the coverage for the national and U5 consumer-CV SDs.
+9. **2035 targets where the literature differs.** GF's targets are used by default and
+   the literature's current-state values for these rows aren't reported. The ones that
+   differ: Nigeria rice fortifiability (GF 0.90 vs M4N 0.54, GFDx 0.30); Nigeria bouillon
+   fortifiability (GF 1.0 vs Dashboard 0.95); Nigeria wheat intervention coverage (GF
+   √0.85 = 0.92 vs the literature extraction's 100%). These were decisions D011–D018 before
+   GF came first for targets.

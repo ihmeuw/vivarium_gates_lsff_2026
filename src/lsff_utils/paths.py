@@ -5,8 +5,7 @@ Paths
 
 Filesystem locations for the LSFF modeling pipeline.
 
-The pipeline reads and writes inside the repository, beside the package that
-produces each thing::
+Each output has an in-repo root, beside the package that produces it::
 
     0200_pregnancy_sim/mean_draw_artifacts/<vehicle>/<location>.hdf
     0200_pregnancy_sim/sim_results/<vehicle>/<location>/<run>/
@@ -20,9 +19,9 @@ produces each thing::
 All of them are gitignored: they hold large binaries and psimulate's per-run
 metadata, none of which belongs in version control.
 
-Nothing here carries a model iteration number. The repository holds the run you
-are working on; ``archive_last_run.sh`` publishes it to the team drive under
-:data:`MODEL_NUMBER`, and that archive is the versioned record::
+Nothing here carries a model iteration number. On the team drive, the same
+outputs are grouped by kind under :data:`MODEL_NUMBER`, and that is the
+versioned record::
 
     /mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026/
     |-- artifacts/<MODEL_NUMBER>/{maternal,child}/<vehicle>/<location>.hdf
@@ -37,12 +36,13 @@ and lets :data:`MODEL_NUMBER` supply the rest::
 
     results = latest_results(archive_root(CHILD_RESULTS_ROOT), location, vehicle)
 
-Because the in-repo paths do not move between iterations, Snakemake no longer
-rebuilds a stage just because a number was bumped -- it reruns on changed inputs
-or changed recipe code, which is what its staleness tracking is for. Starting a
-new iteration therefore means: archive what you have, bump MODEL_NUMBER, then
-clear the in-repo roots (or ``--forcerun`` the stages you want rebuilt). See the
-"What to delete" section of the README.
+By default ``snakemake`` writes these outputs straight to the team drive under
+:data:`MODEL_NUMBER`, through :func:`output_root`, so a new number starts from
+nothing and rebuilds every stage. ``--config write_local=true`` writes them to
+the in-repo roots instead, and ``archive_last_run.sh`` publishes them later. The
+in-repo roots do not move between iterations, so there Snakemake reruns only on
+changed inputs or recipe code. Data prep, the NTD model, the summary CSVs and
+the executed notebooks stay in the repository either way.
 
 These constants live in ``lsff_utils`` rather than in either simulation package
 because the two packages have to agree on them. The child model's population
@@ -87,7 +87,7 @@ RESCALED_CHILD_RESULTS_ROOT = (
 # ---------------------------------------------------------------------------
 
 #: Label the archive files this iteration under. Bump it to start a new one.
-MODEL_NUMBER = "model2.5.0"
+MODEL_NUMBER = "model2.6.1"
 
 #: Team-drive root that ``archive_last_run.sh`` publishes to.
 TEAM_ARCHIVE_ROOT = Path("/mnt/team/simulation_science/pub/models/vivarium_gates_lsff_2026")
@@ -138,7 +138,12 @@ def archive_root(in_repo_root: Path, model_number: str = MODEL_NUMBER) -> Path:
 #: Environment variable choosing where the 5000 notebooks read pipeline output from.
 DATA_SOURCE_ENV_VAR = "LSFF_DATA_SOURCE"
 
-#: The :func:`source_root` value meaning this working tree.
+#: Environment variable naming where the pipeline writes: ``"local"`` or a model
+#: number. The root Snakefile sets it from ``--config write_local``, so the
+#: notebooks and ``make_artifacts`` it starts write where the rules expect.
+OUTPUT_TARGET_ENV_VAR = "LSFF_OUTPUT_TARGET"
+
+#: The :func:`source_root` and :func:`output_root` value meaning this working tree.
 LOCAL_SOURCE = "local"
 
 
@@ -151,11 +156,32 @@ def data_source(default: str) -> str:
     return os.environ.get(DATA_SOURCE_ENV_VAR) or default
 
 
-def source_root(in_repo_root: Path, source: str) -> Path:
-    """``in_repo_root`` for ``"local"``, otherwise its archive under model number ``source``."""
-    if source == LOCAL_SOURCE:
+def output_target() -> str:
+    """``LSFF_OUTPUT_TARGET`` if set, else ``"local"``."""
+    return os.environ.get(OUTPUT_TARGET_ENV_VAR) or LOCAL_SOURCE
+
+
+def output_root(in_repo_root: Path, target: str | None = None) -> Path:
+    """Where the pipeline writes what ``in_repo_root`` holds.
+
+    ``in_repo_root`` for ``"local"``, otherwise its archive under model number
+    ``target``. ``target`` defaults to :func:`output_target`.
+    """
+    target = target or output_target()
+    if target == LOCAL_SOURCE:
         return in_repo_root
-    root = archive_root(in_repo_root, source)
+    return archive_root(in_repo_root, target)
+
+
+def source_root(in_repo_root: Path, source: str) -> Path:
+    """``in_repo_root`` for ``"local"``, otherwise its archive under model number ``source``.
+
+    An archive the current run is writing to may not exist yet, so it is not
+    checked for.
+    """
+    root = output_root(in_repo_root, source)
+    if source in (LOCAL_SOURCE, output_target()):
+        return root
     if not root.is_dir():
         raise FileNotFoundError(
             f"'{root}' does not exist. Check that {DATA_SOURCE_ENV_VAR}='{source}' is "

@@ -1,5 +1,5 @@
 from lsff_utils import config_utils, snakemake_utils
-from snakemake.io import directory
+from snakemake.io import directory, touch
 
 debug = config["debug"]
 
@@ -55,12 +55,49 @@ rule dhs_mm:
         papermill maternal_mortality_{wildcards.location}.ipynb ../executed/dhs/{wildcards.location}/maternal_mortality_{wildcards.location}.ipynb -k python3 {papermill_engine}
         """
 
+# The extraction tables the data prep notebooks read (extraction/generated/) are built from
+# the base tables, the literature and GF snapshots, decisions.csv and the model's list of
+# arms, by extraction/integration/build_extraction.py. Snakemake does NOT run the build: it
+# only checks that the committed tables are up to date, and stops if they aren't. Run the
+# build by hand, review what changed and commit it (see 0100_data_prep/extraction/README.md).
+# That way a failed build can't delete the committed tables, and the model only ever runs
+# on tables someone has reviewed. tests/test_extraction_build.py runs the same check.
+#
+# The check joins the DAG only when data prep runs: with skip_data_prep=true, a missing
+# check marker would otherwise make data prep rerun.
+extraction_check_marker = "0100_data_prep/extraction/integration/.extraction_checked"
+extraction_check = [] if frozen else [extraction_check_marker]
+
+rule check_extraction:
+    input:
+        [
+            f"0100_data_prep/extraction/{layer}/{table}.csv"
+            for layer in ["data", "generated"]
+            for table in ["country_vehicle", "country_vehicle_fortificant", "scenario_definition", "vehicle"]
+        ] + [
+            "0100_data_prep/extraction/integration/lit_long.csv",
+            "0100_data_prep/extraction/integration/gf_long.csv",
+            "0050_config/location_fortificant_vehicles.csv",
+            "0100_data_prep/extraction/integration/decisions.csv",
+            "0100_data_prep/extraction/integration/build_extraction.py",
+            "0100_data_prep/extraction/integration/common.py",
+            "0100_data_prep/extraction/integration/report.py",
+        ]
+    output:
+        touch(extraction_check_marker)
+    shell:
+        """
+        {common_setup}
+        cd extraction/integration
+        python build_extraction.py --check
+        """
+
 rule prep_vehicle:
     input:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_vehicle.ipynb",
-            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
-        ], frozen)
+            "0100_data_prep/extraction/generated/vehicle.csv",
+        ], frozen) + extraction_check
     log: "0100_data_prep/executed/extraction/prep_vehicle.ipynb"
     output: 
         [
@@ -99,6 +136,13 @@ location_vehicle_fortificant_intervention_scenario_specific_data_needs = [
 
 extracted_output_files = []
 hces_output_files = []
+# Written by the HCES notebook into hces/ (committed) and read by prep_extracted
+hces_local_files = [
+    "0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv",
+    "0100_data_prep/hces/india_proportion_government_rice.csv",
+    "0100_data_prep/hces/india_share_eating_any_government_rice.csv",
+    "0100_data_prep/hces/india_share_eating_only_government_rice.csv",
+]
 
 location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
 
@@ -114,7 +158,10 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
 for (location, vehicle, fortificant) in config_utils.get_configured_combos(["location", "vehicle", "fortificant"]):
     for data_need in location_vehicle_fortificant_specific_data_needs:
         file_name = f"0100_data_prep/results/{fortificant}/{vehicle}/{data_need}/{location}.csv"
-        if (location, vehicle) == ("india", "rice") and (("baseline_fortification" in data_need) and ("concentration" not in data_need) and ("effectiveness" not in data_need)):
+        # India rice: HCES gives the partial-coverage amounts directly; any/full coverage are
+        # the HCES government-rice shares scaled in prep_extracted by the share of government rice
+        # fortified.
+        if (location, vehicle) == ("india", "rice") and "partial_coverage_amount" in data_need:
             hces_output_files.append(file_name)
         else:
             extracted_output_files.append(file_name)
@@ -132,7 +179,7 @@ rule prep_hces:
         ], frozen)
     log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
     output: 
-        hces_output_files + ['0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv', '0100_data_prep/hces/india_proportion_government_rice.csv']
+        hces_output_files + hces_local_files
     shell:
         """
         {common_setup}
@@ -145,11 +192,11 @@ rule prep_extracted:
     input:
         snakemake_utils.freeze([
             "0100_data_prep/extraction/prep_extracted.ipynb",
-            "0100_data_prep/extraction/Data Extraction Sheet.xlsx",
-            '0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv',
-            '0100_data_prep/hces/india_proportion_government_rice.csv',
+            "0100_data_prep/extraction/generated/country_vehicle.csv",
+            "0100_data_prep/extraction/generated/country_vehicle_fortificant.csv",
+            "0100_data_prep/extraction/generated/scenario_definition.csv",
             '0100_data_prep/results/wealth_quintile_probabilities/nigeria.csv',
-        ], frozen)
+        ] + hces_local_files, frozen) + extraction_check
     log: "0100_data_prep/executed/extraction/prep_extracted.ipynb"
     output: 
         extracted_output_files

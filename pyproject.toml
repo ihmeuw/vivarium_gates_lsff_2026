@@ -18,8 +18,8 @@ dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
     "vivarium-build-utils>=4.4.2,<5.0.0",
     "vivarium-gbd-mapping>=6.0.7",
-    "vivarium-engine>=5.5.3",
-    "vivarium-public-health>=6.4.5",
+    "vivarium-engine>=5.11.0",
+    "vivarium-public-health>=6.6.4",
     "jinja2",
     "pyyaml",
 ]
@@ -66,8 +66,8 @@ data = [
 notebooks = [
     "papermill",
     "ploomber-engine",  # Provides papermill's `--engine debug`, used by the debug profile.
-    "openpyxl",  # Reads the extraction workbook.
     "xlsxwriter",  # Writes results_spreadsheet.xlsx.
+    "openpyxl",  # extraction/integration/extract_*.py read the GF and literature workbooks.
     "statsmodels",
     "scikit-learn",
     "vivarium_gates_lsff_2026[interactive]",
@@ -85,6 +85,8 @@ validation = [
     "jupyterlab",
 ]
 lint = ["vivarium-dependencies[lint]"]
+# Builds the Markdown notes in docs/ (make build-docs).
+docs = ["vivarium-dependencies[sphinx]", "myst-parser"]
 # Snakemake drives the pipeline. It lives in the simulation environment rather
 # than one of its own because it does not need one: a rule's recipe activates the
 # environment that stage needs in its own subshell, so the environment Snakemake
@@ -102,7 +104,7 @@ simulation = [
     # the artifact path.
     "vivarium-fuzzy-checker>=0.3.0",
 ]
-dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,simulation,notebooks,workflow]"]
+dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,docs,simulation,notebooks,workflow]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
