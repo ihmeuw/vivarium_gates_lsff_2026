@@ -210,7 +210,7 @@ current state, so they're expected to differ.
 | proposed decision (not applied) / is invalid | Set its status to active or rejected, or fix it. |
 | literature row needs attention | Fix the row in the literature workbook, or add a typo fix to `common.py`. |
 | literature row can't be matched | A literature row matches table rows but isn't used: its scenario is blank where the arm has several intervention scenarios, or its units differ from the table's. Fix it in the literature workbook. |
-| literature value has no row in the extraction sheet | There's nowhere to put it: its need isn't in the spec for that arm, or its scenario isn't configured. |
+| literature value has no row in the extraction tables | There's nowhere to put it: its need isn't in the spec for that arm, or its scenario isn't configured. |
 
 **comparison.csv** (and `comparison.xlsx`, the same with colours, written when openpyxl is
 installed; gitignored) has one row per data row of the extraction tables, with these side by

@@ -844,7 +844,7 @@ def build_review(wb, lit, arms, decisions, decided, gf_values):
             continue
         if not rows:
             if r.need in NEEDS and NEEDS[r.need][0] != VEH:
-                add("literature value has no row in the extraction sheet", f"{r.need} {r.country} {r.vehicle} {r.quintile or ''} "
+                add("literature value has no row in the extraction tables", f"{r.need} {r.country} {r.vehicle} {r.quintile or ''} "
                     f"{r.data_point_name}: {r.value:g}", lit_id=r.lit_id)
             continue
         for row in rows:
@@ -1051,7 +1051,7 @@ def build_comparison(gf, wb, lit, arms, decisions, frames):
                         "arm_modeled": listed.get((x.country, x.vehicle), "no"),
                         "lit_value": x.value, "lit_as_published": x.raw_value, "lit_ids": x.lit_id,
                         "lit_source": x.data_source,
-                        "output_source": "(no row in the extraction sheet)" if x.status == "ok"
+                        "output_source": "(no row in the extraction tables)" if x.status == "ok"
                         else f"(literature row needs attention: {x.issues})"})
     return pd.DataFrame(records)
 
