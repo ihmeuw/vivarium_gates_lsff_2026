@@ -1,4 +1,4 @@
-"""Step 1b: hand extractions (LSFF_effect_sizes.xlsx) -> lit_long.csv, in our terms.
+"""Step 1b: hand extractions (LSFF_model_inputs.xlsx) -> lit_long.csv, in our terms.
 
 Built to survive the source workbook being edited and reformatted:
 
