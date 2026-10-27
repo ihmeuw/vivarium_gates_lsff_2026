@@ -360,7 +360,9 @@ def reshape_to_vivarium_format(df, location, verbosity=None):
         return df
 
 
-def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosity=None):
+def pull_modelable_entity_draws(
+    me_id, location, year=None, draws=None, verbosity=None, release_id=None
+):
     """Pull draws for a modelable entity, reshaped to the Vivarium convention.
 
     Named to match :func:`pull_sequelae_prevalence` rather than the
@@ -386,6 +388,8 @@ def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosit
         A :class:`Verbosity`. Defaults to :data:`DEFAULT_VERBOSITY`. Ignored
         when already inside a :func:`quiet_gbd_logs` block -- the outermost
         block governs.
+    release_id
+        GBD release ID. Defaults to the ``vivarium_gbd_access`` current release.
     """
     # This block is the one that matters, and it cannot be replaced by passing
     # verbosity down to the calls below: resolve_location and
@@ -402,8 +406,13 @@ def pull_modelable_entity_draws(me_id, location, year=None, draws=None, verbosit
             draws = DRAWS
 
         location_id = utility_data.resolve_location(location.title())
+        release_kwargs = {} if release_id is None else {"release_id": release_id}
         result = gbd.get_modelable_entity_draws(
-            me_id=me_id, location_id=location_id, year_id=year, data_type="draws"
+            me_id=me_id,
+            location_id=location_id,
+            year_id=year,
+            data_type="draws",
+            **release_kwargs,
         )
         return (
             reshape_to_vivarium_format(result, location.title())
