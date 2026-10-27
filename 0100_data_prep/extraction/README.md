@@ -78,5 +78,4 @@ thoroughly revised, and they may contain errors:
 
 - `0100_data_prep/extraction/README.md`
 - `0100_data_prep/extraction/integration/`:
-  - `README.md`, `GF_DATA_MAPPING.md`, `CONSUMPTION_DISTRIBUTION.md` and
-    `REDESIGN_PROPOSAL.md`
+  - `README.md`, `GF_DATA_MAPPING.md` and `CONSUMPTION_DISTRIBUTION.md`

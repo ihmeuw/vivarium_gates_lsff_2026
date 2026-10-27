@@ -12,9 +12,7 @@ notebooks read) from:
   `config.yaml` for each arm's intervention scenarios (scope).
 
 Every value in the output comes from the literature, GF or a decision. (The old extraction
-sheet's tables, `../data/`, were removed in October 2026; they are in git history, and
-`old_values_in_use.csv` lists the ones that were still in use then. See
-`REDESIGN_PROPOSAL.md`.)
+sheet's tables, `../data/`, were removed in October 2026; they are in git history.)
 
 ```
 python extract_lit.py --lit <LSFF_effect_sizes.xlsx>   # literature workbook -> lit_long.csv
