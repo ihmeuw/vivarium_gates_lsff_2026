@@ -118,8 +118,8 @@ def get_anemia_yld_rate(location: str):
 def get_hemoglobin_exposure_data(key: str, location: str):
     # Release 33 estimates are already for the pregnant population, so no
     # pregnancy correction factor is applied downstream. The SD model version was
-    # never published, so both mean and SD are read from the stored get_draws
-    # capture (rei 376, females, 2023) that MNCNH also uses.
+    # never published, so both mean and SD are read from the stored files
+    # (rei 376, females, 2023) that MNCNH also uses.
     dataset = {
         data_keys.HEMOGLOBIN.MEAN: "hemoglobin_exposure",
         data_keys.HEMOGLOBIN.STANDARD_DEVIATION: "hemoglobin_exposure_sd",
