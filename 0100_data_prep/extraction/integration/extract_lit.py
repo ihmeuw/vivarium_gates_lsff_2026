@@ -22,6 +22,10 @@ Built to survive the source workbook being edited and reformatted:
   When candidates disagree, build_extraction uses it to pick the literature default ('no'
   candidates are ignored; if any are 'yes', only those count), and shows it in review.csv
   and comparison.csv.
+* Population (WRA, Pregnant women, Children U5, ...) and Sex (Female, Male, Total,
+  All (assumed same)) are separate columns. Older workbooks folded sex into Population
+  ('Children U5 - male'); that still works when there is no Sex column. U5 rows take their
+  sex from Sex; WRA rows are always Female.
 
 Rows that can't be mapped onto one of our data needs are kept, with status
 'needs_attention' and the reason, so nothing disappears silently.
@@ -38,7 +42,7 @@ import openpyxl
 import pandas as pd
 
 from common import (
-    CVF, SCEN, COUNTRIES, FORTIFICANTS, LIT_FILE, LIT_LONG, NEEDS, QUINTILE_LABELS, VEHICLES,
+    ALL_SAME, CVF, SCEN, COUNTRIES, FORTIFICANTS, LIT_FILE, LIT_LONG, NEEDS, QUINTILE_LABELS, VEHICLES,
     canonical, fix_typos, need_alias, norm, record_source, stable_id,
 )
 
@@ -53,6 +57,7 @@ COLUMN_SYNONYMS = {
     "scenario": ["scenario"],
     "quintile": ["quintile", "wealth quintile"],
     "population": ["population"],
+    "sex": ["sex"],
     "data_need": ["data need"],
     "data_point_name": ["data point name", "measure"],
     "units": ["units", "unit"],
@@ -90,6 +95,9 @@ POPULATIONS = {
     "children u5 - male": ("u5", "Male"),
     "children u5 - female": ("u5", "Female"),
 }
+
+# Sex column label -> our sex
+SEXES = {"female": "Female", "male": "Male", "total": "Total", "all": "Total", "all (assumed same)": ALL_SAME}
 
 
 def find_columns(ws):
@@ -164,10 +172,16 @@ def normalise(sheet_name, r, raw):
         issues.append("population is women but the data need is for U5")
     if age_group == "pregnant":
         no_target.append("pregnant women: the workbook has no pregnant-specific rows")
+    sex_text = " ".join(str(raw.get("sex") or "").split())
+    sex_column = SEXES.get(norm(sex_text)) if sex_text else None
+    if sex_text and sex_column is None:
+        issues.append(f"unknown sex '{sex_text}' (known: {', '.join(SEXES)})")
     if alias in ("any", "amount"):
+        if sex_column == "Male":
+            issues.append("sex is Male but the data need is for WRA")
         rec["sex"] = "Female"  # WRA rows in our workbook are all Sex = Female
     elif alias in ("u5_any", "u5_amount"):
-        rec["sex"] = sex or "Total"
+        rec["sex"] = sex_column or sex or "Total"
     else:
         rec["sex"] = None
 
@@ -204,7 +218,7 @@ def normalise(sheet_name, r, raw):
     rec["_explicit_id"] = bool(explicit)
     rec["lit_id"] = (explicit if explicit.startswith("lit:") else f"lit:{explicit}") if explicit else stable_id(
         "lit", rec["country"], rec["vehicle"], rec["fortificant"], rec["scenario"], rec["quintile"],
-        rec["population"], rec["need"] or rec["data_need"], rec["data_point_name"], rec["data_source"],
+        rec["population"], *([sex_text] if sex_text else []), rec["need"] or rec["data_need"], rec["data_point_name"], rec["data_source"],
         rec["term"],
     )
     if rec["value"] is None:
