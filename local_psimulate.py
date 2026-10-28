@@ -18,7 +18,7 @@ if __name__ == "__main__":
     from vivarium.cluster_tools.psimulate import COMMANDS, model_specification
     from vivarium.cluster_tools.psimulate.branches import Keyspace
     from vivarium.engine.framework.configuration import build_model_specification
-    from vivarium.engine.framework.engine import SimulationContext
+    from vivarium.engine.framework.engine import Simulation
 
     keyspace = Keyspace.from_branch_configuration(Path(args.branches))
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             source="branch_config",
         )
         branch_config.update(configuration.to_dict())
-        sim = SimulationContext(model_spec, configuration=configuration)
+        sim = Simulation(model_spec, configuration=configuration)
         sim.run_simulation()
 
         results = sim.get_results()  # Dict[measure, results dataframe]
