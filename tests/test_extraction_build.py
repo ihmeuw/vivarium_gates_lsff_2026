@@ -45,3 +45,43 @@ def test_generated_tables_are_up_to_date(fresh_build):
         f"generated/ is out of date ({', '.join(stale)}); rebuild with "
         "`cd 0100_data_prep/extraction/integration && python build_extraction.py`"
     )
+
+
+@pytest.mark.parametrize(
+    "tamper, expected",
+    [
+        # A label that matches no table row (U5 amounts have only a Total quintile row)
+        (
+            lambda lit: (lit.country == "Nigeria")
+            & (lit.vehicle == "Salt")
+            & (lit.need == "u5_amount")
+            & (lit.sex == "Female"),
+            "match none of the table's rows",
+        ),
+        # A row extract_lit couldn't read
+        (
+            lambda lit: (lit.country == "Nigeria")
+            & (lit.vehicle == "Salt")
+            & (lit.need == "amount")
+            & (lit.quintile == "Lowest"),
+            "unreadable row",
+        ),
+    ],
+    ids=["mislabelled quintile", "needs attention"],
+)
+def test_dropped_literature_fails_the_build(fresh_build, tmp_path, tamper, expected):
+    """A literature value for an arm the model runs must never be dropped silently."""
+    import pandas as pd
+
+    module, _ = fresh_build
+    lit = pd.read_csv(module.LIT_LONG, dtype=str, keep_default_na=False)
+    rows = tamper(lit) & (lit.status == "ok") & (lit.use_in_model != "no")
+    assert rows.any()
+    if expected == "unreadable row":
+        lit.loc[rows, ["status", "issues"]] = ["needs_attention", "unreadable row"]
+    else:
+        lit.loc[rows, "quintile"] = "All (assumed same)"
+    path = tmp_path / "lit_long.csv"
+    lit.to_csv(path, index=False)
+    problems = module.build(lit_long=path).problems
+    assert any("literature workbook" in p and expected in p for p in problems), problems
