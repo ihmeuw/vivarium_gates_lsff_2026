@@ -17,6 +17,8 @@ from vivarium_gates_lsff_2026_maternal.constants import paths
 
 ME_ID = 28869
 MODEL_VERSION_ID = 926437
+# The folio name for 926437, per the README in HEMOGLOBIN_RELEASE_33_DATA_DIR.
+MODEL_VERSION_NAME = "mv_20250822_axial_black_hyena"
 REI_ID = 376
 RELEASE_ID = 33
 YEAR_ID = 2023
@@ -45,7 +47,9 @@ def pull_mean(location: str) -> pd.DataFrame:
     )
     data = data[data["sex_id"] == FEMALE].assign(rei_id=REI_ID, parameter="continuous")
     versions = data["model_version_id"].unique().tolist()
-    assert versions == [MODEL_VERSION_ID], f"Expected model version {MODEL_VERSION_ID}, got {versions}"
+    assert versions == [MODEL_VERSION_NAME], f"Expected {MODEL_VERSION_NAME}, got {versions}"
+    # Store the legacy numeric ID, as the existing files do.
+    data["model_version_id"] = MODEL_VERSION_ID
     draws = [c for c in data.columns if c.startswith("draw_")]
     return (
         data[COLUMNS + draws + ["model_version_id"]]
