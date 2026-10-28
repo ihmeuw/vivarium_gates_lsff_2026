@@ -129,6 +129,14 @@ optional row nothing fills is left out.
      are required);
    - every row whose literature candidates disagree is resolved, by a `Use in model` mark
      or a decision;
+   - no literature value for an arm the model runs is dropped silently: every literature
+     row with a value that isn't marked `Use in model` = no must reach a table row. It fails
+     if `extract_lit.py` couldn't read the row (status `needs_attention`) or if its labels
+     match no row (e.g. quintile `All (assumed same)` where the table has only `Total`).
+     Out of scope, and not checked: fortificants the arm doesn't model, intervention
+     scenarios it doesn't run, consumption for HCES arms, and data needs that aren't ours
+     (`no_target` in `lit_long.csv`; a misspelt data need also ends up there, so check
+     `review.csv`);
    - percentages are in [0, 1] (every row the build sets);
    - for the arms the model runs, apart from India rice (HCES) and arms without amount rows:
      consumer variance is > 0 (needed by the pregnancy sim); each amount Total is within 10%
