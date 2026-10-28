@@ -38,11 +38,9 @@ interactive = [
     "nbdime",
 ]
 data = [
-    "vivarium-inputs>=8.0.2",
+    "vivarium-inputs>=9.0.0",
     "vivarium_gates_lsff_2026_maternal[cluster,lint,test,validation]",
 ]
-# NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
-# See the root pyproject.toml for why.
 simulation = ["pandas>=2.2.1"]
 dev = ["vivarium_gates_lsff_2026_maternal[test,cluster,lint,interactive,simulation]"]
 
