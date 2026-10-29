@@ -18,7 +18,7 @@ dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
     "vivarium-build-utils>=4.4.2,<5.0.0",
     "vivarium-gbd-mapping>=6.0.7",
-    "vivarium-engine>=5.11.0",
+    "vivarium-engine>=6.0.0,<7.0.0",
     "vivarium-public-health>=6.6.4",
     "jinja2",
     "pyyaml",
@@ -41,7 +41,7 @@ test = [
 # root install (base.mk's 'uv pip install -e .[data]') is the step that resolves jobmon;
 # the sub-package install step cannot see the package on the index at all.
 cluster = [
-    "vivarium-cluster-tools[cluster]>=4.2.14",
+    "vivarium-cluster-tools[cluster]>=4.8.0",
     "jobmon_installer_ihme>=10.12.2",
 ]
 data = [
@@ -72,7 +72,7 @@ notebooks = [
     "scikit-learn",
     "vivarium_gates_lsff_2026[interactive]",
 ]
-interactive = ["vivarium-dependencies[interactive]"]
+interactive = ["vivarium-dependencies[interactive]", "vivarium-interactive>=1.0.0,<2.0.0"]
 # Automated V&V notebooks under 5000_analyze_results/validation.
 # NOTE: As of vivarium-validation v0.3.1 the 'gbd' extra contains only vivarium-inputs
 # NOTE: jupyterlab is named explicitly rather than relied on transitively. [interactive]
