@@ -42,6 +42,12 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 - Ethiopia Wheat: WRA consumption: g/day SD [Second]. output 49.28
 - Ethiopia Wheat: WRA consumption: g/day SD [Total]. output 56.95
 
+*literature value has no row in the extraction tables*: Nothing to do unless the tables should gain a row
+
+- Ethiopia Wheat: WRA consumption: g/day [All (assumed same), WRA]. literature: 90.74074074074073 g/day from Ethiopia National Food Consumption Survey (literature workbook 'Vehicle Consumption' row 112; marked not for use in model)
+- Ethiopia Wheat: WRA consumption: g/day [All (assumed same), WRA]. literature: 125.83333333333333 g/day from Ethiopia National Food Consumption Survey (literature workbook 'Vehicle Consumption' row 113; marked not for use in model)
+- Ethiopia Wheat: WRA consumption: g/day [All (assumed same), WRA]. literature: 0.7211184694628403 g/day from Ethiopia National Food Consumption Survey (literature workbook 'Vehicle Consumption' row 114; marked not for use in model)
+
 *literature disagrees with output*: Decide which is right; a 'gf', 'value:' or 'lit:' decision records the choice
 
 - Ethiopia Wheat Folate: baseline: share fortified. output 0.378; literature: 65.0 % from GFDx (literature workbook 'MN baseline fortification' row 31; marked not for use in model)
