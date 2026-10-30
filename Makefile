@@ -179,7 +179,6 @@ build-env: # Create a new environment with installed packages
 #	setuptools 83, and its 'make_artifacts -l all' works, so neither flag is wanted here.
 	@if [ "$(type)" = "simulation" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev; \
-		conda install $(CONDA_RUN_FLAG) redis -c anaconda -y; \
 	elif [ "$(type)" = "artifact" ]; then \
 		conda run $(CONDA_RUN_FLAG) make install ENV_REQS=data; \
 	fi

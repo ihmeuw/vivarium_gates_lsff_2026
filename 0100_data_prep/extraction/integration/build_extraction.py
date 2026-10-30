@@ -165,6 +165,12 @@ def read_arms(wb, model_arms_file=MODEL_ARMS_FILE):
         # blank means results). Arms at "none" are listed but not run, so here they are
         # treated like arms that aren't listed: unmodeled, not checked.
         run_through = norm(a.run_through) or "results"
+        # NOTE: Some of this can be deduplicated. E.g., if we do
+        # from config_utils import reaches_stage, the following
+        # two if statements could be replaced by
+        # if not reaches_stage("data_prep"): continue
+        # More generally, this method could probably be deduplicated
+        # further with the config_utils.
         if run_through not in RUN_THROUGH_STAGES:
             raise ValueError(f"{where}: unknown run_through '{a.run_through}' "
                              f"(expected one of {', '.join(RUN_THROUGH_STAGES)}, or blank)")

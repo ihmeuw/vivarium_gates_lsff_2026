@@ -19,13 +19,13 @@ import numpy as np
 import pandas as pd
 import vivarium.gbd_mapping as gbd_mapping
 import vivarium_inputs.validation.sim as validation
-from joblib import Memory
 from scipy import integrate, stats
 from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
 from vivarium_inputs import core as vi_core
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import interface
+from vivarium_gbd_access.utilities import cache as disk_cache
 from vivarium_inputs import utilities as vi_utils
 
 from lsff_utils import data_processing, hemoglobin_distribution
@@ -41,8 +41,6 @@ from vivarium_gates_lsff_2026_maternal.data.utilities import get_entity
 from vivarium_gates_lsff_2026_maternal.utilities import get_random_variable_draws
 
 ##Note: need to remove all instances where we limit the size of the data manually. This will be done when RT updates in the input files.
-
-memory = Memory("./.cachedir", verbose=0)
 
 # Women of reproductive age. Must agree with the age filter in get_hemoglobin_data and
 # with the age groups carrying a non-zero pregnancy end rate in the data prep results.
@@ -114,9 +112,7 @@ def get_data(
         data_keys.MATERNAL_DISORDERS.INCIDENT_PROBABILITY: load_pregnant_maternal_disorders_incidence_probability,
         data_keys.MATERNAL_DISORDERS.YLDS: load_maternal_disorders_ylds,
         data_keys.MATERNAL_DISORDERS.RR_ATTRIBUTABLE_TO_HEMOGLOBIN: load_hemoglobin_maternal_disorders_rr,
-        data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN: memory.cache(
-            generate_hemoglobin_maternal_disorders_paf
-        ),
+        data_keys.MATERNAL_DISORDERS.PAF_ATTRIBUTABLE_TO_HEMOGLOBIN: generate_hemoglobin_maternal_disorders_paf,
         data_keys.MATERNAL_HEMORRHAGE.RAW_INCIDENCE_RATE: load_raw_incidence_data,
         data_keys.MATERNAL_HEMORRHAGE.CSMR: load_maternal_csmr,
         data_keys.MATERNAL_HEMORRHAGE.INCIDENT_PROBABILITY: load_pregnant_maternal_hemorrhage_incidence,
@@ -694,12 +690,13 @@ def load_hemoglobin_maternal_disorders_rr(
 
     groupby_cols = ["age_group_id", "sex_id", "year_id"]
     draw_cols = vi_globals.DRAW_COLUMNS
-    rr = extra_gbd.get_hemoglobin_maternal_disorders_rr()
+    rr = extra_gbd.get_hemoglobin_maternal_disorders_rr(location)
     rr = rr.groupby(groupby_cols)[draw_cols].sum().reset_index()
     rr = reshape_to_vivarium_format(rr, location)
     return rr
 
 
+@disk_cache
 def generate_hemoglobin_maternal_disorders_paf(
     key: str, location: str, mean_draw: bool
 ) -> pd.DataFrame:
@@ -862,18 +859,18 @@ def load_background_morbidity(key: str, location: str) -> pd.DataFrame:
     all_cause_yld_rate = reshape_to_vivarium_format(all_cause_yld_rate, location)
 
     all_anemia_yld_rate = extra_gbd.get_anemia_yld_rate(location)
-    all_anemia_yld_rate = all_anemia_yld_rate.loc[all_anemia_yld_rate.cause_id == 294][
+    all_anemia_yld_rate = all_anemia_yld_rate[
         vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS
     ]
     all_anemia_yld_rate = reshape_to_vivarium_format(all_anemia_yld_rate, location)
 
-    all_md_yld_rate = extra_gbd.get_maternal_disorder_ylds(location, metric_id=3)
+    all_md_yld_rate = extra_gbd.get_maternal_disorder_ylds(location)
     all_md_yld_rate = all_md_yld_rate[
         vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS
     ]
     all_md_yld_rate = reshape_to_vivarium_format(all_md_yld_rate, location)
 
-    anemia_sequelae_yld_rate = extra_gbd.get_anemia_ylds(location, metric_id=3)
+    anemia_sequelae_yld_rate = extra_gbd.get_anemia_ylds(location)
     anemia_sequelae_yld_rate = (
         anemia_sequelae_yld_rate.groupby(vi_globals.DEMOGRAPHIC_COLUMNS)[
             vi_globals.DRAW_COLUMNS
@@ -906,7 +903,9 @@ def get_hemoglobin_data(key: str, location: str, mean_draw: bool) -> pd.DataFram
     ]
     if key == data_keys.HEMOGLOBIN.MEAN:
         levels_to_drop.append("parameter")
-    hemoglobin_data = hemoglobin_data.droplevel(levels_to_drop)
+    hemoglobin_data = hemoglobin_data.droplevel(
+        [level for level in levels_to_drop if level in hemoglobin_data.index.names]
+    )
 
     hemoglobin_data = hemoglobin_data[
         (hemoglobin_data.index.get_level_values("sex") == "Female")

@@ -1,7 +1,7 @@
 import warnings
 from itertools import product
 from numbers import Real
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -16,13 +16,13 @@ from vivarium.gbd_mapping import (
 )
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
-from vivarium_gbd_access.gbd.base_data import get_draws, query
+from vivarium_gbd_access.gbd import measures
+from vivarium_gbd_access.gbd.base_data import query
 from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
 from vivarium_inputs.mapping_extension import AlternativeRiskFactor, alternative_risk_factors
-from vivarium_inputs.validation.raw import check_metadata
 
 from vivarium_gates_lsff_2026_child.constants import data_keys, data_values, paths
 from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUND_ID,
@@ -34,43 +34,6 @@ from vivarium_gates_lsff_2026_child.constants.metadata import (  # GBD_2019_ROUN
     NEONATAL_END_AGE,
 )
 from vivarium_gates_lsff_2026_child.utilities import get_random_variable_draws
-
-
-def get_data(
-    key: EntityKey,
-    entity: ModelableEntity,
-    location: str,
-    source: str,
-    gbd_id_type: str,
-    age_group_ids: Set[int],
-    gbd_release_id: int,
-    decomp_step: str = "iterative",
-) -> pd.DataFrame:
-    age_group_ids = list(age_group_ids)
-
-    # from interface.get_measure
-    # from vivarium_inputs.core.get_data
-    location_id = (
-        utility_data.get_location_id(location) if isinstance(location, str) else location
-    )
-
-    # from vivarium_inputs.core.get_{measure}
-    # from vivarium_inputs.extract.extract_data
-    check_metadata(entity, key.measure)
-
-    # from vivarium_inputs.extract.extract_{measure}
-    # from vivarium_gbd_access.gbd.get_{measure}
-    data = get_draws(
-        gbd_id_type=gbd_id_type,
-        gbd_id=entity.gbd_id,
-        source=source,
-        location_id=location_id,
-        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
-        age_group_id=age_group_ids,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        status="best",
-    )
-    return data
 
 
 def get_entity(key: str):
@@ -565,16 +528,14 @@ def load_lbwsg_exposure(location: str):
         location_id = location
     else:
         location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        gbd_id_type="rei_id",
-        gbd_id=entity.gbd_id,
-        source=gbd_constants.SOURCES.EXPOSURE,
+    # NOTE: no age_group_id argument, but LBWSG is estimated for ages 2 and 3 only.
+    data = measures.get_exposure(
+        entity_id=entity.gbd_id,
         location_id=location_id,
-        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
-        age_group_id=[2, 3],
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
         # This data set is big, so let's reduce it by a factor of ~40
         year_id=2022,
+        data_type="draws",
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
     )
     # Restamp onto the artifact's year bin so this joins the LBWSG relative risk.
     data["year_id"] = GBD_EXTRACT_YEAR
@@ -595,15 +556,12 @@ def load_lbwsg_birth_exposure(location: str):
         location_id = location
     else:
         location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        gbd_id_type="rei_id",
-        gbd_id=entity.gbd_id,
-        source=gbd_constants.SOURCES.EXPOSURE,
+    data = measures.get_birth_exposure(
+        entity_id=entity.gbd_id,
         location_id=location_id,
-        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
-        age_group_id=164,  # Birth prevalence
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
         year_id=2022,
+        data_type="draws",
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
     )
     # Restamp onto the artifact's year bin so this joins the LBWSG relative risk.
     data["year_id"] = GBD_EXTRACT_YEAR
