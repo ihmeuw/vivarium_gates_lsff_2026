@@ -135,8 +135,7 @@ each one:
 
 All rows of a (location, vehicle) pair must have the same value. Comparisons in
 ``location_vehicle_scenario_comparisons.csv`` for arms that don't reach ``results``
-stay in the file and are skipped. India rice must stay at ``results``: the results
-notebooks use its files as a template.
+stay in the file and are skipped.
 
 Snakemake flags
 ~~~~~~~~~~~~~~~
