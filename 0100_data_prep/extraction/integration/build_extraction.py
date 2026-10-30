@@ -224,7 +224,9 @@ def lit_pick(candidates):
 def default_scope(wb, sheet, row, arms):
     """The arm a row belongs to, if it takes default values (None otherwise)."""
     if sheet == VEH:
-        return None  # effect sizes are model-wide; they change only through decisions
+        # Effect sizes are per vehicle, not per arm, and take literature defaults like
+        # everything else (decisions can still override them).
+        return {"country": None, "vehicle": wb.get(sheet, row, "vehicle"), "model_wide": True}
     arm = next((a for a in arms if a["modeled"] and a["country"] == wb.get(sheet, row, "country")
                 and a["vehicle"] == wb.get(sheet, row, "vehicle")), None)
     if arm is None:
@@ -408,8 +410,12 @@ def coverage_row(wb, sheet, row):
     """The WRA coverage row that goes with an amount row (national for U5 rows)."""
     need = need_alias(wb.get(sheet, row, "data need"))
     q = wb.get(sheet, row, "quintile") if need == "amount" else "Total"
-    return wb.one(CV, country=wb.get(sheet, row, "country"), vehicle=wb.get(sheet, row, "vehicle"),
-                  need="any", quintile=q)
+    keys = {"country": wb.get(sheet, row, "country"), "vehicle": wb.get(sheet, row, "vehicle"), "need": "any"}
+    # A national coverage row ('All (assumed same)') serves every quintile
+    rows = wb.find(CV, quintile=q, **keys) or wb.find(CV, quintile=ALL_SAME, **keys)
+    if len(rows) != 1:
+        raise LookupError(f"Expected 1 WRA coverage row for {keys} quintile {q} (or {ALL_SAME}), found {rows}")
+    return rows[0]
 
 
 def likely_lit_rows(lit, d):
@@ -556,6 +562,30 @@ def method_consumer_cv(wb, lit, sheet, row, d):
                       f"sqrt(p (CV mu)^2 + p (1 - p) mu^2); {d['rationale']}"}
 
 
+def method_assumed_consumer_cv(wb, lit, sheet, row, d, cv_text):
+    """PLACEHOLDER SD over all women from an assumed consumer CV (no data source).
+
+    Same conversion as consumer_cv, with the CV typed in the decision instead of taken from
+    the literature. Reported as a placeholder until replaced.
+    """
+    need = need_alias(wb.get(sheet, row, "data need"))
+    if need not in ("amount", "u5_amount") or norm(wb.get(sheet, row, "data point name")) != "standard deviation":
+        raise ValueError(f"decision {d['decision_id']}: method assumed_consumer_cv applies only to amount SD rows")
+    try:
+        cv = float(cv_text)
+    except ValueError:
+        raise ValueError(f"decision {d['decision_id']}: assumed_consumer_cv needs a number, e.g. "
+                         f"method:assumed_consumer_cv:0.7 (got '{cv_text}')")
+    m = wb.current(sheet, matching_row(wb, sheet, row, data_point_name="mean"))
+    p = wb.current(CV, coverage_row(wb, sheet, row))
+    return {"action": "set", "value": mixture_sd(p, m, cv), "origin": "derived",
+            "ref": f"(no SD source) assumed consumer CV {cv:g}",
+            "label": f"PLACEHOLDER (decision {d['decision_id']}): assumed consumer CV",
+            "source": f"placeholder: assumed consumer CV {cv:g}",
+            "method": f"PLACEHOLDER: assumed consumer CV {cv:g}; consumer mean = {m:.4g} / coverage {p:.3g}; "
+                      f"SD over all women = sqrt(p (CV mu)^2 + p (1 - p) mu^2); {d['rationale']}"}
+
+
 def method_derive_from(wb, lit, sheet, row, d, base):
     """Placeholder from another vehicle: its consumer CV (SD rows) or U5/WRA ratio (U5 means)."""
     need = need_alias(wb.get(sheet, row, "data need"))
@@ -623,7 +653,10 @@ def run_method(wb, lit, name, sheet, row, d):
         return method_scale_to_gf_total(wb, lit, sheet, row, d)
     if name.startswith("derive_from:"):
         return method_derive_from(wb, lit, sheet, row, d, name.split(":", 1)[1].strip())
-    raise ValueError(f"decision {d['decision_id']}: unknown method '{name}' (known: consumer_cv, scale_to_gf_total, derive_from:<vehicle>)")
+    if name.startswith("assumed_consumer_cv:"):
+        return method_assumed_consumer_cv(wb, lit, sheet, row, d, name.split(":", 1)[1].strip())
+    raise ValueError(f"decision {d['decision_id']}: unknown method '{name}' (known: consumer_cv, scale_to_gf_total, "
+                     "derive_from:<vehicle>, assumed_consumer_cv:<number>)")
 
 
 def is_method(d):
