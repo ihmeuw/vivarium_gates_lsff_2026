@@ -123,6 +123,28 @@ Analysis only                             Nothing. Add ``--forcerun dalys_by_sce
 * In the dry run, ``lbwsg_pafs`` and ``pregnancy_artifacts`` should appear only if
   you deleted their outputs.
 
+Which arms run
+~~~~~~~~~~~~~~
+
+``0050_config/location_fortificant_vehicles.csv`` lists the arms (location,
+fortificant, vehicle). Its ``run_through`` column says how far the pipeline takes
+each one:
+
+==============  ==============================================================
+``run_through`` Effect
+==============  ==============================================================
+``none``        Listed, but nothing runs it. The extraction build treats it as
+                an arm the model doesn't run.
+``data_prep``   The extraction build checks it and ``0100_data_prep`` builds its
+                inputs through effective coverage. No simulations, models or
+                results.
+``results``     The whole pipeline. A blank value means the same.
+==============  ==============================================================
+
+All rows of a (location, vehicle) pair must have the same value. Comparisons in
+``location_vehicle_scenario_comparisons.csv`` for arms that don't reach ``results``
+stay in the file and are skipped.
+
 Snakemake flags
 ~~~~~~~~~~~~~~~
 

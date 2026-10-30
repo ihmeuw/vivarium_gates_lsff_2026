@@ -5,8 +5,6 @@ from lsff_utils import config_utils, paths, snakemake_utils
 
 configfile: "0050_config/config.yaml"
 
-config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_fortificant_vehicle_intervention_scenarios()
-
 # Use the Snakemake config as a way to pass "globals" through all Snakefiles.
 #
 # Environments are the two `environment.sh` builds -- `artifact` for anything
@@ -100,13 +98,17 @@ onstart:
         snakemake_utils.record_team_run(config["output_target"], sys.argv)
 
 # The end-to-end pipeline: the spreadsheet and the plots are the only things
-# nothing else consumes, so requiring them pulls every stage in behind them.
+# nothing else consumes, so requiring them pulls every stage in behind them for
+# the arms whose run_through is "results". Arms whose run_through is "data_prep"
+# reach no results, so their data-prep products are asked for directly
+# (`data_prep_targets`, defined in 0100_data_prep/Snakefile; a function because
+# that file is included below). See 0050_config/location_fortificant_vehicles.csv.
 rule all:
     input:
-        [
+        lambda wildcards: [
             "5000_analyze_results/results_spreadsheet.xlsx",
             "5000_analyze_results/executed/results_plots.ipynb",
-        ]
+        ] + data_prep_targets
 
 include: "0100_data_prep/Snakefile"
 include: "0200_pregnancy_sim/Snakefile"

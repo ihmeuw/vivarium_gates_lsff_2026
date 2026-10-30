@@ -58,12 +58,77 @@ def get_intervention_scenarios(location, vehicle, config=None):
     return list(custom.get(location, {}).get(vehicle, DEFAULT_INTERVENTION_SCENARIOS))
 
 
-def get_location_fortificant_vehicle_intervention_scenarios():
+# How far through the pipeline each arm (a row of location_fortificant_vehicles.csv)
+# runs, in pipeline order. Each stage includes the ones before it.
+#
+# - none: listed but not run. build_extraction.py treats it as an arm the model
+#   doesn't run (its GF and literature values are still compared, but nothing is
+#   checked), and Snakemake builds nothing for it.
+# - data_prep: the extraction build checks it, and 0100_data_prep builds its
+#   inputs through effective coverage. No simulations, models or results.
+# - results: the whole pipeline, through the results spreadsheet and plots.
+#
+# A blank value, or a file without the column, means "results".
+RUN_THROUGH_STAGES = ["none", "data_prep", "results"]
+DEFAULT_RUN_THROUGH = "results"
+
+
+def _check_stage(stage):
+    if stage not in RUN_THROUGH_STAGES:
+        raise ValueError(f"unknown stage {stage!r}; expected one of {RUN_THROUGH_STAGES}")
+
+
+def reaches_stage(run_through, stage):
+    """Whether an arm whose run_through is `run_through` is run at `stage`."""
+    _check_stage(run_through)
+    _check_stage(stage)
+    return RUN_THROUGH_STAGES.index(run_through) >= RUN_THROUGH_STAGES.index(stage)
+
+
+def get_location_fortificant_vehicles():
+    """location_fortificant_vehicles.csv, validated, with `run_through` filled in.
+
+    Every row of a (location, vehicle) pair must share one run_through value,
+    because the pipeline runs each pair as a unit from coverage onwards.
+    """
+    df = pd.read_csv(str(CONFIG_DIR / "location_fortificant_vehicles.csv"), dtype=str).fillna(
+        ""
+    )
+    for column in ["location", "fortificant", "vehicle"]:
+        df[column] = df[column].str.strip()
+    if "run_through" not in df.columns:
+        df["run_through"] = ""
+    df["run_through"] = (
+        df.run_through.str.strip().str.lower().replace("", DEFAULT_RUN_THROUGH)
+    )
+
+    unknown = sorted(set(df.run_through) - set(RUN_THROUGH_STAGES))
+    if unknown:
+        raise ValueError(
+            f"location_fortificant_vehicles.csv: unknown run_through value(s) {unknown}; "
+            f"expected one of {RUN_THROUGH_STAGES} (or blank for {DEFAULT_RUN_THROUGH!r})"
+        )
+    mixed = df.groupby(["location", "vehicle"]).run_through.nunique()
+    mixed = sorted(mixed[mixed > 1].index)
+    if mixed:
+        raise ValueError(
+            "location_fortificant_vehicles.csv: every row of a (location, vehicle) pair must "
+            f"have the same run_through; these differ: {mixed}"
+        )
+    return df
+
+
+def get_location_fortificant_vehicle_intervention_scenarios(stage=None):
+    """One row per (location, fortificant, vehicle, intervention_scenario).
+
+    With `stage`, only the arms that run at that stage (see RUN_THROUGH_STAGES);
+    without it, every listed arm, whatever its run_through. Per-arm questions
+    (which scenarios or pathways an arm has) use every listed arm; deciding
+    what to build uses a stage.
+    """
     config = get_config()
 
-    location_fortificant_vehicles = pd.read_csv(
-        str(CONFIG_DIR / "location_fortificant_vehicles.csv")
-    )
+    location_fortificant_vehicles = get_location_fortificant_vehicles()
 
     # Expand "all" fortificants
     location_fortificant_vehicles = pd.concat(
@@ -112,6 +177,16 @@ def get_location_fortificant_vehicle_intervention_scenarios():
         .reset_index(drop=True)
     )
 
+    if stage is not None:
+        _check_stage(stage)
+        location_fortificant_vehicle_intervention_scenarios = (
+            location_fortificant_vehicle_intervention_scenarios[
+                location_fortificant_vehicle_intervention_scenarios.run_through.apply(
+                    lambda x: reaches_stage(x, stage)
+                )
+            ].reset_index(drop=True)
+        )
+
     return location_fortificant_vehicle_intervention_scenarios
 
 
@@ -152,9 +227,36 @@ def get_combo_pathways(location, vehicle):
     }
 
 
-def get_configured_combos(variables):
+def get_scenario_comparisons(stage="results"):
+    """location_vehicle_scenario_comparisons.csv, limited to arms that run at `stage`.
+
+    Every row must name a (location, vehicle) pair listed in
+    location_fortificant_vehicles.csv, so a typo can't silently drop a comparison.
+    Rows for pairs that don't reach `stage` are kept in the file but skipped here.
+    """
+    _check_stage(stage)
+    comparisons = pd.read_csv(CONFIG_DIR / "location_vehicle_scenario_comparisons.csv")
+    arms = get_location_fortificant_vehicles()
+    run_through = dict(zip(zip(arms.location, arms.vehicle), arms.run_through))
+    pairs = list(zip(comparisons.location, comparisons.vehicle))
+    unknown = sorted(set(pair for pair in pairs if pair not in run_through))
+    if unknown:
+        raise ValueError(
+            "location_vehicle_scenario_comparisons.csv names (location, vehicle) pairs that "
+            f"are not in location_fortificant_vehicles.csv: {unknown}"
+        )
+    keep = [reaches_stage(run_through[pair], stage) for pair in pairs]
+    return comparisons[keep].reset_index(drop=True)
+
+
+def get_configured_combos(variables, stage):
+    """Distinct combinations of `variables` over the arms that run at `stage`.
+
+    `stage` is required: "data_prep" for what 0100_data_prep builds, "results"
+    for what the simulations, models and results build. See RUN_THROUGH_STAGES.
+    """
     location_fortificant_vehicle_intervention_scenarios = (
-        get_location_fortificant_vehicle_intervention_scenarios()
+        get_location_fortificant_vehicle_intervention_scenarios(stage)
     )
     return [
         combo_tuple

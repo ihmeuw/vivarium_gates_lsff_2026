@@ -151,7 +151,7 @@ def test_custom_entry_for_unconfigured_pair_raises(config_dir) -> None:
 
 def test_configured_combos_follow_scenarios(config_dir) -> None:
     combos = config_utils.get_configured_combos(
-        ["location", "vehicle", "intervention_scenario"]
+        ["location", "vehicle", "intervention_scenario"], stage="results"
     )
     assert sorted(tuple(c) for c in combos) == sorted(
         [
@@ -161,6 +161,119 @@ def test_configured_combos_follow_scenarios(config_dir) -> None:
             ("ethiopia", "salt", "intervention_45_ppm"),
         ]
     )
+
+
+# ---------------------------------------------------------------------------
+# run_through: how far the pipeline takes each arm
+# ---------------------------------------------------------------------------
+
+STAGED_COMBOS_CSV = """\
+location,fortificant,vehicle,run_through
+nigeria,all,rice,results
+nigeria,folate,salt,data_prep
+ethiopia,folate,salt,
+india,iron,salt,none
+"""
+
+
+def _pairs(stage):
+    return sorted(
+        tuple(c)
+        for c in config_utils.get_configured_combos(["location", "vehicle"], stage=stage)
+    )
+
+
+def test_missing_run_through_column_means_results(config_dir) -> None:
+    """Files written before the column existed run everything, as before."""
+    assert (
+        _pairs("results")
+        == _pairs("data_prep")
+        == [("ethiopia", "salt"), ("nigeria", "rice"), ("nigeria", "salt")]
+    )
+
+
+def test_stages_are_cumulative(config_dir) -> None:
+    config_dir(combos_csv=STAGED_COMBOS_CSV)
+    # blank means results; data_prep arms are prepped but get no results; none runs nothing
+    assert _pairs("results") == [("ethiopia", "salt"), ("nigeria", "rice")]
+    assert _pairs("data_prep") == [
+        ("ethiopia", "salt"),
+        ("nigeria", "rice"),
+        ("nigeria", "salt"),
+    ]
+    assert ("india", "salt") in _pairs("none")
+
+
+def test_stage_is_required(config_dir) -> None:
+    with pytest.raises(TypeError):
+        config_utils.get_configured_combos(["location", "vehicle"])
+
+
+def test_unfiltered_table_lists_every_arm(config_dir) -> None:
+    """Per-arm questions (scenarios, pathways) see arms at every stage."""
+    config_dir(combos_csv=STAGED_COMBOS_CSV)
+    df = config_utils.get_location_fortificant_vehicle_intervention_scenarios()
+    assert ("india", "salt") in set(zip(df.location, df.vehicle))
+    assert config_utils.get_combo_pathways("india", "salt")["has_simulations"] is True
+
+
+def test_custom_scenarios_allowed_for_arm_that_does_not_run(config_dir) -> None:
+    """config.yaml can keep an arm's scenarios while the arm is at 'none'."""
+    config_dir(
+        combos_csv=STAGED_COMBOS_CSV.replace(
+            "nigeria,folate,salt,data_prep", "nigeria,folate,salt,none"
+        )
+    )
+    assert _pairs("data_prep") == [("ethiopia", "salt"), ("nigeria", "rice")]
+
+
+@pytest.mark.parametrize(
+    "combos_csv, match",
+    [
+        (
+            "location,fortificant,vehicle,run_through\nnigeria,all,rice,simulations\n",
+            "unknown run_through",
+        ),
+        (
+            "location,fortificant,vehicle,run_through\nnigeria,iron,salt,results\nnigeria,folate,salt,none\n",
+            "same run_through",
+        ),
+    ],
+)
+def test_bad_run_through_raises(config_dir, combos_csv, match) -> None:
+    config_dir(config_yaml='all_fortificants: ["folate", "iron"]\n', combos_csv=combos_csv)
+    with pytest.raises(ValueError, match=match):
+        config_utils.get_location_fortificant_vehicles()
+
+
+def test_unknown_stage_raises(config_dir) -> None:
+    with pytest.raises(ValueError, match="unknown stage"):
+        config_utils.get_configured_combos(["location"], stage="simulation")
+
+
+def test_scenario_comparisons_follow_stage(config_dir, tmp_path) -> None:
+    config_dir(combos_csv=STAGED_COMBOS_CSV)
+    (tmp_path / "location_vehicle_scenario_comparisons.csv").write_text(
+        "location,vehicle,baseline,intervention,custom_name\n"
+        "nigeria,rice,baseline,intervention,\n"
+        "nigeria,salt,baseline,intervention_25_nrv,\n"
+        "india,salt,baseline,intervention,\n"
+    )
+    pairs = lambda df: list(zip(df.location, df.vehicle))  # noqa: E731
+    assert pairs(config_utils.get_scenario_comparisons()) == [("nigeria", "rice")]
+    assert pairs(config_utils.get_scenario_comparisons(stage="data_prep")) == [
+        ("nigeria", "rice"),
+        ("nigeria", "salt"),
+    ]
+
+
+def test_scenario_comparison_for_unlisted_pair_raises(config_dir, tmp_path) -> None:
+    (tmp_path / "location_vehicle_scenario_comparisons.csv").write_text(
+        "location,vehicle,baseline,intervention,custom_name\n"
+        "nigera,rice,baseline,intervention,\n"
+    )
+    with pytest.raises(ValueError, match="nigera"):
+        config_utils.get_scenario_comparisons()
 
 
 # ---------------------------------------------------------------------------
@@ -261,6 +374,24 @@ def test_scenario_comparisons_reference_configured_scenarios() -> None:
             checkout_config_utils.get_intervention_scenarios(row.location, row.vehicle)
         )
         assert {row.baseline, row.intervention} <= available, row
+
+
+def test_committed_scenario_comparisons_name_listed_arms() -> None:
+    """Every comparison names a listed arm (get_scenario_comparisons raises otherwise)."""
+    checkout_config_utils = _load_config_utils_from_checkout()
+    checkout_config_utils.get_scenario_comparisons()
+
+
+def test_committed_template_combo_runs_through_results() -> None:
+    """The 5000 notebooks read india/rice's files as a template, so it must run through results."""
+    checkout_config_utils = _load_config_utils_from_checkout()
+    pairs = [
+        tuple(c)
+        for c in checkout_config_utils.get_configured_combos(
+            ["location", "vehicle"], stage="results"
+        )
+    ]
+    assert ("india", "rice") in pairs
 
 
 def test_committed_template_combo_has_every_pathway() -> None:
