@@ -41,7 +41,7 @@ test = [
 # root install (base.mk's 'uv pip install -e .[data]') is the step that resolves jobmon;
 # the sub-package install step cannot see the package on the index at all.
 cluster = [
-    "vivarium-cluster-tools[cluster]>=4.8.0",
+    "vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0",
     "jobmon_installer_ihme>=10.12.2",
 ]
 data = [
