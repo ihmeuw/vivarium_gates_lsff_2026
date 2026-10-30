@@ -31,7 +31,7 @@ test = [
 ]
 # NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
 # It is pinned in the root pyproject.toml, which is where it actually resolves.
-cluster = ["vivarium-cluster-tools[cluster]>=4.2.14"]
+cluster = ["vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0"]
 validation = ["vivarium-validation[gbd]>=0.3.1"]
 lint = ["vivarium-dependencies[lint]"]
 interactive = [
@@ -39,11 +39,9 @@ interactive = [
     "nbdime",
 ]
 data = [
-    "vivarium-inputs>=8.0.2",
+    "vivarium-inputs>=9.0.0",
     "vivarium_gates_lsff_2026_child[cluster,lint,test,validation]",
 ]
-# NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
-# See the root pyproject.toml for why.
 simulation = ["pandas>=2.2.1"]
 dev = ["vivarium_gates_lsff_2026_child[test,cluster,lint,interactive,simulation]"]
 

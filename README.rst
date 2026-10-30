@@ -103,10 +103,18 @@ Both simulations (usual rerun)            ``0200_pregnancy_sim/sim_results``
 Maternal artifact                         ``0200_pregnancy_sim/mean_draw_artifacts``
 (GBD data or maternal loader changed)
 LBWSG PAFs (takes hours; rarely needed)   ``0300_child_sim/lbwsg_paf*``
-Hemoglobin PAF cache                      ``.cachedir``
+Hemoglobin PAF cache                      Its entry in the GBD cache (see below)
 (hemoglobin PAF loader changed)
 Analysis only                             Nothing. Add ``--forcerun dalys_by_scenario cases_by_scenario``
 ========================================  =======================================================
+
+* Deleting an artifact does not clear the GBD cache. ``vivarium_gbd_access`` keys
+  its cache on function name and arguments, so a changed hemoglobin PAF loader
+  still returns the old cached value. Clear only that function, because the cache
+  is shared with other model repos::
+
+    find /share/scratch/users/$USER/cache/joblib -type d \
+      -name generate_hemoglobin_maternal_disorders_paf -exec rm -rf {} +
 
 * Always delete the two ``sim_results`` directories together. If they don't
   match, the child results come out empty with no error.
