@@ -5,8 +5,6 @@ from lsff_utils import config_utils, paths, snakemake_utils
 
 configfile: "0050_config/config.yaml"
 
-config["location_fortificant_vehicle_scenarios"] = config_utils.get_location_fortificant_vehicle_intervention_scenarios(stage="data_prep")
-
 # Use the Snakemake config as a way to pass "globals" through all Snakefiles.
 #
 # Environments are the two `environment.sh` builds -- `artifact` for anything
