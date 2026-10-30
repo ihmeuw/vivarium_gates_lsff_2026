@@ -96,10 +96,12 @@ touches keeps its base value.
    `run_through` is `data_prep` or `results`; rows at `none` are listed but treated as not
    run. Changing an arm from `none` fills it in on the next build.
    Effect sizes (`vehicle.csv`) take literature defaults for every vehicle, matched on the
-   vehicle name (pooled estimates such as 'Any' need a decision). For
-   India rice, whose consumption, fortifiability and government-rice shares come from HCES
-   microdata, only intervention rows and GF's baseline split take defaults (`HCES_ARMS` in
-   `build_extraction.py`; see `GF_DATA_MAPPING.md`).
+   vehicle name (pooled estimates such as 'Any' need a decision). India rice's consumption
+   comes from HCES microdata, so its consumption rows take no defaults. Its fortifiability
+   (consolidation of purchased non-government rice) and baseline any (share of government rice
+   fortified) mean something narrower than the literature's market-wide values, so they take
+   only GF's rules for them; every other India rice row takes defaults as usual (`HCES_ARMS`,
+   `HCES_NEEDS` and `HCES_REDEFINED_NEEDS` in `build_extraction.py`; see `GF_DATA_MAPPING.md`).
 2. **Value decisions**: active decisions whose source is `lit:`, `value:`, `gf` or `keep`.
    Those with `transform = times_coverage` run last, once coverage is final.
 3. **Method decisions**: active decisions whose source is `method:<name>`. These compute a

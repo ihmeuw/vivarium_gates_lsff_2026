@@ -121,7 +121,8 @@ intended one.
 1. **Effect sizes take literature defaults** (`default_scope`). Expected diff: wheat
    hemoglobin 3.25 -> 2.08, rice 3.25 -> 3.24, salt 4.40 -> 4.8 (salt unused).
 2. **HCES covers consumption only.** India rice takes literature defaults for everything but
-   consumption; its government-rice rules for fortifiability and baseline coverage stay.
+   consumption and the two needs whose meaning differs for government rice (fortifiability,
+   baseline any); its GF rules for those stay.
    Expected diff: none (the India rice baseline concentrations come from the literature,
    same values).
 3. **Spec-driven rows.** Add `data_needs.py`; generate the rows for each arm that runs from

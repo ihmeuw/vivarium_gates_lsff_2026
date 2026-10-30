@@ -73,11 +73,16 @@ TARGET_YEAR = "2035"
 # Data needs that are 2035 targets rather than measurements. GF is their primary source;
 # the literature's values for them describe the current state.
 TARGET_NEEDS = {"fortifiability", "intervention_coverage", "intervention_effectiveness"}
-# Arms whose consumption, fortifiability and baseline coverage come from HCES microdata
-# (0100_data_prep/hces). They take no literature defaults except for intervention rows; GF
-# defaults apply to intervention rows and, as the share of government rice fortified, to baseline
-# any and effectiveness (gf_baseline).
+# Arms whose consumption comes from HCES microdata (0100_data_prep/hces) rather than the
+# extraction tables. They take no defaults for the consumption needs (HCES_NEEDS). For India
+# rice, HCES also changes what two other needs mean (HCES_REDEFINED_NEEDS): fortifiability is
+# industry consolidation of purchased non-government rice, and baseline any is the share of
+# government rice that is fortified. Literature values for those describe the whole market, so
+# they aren't defaults either; GF's rules for them are in gf_fortifiability and gf_baseline.
+# Every other need (concentrations, effectiveness, intervention rows) takes defaults as usual.
 HCES_ARMS = {("India", "Rice")}
+HCES_NEEDS = {"any", "amount", "u5_any", "u5_amount"}
+HCES_REDEFINED_NEEDS = {"fortifiability", "baseline_any"}
 # The run_through values of 0050_config/location_fortificant_vehicles.csv; keep in step with
 # lsff_utils.config_utils.RUN_THROUGH_STAGES. Every value but "none" makes an arm modeled.
 RUN_THROUGH_STAGES = ["none", "data_prep", "results"]
@@ -233,8 +238,8 @@ def default_scope(wb, sheet, row, arms):
         return None
     if sheet in (CVF, SCEN) and wb.get(sheet, row, "fortificant") not in arm["fortificants"]:
         return None
-    if arm["hces"] and sheet != SCEN:
-        return None  # consumption, fortifiability and baseline come from HCES for these arms
+    if arm["hces"] and need_alias(wb.get(sheet, row, "data need")) in HCES_NEEDS | HCES_REDEFINED_NEEDS:
+        return None  # from HCES, or a meaning the literature's values don't share (see HCES_ARMS)
     return arm
 
 
