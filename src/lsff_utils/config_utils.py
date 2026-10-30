@@ -179,10 +179,12 @@ def get_location_fortificant_vehicle_intervention_scenarios(stage=None):
 
     if stage is not None:
         _check_stage(stage)
-        location_fortificant_vehicle_intervention_scenarios = location_fortificant_vehicle_intervention_scenarios[
-            location_fortificant_vehicle_intervention_scenarios.run_through.apply(lambda x: reaches_stage(x, stage))
-        ].reset_index(
-            drop=True
+        location_fortificant_vehicle_intervention_scenarios = (
+            location_fortificant_vehicle_intervention_scenarios[
+                location_fortificant_vehicle_intervention_scenarios.run_through.apply(
+                    lambda x: reaches_stage(x, stage)
+                )
+            ].reset_index(drop=True)
         )
 
     return location_fortificant_vehicle_intervention_scenarios
