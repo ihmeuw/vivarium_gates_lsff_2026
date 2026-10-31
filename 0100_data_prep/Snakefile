@@ -146,8 +146,6 @@ hces_local_files = [
     "0100_data_prep/hces/india_share_eating_only_government_rice.csv",
 ]
 
-location_fortificant_vehicle_scenarios = config["location_fortificant_vehicle_scenarios"]
-
 # Data prep builds every arm whose run_through (0050_config/location_fortificant_vehicles.csv)
 # is data_prep or results; see config_utils.RUN_THROUGH_STAGES.
 #
