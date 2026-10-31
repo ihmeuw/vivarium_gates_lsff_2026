@@ -18,7 +18,7 @@ dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
     "vivarium-build-utils>=4.4.2,<5.0.0",
     "vivarium-gbd-mapping>=6.0.7",
-    "vivarium-engine>=5.11.0",
+    "vivarium-engine>=6.0.0,<7.0.0",
     "vivarium-public-health>=6.6.4",
     "jinja2",
     "pyyaml",
@@ -41,11 +41,11 @@ test = [
 # root install (base.mk's 'uv pip install -e .[data]') is the step that resolves jobmon;
 # the sub-package install step cannot see the package on the index at all.
 cluster = [
-    "vivarium-cluster-tools[cluster]>=4.2.14",
+    "vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0",
     "jobmon_installer_ihme>=10.12.2",
 ]
 data = [
-    "vivarium-inputs>=8.0.2,<9.0.0",
+    "vivarium-inputs>=9.0.0",
     "vivarium_gates_lsff_2026[cluster]",
     # Automated V&V (5000_analyze_results/validation) runs in the artifact env, so it
     # belongs on this path -- see the [validation] extra below.
@@ -72,7 +72,7 @@ notebooks = [
     "scikit-learn",
     "vivarium_gates_lsff_2026[interactive]",
 ]
-interactive = ["vivarium-dependencies[interactive]"]
+interactive = ["vivarium-dependencies[interactive]", "vivarium-interactive>=1.0.0,<2.0.0"]
 # Automated V&V notebooks under 5000_analyze_results/validation.
 # NOTE: As of vivarium-validation v0.3.1 the 'gbd' extra contains only vivarium-inputs
 # NOTE: jupyterlab is named explicitly rather than relied on transitively. [interactive]
@@ -97,10 +97,6 @@ docs = ["vivarium-dependencies[sphinx]", "myst-parser"]
 # synthesize the wildcards for its Ethiopia-folate variant, so the workflow fails
 # to parse on 9.x. Lifting the cap means rewriting that rule first.
 workflow = ["snakemake>=8.16,<9"]
-# NOTE: Simulation-only pandas floor -- keep it out of [project.dependencies] and [data].
-# The artifact env is hard-capped to pandas<2.0 via vivarium-inputs -> vivarium-gbd-access
-# -> ihme-cc-dependencies, so a floor on either path is unresolvable. build-env installs
-# [dev] for type=simulation and [data] for type=artifact.
 simulation = [
     "pandas>=2.2.1",
     # Live-sim V&V (5000_analyze_results/validation/child_model/child_lbwsg.ipynb) runs
@@ -115,6 +111,9 @@ Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
 
 [project.scripts]
 make_artifacts = "vivarium_gates_lsff_2026.tools.cli:make_artifacts"
+
+[tool.uv]
+override-dependencies = ["pandas<3.0.0", "sqlalchemy>=2.0.0,<3.0.0", "numpy<2.0.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
