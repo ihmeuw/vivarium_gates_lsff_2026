@@ -1,11 +1,15 @@
+import pandas as pd
+from gbd.enums import Measures, Metrics
+from loguru import logger
 from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
-from vivarium_gbd_access.gbd.base_data import get_draws
+from vivarium_gbd_access import gbd
+from vivarium_gbd_access.gbd import measures
+from vivarium_gbd_access.gbd.base_data import get_machinery_estimates
 from vivarium_gbd_access.utilities import cache
-from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utility_data
 
-from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata, paths
 from vivarium_gates_lsff_2026_maternal.data import utilities
 
 
@@ -13,14 +17,11 @@ from vivarium_gates_lsff_2026_maternal.data import utilities
 def load_lbwsg_exposure(location: str):
     entity = utilities.get_entity(data_keys.LBWSG.EXPOSURE)
     location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        gbd_id_type="rei_id",
-        gbd_id=entity.gbd_id,
-        source=gbd_constants.SOURCES.EXPOSURE,
+    data = measures.get_birth_exposure(
+        entity_id=entity.gbd_id,
         location_id=location_id,
         year_id=2022,
-        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
-        age_group_id=164,  # Birth prevalence
+        data_type="draws",
         release_id=gbd_constants.RELEASE_IDS.GBD_2021,  # LBWSG not re-estimated for GBD 2023
     )
     return data
@@ -30,37 +31,45 @@ def load_lbwsg_exposure(location: str):
 def get_all_cause_yld_rate(location: str):
     entity = utilities.get_entity("cause.all_causes.ylds")
     location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        "cause_id",
-        entity.gbd_id,
-        source=gbd_constants.SOURCES.COMO,
+    release_id = gbd_constants.RELEASE_IDS.GBD_2023
+    # NOTE: an omitted dimension defaults to an aggregate, so all are passed explicitly.
+    data = get_machinery_estimates(
+        entity="cause",
+        entity_id=entity.gbd_id,
+        release_id=release_id,
+        estimates="draws",
+        measure_id=[Measures.YLD],
+        metric_id=Metrics.RATE,
         location_id=location_id,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        measure_id=vi_globals.MEASURES["YLDs"],
-        metric_id=3,  # rate
+        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+        age_group_id=gbd.get_age_group_id(release_id),
+        year_id=metadata.GBD_EXTRACT_YEAR,
     )
     return data
 
 
 @cache
-def get_maternal_disorder_ylds(location: str, metric_id=None):
+def get_maternal_disorder_ylds(location: str):
     entity = utilities.get_entity(data_keys.MATERNAL_DISORDERS.YLDS)
     location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        "cause_id",
-        entity.gbd_id,
-        source=gbd_constants.SOURCES.COMO,
+    release_id = gbd_constants.RELEASE_IDS.GBD_2023
+    data = get_machinery_estimates(
+        entity="cause",
+        entity_id=entity.gbd_id,
+        release_id=release_id,
+        estimates="draws",
+        measure_id=[Measures.YLD],
+        metric_id=Metrics.RATE,
         location_id=location_id,
-        year_id=2023,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        measure_id=vi_globals.MEASURES["YLDs"],
-        metric_id=metric_id,
+        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+        age_group_id=gbd.get_age_group_id(release_id),
+        year_id=metadata.GBD_EXTRACT_YEAR,
     )
     return data
 
 
 @cache
-def get_anemia_ylds(location: str, metric_id=None):
+def get_anemia_ylds(location: str):
     anemia_sequelae = [
         sequelae.mild_anemia_due_to_maternal_hemorrhage,
         sequelae.moderate_anemia_due_to_maternal_hemorrhage,
@@ -68,15 +77,18 @@ def get_anemia_ylds(location: str, metric_id=None):
     ]
     anemia_ids = [s.gbd_id for s in anemia_sequelae]
     location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        "sequela_id",
-        anemia_ids,
-        source=gbd_constants.SOURCES.COMO,
+    release_id = gbd_constants.RELEASE_IDS.GBD_2023
+    data = get_machinery_estimates(
+        entity="sequela",
+        entity_id=anemia_ids,
+        release_id=release_id,
+        estimates="draws",
+        measure_id=[Measures.YLD],
+        metric_id=Metrics.RATE,
         location_id=location_id,
-        year_id=2023,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        measure_id=vi_globals.MEASURES["YLDs"],
-        metric_id=metric_id,
+        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+        age_group_id=gbd.get_age_group_id(release_id),
+        year_id=metadata.GBD_EXTRACT_YEAR,
     )
     return data
 
@@ -84,54 +96,59 @@ def get_anemia_ylds(location: str, metric_id=None):
 @cache
 def get_anemia_yld_rate(location: str):
     location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        "rei_id",
-        192,
-        source=gbd_constants.SOURCES.COMO,
+    release_id = gbd_constants.RELEASE_IDS.GBD_2023
+    # The impairment-cause pair restricts to cause 294 in the query, so callers no
+    # longer filter on cause_id themselves.
+    data = get_machinery_estimates(
+        entity="impairment-cause",
+        entity_id=[192, 294],
+        release_id=release_id,
+        estimates="draws",
+        measure_id=[Measures.YLD],
+        metric_id=Metrics.RATE,
         location_id=location_id,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2023,
-        measure_id=vi_globals.MEASURES["YLDs"],
-        metric_id=3,
+        sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+        age_group_id=gbd.get_age_group_id(release_id),
+        year_id=metadata.GBD_EXTRACT_YEAR,
     )
     return data
 
 
 @cache
 def get_hemoglobin_exposure_data(key: str, location: str):
-    source = {
-        data_keys.HEMOGLOBIN.MEAN: gbd_constants.SOURCES.EXPOSURE,
-        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: gbd_constants.SOURCES.EXPOSURE_SD,
+    # Release 33 estimates are already for the pregnant population, so no
+    # pregnancy correction factor is applied downstream. The SD model version was
+    # never published, so both mean and SD are read from the stored files
+    # (rei 376, females, 2023) that MNCNH also uses.
+    dataset = {
+        data_keys.HEMOGLOBIN.MEAN: "hemoglobin_exposure",
+        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: "hemoglobin_exposure_sd",
     }[key]
-    location_id = utility_data.get_location_id(location)
-    data = get_draws(
-        gbd_id_type="rei_id",
-        gbd_id=376,
-        source=source,
-        location_id=location_id,
-        year_id=metadata.GBD_EXTRACT_YEAR,
-        sex_id=gbd_constants.SEX.FEMALE,
-        # Release 33 estimates are already for the pregnant population, so no
-        # pregnancy correction factor is applied downstream.
-        release_id=metadata.GBD_2023_SPECIAL_PUBLICATIONS_RELEASE_ID,
-    )
-    return data
+    path = paths.HEMOGLOBIN_RELEASE_33_DATA_DIR / f"{dataset}_{location.lower()}.parquet"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} is missing. Release-33 hemoglobin data can't be pulled live; "
+            "see the README in HEMOGLOBIN_RELEASE_33_DATA_DIR."
+        )
+    logger.warning(f"Reading {key} from stored release-33 capture at {path}.")
+    return pd.read_parquet(path)
 
 
 @cache
-def get_hemoglobin_maternal_disorders_rr():
+def get_hemoglobin_maternal_disorders_rr(location: str):
     """Relative risk associated with one g/dL decrease in hemoglobin concentration below 12 g/dL"""
+    # Relative risks do not vary by location, but get_relative_risk requires one.
+    location_id = utility_data.get_location_id(location)
     # Left on GBD 2021: the 2023 RRs changed enough to require model updates we do not
     # plan to make. NO does the same.
-    data = get_draws(
-        gbd_id_type="rei_id",
-        gbd_id=95,
-        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
+    data = measures.get_relative_risk(
+        risk_id=95,
+        location_id=location_id,
         year_id=2021,
-        sex_id=2,
-        source="rr",
-        status="best",
+        data_type="draws",
+        release_id=gbd_constants.RELEASE_IDS.GBD_2021,
     )
-    # Subset to a single sub-cause as the get_draws call returns values for 10 sub-causes within the
+    # Subset to a single sub-cause as the call returns values for 10 sub-causes within the
     # maternal disorders parent cause
     # The RRs are all the same
     assert (
