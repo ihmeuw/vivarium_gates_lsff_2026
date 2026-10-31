@@ -88,9 +88,9 @@ overridden with a decision.
 
 | Rule | Where | Effect |
 |---|---|---|
-| If GF's national g/cap is more than 10% from the mean of its own quintiles, keep the base Total. | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
+| If GF's national g/cap is more than 10% from the mean of its own quintiles, GF doesn't set the Total; the literature or a decision must (or the build fails). | `gf_consumption_amount` | Avoids failing the totals check in `prep_extracted`. Applies to Nigeria rice (38 vs 60.1). Overriding it: `method:scale_to_gf_total` rescales the quintiles to the national figure (proposed decision P009). |
 | For arms in `HCES_ARMS` (India rice), consumption comes from HCES, and fortifiability is not taken from GF. Consumption, fortifiability and baseline any take no literature defaults (their meanings differ for government rice); other rows (concentrations, effectiveness, intervention) do. Baseline any (share of government rice fortified) and effectiveness are both √(current compliance), with no consolidation factor. | `default_scope`, `apply_gf_defaults`, `gf_fortifiability`, `gf_baseline` | India rice keeps its HCES-based consumption and government-rice shares. |
-| Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`, or there with `run_through` = `none`) take no defaults. | `read_arms`, `default_scope` | They keep their base values unless a decision targets them; `comparison.csv` shows GF's numbers for them. |
+| Arms the model doesn't run (not in `0050_config/location_fortificant_vehicles.csv`, or there with `run_through` = `none`) take no defaults. | `read_arms`, `default_scope` | They get no rows in the generated tables; `comparison.csv` shows GF's and the literature's numbers for them. |
 | Effect sizes take literature defaults, not GF ones. | `default_scope` | Matched on the vehicle name; a pooled estimate ('Any', 'Condiments') needs a decision. |
 | Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) take their baseline from the literature or, failing that, keep the base value. |
 | Compliance is split equally: coverage = effectiveness = √compliance, rounded to 2 d.p. | `gf_baseline`, `gf_intervention` | All arms. |
@@ -206,8 +206,8 @@ If it trips again, weight that mean (or loosen `rtol`).
    rejected (P001–P004); question 5 above affects the folate part.
 5. **Arms not in the model yet.** India wheat and India salt have `run_through` = `none` in
    `0050_config/location_fortificant_vehicles.csv` (their quintile consumption is to come
-   from HCES), so they keep their base values; `comparison.csv` still shows GF's numbers for
-   them. India wheat already has baseline decisions (D023, D024). Nigeria salt and Ethiopia
+   from HCES), so they get no rows in the generated tables; `comparison.csv` still shows GF's
+   numbers for them. India wheat already has baseline decisions (D023, D024). Nigeria salt and Ethiopia
    wheat are at `data_prep`: the build fills them in from the literature and GF and runs the
    checks on them, and data prep builds their inputs, but nothing downstream runs. Set an
    arm to `results` once its data are settled. Expect to need decisions (e.g. Ethiopia
