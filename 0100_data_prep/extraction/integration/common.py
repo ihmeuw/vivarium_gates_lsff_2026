@@ -25,7 +25,7 @@ GENERATED_DIR = EXTRACTION_DIR / "generated"
 # The source workbooks live outside the repo (SharePoint). Their extracts are committed
 # as gf_long.csv and lit_long.csv, and sources.csv records which file each came from.
 GF_FILE = EXTRACTION_DIR / "Nutrition PST Background Data.xlsx"
-LIT_FILE = EXTRACTION_DIR / "LSFF_effect_sizes.xlsx"
+LIT_FILE = EXTRACTION_DIR / "LSFF_model_inputs.xlsx"
 
 GF_LONG = HERE / "gf_long.csv"
 LIT_LONG = HERE / "lit_long.csv"

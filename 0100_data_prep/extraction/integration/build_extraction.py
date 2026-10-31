@@ -26,7 +26,9 @@ one before, fill them:
     3. method decisions  active decisions whose source is method:<name>; values computed from
                          others already in place (e.g. consumption SDs, CONSUMPTION_DISTRIBUTION.md)
     4. checks            every required row has a value, the constraints the pipeline relies
-                         on, and unresolved literature candidates (any fails the build)
+                         on, unresolved literature candidates, and literature values for the
+                         arms the model runs that would otherwise be dropped silently (any
+                         fails the build)
 
 Methods (how a value is computed) live in this file, in run_method. Which method applies
 where, and why, lives in decisions.csv.
@@ -59,7 +61,7 @@ import numpy as np
 import pandas as pd
 
 from report import enrich_review, write_status
-from data_needs import HCES_NEEDS, read_arms, skeleton, write_spec_markdown
+from data_needs import HCES_NEEDS, read_arms, scenario_slug, skeleton, write_spec_markdown
 from common import (
     ALL_SAME, MODEL_ARMS_FILE, CV, CVF, DECISIONS_FILE, GENERATED_DIR, GF_LONG, HERE, LIT_LONG,
     NEEDS, QUINTILES, SCEN, STEP_LABELS, VEH, Workbook, overrides_text, consumer_moments, format_number, mixture_sd,
@@ -664,6 +666,61 @@ def missing_rows(wb, info):
     return out
 
 
+def dropped_literature(wb, lit, arms):
+    """Literature values for the arms the model runs that the build would drop silently.
+
+    A value the extractor didn't mark 'Use in model' = no must reach the tables. It is dropped
+    (and GF, or nothing, fills its row instead) when extract_lit couldn't read the row
+    (needs_attention) or when its labels match no table row (e.g. quintile 'All (assumed
+    same)' where the table has 'Total'). Both fail the build. Out of scope, and not checked:
+    fortificants the arm doesn't model, intervention scenarios the arm doesn't run,
+    consumption for HCES arms, and data needs that aren't ours (blank, or ones we don't use,
+    such as fortifiability in the intervention; a misspelt need also lands here).
+    """
+    modeled = {(a["country"], a["vehicle"]): a for a in arms if a["modeled"]}
+    problems = []
+    for _, r in lit.iterrows():
+        arm = modeled.get((r.country, r.vehicle))
+        if arm is None or r.use_in_model == "no" or r.status in ("no_value",):
+            continue
+        where = f"literature workbook '{r.source_sheet}' row {r.source_row}"
+        fix = "Fix the row in the literature workbook, or mark it 'Use in model' = no"
+        if r.status == "needs_attention":
+            problems.append(f"{where} ({r.country} {r.vehicle}): {r.issues}. {fix}")
+            continue
+        if r.status != "ok" or r.need not in NEEDS:
+            continue
+        sheet = NEEDS[r.need][0]
+        if sheet not in (CV, CVF, SCEN):
+            continue
+        if sheet in (CVF, SCEN) and r.fortificant not in arm["fortificants"]:
+            continue
+        if sheet == SCEN and not blank(r.scenario) and \
+                scenario_slug(r.scenario) not in arm["scenarios"] and norm(r.scenario) != "intervention":
+            continue
+        if arm["hces"] and r.need in HCES_NEEDS:
+            continue
+        rows, why = lit_placement(wb, r)
+        if rows:
+            continue
+        if why is None:
+            criteria = {"need": r.need, "country": r.country, "vehicle": r.vehicle,
+                        "data_point_name": r.data_point_name}
+            if sheet in (CVF, SCEN):
+                criteria["fortificant"] = r.fortificant
+            near = wb.find(sheet, **criteria)
+            labels = sorted({", ".join(f"{k} '{wb.get(sheet, x, k)}'" for k in ("quintile", "sex", "scenario")
+                                       if not blank(wb.get(sheet, x, k)))
+                             for x in near})
+            mine = ", ".join(f"{k} '{getattr(r, k)}'" for k in ("quintile", "sex", "scenario")
+                             if not blank(getattr(r, k, None)))
+            why = (f"its labels ({mine or 'none'}) match none of the table's rows for it"
+                   + (f" ({'; '.join(labels)})" if labels else " (the table has no rows for it)"))
+        problems.append(f"{where} ({r.country} {r.vehicle} {r.need} {r.data_point_name} = {r.value:g}): "
+                        f"{why}. {fix}")
+    return problems
+
+
 def run_checks(wb, arms, unresolved=None, info=None):
     """Problems that stop the build: required rows with no value, broken constraints, and
     unresolved literature candidates."""
@@ -1182,7 +1239,7 @@ def build(lit_long=LIT_LONG, gf_long=GF_LONG, model_arms_file=MODEL_ARMS_FILE, d
     # Phase 4: checks. Disagreeing literature candidates that no decision resolves fail the
     # build, so a row never silently switches source when a candidate is added.
     unresolved = {key: c for key, c in ambiguous.items() if key not in decided}
-    b.problems = run_checks(wb, arms, unresolved, info)
+    b.problems = run_checks(wb, arms, unresolved, info) + dropped_literature(wb, lit, arms)
     out_frames = wb.outputs(SOURCE_LABELS)
     b.tables = {t: table_text(output_rows(wb, t, df, info)) for t, df in out_frames.items()}
     return b
