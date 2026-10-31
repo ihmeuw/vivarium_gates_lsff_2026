@@ -95,7 +95,7 @@ overridden with a decision.
 | Baseline coverage and effectiveness are set only when GF gives both current consolidation and compliance; effectiveness is left alone when the resulting coverage is 0. | `gf_baseline` | Arms with "n/a" in GF (Nigeria rice, bouillon) take their baseline from the literature or, failing that, keep the base value. |
 | Compliance is split equally: coverage = effectiveness = √compliance, rounded to 2 d.p. | `gf_baseline`, `gf_intervention` | All arms. |
 | GF compliance is per vehicle, so iron and folate get the same baseline and intervention values. | `gf_baseline`, `gf_intervention` | Wrong if a vehicle is fortified with only one nutrient today; override with a decision for the other fortificant. |
-| CI and SE are cleared when a value changes by more than 1%. | `common.Workbook.outputs` | The base uncertainty no longer describes the new value. |
+| A value from the literature brings its Year, CI and SE; GF values bring none. | `common.Workbook.outputs` | GF publishes point values only. |
 | Literature units: % on a 0–100 scale becomes a fraction, ppm becomes mcg/g, g/dL becomes g/L. | `extract_lit.convert_units` | The g/dL conversion is flagged for checking. |
 
 ## Questions to raise with GF

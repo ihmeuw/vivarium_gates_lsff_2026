@@ -56,8 +56,8 @@ rule dhs_mm:
         """
 
 # The extraction tables the data prep notebooks read (extraction/generated/) are built from
-# the base tables, the literature and GF snapshots, decisions.csv and the model's list of
-# arms, by extraction/integration/build_extraction.py. Snakemake does NOT run the build: it
+# the data needs spec, the literature and GF snapshots, decisions.csv and the model's arms
+# and scenarios, by extraction/integration/build_extraction.py. Snakemake does NOT run the build: it
 # only checks that the committed tables are up to date, and stops if they aren't. Run the
 # build by hand, review what changed and commit it (see 0100_data_prep/extraction/README.md).
 # That way a failed build can't delete the committed tables, and the model only ever runs
@@ -71,16 +71,18 @@ extraction_check = [] if frozen else [extraction_check_marker]
 rule check_extraction:
     input:
         [
-            f"0100_data_prep/extraction/{layer}/{table}.csv"
-            for layer in ["data", "generated"]
+            f"0100_data_prep/extraction/generated/{table}.csv"
             for table in ["country_vehicle", "country_vehicle_fortificant", "scenario_definition", "vehicle"]
         ] + [
             "0100_data_prep/extraction/integration/lit_long.csv",
             "0100_data_prep/extraction/integration/gf_long.csv",
             "0050_config/location_fortificant_vehicles.csv",
+            # each arm's intervention scenarios (data_needs.read_arms)
+            "0050_config/config.yaml",
             "0100_data_prep/extraction/integration/decisions.csv",
             "0100_data_prep/extraction/integration/build_extraction.py",
             "0100_data_prep/extraction/integration/common.py",
+            "0100_data_prep/extraction/integration/data_needs.py",
             "0100_data_prep/extraction/integration/report.py",
         ]
     output:

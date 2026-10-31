@@ -56,12 +56,13 @@ For example, a second concentration for one fortificant:
    that vehicle gets every scenario.
 2. **Names.** A scenario's name is the extraction table's `Scenario` label, lowercased with
    non-word characters collapsed to `_` ("Intervention - 25% NRV" → `intervention_25_nrv`).
-3. **Extraction rows.** Add the scenario's rows to the base table
-   `0100_data_prep/extraction/data/scenario_definition.csv`: intervention coverage,
-   effectiveness and concentration, for **each** fortificant of the vehicle. The build fills
-   coverage and effectiveness from GF (√ of 2035 compliance). Literature rows are matched by
-   scenario label, so the label in the literature workbook must match, or add a typo fix to
-   `TYPO_FIXES` in `extraction/integration/common.py`. Rebuild with `build_extraction.py`.
+3. **Extraction rows.** The build creates the scenario's rows (intervention coverage,
+   effectiveness and concentration, for **each** fortificant of the vehicle) from the data
+   needs spec. It fills coverage and effectiveness from GF (√ of 2035 compliance) and needs
+   a concentration for each fortificant from the literature workbook (`MN intervention
+   fortification`, with the scenario's label in `Scenario`) or a `value:` decision. The
+   scenario's label comes from those rows, so at least one must name it; the build stops if
+   none does, or if a required value is missing. Rebuild with `build_extraction.py`.
 4. **Comparisons.** Add a row to `0050_config/location_vehicle_scenario_comparisons.csv`.
    `custom_name` is free text; avoid commas, as the file isn't quoted.
 
