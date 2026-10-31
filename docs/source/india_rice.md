@@ -123,7 +123,7 @@ share of women with *any* effective fortified rice: 0.697 × 0.71 × 0.71 ≈ **
 The government rice fortification roll-out happened after the reference years of the input data, so for India the
 "2021" fortification status in the pregnancy sim (GBD 2021 hemoglobin) and the 2019–20
 coverage in the folate models are set to 0. Nothing is subtracted from the input data, and the
-`zero` scenario equals the GBD or survey values. See `docs/scenarios.md`.
+`zero` scenario equals the GBD or survey values. See `docs/source/scenarios.md`.
 
 ## Intervention: the 2035 scale-up
 
