@@ -44,7 +44,7 @@ ISSUE_ORDER = [
     "proposed decision is invalid",
     "literature row needs attention",
     "literature row can't be matched",
-    "literature value has no row in the extraction sheet",
+    "literature value has no row in the extraction tables",
 ]
 
 WHAT_TO_DO = {
@@ -60,7 +60,7 @@ WHAT_TO_DO = {
     "proposed decision is invalid": "Fix the decision (see detail)",
     "literature row needs attention": "Fix the row in the literature workbook",
     "literature row can't be matched": "Fix the row in the literature workbook (the detail says why); until then it isn't used",
-    "literature value has no row in the extraction sheet": "Nothing to do unless the sheet should gain a row",
+    "literature value has no row in the extraction tables": "Nothing to do unless the tables should gain a row",
 }
 
 

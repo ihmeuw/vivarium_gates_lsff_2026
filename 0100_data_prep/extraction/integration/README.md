@@ -12,9 +12,7 @@ notebooks read) from:
   `config.yaml` for each arm's intervention scenarios (scope).
 
 Every value in the output comes from the literature, GF or a decision. (The old extraction
-sheet's tables, `../data/`, were removed in October 2026; they are in git history, and
-`old_values_in_use.csv` lists the ones that were still in use then. See
-`REDESIGN_PROPOSAL.md`.)
+sheet's tables, `../data/`, were removed in October 2026; they are in git history.)
 
 ```
 python extract_lit.py --lit <LSFF_effect_sizes.xlsx>   # literature workbook -> lit_long.csv
@@ -212,7 +210,7 @@ current state, so they're expected to differ.
 | proposed decision (not applied) / is invalid | Set its status to active or rejected, or fix it. |
 | literature row needs attention | Fix the row in the literature workbook, or add a typo fix to `common.py`. |
 | literature row can't be matched | A literature row matches table rows but isn't used: its scenario is blank where the arm has several intervention scenarios, or its units differ from the table's. Fix it in the literature workbook. |
-| literature value has no row in the extraction sheet | There's nowhere to put it: its need isn't in the spec for that arm, or its scenario isn't configured. |
+| literature value has no row in the extraction tables | There's nowhere to put it: its need isn't in the spec for that arm, or its scenario isn't configured. |
 
 **comparison.csv** (and `comparison.xlsx`, the same with colours, written when openpyxl is
 installed; gitignored) has one row per data row of the extraction tables, with these side by

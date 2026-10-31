@@ -63,7 +63,7 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 
 **Still open**
 
-*literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
+*literature value has no row in the extraction tables*: Nothing to do unless the tables should gain a row
 
 - India Rice Folate: intervention: concentration (mcg/g) [Intervention - 2016 FA standard]. literature: 1.3 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 43)
 - India Rice Folate: intervention: concentration (mcg/g) [Intervention - current standard]. literature: 0.125 ppm from email correspondence KB 09/28 (literature workbook 'MN intervention fortification' row 42)
@@ -130,7 +130,7 @@ Nothing open.
 
 **Still open**
 
-*literature value has no row in the extraction sheet*: Nothing to do unless the sheet should gain a row
+*literature value has no row in the extraction tables*: Nothing to do unless the tables should gain a row
 
 - India Wheat Folate: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 48)
 - India Wheat Folate: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 0.075 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 47)
