@@ -349,6 +349,9 @@ def load_fertility_data(fertility_data_path: str) -> pd.DataFrame:
     df = pd.read_parquet(path)
     if df.empty:
         raise ValueError(f"Fertility data at '{path}' contains no birth records.")
+    # HDF drops non-ns datetime units, so a us timestamp would read back 1000x too small.
+    datetime_columns = df.select_dtypes("datetime").columns
+    df[datetime_columns] = df[datetime_columns].astype("datetime64[ns]")
 
     for column, default in (
         ("input_draw", 0),

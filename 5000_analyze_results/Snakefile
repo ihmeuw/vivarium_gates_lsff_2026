@@ -228,7 +228,7 @@ for (location, vehicle) in config_utils.get_configured_combos(["location", "vehi
 # Both summary notebooks iterate over this file to decide which comparisons to
 # report, so an edit to it alone has to rerun them. They skip comparisons for arms
 # that don't run through results (config_utils.get_scenario_comparisons), so the
-# arm list is an input too.
+# arm list (i.e., location_fortificant_vehicles.csv) is an input too.
 scenario_comparisons = [
     "0050_config/location_vehicle_scenario_comparisons.csv",
     "0050_config/location_fortificant_vehicles.csv",

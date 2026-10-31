@@ -181,6 +181,8 @@ def read_arms(model_arms_file, lit, decisions):
     for i, a in table.iterrows():
         where = f"{model_arms_file.name} row {i + 2}"
         run_through = norm(a.run_through) or "results"
+        # NOTE: Parts of this method can probably be deduplicated if we
+        # import things from config_utils, like `reaches_stage`
         if run_through not in RUN_THROUGH_STAGES:
             raise ValueError(f"{where}: unknown run_through '{a.run_through}' "
                              f"(expected one of {', '.join(RUN_THROUGH_STAGES)}, or blank)")
