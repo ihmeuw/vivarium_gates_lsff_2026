@@ -145,6 +145,12 @@ All rows of a (location, vehicle) pair must have the same value. Comparisons in
 ``location_vehicle_scenario_comparisons.csv`` for arms that don't reach ``results``
 stay in the file and are skipped.
 
+Data prep ends with ``check_data_prep_results``, which checks every data prep results
+file of the arms that run (finite, non-negative values, shares in [0, 1], all five
+wealth quintiles) and stops the run if one fails. Arms listed under
+``hces_consumption`` in ``config.yaml`` take their consumption from the HCES notebook
+instead of the extraction tables.
+
 Snakemake flags
 ~~~~~~~~~~~~~~~
 

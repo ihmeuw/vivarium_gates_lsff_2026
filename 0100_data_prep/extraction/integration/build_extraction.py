@@ -76,14 +76,15 @@ TARGET_YEAR = "2035"
 # Data needs that are 2035 targets rather than measurements. GF is their primary source;
 # the literature's values for them describe the current state.
 TARGET_NEEDS = {"fortifiability", "intervention_coverage", "intervention_effectiveness"}
-# Arms whose consumption comes from HCES microdata (HCES_ARMS and HCES_NEEDS, in
-# data_needs.py): the spec builds no consumption rows for them. For India rice, HCES also
-# changes what two other needs mean (HCES_REDEFINED_NEEDS): fortifiability is industry
-# consolidation of purchased non-government rice, and baseline any is the share of government
-# rice that is fortified. Literature values for those describe the whole market, so they aren't
-# defaults; GF's rules for them are in gf_fortifiability and gf_baseline. Every other need
+# Arms whose consumption comes from HCES microdata (arm["hces"], from config.yaml's
+# hces_consumption): the spec builds no consumption rows for them (HCES_NEEDS, data_needs.py).
+# India rice is also modelled through government rice (arm["government_rice"]), which changes
+# what two other needs mean (GOVERNMENT_RICE_NEEDS): fortifiability is industry consolidation
+# of purchased non-government rice, and baseline any is the share of government rice that is
+# fortified. Literature values for those describe the whole market, so they aren't defaults;
+# GF's rules for them are in gf_fortifiability and gf_baseline. Every other need
 # (concentrations, effectiveness, intervention rows) takes defaults as usual.
-HCES_REDEFINED_NEEDS = {"fortifiability", "baseline_any"}
+GOVERNMENT_RICE_NEEDS = {"fortifiability", "baseline_any"}
 TOTALS_RTOL = 0.1  # check_totals_reasonable in prep_extracted.ipynb
 AGREE_RTOL = 0.01  # literature and workbook values closer than this "agree"
 
@@ -182,8 +183,11 @@ def default_scope(wb, sheet, row, arms):
         return None
     if sheet in (CVF, SCEN) and wb.get(sheet, row, "fortificant") not in arm["fortificants"]:
         return None
-    if arm["hces"] and need_alias(wb.get(sheet, row, "data need")) in HCES_NEEDS | HCES_REDEFINED_NEEDS:
-        return None  # from HCES, or a meaning the literature's values don't share (see HCES_ARMS)
+    need = need_alias(wb.get(sheet, row, "data need"))
+    if arm["hces"] and need in HCES_NEEDS:
+        return None  # from HCES
+    if arm["government_rice"] and need in GOVERNMENT_RICE_NEEDS:
+        return None  # a meaning the literature's values don't share (see GOVERNMENT_RICE_NEEDS)
     return arm
 
 
@@ -272,7 +276,7 @@ def gf_fortifiability(gf, wb, arm):
     c, v = arm["country"], arm["vehicle"]
     value, ref, raw = gf.target(c, v, "consolidation")
     rows = wb.find(CV, country=c, vehicle=v, need="fortifiability")
-    if arm["hces"]:
+    if arm["government_rice"]:
         for row in rows:
             wb.keep(CV, row, origin="gf", ref=ref,
                     method=f"GF {TARGET_YEAR} consolidation {raw} is market-wide; ours applies only to purchased "
@@ -291,7 +295,7 @@ def gf_baseline(gf, wb, arm, fortificant):
     eff_rows = wb.find(CVF, country=c, vehicle=v, fortificant=fortificant, need="baseline_effectiveness")
     cons, cons_ref, _ = gf.national(c, v, "consolidation")
     compl, compl_ref, _ = gf.national(c, v, "compliance")
-    if arm["hces"]:
+    if arm["government_rice"]:
         # India rice: HCES gives who eats government rice (PDS, school and anganwadi meals), which
         # stands in for consolidation (government rice is all fortifiable). Baseline any is then the
         # share of government rice fortified, so both rows take the sqrt(compliance) split, applied
@@ -722,10 +726,10 @@ def intervention_problems(wb, arm):
     for f in arm["fortificants"]:
         for row in wb.find(CVF, country=c, vehicle=v, fortificant=f, need="baseline_any"):
             q = wb.get(CVF, row, "quintile")
-            # HCES arms: baseline any is the share of government rice fortified, and government rice
-            # is fully fortifiable, so the intervention must reach at least that share of it. (The
+            # Government rice: baseline any is the share of government rice fortified, and government
+            # rice is fully fortifiable, so the intervention must reach at least that share of it. (The
             # coverage notebook checks the full HCES-based coverage.)
-            fv = 1.0 if arm["hces"] else fort.get(q, fort.get(ALL_SAME, fort.get("Total")))
+            fv = 1.0 if arm["government_rice"] else fort.get(q, fort.get(ALL_SAME, fort.get("Total")))
             baseline = wb.current(CVF, row)
             for irow in wb.find(SCEN, country=c, vehicle=v, fortificant=f, need="intervention_coverage"):
                 coverage = wb.current(SCEN, irow)

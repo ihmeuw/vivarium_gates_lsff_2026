@@ -399,3 +399,30 @@ def test_committed_template_combo_has_every_pathway() -> None:
     india/rice must produce all of them (the 5000 Snakefile asserts this too)."""
     checkout_config_utils = _load_config_utils_from_checkout()
     assert all(checkout_config_utils.get_combo_pathways("india", "rice").values())
+
+
+# ---------------------------------------------------------------------------
+# hces_consumption
+# ---------------------------------------------------------------------------
+
+
+def test_hces_consumption_pairs(config_dir) -> None:
+    config_dir(config_yaml=CONFIG_YAML + "hces_consumption:\n  nigeria: [rice]\n")
+    assert config_utils.get_hces_consumption_pairs() == {("nigeria", "rice")}
+    assert config_utils.consumption_from_hces("nigeria", "rice")
+    assert not config_utils.consumption_from_hces("nigeria", "salt")
+
+
+def test_hces_consumption_defaults_to_none(config_dir) -> None:
+    assert config_utils.get_hces_consumption_pairs() == set()
+
+
+def test_hces_consumption_for_unlisted_pair_raises(config_dir) -> None:
+    config_dir(config_yaml=CONFIG_YAML + "hces_consumption:\n  india: [wheat]\n")
+    with pytest.raises(ValueError, match="hces_consumption"):
+        config_utils.get_hces_consumption_pairs()
+
+
+def test_committed_config_takes_india_rice_consumption_from_hces() -> None:
+    checkout_config_utils = _load_config_utils_from_checkout()
+    assert checkout_config_utils.get_hces_consumption_pairs() == {("india", "rice")}

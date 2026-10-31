@@ -1,6 +1,6 @@
 # Proposal: build the extraction tables from GF and the literature only
 
-Status: agreed; being implemented in steps (see "Implementation plan"; steps 0-4 done). The
+Status: agreed; being implemented in steps (see "Implementation plan"; steps 0-5 done). The
 spec is `data_needs.py` (readable version: `DATA_NEEDS.md`). `old_values_in_use.csv` lists the
 values the model still took from the old extraction sheet in October 2026.
 
@@ -133,8 +133,14 @@ intended one.
    "placeholder remains", the base columns in the reports, `base=True` in
    `lsff_utils.extraction`, `check_completeness.py` / `progress.csv` (reworked from the spec
    or retired). Update the README, `GF_DATA_MAPPING.md` and tests.
-5. **HCES, pipeline side.** Snakefile routing from the spec; a results-file check after data
-   prep (Snakemake rule and pytest).
+5. **HCES, pipeline side.** Which arms get consumption from HCES is now `hces_consumption`
+   in `config.yaml`, read by both the build and the Snakefile (`config_utils.consumption_from_hces`),
+   instead of hard-coded India rice checks. India rice's government-rice logic, which is
+   specific to its programme rather than to HCES, is named separately
+   (`config_utils.GOVERNMENT_RICE`, `data_needs.GOVERNMENT_RICE_ARMS`). A Snakemake rule
+   (`check_data_prep_results`, `lsff_utils.results_check`) checks every data prep results file
+   of the arms that run; it has unit tests, but no test over the committed results, which can
+   lag the configuration until data prep is rerun.
 6. **Later.** `prep_extracted`'s `data_needs` and the Snakefile's file lists read the spec;
    the U5 coverage fix in the anemia notebooks.
 

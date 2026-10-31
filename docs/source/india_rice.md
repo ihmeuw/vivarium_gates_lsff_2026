@@ -49,15 +49,16 @@ women aged 15–50 (an equal-weight average over their quintile and age strata) 
 | Share of government rice fortified, baseline effectiveness | Extraction tables: √(GF current compliance 0.5) = 0.71 (decisions D030, D029) |
 | Industry consolidation (applied to purchased non-government rice) | Extraction tables: 0.175 (decision P011) |
 | Intervention coverage and effectiveness | Extraction tables: √(GF 2035 compliance 0.85) = 0.92 each |
-| Baseline concentrations | Base extraction table, passed through unchanged: iron 42.5 mcg/g, folic acid 0.125 mcg/g (Indian standard values; the literature extraction agrees) |
-| Intervention concentrations | Iron 42.5 mcg/g (literature default); folic acid 1.3 mcg/g (base value, kept by D031) |
+| Baseline concentrations | Literature defaults: iron 42.5 mcg/g, folic acid 0.125 mcg/g (Indian standard values) |
+| Intervention concentrations | Iron 42.5 mcg/g (literature default); folic acid 1.3 mcg/g (the literature's "2016 FA standard" row, chosen by D031) |
 
 The HCES notebook reads microdata on `/snfs1`, so it runs only on the cluster. It writes facts
 from the survey only; every assumption (share fortified, effectiveness, consolidation) is
-applied later in data prep, which runs anywhere. In the build, India rice is in `HCES_ARMS`
-(`build_extraction.py`): it takes no literature defaults except for intervention rows, and its
-GF baseline values are the √ split described below (see `GF_DATA_MAPPING.md`). Rows that
-neither source sets, such as the baseline concentrations, keep their base-table values.
+applied later in data prep, which runs anywhere. In the extraction build, India rice's
+consumption comes from HCES (config.yaml's `hces_consumption`), so it has no consumption rows;
+as the government-rice arm, its fortifiability and baseline any take no literature defaults,
+and its GF baseline values are the √ split described below (see `GF_DATA_MAPPING.md`). Every
+other row takes literature and GF defaults as for any arm.
 
 HCES item codes 061 and 101 are PDS rice (free or paid); 102 is other rice, split into
 purchased and home-grown. Household rice is shared among members by meals eaten at home. A

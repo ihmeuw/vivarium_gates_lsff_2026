@@ -46,15 +46,17 @@ TABLE_COLUMNS = {
     VEH: ["Vehicle", "Data need", "Data point name", "Units", "Year", "Data source", "Value", "CI", "Notes"],
 }
 
-# Arms whose consumption comes from HCES microdata (0100_data_prep/hces). Consumption rows
-# for them are not built here; for India rice, fortifiability and baseline any also have
-# narrower meanings (see build_extraction.HCES_REDEFINED_NEEDS).
-HCES_ARMS = {("India", "Rice")}
+# Needs that come from HCES microdata (0100_data_prep/hces) for the arms listed under
+# hces_consumption in config.yaml. Their rows are not built here.
 HCES_NEEDS = {"any", "amount", "u5_any", "u5_amount"}
+# Arms modelled through government rice (PDS, school and anganwadi meals). For them,
+# fortifiability and baseline any have narrower meanings (build_extraction.GOVERNMENT_RICE_NEEDS),
+# and fortifiability is one Total row (prep_extracted's India rice cells read it that way).
+GOVERNMENT_RICE_ARMS = {("India", "Rice")}
 
 
 def _not_hces(arm):
-    return (arm["country"], arm["vehicle"]) not in HCES_ARMS
+    return not arm["hces"]
 
 
 def _nigeria(arm):
@@ -169,6 +171,8 @@ def read_arms(model_arms_file, lit, decisions):
         config = yaml.safe_load(f)
     all_forts = [canonical(FORTIFICANTS, f)[0] for f in config["all_fortificants"]]
     custom = config.get("custom_intervention_scenarios") or {}
+    hces = {(canonical(COUNTRIES, loc)[0], canonical(VEHICLES, veh)[0])
+            for loc, vehicles in (config.get("hces_consumption") or {}).items() for veh in vehicles}
 
     table = pd.read_csv(model_arms_file, dtype=str).fillna("")
     if "run_through" not in table.columns:
@@ -194,12 +198,16 @@ def read_arms(model_arms_file, lit, decisions):
             forts = [fort]
         arm = arms.setdefault((country, vehicle), {
             "country": country, "vehicle": vehicle, "fortificants": set(), "modeled": False,
-            "hces": (country, vehicle) in HCES_ARMS,
+            "hces": (country, vehicle) in hces,
+            "government_rice": (country, vehicle) in GOVERNMENT_RICE_ARMS,
             "slugs": list((custom.get(norm(a.location)) or {}).get(norm(a.vehicle)) or ["intervention"]),
         })
         arm["fortificants"].update(forts)
         arm["modeled"] = arm["modeled"] or run_through != "none"
 
+    unknown = sorted(hces - set(arms))
+    if unknown:
+        raise ValueError(f"config.yaml: hces_consumption lists arms that aren't in {model_arms_file.name}: {unknown}")
     out = []
     for (country, vehicle), arm in sorted(arms.items()):
         names = scenario_names(country, vehicle, lit, decisions)
@@ -282,7 +290,7 @@ def _source_strata(need, arm, fortificant, scenario, lit, gf, decisions):
 
 
 def _quintile_layout(need, arm, quintiles):
-    if need.quintiles == "total" or (need.alias == "fortifiability" and arm["hces"]):
+    if need.quintiles == "total" or (need.alias == "fortifiability" and arm["government_rice"]):
         return ["Total"]
     if set(QUINTILES) <= quintiles:
         return (["Total"] if "Total" in quintiles else []) + QUINTILES
