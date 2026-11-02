@@ -14,6 +14,7 @@ license = {text = "BSD-3-Clause"}
 authors = [{name = "The vivarium developers", email = "vivarium.dev@gmail.com"}]
 dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
+    "vivarium-artifact>=1.1.1",
     "vivarium-gbd-mapping>=6.0.7",
     "vivarium-engine>=5.11.0",
     "vivarium-public-health>=6.6.4",
@@ -29,21 +30,21 @@ test = [
     "papermill",
     "jupyterlab",
 ]
-# NOTE: jobmon_installer_ihme must stay transitive; naming it here fails to resolve.
-# It is pinned in the root pyproject.toml, which is where it actually resolves.
 cluster = ["vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0"]
-validation = ["vivarium-validation[gbd]>=0.3.1"]
+validation = ["vivarium-validation>=0.3.1"]
 lint = ["vivarium-dependencies[lint]"]
 interactive = [
     "vivarium-dependencies[interactive]",
     "nbdime",
 ]
 data = [
-    "vivarium-inputs>=9.0.0",
-    "vivarium_gates_lsff_2026_child[cluster,lint,test,validation]",
+    # TODO: replace both git references with released versions once GBD siloing
+    # (MIC-7613) ships.
+    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@hjafari/mic-7663/gbd-access-8",
+    "vivarium-gbd-access @ git+https://github.com/ihme-internal/vivarium_gbd_access.git@epic/mic-7365-silo-gbd-shared-functions",
 ]
 simulation = ["pandas>=2.2.1"]
-dev = ["vivarium_gates_lsff_2026_child[test,cluster,lint,interactive,simulation]"]
+dev = ["vivarium_gates_lsff_2026_child[test,cluster,lint,interactive,simulation,data]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"

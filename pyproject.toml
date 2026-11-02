@@ -7,7 +7,7 @@ name = "vivarium_gates_lsff_2026"
 description = "Vivarium simulation model for the vivarium_gates_lsff_2026 project."
 readme = "README.rst"
 # 3.11 floor, not 3.10: the `workflow` extra needs snakemake>=8.16, which requires
-# 3.11. The two environments `environment.sh` builds are 3.11 and 3.12 anyway.
+# 3.11. python_versions.json lists only 3.11 and 3.12 anyway.
 requires-python = ">=3.11"
 license = {text = "BSD-3-Clause"}
 authors = [{name = "The vivarium developers", email = "vivarium.dev@gmail.com"}]
@@ -17,6 +17,7 @@ version = "0.0.1"
 dependencies = [
     "vivarium-dependencies[pandas,numpy,scipy,click,tables,loguru]",
     "vivarium-build-utils>=4.4.2,<5.0.0",
+    "vivarium-artifact>=1.1.1",
     "vivarium-gbd-mapping>=6.0.7",
     "vivarium-engine>=6.0.0,<7.0.0",
     "vivarium-public-health>=6.6.4",
@@ -29,39 +30,29 @@ test = [
     "vivarium-dependencies[pytest]",
     "pytest-vivarium",
 ]
-# NOTE: The [cluster] extra is required, not optional. vivarium-cluster-tools gates
-# jobmon_installer_ihme behind it, and psimulate imports jobmon at module load, so a
-# plain "vivarium-cluster-tools" install yields a psimulate that dies with
-# "ModuleNotFoundError: No module named 'jobmon'".
-# NOTE: jobmon_installer_ihme is pinned here, not in the sub-package pyproject.toml files.
-# vivarium-cluster-tools leaves it unpinned, and a fresh resolve of '.[data]' selects
-# 10.6.5 -- whose jobmon has no 'http.gui_url' config key, so
-# cluster_tools.core.jobmon.client.get_monitoring_url raises between binding a workflow
-# and running it, and 'make_artifacts -l all' fails without submitting a task. This
-# root install (base.mk's 'uv pip install -e .[data]') is the step that resolves jobmon;
-# the sub-package install step cannot see the package on the index at all.
-cluster = [
-    "vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0",
-    "jobmon_installer_ihme>=10.12.2",
-]
+# NOTE: The vivarium-cluster-tools[cluster] extra is required, not optional.
+# vivarium-cluster-tools gates jobmon_installer_ihme behind it, and psimulate
+# imports jobmon at module load, so a plain "vivarium-cluster-tools" install
+# yields a psimulate that dies with "ModuleNotFoundError: No module named 'jobmon'".
+cluster = ["vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0"]
+# Packages that read GBD. They are only on the IHME package index or in ihme-internal
+# repositories, so they are kept out of the other extras: an install without [data]
+# can run simulations but cannot make artifacts or run data prep.
 data = [
-    "vivarium-inputs>=9.0.0",
-    "vivarium_gates_lsff_2026[cluster]",
-    # Automated V&V (5000_analyze_results/validation) runs in the artifact env, so it
-    # belongs on this path -- see the [validation] extra below.
-    "vivarium_gates_lsff_2026[validation]",
-    # Every papermill-driven stage of the Snakemake pipeline runs in the artifact
-    # environment, so the notebook dependencies belong on this path too.
-    "vivarium_gates_lsff_2026[notebooks]",
-    # IHME-internal, and only resolvable from the IHME package index. Confined to
-    # this extra because it is reachable only on the artifact path; the data-prep
-    # notebooks import it directly rather than through vivarium_inputs.
+    # TODO: replace both git references with released versions once GBD siloing
+    # (MIC-7613) ships vivarium_gbd_access 8.x and the vivarium_inputs that needs it.
+    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@hjafari/mic-7663/gbd-access-8",
+    "vivarium-gbd-access @ git+https://github.com/ihme-internal/vivarium_gbd_access.git@epic/mic-7365-silo-gbd-shared-functions",
+    # The data-prep notebooks import db_queries directly rather than through vivarium_inputs.
     "db_queries",
+    # The 0500 model notebook and the GBD V&V notebooks import it directly. It came in
+    # through vivarium_gbd_access 7.x, which the siloed branch no longer does.
+    "ihme_cc_get_estimates[library]>=2.39.0,<3.0.0",
 ]
 # Dependencies of the notebooks Snakemake runs through papermill (0100_data_prep,
 # 0400, 0500 and 5000_analyze_results). These were previously listed in
 # requirements.txt and installed into a Snakemake-built venv; the pipeline now runs
-# in the environments environment.sh builds, so they have to be declared here to be
+# in the environment environment.sh builds, so they have to be declared here to be
 # installed at all.
 notebooks = [
     "papermill",
@@ -74,24 +65,25 @@ notebooks = [
 ]
 interactive = ["vivarium-dependencies[interactive]", "vivarium-interactive>=1.0.0,<2.0.0"]
 # Automated V&V notebooks under 5000_analyze_results/validation.
-# NOTE: As of vivarium-validation v0.3.1 the 'gbd' extra contains only vivarium-inputs
+# NOTE: vivarium-validation's 'gbd' extra is not used. It contains only vivarium-inputs,
+# which [data] provides, and it re-adds pandas and numpy caps.
 # NOTE: jupyterlab is named explicitly rather than relied on transitively. [interactive]
 # brings vivarium_dependencies[jupyter], whose 'jupyter' metapackage only started depending
 # on jupyterlab in 1.1.0 (and otherwise reaches it via notebook>=7). Both are unpinned, so
 # leaving it implicit makes 'jupyter lab' contingent on how the resolver happens to land.
 validation = [
-    "vivarium-validation[gbd]>=0.3.1",
+    "vivarium-validation>=0.3.1",
     "vivarium_gates_lsff_2026[interactive]",
     "jupyterlab",
 ]
 lint = ["vivarium-dependencies[lint]"]
 # Builds the Markdown notes in docs/ (make build-docs).
 docs = ["vivarium-dependencies[sphinx]", "myst-parser"]
-# Snakemake drives the pipeline. It lives in the simulation environment rather
-# than one of its own because it does not need one: a rule's recipe activates the
-# environment that stage needs in its own subshell, so the environment Snakemake
-# is launched from is never inherited by a stage. Snakemake itself imports only
-# lsff_utils, to resolve paths and read 0050_config.
+# Snakemake drives the pipeline. It lives in the model environment rather than one
+# of its own because it does not need one: a rule's recipe activates the model
+# environment in its own subshell, so the environment Snakemake is launched from is
+# never inherited by a stage. Snakemake itself imports only lsff_utils, to resolve
+# paths and read 0050_config.
 # NOTE: The <9 cap is load-bearing, not caution. Snakemake 9 removed `Wildcards`
 # from `snakemake.io`, which 0400_non_pregnant_anemia_model/Snakefile imports to
 # synthesize the wildcards for its Ethiopia-folate variant, so the workflow fails
@@ -99,12 +91,10 @@ docs = ["vivarium-dependencies[sphinx]", "myst-parser"]
 workflow = ["snakemake>=8.16,<9"]
 simulation = [
     "pandas>=2.2.1",
-    # Live-sim V&V (5000_analyze_results/validation/child_model/child_lbwsg.ipynb) runs
-    # FuzzyChecker inside the simulation env; the full vivarium-validation stack stays on
-    # the artifact path.
+    # Live-sim V&V (5000_analyze_results/validation/child_model/child_lbwsg.ipynb) runs FuzzyChecker.
     "vivarium-fuzzy-checker>=0.3.0",
 ]
-dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,docs,simulation,notebooks,workflow]"]
+dev = ["vivarium_gates_lsff_2026[test,cluster,interactive,lint,docs,simulation,notebooks,workflow,validation,data]"]
 
 [project.urls]
 Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
@@ -113,7 +103,16 @@ Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
 make_artifacts = "vivarium_gates_lsff_2026.tools.cli:make_artifacts"
 
 [tool.uv]
-override-dependencies = ["pandas<3.0.0", "sqlalchemy>=2.0.0,<3.0.0", "numpy<2.0.0"]
+# The vivarium_gbd_access branch builds as a dev version below 8.0.0, which fails the
+# vivarium-gbd-access>=8.0.0 that vivarium_inputs requires, so force it.
+# TODO: remove this with the git references in [data].
+# vivarium-validation caps pandera below 0.23, and pandera 0.22 fails to import
+# vivarium.validation under numpy 2.
+# TODO: remove the pandera override once vivarium-validation drops the cap (MIC-7662).
+override-dependencies = [
+    "pandera>=0.23.0",
+    "vivarium-gbd-access @ git+https://github.com/ihme-internal/vivarium_gbd_access.git@epic/mic-7365-silo-gbd-shared-functions",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

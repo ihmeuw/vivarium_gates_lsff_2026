@@ -12,8 +12,7 @@ full_scale = config["full_scale"]
 # recipe can reference it as `{name}`; anything that has to be computed from the
 # wildcards goes in the rule's `params`, which is the only interpolation
 # Snakemake resolves per job.
-artifact_setup = config["artifact_env_setup"]
-simulation_setup = config["simulation_env_setup"]
+env_setup = config["env_setup"]
 artifact_debug = "--pdb -vvv" if debug else ""
 psimulate_debug = "--pdb -vvv" if debug and not local else ""
 cluster_args = "" if debug or local else "-P proj_simscience -m 2 -r 01:00:00 -q all.q"
@@ -70,7 +69,7 @@ rule pregnancy_artifacts:
     output: [MATERNAL_ARTIFACT]
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         rm -f {output}
         make_artifacts -p maternal -o {MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle} -l {wildcards.location} --vehicle {wildcards.vehicle} -a --mean {artifact_debug}
         """
@@ -96,7 +95,7 @@ rule pregnancy_simulations:
         ),
     shell:
         """
-        {simulation_setup}
+        {env_setup}
         cd 0200_pregnancy_sim
         rm -f dump.rdb
         {simulate_command} src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {branches_arg} -i {MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {MATERNAL_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
