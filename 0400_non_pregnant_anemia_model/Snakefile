@@ -4,7 +4,7 @@ debug = config["debug"]
 
 # Recipes are plain strings and Snakemake does the interpolation -- never
 # f-strings. See "Recipes are not f-strings" in the root Snakefile.
-artifact_setup = config["artifact_env_setup"]
+env_setup = config["env_setup"]
 papermill_engine = "--engine debug" if debug else ""
 
 
@@ -43,7 +43,7 @@ rule non_pregnant_anemia:
     log: "0400_non_pregnant_anemia_model/executed/{vehicle}/{location}/non_pregnant_anemia.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 0400_non_pregnant_anemia_model
         mkdir -p ./executed/{wildcards.vehicle}/{wildcards.location}
         papermill non_pregnant_anemia.ipynb ./executed/{wildcards.vehicle}/{wildcards.location}/non_pregnant_anemia.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
@@ -65,7 +65,7 @@ rule non_pregnant_anemia_ethiopia_folate:
     log: "0400_non_pregnant_anemia_model/executed/{vehicle}/ethiopia/non_pregnant_anemia_folate.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 0400_non_pregnant_anemia_model
         mkdir -p ./executed/{wildcards.vehicle}/ethiopia
         papermill non_pregnant_anemia_folate.ipynb ./executed/{wildcards.vehicle}/ethiopia/non_pregnant_anemia_folate.ipynb -p location ethiopia -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}

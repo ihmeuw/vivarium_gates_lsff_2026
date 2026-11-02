@@ -7,14 +7,13 @@ configfile: "0050_config/config.yaml"
 
 # Use the Snakemake config as a way to pass "globals" through all Snakefiles.
 #
-# Environments are the two `environment.sh` builds -- `artifact` for anything
-# that reads GBD, `simulation` for anything that runs vivarium. Snakemake does
-# not build them; it activates them. Override either with
+# Every rule runs in the one environment `environment.sh` builds. Snakemake does
+# not build it; it activates it. Override it with
 #
-#   snakemake --config simulation_env=<name or venv path>
-#   snakemake --config artifact_env_setup='<shell that activates something else>'
+#   snakemake --config env=<name or venv path>
+#   snakemake --config env_setup='<shell that activates something else>'
 #
-# See lsff_utils.snakemake_utils.resolve_environments.
+# See lsff_utils.snakemake_utils.resolve_environment.
 
 config = {
     "debug": "false",
@@ -35,7 +34,7 @@ config = {
     **config,
 }
 
-config.update(snakemake_utils.resolve_environments(config))
+config.update(snakemake_utils.resolve_environment(config))
 
 # Recipes are not f-strings
 # -------------------------
