@@ -1,6 +1,4 @@
-import pandas as pd
 from gbd.enums import Measures, Metrics
-from loguru import logger
 from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
@@ -9,11 +7,13 @@ from vivarium_gbd_access.gbd.base_data import get_machinery_estimates
 from vivarium_gbd_access.utilities import cache
 from vivarium_inputs import utility_data
 
-from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata, paths
+from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
 from vivarium_gates_lsff_2026_maternal.data import utilities
 
 HEMOGLOBIN_RELEASE_ID = 33
 HEMOGLOBIN_PREGNANT_MEAN_ME_ID = 28869
+# Not the pregnant SD (ME 28870), which was never published. See MIC-7716.
+HEMOGLOBIN_SD_ME_ID = 10488
 
 
 @cache
@@ -121,27 +121,18 @@ def get_anemia_yld_rate(location: str):
 def get_hemoglobin_exposure_data(key: str, location: str):
     # Release 33 estimates are already for the pregnant population, so no
     # pregnancy correction factor is applied downstream.
-    if key == data_keys.HEMOGLOBIN.MEAN:
-        location_id = utility_data.get_location_id(location)
-        return gbd.get_modelable_entity_draws(
-            me_id=HEMOGLOBIN_PREGNANT_MEAN_ME_ID,
-            location_id=location_id,
-            year_id=metadata.GBD_EXTRACT_YEAR,
-            data_type="draws",
-            release_id=HEMOGLOBIN_RELEASE_ID,
-        )
-    # TODO: pull the SD live (ME 10488) once the release-33 pull works.
-    path = (
-        paths.HEMOGLOBIN_RELEASE_33_DATA_DIR
-        / f"hemoglobin_exposure_sd_{location.lower()}.parquet"
+    me_id = {
+        data_keys.HEMOGLOBIN.MEAN: HEMOGLOBIN_PREGNANT_MEAN_ME_ID,
+        data_keys.HEMOGLOBIN.STANDARD_DEVIATION: HEMOGLOBIN_SD_ME_ID,
+    }[key]
+    location_id = utility_data.get_location_id(location)
+    return gbd.get_modelable_entity_draws(
+        me_id=me_id,
+        location_id=location_id,
+        year_id=metadata.GBD_EXTRACT_YEAR,
+        data_type="draws",
+        release_id=HEMOGLOBIN_RELEASE_ID,
     )
-    if not path.exists():
-        raise FileNotFoundError(
-            f"{path} is missing. The release-33 hemoglobin SD can't be pulled live yet; "
-            "see the README in HEMOGLOBIN_RELEASE_33_DATA_DIR."
-        )
-    logger.warning(f"Reading {key} from stored release-33 capture at {path}.")
-    return pd.read_parquet(path)
 
 
 @cache
