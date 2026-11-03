@@ -1053,7 +1053,7 @@ def load_iron_fortification_stillbirth_rr(
 
 
 def reshape_to_vivarium_format(df, location):
-    df = vi_utils.reshape(df, value_cols=vi_globals.DRAW_COLUMNS)
+    df = vi_utils.reshape(df, value_cols=[c for c in df.columns if c.startswith("draw_")])
     df = vi_utils.scrub_gbd_conventions(df, location)
     df = vi_utils.split_interval(df, interval_column="age", split_column_prefix="age")
     df = vi_utils.split_interval(df, interval_column="year", split_column_prefix="year")
