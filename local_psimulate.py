@@ -15,10 +15,10 @@ if __name__ == "__main__":
 
     from pathlib import Path
 
-    from vivarium.cluster_tools.psimulate import COMMANDS, model_specification
-    from vivarium.cluster_tools.psimulate.branches import Keyspace
     from vivarium.engine.framework.configuration import build_model_specification
     from vivarium.engine.framework.engine import Simulation
+    from vivarium.psimulate import COMMANDS, model_specification
+    from vivarium.psimulate.branches import Keyspace
 
     keyspace = Keyspace.from_branch_configuration(Path(args.branches))
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         from vivarium.engine.framework.utilities import collapse_nested_dict
 
-        # https://github.com/ihmeuw/vivarium-suite/blob/main/libs/cluster-tools/src/vivarium/cluster_tools/psimulate/worker/vivarium_work_horse.py
+        # https://github.com/ihmeuw/vivarium-suite/blob/main/libs/psimulate/src/vivarium/psimulate/worker/vivarium_work_horse.py
         for key, val in collapse_nested_dict(branch_config):
             # Exclude the run_configuration values from branch_configuration
             # since they are duplicates. Also do not include the additional_seed

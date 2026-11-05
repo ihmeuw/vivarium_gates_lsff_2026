@@ -29,18 +29,19 @@ test = [
     "papermill",
     "jupyterlab",
 ]
-cluster = ["vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0"]
-validation = ["vivarium-validation>=0.3.1"]
+cluster = [
+    "vivarium-cluster-tools[cluster]>=5.0.0,<6.0.0",
+    "vivarium-psimulate[cluster]>=1.0.0,<2.0.0",
+]
+validation = ["vivarium-validation>=0.5.0"]
 lint = ["vivarium-dependencies[lint]"]
 interactive = [
     "vivarium-dependencies[interactive]",
     "nbdime",
 ]
 data = [
-    # TODO: replace both git references with released versions once GBD siloing
-    # (MIC-7613) ships.
-    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@hjafari/mic-7663/gbd-access-8",
-    "vivarium-gbd-access @ git+https://github.com/ihme-internal/vivarium_gbd_access.git@epic/mic-7365-silo-gbd-shared-functions",
+    "vivarium-inputs>=9.2.0",
+    "vivarium-gbd-access>=8.0.0",
 ]
 simulation = ["pandas>=2.2.1"]
 dev = ["vivarium_gates_lsff_2026_maternal[test,cluster,lint,interactive,simulation,data]"]
