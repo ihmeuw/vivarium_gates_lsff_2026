@@ -173,7 +173,8 @@ build-env: # Create a new environment with installed packages
 	conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev
 #	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
 #	reasons. First, 'dev' pulls IHME-internal packages that are absent from public
-#	PyPI -- jobmon_installer_ihme (via vivarium-cluster-tools[cluster]) and db_queries --
+#	PyPI -- jobmon_installer_ihme (via the [cluster] extras of vivarium-cluster-tools and
+#	vivarium-psimulate) and db_queries --
 #	so the Artifactory index is required, not optional. Second, EXTRA_INDEX_FLAGS includes '--index-strategy',
 #	which plain pip rejects outright; reusing the shared variable keeps the Artifactory
 #	URL defined in one place and installs these packages with the same resolver and

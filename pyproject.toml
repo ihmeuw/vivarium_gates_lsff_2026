@@ -30,23 +30,25 @@ test = [
     "vivarium-dependencies[pytest]",
     "pytest-vivarium",
 ]
-# NOTE: The vivarium-cluster-tools[cluster] extra is required, not optional.
-# vivarium-cluster-tools gates jobmon_installer_ihme behind it, and psimulate
-# imports jobmon at module load, so a plain "vivarium-cluster-tools" install
-# yields a psimulate that dies with "ModuleNotFoundError: No module named 'jobmon'".
-cluster = ["vivarium-cluster-tools[cluster]>=4.8.0,<5.0.0"]
+# NOTE: The [cluster] extras below are required, not optional. Both packages gate
+# jobmon_installer_ihme behind them, and psimulate imports jobmon at module load, so
+# a plain install yields a psimulate that dies with
+# "ModuleNotFoundError: No module named 'jobmon'".
+cluster = [
+    "vivarium-cluster-tools[cluster]>=5.0.0,<6.0.0",
+    "vivarium-psimulate[cluster]>=1.0.0,<2.0.0",
+    "jobmon_installer_ihme>=10.12.2",
+]
 # Packages that read GBD. They are only on the IHME package index or in ihme-internal
 # repositories, so they are kept out of the other extras: an install without [data]
 # can run simulations but cannot make artifacts or run data prep.
 data = [
-    # TODO: replace both git references with released versions once GBD siloing
-    # (MIC-7613) ships vivarium_gbd_access 8.x and the vivarium_inputs that needs it.
-    "vivarium-inputs @ git+https://github.com/ihme-internal/vivarium_inputs.git@hjafari/mic-7663/gbd-access-8",
-    "vivarium-gbd-access @ git+https://github.com/ihme-internal/vivarium_gbd_access.git@epic/mic-7365-silo-gbd-shared-functions",
+    "vivarium-inputs>=9.2.0",
+    "vivarium-gbd-access>=8.0.0",
     # The data-prep notebooks import db_queries directly rather than through vivarium_inputs.
     "db_queries",
     # The 0500 model notebook and the GBD V&V notebooks import it directly. It came in
-    # through vivarium_gbd_access 7.x, which the siloed branch no longer does.
+    # through vivarium_gbd_access 7.x, and 8.x no longer depends on it.
     "ihme_cc_get_estimates[library]>=2.39.0,<3.0.0",
 ]
 # Dependencies of the notebooks Snakemake runs through papermill (0100_data_prep,
@@ -72,7 +74,7 @@ interactive = ["vivarium-dependencies[interactive]", "vivarium-interactive>=1.0.
 # on jupyterlab in 1.1.0 (and otherwise reaches it via notebook>=7). Both are unpinned, so
 # leaving it implicit makes 'jupyter lab' contingent on how the resolver happens to land.
 validation = [
-    "vivarium-validation>=0.3.1",
+    "vivarium-validation>=0.5.0",
     "vivarium_gates_lsff_2026[interactive]",
     "jupyterlab",
 ]
@@ -101,18 +103,6 @@ Homepage = "https://github.com/ihmeuw/vivarium_gates_lsff_2026"
 
 [project.scripts]
 make_artifacts = "vivarium_gates_lsff_2026.tools.cli:make_artifacts"
-
-[tool.uv]
-# The vivarium_gbd_access branch builds as a dev version below 8.0.0, which fails the
-# vivarium-gbd-access>=8.0.0 that vivarium_inputs requires, so force it.
-# TODO: remove this with the git references in [data].
-# vivarium-validation caps pandera below 0.23, and pandera 0.22 fails to import
-# vivarium.validation under numpy 2.
-# TODO: remove the pandera override once vivarium-validation drops the cap (MIC-7662).
-override-dependencies = [
-    "pandera>=0.23.0",
-    "vivarium-gbd-access @ git+https://github.com/ihme-internal/vivarium_gbd_access.git@epic/mic-7365-silo-gbd-shared-functions",
-]
 
 [tool.setuptools.packages.find]
 where = ["src"]
