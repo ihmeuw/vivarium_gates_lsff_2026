@@ -45,11 +45,6 @@ cluster = [
 data = [
     "vivarium-inputs>=9.2.0",
     "vivarium-gbd-access>=8.0.0",
-    # The data-prep notebooks import db_queries directly rather than through vivarium_inputs.
-    "db_queries",
-    # The 0500 model notebook and the GBD V&V notebooks import it directly. It came in
-    # through vivarium_gbd_access 7.x, and 8.x no longer depends on it.
-    "ihme_cc_get_estimates[library]>=2.39.0,<3.0.0",
 ]
 # Dependencies of the notebooks Snakemake runs through papermill (0100_data_prep,
 # 0400, 0500 and 5000_analyze_results). These were previously listed in
