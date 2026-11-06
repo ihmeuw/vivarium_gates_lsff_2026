@@ -3,18 +3,18 @@ import pandas as pd
 
 def aggregate_by_scenario(df):
     return (
-        df.groupby(["scenario", "input_draw", "wealth_quintile"])
+        df.groupby(["scenario", "input_draw", "wealth_quintile"], observed=False)
         .value.sum()
-        .groupby(["scenario", "wealth_quintile"])
+        .groupby(["scenario", "wealth_quintile"], observed=False)
         .mean()
     )
 
 
 def aggregate_by_cause_and_scenario(df):
     result = (
-        df.groupby(["scenario", "entity", "input_draw", "wealth_quintile"])
+        df.groupby(["scenario", "entity", "input_draw", "wealth_quintile"], observed=False)
         .value.sum()
-        .groupby(["scenario", "entity", "wealth_quintile"])
+        .groupby(["scenario", "entity", "wealth_quintile"], observed=False)
         .mean()
     )
     return result[result.index.get_level_values("entity") != "all_causes"]
