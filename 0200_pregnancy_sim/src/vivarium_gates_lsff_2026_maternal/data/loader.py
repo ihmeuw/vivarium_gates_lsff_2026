@@ -22,10 +22,10 @@ import vivarium_inputs.validation.sim as validation
 from scipy import integrate, stats
 from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
+from vivarium_gbd_access.caching import cache as disk_cache
 from vivarium_inputs import core as vi_core
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import interface
-from vivarium_gbd_access.utilities import cache as disk_cache
 from vivarium_inputs import utilities as vi_utils
 
 from lsff_utils import data_processing, hemoglobin_distribution

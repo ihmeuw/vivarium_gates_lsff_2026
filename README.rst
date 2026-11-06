@@ -18,14 +18,13 @@ Setup
 
   git clone https://github.com/ihmeuw/vivarium_gates_lsff_2026.git
   cd vivarium_gates_lsff_2026
-  source environment.sh -t artifact    # build the artifact environment
-  source environment.sh                # build the simulation environment and activate it
+  source environment.sh                # build the environment and activate it
   snakemake --version                  # check it works
 
-* Add ``-f`` to rebuild an environment, for example ``source environment.sh -f``.
-* On the cluster, add ``-s`` to both commands to use the shared environment.
-* Always run Snakemake from the simulation environment. It switches to the artifact
-  environment by itself when a stage needs it.
+* Add ``-f`` to rebuild the environment, for example ``source environment.sh -f``.
+* On the cluster, add ``-s`` to use the shared environment.
+* Off the IHME network, the ``data`` extra cannot be installed. Without it, the
+  environment can run simulations but cannot make artifacts or run data prep.
 
 Running the model
 -----------------
@@ -231,7 +230,5 @@ Tests
 ::
 
   pytest --runslow
-
-Run them in both environments if you change shared code.
 
 Supported Python versions: 3.11, 3.12

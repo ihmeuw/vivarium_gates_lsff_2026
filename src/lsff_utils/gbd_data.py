@@ -12,12 +12,12 @@ carried verbatim copies of everything here, which is how they drifted apart.
 
 .. warning::
 
-   This module imports ``vivarium_gbd_access``, ``vivarium_inputs`` and
-   ``joblib``, none of which exist in the *simulation* environment -- only in
-   the *artifact* environment. That is safe because ``lsff_utils/__init__.py``
-   is empty, so the simulation packages' ``from lsff_utils import paths`` (and
-   friends) never load this module. Do not add a re-export of anything here to
-   ``__init__.py``: it would break every simulation import.
+   This module imports ``vivarium_gbd_access`` and ``vivarium_inputs``, which
+   are installed only with the ``[data]`` extra. That is safe because
+   ``lsff_utils/__init__.py`` is empty, so the simulation packages'
+   ``from lsff_utils import paths`` (and friends) never load this module. Do not
+   add a re-export of anything here to ``__init__.py``: it would break every
+   simulation import in an install without ``[data]``.
 """
 
 import collections
@@ -29,8 +29,7 @@ from enum import IntEnum
 from functools import cache
 
 import loguru
-import vivarium_gbd_access.utilities as vgu
-from joblib import Memory
+import vivarium_gbd_access.caching as vgc
 from vivarium_gbd_access import gbd
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
@@ -163,6 +162,7 @@ _ME_METADATA_LEVELS = [
     "metric_id",
     "model_version_id",
     "modelable_entity_id",
+    "rei_id",
 ]
 
 
@@ -176,18 +176,20 @@ def quiet_gbd_logs(verbosity=None):
 
     - ``vivarium_gbd_access`` re-emits a multi-line config dump on *every*
       cached call, plus an INFO line per cache hit.
-    - ``vivarium_gbd_access.utilities.get_memory`` hardcodes
-      ``joblib.Memory(verbose=1)``, so it is swapped for one that builds the
-      same cache in the same location, quietly. It has to be replaced rather
-      than mutated: ``Memory.cache()`` reads the private ``_verbose``, so
-      setting ``memory.verbose = 0`` after construction silently does nothing.
-    - Shared-function warnings, which cannot be handled with ``filterwarnings``:
-      the ``vivarium_gbd_access.gbd.base_data`` getters call
-      ``warnings.filterwarnings("default", module="ihme_cc_get_estimates")`` on
-      *every* call, and ``filterwarnings`` prepends, so an "ignore" filter
-      installed here is immediately outranked. Overriding ``showwarning`` works
-      because filters decide whether a warning is emitted, while ``showwarning``
-      decides how it is displayed -- and nothing upstream touches that.
+    - ``vivarium_gbd_access.caching.cache`` hardcodes
+      ``joblib.Memory(verbose=1)``, so the module's ``Memory`` is swapped for
+      one that builds the same cache in the same location, quietly. It has to
+      be replaced rather than mutated: ``Memory.cache()`` reads the private
+      ``_verbose``, so setting ``memory.verbose = 0`` after construction
+      silently does nothing.
+    - Python warnings that match :data:`SUPPRESSED_WARNINGS`, which are counted
+      for the summary. They are dropped by overriding ``showwarning`` rather than
+      by an "ignore" filter, because a ``filterwarnings`` call elsewhere prepends
+      its filter and outranks one installed here. Filters decide whether a
+      warning is emitted, while ``showwarning`` decides how it is displayed.
+      Shared functions in ``vivarium_gbd_access`` 8.x run in a worker process,
+      so their warnings arrive as a DEBUG record under ``vivarium_gbd_access``,
+      which the first item disables, and not as Python warnings.
     - ``vivarium_inputs`` data-quality warnings, which are *recorded* rather
       than dropped -- see :class:`Verbosity`.
 
@@ -217,13 +219,10 @@ def quiet_gbd_logs(verbosity=None):
             _quiet_depth -= 1
         return
 
-    original_get_memory = vgu.get_memory
+    original_memory = vgc.Memory
 
-    def _quiet_get_memory():
-        config = vgu.get_input_config()
-        if not config.input_data.cache_data:
-            return original_get_memory()
-        return Memory(location=vgu.get_cache_directory(config), verbose=0)
+    def _quiet_memory(*args, **kwargs):
+        return original_memory(*args, **{**kwargs, "verbose": 0})
 
     # Data-quality warnings are collected only when they are not being shown.
     collectors = {}
@@ -238,7 +237,7 @@ def quiet_gbd_logs(verbosity=None):
     warning_counts = collections.Counter()
     for name in BOOKKEEPING_LOGGERS:
         loguru.logger.disable(name)
-    vgu.get_memory = _quiet_get_memory
+    vgc.Memory = _quiet_memory
     _quiet_depth += 1
     try:
         # catch_warnings saves and restores showwarning along with the filters.
@@ -257,7 +256,7 @@ def quiet_gbd_logs(verbosity=None):
             yield
     finally:
         _quiet_depth -= 1
-        vgu.get_memory = original_get_memory
+        vgc.Memory = original_memory
         for name in BOOKKEEPING_LOGGERS:
             loguru.logger.enable(name)
         for name, collector in collectors.items():
