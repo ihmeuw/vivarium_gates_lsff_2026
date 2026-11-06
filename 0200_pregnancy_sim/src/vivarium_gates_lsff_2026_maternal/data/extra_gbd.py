@@ -1,10 +1,10 @@
 import pandas as pd
-from gbd.enums import Measures, Metrics
 from loguru import logger
 from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd, shared_functions
 from vivarium_gbd_access.caching import cache
+from vivarium_gbd_access.enums import Measures, Metrics
 from vivarium_gbd_access.gbd import measures
 from vivarium_gbd_access.utilities import drop_bookkeeping_columns
 from vivarium_inputs import utility_data
