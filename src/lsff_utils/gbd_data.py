@@ -162,6 +162,7 @@ _ME_METADATA_LEVELS = [
     "metric_id",
     "model_version_id",
     "modelable_entity_id",
+    "rei_id",
 ]
 
 

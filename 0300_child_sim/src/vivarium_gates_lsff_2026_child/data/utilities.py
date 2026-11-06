@@ -1,4 +1,3 @@
-import warnings
 from itertools import product
 from numbers import Real
 from typing import Dict, List, Tuple, Union
@@ -18,7 +17,7 @@ from vivarium_gbd_access import constants as gbd_constants
 from vivarium_gbd_access import gbd
 from vivarium_gbd_access.caching import cache
 from vivarium_gbd_access.gbd import measures
-from vivarium_gbd_access.shared_functions import query
+from vivarium_gbd_access.shared_functions import get_demographics, query
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import utilities as vi_utils
 from vivarium_inputs import utility_data
@@ -293,10 +292,6 @@ def normalize_age_and_years(
 
 def get_gbd_estimation_years(gbd_release_id: int) -> List[int]:
     """Gets the estimation years for a particular gbd round."""
-    from db_queries import get_demographics
-
-    warnings.filterwarnings("default", module="db_queries")
-
     return get_demographics(gbd_constants.CONN_DEFS.EPI, gbd_release_id=gbd_release_id)[
         "year_id"
     ]

@@ -172,10 +172,8 @@ build-env: # Create a new environment with installed packages
 #	setuptools 83, and its 'make_artifacts -l all' works, so neither flag is wanted here.
 	conda run $(CONDA_RUN_FLAG) make install ENV_REQS=dev
 #	NOTE: These use 'uv pip' with EXTRA_INDEX_FLAGS rather than plain 'pip', for two
-#	reasons. First, 'dev' pulls IHME-internal packages that are absent from public
-#	PyPI -- jobmon_installer_ihme (via the [cluster] extras of vivarium-cluster-tools and
-#	vivarium-psimulate) and db_queries --
-#	so the Artifactory index is required, not optional. Second, EXTRA_INDEX_FLAGS includes '--index-strategy',
+#	reasons. First, 'dev' pulls IHME-internal packages that are absent from public PyPI, so the
+#	Artifactory index is required, not optional. Second, EXTRA_INDEX_FLAGS includes '--index-strategy',
 #	which plain pip rejects outright; reusing the shared variable keeps the Artifactory
 #	URL defined in one place and installs these packages with the same resolver and
 #	index strategy as the root package above. 'uv' is available here because the
