@@ -26,15 +26,21 @@ simulate_command = (
     + "simulate"
     + (".py" if local else " run")
 )
+# psimulate takes the model specification and branch configuration as options.
+# The positional forms are deprecated there. `simulate run` and local_psimulate.py
+# take them only as positional arguments.
+use_psimulate = not (debug or local)
+model_spec_flag = "-M" if use_psimulate else ""
+branches_flag = "-B" if use_psimulate else ""
 # debug runs a single branch, so it takes no branch configuration at all.
 lbwsg_paf_branches_file = "src/vivarium_gates_lsff_2026_child/data/lbwsg_paf_branches.yaml"
-lbwsg_paf_branches_arg = "" if debug else lbwsg_paf_branches_file
+lbwsg_paf_branches_arg = "" if debug else f"{branches_flag} {lbwsg_paf_branches_file}"
 child_branches_file = (
     "src/vivarium_gates_lsff_2026_child/model_specifications/branches/scenarios"
     + ("_small" if not full_scale else "")
     + ".yaml"
 )
-child_branches_arg = "" if debug else child_branches_file
+child_branches_arg = "" if debug else f"{branches_flag} {child_branches_file}"
 
 # See lsff_utils.paths for the layout these resolve against. They are in the
 # team drive under MODEL_NUMBER, or in the repository with write_local=true.
@@ -85,7 +91,7 @@ rule lbwsg_pafs:
         {env_setup}
         cd 0300_child_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {lbwsg_paf_branches_arg} -i {LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf -o {LBWSG_PAF_RESULTS_ROOT} {cluster_args} {psimulate_debug}
+        {simulate_command} {model_spec_flag} src/vivarium_gates_lsff_2026_child/data/lbwsg_paf.yaml {lbwsg_paf_branches_arg} -i {LBWSG_PAF_ARTIFACT_ROOT}/{wildcards.location}.hdf -o {LBWSG_PAF_RESULTS_ROOT} {cluster_args} {psimulate_debug}
         rm -f dump.rdb
         {params.write_marker}
         """
@@ -135,7 +141,7 @@ rule child_simulations:
         {env_setup}
         cd 0300_child_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {child_branches_arg} -i {CHILD_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {CHILD_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
+        {simulate_command} {model_spec_flag} src/vivarium_gates_lsff_2026_child/model_specifications/model_spec.yaml {child_branches_arg} -i {CHILD_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {CHILD_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
         rm -f dump.rdb
         {params.write_marker}
         """
