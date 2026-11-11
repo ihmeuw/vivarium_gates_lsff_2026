@@ -1,8 +1,8 @@
 wealth_quintile,entity,scenario,value
-1,ntd,zero,176991.0364802809
+1,ntd,zero,176991.03648028057
 2,ntd,zero,144877.60478143848
 3,ntd,zero,129646.90362478704
-4,ntd,zero,108340.64169588209
+4,ntd,zero,108340.64169588214
 5,ntd,zero,83986.89885134481
 1,ntd,baseline,134233.0842120663
 2,ntd,baseline,127686.36668338705
@@ -12,5 +12,5 @@ wealth_quintile,entity,scenario,value
 1,ntd,intervention,98626.57047543264
 2,ntd,intervention,107570.77176931364
 3,ntd,intervention,99812.33178171134
-4,ntd,intervention,94062.48139920567
-5,ntd,intervention,76063.99092110104
+4,ntd,intervention,94062.48139920564
+5,ntd,intervention,76063.99092110118
