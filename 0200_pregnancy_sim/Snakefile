@@ -24,13 +24,19 @@ simulate_command = (
     + "simulate"
     + (".py" if local else " run")
 )
+# psimulate takes the model specification and branch configuration as options.
+# The positional forms are deprecated there. `simulate run` and local_psimulate.py
+# take them only as positional arguments.
+use_psimulate = not (debug or local)
+model_spec_flag = "-M" if use_psimulate else ""
+branches_flag = "-B" if use_psimulate else ""
 # debug runs a single branch, so it takes no branch configuration at all.
 branches_file = (
     "src/vivarium_gates_lsff_2026_maternal/model_specifications/branches/scenarios"
     + ("_small" if not full_scale else "")
     + ".yaml"
 )
-branches_arg = "" if debug else branches_file
+branches_arg = "" if debug else f"{branches_flag} {branches_file}"
 
 # Artifacts and simulation output go to the team drive under MODEL_NUMBER, or
 # to the repository with write_local=true -- see lsff_utils.paths.
@@ -98,7 +104,7 @@ rule pregnancy_simulations:
         {env_setup}
         cd 0200_pregnancy_sim
         rm -f dump.rdb
-        {simulate_command} src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {branches_arg} -i {MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {MATERNAL_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
+        {simulate_command} {model_spec_flag} src/vivarium_gates_lsff_2026_maternal/model_specifications/model_spec.yaml {branches_arg} -i {MATERNAL_ARTIFACT_ROOT}/{wildcards.vehicle}/{wildcards.location}.hdf -o {MATERNAL_RESULTS_ROOT}/{wildcards.vehicle} {cluster_args} {psimulate_debug}
         rm -f dump.rdb
         {params.write_marker}
         """
