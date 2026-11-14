@@ -36,4 +36,4 @@ folate_anemia_vehicles:
 # the consumption results files from the HCES rule. Adding a pair here also needs the HCES
 # notebook to write its files. See config_utils.consumption_from_hces.
 hces_consumption:
-  india: [rice]
+  india: [rice, wheat]

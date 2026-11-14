@@ -423,6 +423,6 @@ def test_hces_consumption_for_unlisted_pair_raises(config_dir) -> None:
         config_utils.get_hces_consumption_pairs()
 
 
-def test_committed_config_takes_india_rice_consumption_from_hces() -> None:
+def test_committed_config_takes_india_rice_and_wheat_consumption_from_hces() -> None:
     checkout_config_utils = _load_config_utils_from_checkout()
-    assert checkout_config_utils.get_hces_consumption_pairs() == {("india", "rice")}
+    assert checkout_config_utils.get_hces_consumption_pairs() == {("india", "rice"), ("india", "wheat")}
