@@ -61,6 +61,24 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 - India Rice Folate: baseline: share fortified. output 0.71; literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 37; marked not for use in model)
 - India Rice Iron: baseline: share fortified. output 0.71; literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 34; marked not for use in model)
 
+## India Wheat
+
+**Decisions in effect**
+
+- **D023** India Wheat Folate: baseline: effective share of fortified → 0.22 | India Wheat Iron: baseline: effective share of fortified → 0.22  
+  Source: typed value, then sqrt. Why: GF cover sheet gives India wheat current compliance 5%, Coverage Over Time says 50% (GF change log, 'Sources' tab row 29, 28 Sep 2026, says it was changed from 5% to 50%). 5% judged more plausible; confirm with GF. sqrt split
+- **D024** India Wheat Folate: baseline: share fortified → 0.0335 | India Wheat Iron: baseline: share fortified → 0.0335  
+  Source: typed value. Why: India wheat baseline share fortified = consolidation 0.15 x sqrt(5% compliance) = 0.15 x 0.2236; see D023. Confirm with GF
+
+**Still open**
+
+*literature value has no row in the extraction tables*: Nothing to do unless the tables should gain a row
+
+- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 21)
+- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 0.075 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 20)
+- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 42.5 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 18)
+- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 28.0 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 17)
+
 ## Nigeria Bouillon
 
 **Still open**
@@ -136,24 +154,6 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 *literature disagrees with output*: Decide which is right; a 'gf', 'value:' or 'lit:' decision records the choice
 
 - Nigeria Wheat Iron: baseline: share fortified. output 0.79; literature: 44.680851063829785 % from NFCMS, Table 146, p 191 (literature workbook 'MN baseline fortification' row 19; marked not for use in model)
-
-## India Wheat (not in the model)
-
-**Decisions in effect**
-
-- **D023** India Wheat Folate: baseline: effective share of fortified → 0.22 | India Wheat Iron: baseline: effective share of fortified → 0.22  
-  Source: typed value, then sqrt. Why: GF cover sheet gives India wheat current compliance 5%, Coverage Over Time says 50% (GF change log, 'Sources' tab row 29, 28 Sep 2026, says it was changed from 5% to 50%). 5% judged more plausible; confirm with GF. sqrt split
-- **D024** India Wheat Folate: baseline: share fortified → 0.0335 | India Wheat Iron: baseline: share fortified → 0.0335  
-  Source: typed value. Why: India wheat baseline share fortified = consolidation 0.15 x sqrt(5% compliance) = 0.15 x 0.2236; see D023. Confirm with GF
-
-**Still open**
-
-*literature value has no row in the extraction tables*: Nothing to do unless the tables should gain a row
-
-- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 0.125 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 21)
-- India Wheat Folate: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 0.075 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 20)
-- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - max standard]. literature: 42.5 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 18)
-- India Wheat Iron: intervention: concentration (mcg/g) [Intervention - min standard]. literature: 28.0 ppm from Food Safety and Standards (Fortification of Foods) Regulations (literature workbook 'MN intervention fortification' row 17)
 
 ## Effect sizes (all countries)
 

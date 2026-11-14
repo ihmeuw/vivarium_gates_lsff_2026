@@ -136,32 +136,52 @@ location_vehicle_fortificant_intervention_scenario_specific_data_needs = [
     "intervention_fortification/concentration",
 ]
 
+# HCES notebook (in 0100_data_prep/hces/) for each (location, vehicle) in config.yaml hces_consumption.
+# Adding a vehicle: add its notebook here; it must write that vehicle's consumption results files
+# and hces/{location}_{vehicle}_proportion_purchased.csv (except government rice).
+hces_notebooks = {
+    ("india", "rice"): "01_extract_hces.ipynb",
+    ("india", "wheat"): "02_extract_hces_wheat.ipynb",
+}
+
 extracted_output_files = []
 hces_output_files = []
 # Written by the HCES notebook into hces/ (committed) and read by prep_extracted
-hces_local_files = [
+hces_local_files_by_pair = {
+    pair: [f"0100_data_prep/hces/{pair[0]}_{pair[1]}_proportion_purchased.csv"]
+    for pair in hces_notebooks
+    if pair != config_utils.GOVERNMENT_RICE
+}
+hces_local_files_by_pair[config_utils.GOVERNMENT_RICE] = [
     "0100_data_prep/hces/india_non_government_rice_proportion_purchased.csv",
     "0100_data_prep/hces/india_proportion_government_rice.csv",
     "0100_data_prep/hces/india_share_eating_any_government_rice.csv",
     "0100_data_prep/hces/india_share_eating_only_government_rice.csv",
 ]
+hces_local_files = [f for files in hces_local_files_by_pair.values() for f in files]
 
 # Data prep builds every arm whose run_through (0050_config/location_fortificant_vehicles.csv)
 # is data_prep or results; see config_utils.RUN_THROUGH_STAGES.
 #
 # Consumption (coverage, amount mean and SD) comes from the HCES notebook for the arms listed
 # under hces_consumption in config.yaml, and from the extraction tables for every other arm.
-# Fortifiability always comes from the extraction tables.
+# Fortifiability is written by prep_extracted: from the extraction tables, or for HCES arms,
+# the extraction tables' consolidation combined with the HCES proportion purchased.
 hces_consumption_data_needs = [
     "vehicle_consumption/any",
     "vehicle_consumption/amount/mean",
     "vehicle_consumption/amount/sd",
 ]
+
+# Results files written by each HCES notebook, by (location, vehicle)
+hces_output_files_by_pair = {pair: [] for pair in hces_notebooks}
+
 for (location, vehicle) in config_utils.get_configured_combos(["location", "vehicle"], stage="data_prep"):
     for data_need in vehicle_specific_data_needs:
         file_name = f"0100_data_prep/results/{vehicle}/{data_need}/{location}.csv"
         if config_utils.consumption_from_hces(location, vehicle, config) and data_need in hces_consumption_data_needs:
             hces_output_files.append(file_name)
+            hces_output_files_by_pair[(location, vehicle)].append(file_name)
         else:
             extracted_output_files.append(file_name)
 
@@ -173,6 +193,7 @@ for (location, vehicle, fortificant) in config_utils.get_configured_combos(["loc
         # government rice fortified.
         if (location, vehicle) == config_utils.GOVERNMENT_RICE and "partial_coverage_amount" in data_need:
             hces_output_files.append(file_name)
+            hces_output_files_by_pair[(location, vehicle)].append(file_name)
         else:
             extracted_output_files.append(file_name)
 
@@ -182,21 +203,30 @@ for (location, vehicle, fortificant, intervention_scenario) in config_utils.get_
         extracted_output_files.append(file_name)
 
 
-rule prep_hces:
-    input:
-        snakemake_utils.freeze([
-            "0100_data_prep/hces/01_extract_hces.ipynb",
-        ], frozen)
-    log: "0100_data_prep/executed/hces/01_extract_hces.ipynb"
-    output: 
-        hces_output_files + hces_local_files
-    shell:
-        """
-        {common_setup}
-        cd hces
-        mkdir -p ../executed/hces/
-        papermill 01_extract_hces.ipynb ../executed/hces/01_extract_hces.ipynb -k python3 {papermill_engine}
-        """
+# One rule per HCES notebook (hces_notebooks), each producing only that vehicle's files.
+# The notebook name reaches the recipe through params: a loop variable named in a shell
+# string would be read when the job runs, after the loop has ended.
+for (hces_location, hces_vehicle), hces_notebook in hces_notebooks.items():
+    rule:
+        name: f"prep_hces_{hces_location}_{hces_vehicle}"
+        input:
+            snakemake_utils.freeze([
+                f"0100_data_prep/hces/{hces_notebook}",
+            ], frozen)
+        log: f"0100_data_prep/executed/hces/{hces_notebook}"
+        output:
+            hces_output_files_by_pair[(hces_location, hces_vehicle)]
+            + hces_local_files_by_pair[(hces_location, hces_vehicle)]
+        params:
+            notebook=hces_notebook,
+        shell:
+            """
+            {common_setup}
+            cd hces
+            mkdir -p ../executed/hces/
+            papermill {params.notebook} ../executed/hces/{params.notebook} -k python3 {papermill_engine}
+            """
+
 
 rule prep_extracted:
     input:
