@@ -212,6 +212,7 @@ for (hces_location, hces_vehicle), hces_notebook in hces_notebooks.items():
         input:
             snakemake_utils.freeze([
                 f"0100_data_prep/hces/{hces_notebook}",
+                "0100_data_prep/hces/hces_utils.py",
             ], frozen)
         log: f"0100_data_prep/executed/hces/{hces_notebook}"
         output:
