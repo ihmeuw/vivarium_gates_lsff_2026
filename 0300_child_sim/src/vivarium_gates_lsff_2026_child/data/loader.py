@@ -1478,8 +1478,8 @@ def load_lbwsg_paf(key: str, location: str, mean_draw: bool) -> pd.DataFrame:
     # Only the neonatal age groups carry a PAF; the rest are the empty strata the
     # results system expands the index with, and their names do not map to an age.
     df = neonatal.copy()
-    df["age_start"] = df["age_group"].replace(age_start_dict)
-    df["age_end"] = df["age_group"].replace(age_end_dict)
+    df["age_start"] = df["age_group"].map(age_start_dict).astype(float)
+    df["age_end"] = df["age_group"].map(age_end_dict).astype(float)
     df["year_start"] = metadata.GBD_EXTRACT_YEAR
     df["year_end"] = metadata.GBD_EXTRACT_YEAR + 1
     df = df.drop("age_group", axis=1)

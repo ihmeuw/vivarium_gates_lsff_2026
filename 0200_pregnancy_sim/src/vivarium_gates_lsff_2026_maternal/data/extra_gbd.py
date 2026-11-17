@@ -1,10 +1,11 @@
-from gbd.enums import Measures, Metrics
+import pandas as pd
 from vivarium.gbd_mapping import sequelae
 from vivarium_gbd_access import constants as gbd_constants
-from vivarium_gbd_access import gbd
+from vivarium_gbd_access import gbd, shared_functions
+from vivarium_gbd_access.caching import cache
+from vivarium_gbd_access.enums import Measures, Metrics
 from vivarium_gbd_access.gbd import measures
-from vivarium_gbd_access.gbd.base_data import get_machinery_estimates
-from vivarium_gbd_access.utilities import cache
+from vivarium_gbd_access.utilities import drop_bookkeeping_columns
 from vivarium_inputs import utility_data
 
 from vivarium_gates_lsff_2026_maternal.constants import data_keys, metadata
@@ -14,6 +15,11 @@ HEMOGLOBIN_RELEASE_ID = 33
 HEMOGLOBIN_PREGNANT_MEAN_ME_ID = 28869
 # Not the pregnant SD (ME 28870), which was never published. See MIC-7716.
 HEMOGLOBIN_SD_ME_ID = 10488
+
+
+def get_machinery_estimates(**kwargs) -> pd.DataFrame:
+    data = shared_functions.get_machinery_estimates(**kwargs)
+    return drop_bookkeeping_columns(data, "get_machinery_estimates")
 
 
 @cache

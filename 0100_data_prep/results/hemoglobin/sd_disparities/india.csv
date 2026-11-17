@@ -1,8 +1,8 @@
 sex,age_start,age_end,pregnant,wealth_quintile,value
-Female,0,5,not_pregnant,1,14.697788562411402
+Female,0,5,not_pregnant,1,14.697788562411398
 Female,0,5,not_pregnant,2,14.743957876071839
-Female,0,5,not_pregnant,3,15.145306465053036
-Female,0,5,not_pregnant,4,15.14532744225549
+Female,0,5,not_pregnant,3,15.145306465053034
+Female,0,5,not_pregnant,4,15.145327442255493
 Female,0,5,not_pregnant,5,14.59200749753592
 Male,0,5,not_pregnant,1,14.808157503121974
 Male,0,5,not_pregnant,2,15.071596000454232
@@ -11,7 +11,7 @@ Male,0,5,not_pregnant,4,15.281601144959549
 Male,0,5,not_pregnant,5,15.014856379992386
 Female,5,15,not_pregnant,1,15.416514597295368
 Female,5,15,not_pregnant,2,15.512596204726897
-Female,5,15,not_pregnant,3,15.85243768654435
+Female,5,15,not_pregnant,3,15.852437686544349
 Female,5,15,not_pregnant,4,15.705856653684052
 Female,5,15,not_pregnant,5,15.065102996150397
 Male,5,15,not_pregnant,1,15.471699067650654

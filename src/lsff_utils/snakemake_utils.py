@@ -23,9 +23,7 @@ def dict_to_papermill(d):
 # Environments
 # ---------------------------------------------------------------------------
 #
-# The pipeline runs in the two environments `environment.sh` builds: `artifact`
-# for anything that reads GBD (data prep, artifact builds, the analysis
-# notebooks) and `simulation` for anything that runs vivarium. There is no
+# Every rule runs in the one environment `environment.sh` builds. There is no
 # Snakemake-managed environment and no lockfile -- `environment.sh` and
 # `pyproject.toml` are the single source of truth for what is installed.
 #
@@ -35,12 +33,8 @@ def dict_to_papermill(d):
 # nothing to rebuild them from, and treating one as an input would only make
 # every rule rerun whenever a package was installed.
 
-ENVIRONMENT_TYPES = ("artifact", "simulation")
-
-#: Names `environment.sh` gives the two environments (`<repo name>_<type>`).
-DEFAULT_ENVIRONMENTS = {
-    env_type: f"vivarium_gates_lsff_2026_{env_type}" for env_type in ENVIRONMENT_TYPES
-}
+#: Name `environment.sh` gives the environment (the repo name).
+DEFAULT_ENVIRONMENT = "vivarium_gates_lsff_2026"
 
 
 def env_setup(environment: str) -> str:
@@ -49,7 +43,7 @@ def env_setup(environment: str) -> str:
     `environment` is either a conda environment name (the default) or a path to
     a venv, which is how `environment.sh -s` builds the shared-environment
     overlay. A path is anything containing a separator, so
-    `--config simulation_env=.venv/vivarium_gates_lsff_2026_simulation` is
+    `--config env=.venv/vivarium_gates_lsff_2026` is
     enough to switch a run over to one.
     """
     if "/" in environment:
@@ -67,20 +61,16 @@ def env_setup(environment: str) -> str:
     )
 
 
-def resolve_environments(config: dict) -> dict:
+def resolve_environment(config: dict) -> dict:
     """Fill in the environment settings a run did not override.
 
-    Two levels of override, both via `--config`: `<type>_env` names a different
-    environment or venv, and `<type>_env_setup` replaces the activation shell
+    Two levels of override, both via `--config`: `env` names a different
+    environment or venv, and `env_setup` replaces the activation shell
     outright for anything the first cannot express.
     """
-    resolved = {}
-    for env_type, default in DEFAULT_ENVIRONMENTS.items():
-        environment = config.get(f"{env_type}_env", default)
-        setup = config.get(f"{env_type}_env_setup") or env_setup(environment)
-        resolved[f"{env_type}_env"] = environment
-        resolved[f"{env_type}_env_setup"] = setup
-    return resolved
+    environment = config.get("env", DEFAULT_ENVIRONMENT)
+    setup = config.get("env_setup") or env_setup(environment)
+    return {"env": environment, "env_setup": setup}
 
 
 def freeze(inputs, frozen: bool):
