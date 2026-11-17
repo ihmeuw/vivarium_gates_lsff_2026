@@ -140,7 +140,7 @@ location_vehicle_fortificant_intervention_scenario_specific_data_needs = [
 # Adding a vehicle: add its notebook here; it must write that vehicle's consumption results files
 # and hces/{location}_{vehicle}_proportion_purchased.csv (except government rice).
 hces_notebooks = {
-    ("india", "rice"): "01_extract_hces.ipynb",
+    ("india", "rice"): "01_extract_hces_rice.ipynb",
     ("india", "wheat"): "02_extract_hces_wheat.ipynb",
 }
 

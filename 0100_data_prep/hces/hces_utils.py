@@ -1,5 +1,5 @@
 """
-Shared code for the India HCES 2023-24 extraction notebooks (01_extract_hces.ipynb for rice,
+Shared code for the India HCES 2023-24 extraction notebooks (01_extract_hces_rice.ipynb for rice,
 02_extract_hces_wheat.ipynb for wheat).
 
 Everything here was copied verbatim between the notebooks: reading the tab exports, building

@@ -42,7 +42,7 @@ women aged 15–50 (an equal-weight average over their quintile and age strata) 
 
 | Quantity | Source |
 |---|---|
-| Rice consumption (share eating rice, g/day mean and SD) | HCES, `0100_data_prep/hces/01_extract_hces.ipynb` |
+| Rice consumption (share eating rice, g/day mean and SD) | HCES, `0100_data_prep/hces/01_extract_hces_rice.ipynb` |
 | Shares of people eating *any* / *only* government rice | HCES → `hces/india_share_eating_{any,only}_government_rice.csv` |
 | Government share of each person's rice, among those eating some (mean, SD) | HCES → `results/{fortificant}/rice/baseline_fortification/partial_coverage_amount/` |
 | Government share of rice volume; purchased share of non-government rice | HCES → `hces/india_proportion_government_rice.csv`, `hces/india_non_government_rice_proportion_purchased.csv` |
