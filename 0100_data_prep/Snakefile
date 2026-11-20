@@ -142,6 +142,7 @@ location_vehicle_fortificant_intervention_scenario_specific_data_needs = [
 hces_notebooks = {
     ("india", "rice"): "01_extract_hces_rice.ipynb",
     ("india", "wheat"): "02_extract_hces_wheat.ipynb",
+    ("india", "salt"): "03_extract_hces_salt.ipynb",
 }
 
 extracted_output_files = []
