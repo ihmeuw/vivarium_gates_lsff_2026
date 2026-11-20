@@ -31,9 +31,9 @@ custom_intervention_scenarios:
 folate_anemia_vehicles:
   ethiopia: [salt, wheat]
 # (location, vehicle) pairs whose consumption (coverage, amount mean and SD) comes from
-# HCES microdata (0100_data_prep/hces/01_extract_hces.ipynb) rather than the extraction
+# HCES microdata (one notebook per vehicle in 0100_data_prep/hces/) rather than the extraction
 # tables. For these, the extraction build creates no consumption rows, and Snakemake takes
 # the consumption results files from the HCES rule. Adding a pair here also needs the HCES
 # notebook to write its files. See config_utils.consumption_from_hces.
 hces_consumption:
-  india: [rice, wheat]
+  india: [rice, wheat, salt]
