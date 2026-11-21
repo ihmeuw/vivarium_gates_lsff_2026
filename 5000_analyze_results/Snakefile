@@ -4,7 +4,7 @@ debug = config["debug"]
 
 # Recipes are plain strings and Snakemake does the interpolation -- never
 # f-strings. See "Recipes are not f-strings" in the root Snakefile.
-artifact_setup = config["artifact_env_setup"]
+env_setup = config["env_setup"]
 papermill_engine = "--engine debug" if debug else ""
 
 # Upstream output is read from LSFF_DATA_SOURCE, the same setting the notebooks
@@ -55,7 +55,7 @@ rule rescale_pregnancy_results:
     log: "5000_analyze_results/executed/{location}/{vehicle}/0100_rescale_results/pregnancy_results.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 5000_analyze_results/0100_rescale_results
         mkdir -p ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/
         papermill pregnancy_results.ipynb ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/pregnancy_results.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
@@ -86,7 +86,7 @@ rule rescale_child_results:
     log: "5000_analyze_results/executed/{location}/{vehicle}/0100_rescale_results/child_results.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 5000_analyze_results/0100_rescale_results
         mkdir -p ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/
         papermill child_results.ipynb ../executed/{wildcards.location}/{wildcards.vehicle}/0100_rescale_results/child_results.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} -k python3 {papermill_engine}
@@ -167,7 +167,7 @@ rule dalys_by_scenario:
     log: "5000_analyze_results/executed/{location}/{vehicle}/dalys_by_scenario.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}
         papermill dalys_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/dalys_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} {params.pathway_flags} -k python3 {papermill_engine}
@@ -209,7 +209,7 @@ rule cases_by_scenario:
     log: "5000_analyze_results/executed/{location}/{vehicle}/cases_by_scenario.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/{wildcards.location}/{wildcards.vehicle}/
         papermill cases_by_scenario.ipynb ./executed/{wildcards.location}/{wildcards.vehicle}/cases_by_scenario.ipynb -p location {wildcards.location} -p vehicle {wildcards.vehicle} {params.pathway_flags} -k python3 {papermill_engine}
@@ -243,7 +243,7 @@ rule results_spreadsheet:
     log: "5000_analyze_results/executed/results_spreadsheet.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/
         papermill results_spreadsheet.ipynb ./executed/results_spreadsheet.ipynb -k python3 {papermill_engine}
@@ -261,7 +261,7 @@ rule results_plots:
     output: "5000_analyze_results/executed/results_plots.ipynb"
     shell:
         """
-        {artifact_setup}
+        {env_setup}
         cd 5000_analyze_results
         mkdir -p ./executed/
         papermill results_plots.ipynb ./executed/results_plots.ipynb -k python3 {papermill_engine}

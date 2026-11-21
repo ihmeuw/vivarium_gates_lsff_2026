@@ -7,14 +7,14 @@ debug = config["debug"]
 # f-strings. See "Recipes are not f-strings" in the root Snakefile. Anything a
 # recipe needs that has to be computed in Python is named here instead, so the
 # recipe can reference it as `{name}`.
-artifact_setup = config["artifact_env_setup"]
+env_setup = config["env_setup"]
 papermill_engine = "--engine debug" if debug else ""
 
 # When a run opts out of data prep, every input here is marked `ancient()` so
 # that nothing in this stage reruns over a timestamp. Outputs that are actually
 # missing are still built. See `snakemake_utils.freeze`.
 frozen = config["skip_data_prep"]
-common_setup = artifact_setup + "\ncd 0100_data_prep"
+common_setup = env_setup + "\ncd 0100_data_prep"
 
 rule dhs_common:
     input:

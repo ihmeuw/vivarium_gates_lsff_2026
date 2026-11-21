@@ -11,10 +11,10 @@ wealth_quintile,entity,scenario,value
 5,ntd,baseline,80793.59926866145
 1,ntd,intervention_25_nrv,89352.61783867024
 2,ntd,intervention_25_nrv,82059.01737478982
-3,ntd,intervention_25_nrv,70492.38307608051
+3,ntd,intervention_25_nrv,70492.3830760804
 4,ntd,intervention_25_nrv,81929.19854558303
 5,ntd,intervention_25_nrv,68950.98260067779
-1,ntd,intervention_100_nrv,48856.992212439865
+1,ntd,intervention_100_nrv,48856.992212439785
 2,ntd,intervention_100_nrv,43741.653717301335
 3,ntd,intervention_100_nrv,36188.741294124695
 4,ntd,intervention_100_nrv,53505.73248236093
@@ -23,4 +23,4 @@ wealth_quintile,entity,scenario,value
 2,ntd,intervention_45_ppm,47031.0878244058
 3,ntd,intervention_45_ppm,39019.571506306136
 4,ntd,intervention_45_ppm,56521.78168767264
-5,ntd,intervention_45_ppm,51508.20853068151
+5,ntd,intervention_45_ppm,51508.20853068142

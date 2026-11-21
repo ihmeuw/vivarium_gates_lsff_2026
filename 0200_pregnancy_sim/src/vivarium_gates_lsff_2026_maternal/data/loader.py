@@ -22,10 +22,10 @@ import vivarium_inputs.validation.sim as validation
 from scipy import integrate, stats
 from vivarium.artifact import EntityKey
 from vivarium.engine.framework.randomness import get_hash
+from vivarium_gbd_access.caching import cache as disk_cache
 from vivarium_inputs import core as vi_core
 from vivarium_inputs import globals as vi_globals
 from vivarium_inputs import interface
-from vivarium_gbd_access.utilities import cache as disk_cache
 from vivarium_inputs import utilities as vi_utils
 
 from lsff_utils import data_processing, hemoglobin_distribution
@@ -1053,7 +1053,7 @@ def load_iron_fortification_stillbirth_rr(
 
 
 def reshape_to_vivarium_format(df, location):
-    df = vi_utils.reshape(df, value_cols=vi_globals.DRAW_COLUMNS)
+    df = vi_utils.reshape(df, value_cols=[c for c in df.columns if c.startswith("draw_")])
     df = vi_utils.scrub_gbd_conventions(df, location)
     df = vi_utils.split_interval(df, interval_column="age", split_column_prefix="age")
     df = vi_utils.split_interval(df, interval_column="year", split_column_prefix="year")

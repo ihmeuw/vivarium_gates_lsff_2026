@@ -12,7 +12,6 @@ fi
 
 # Define variables
 username=$(whoami)
-env_type="simulation"
 make_new="no"
 use_shared="no"
 install_git_lfs="no"
@@ -26,25 +25,23 @@ Help()
    echo
    echo "Script to automatically create and validate conda environments."
    echo
-  echo "Syntax: source environment.sh [-h|t|s|f|l]"
+  echo "Syntax: source environment.sh [-h|s|f|l]"
    echo "options:"
    echo "h     Print this Help."
-   echo "t     Type of conda environment. Either 'simulation' (default) or 'artifact'."
-   echo "      These are the only two environments; each contains both simulation packages."
-   echo "      For a single-package env, use 'make build-env type=<type> p=<maternal|child>'."
    echo "s     Use shared environment (venv overlay). Recommended for cluster development."
    echo "f     Force creation of a new environment."
    echo "l     Install git lfs (only applies when creating a new conda environment)."
+   echo
+   echo "The environment contains both simulation packages. For a single-package"
+   echo "environment, use 'make build-env profile=<maternal|child>'."
 }
 
 # Process input options
-while getopts ":hsflt:" option; do
+while getopts ":hsfl" option; do
    case $option in
       h) # display help
          Help
          return;;
-      t) # Type of conda environment to build
-         env_type=$OPTARG;;
       s) # Use shared environment
          use_shared="yes";;
       f) # Force creation of a new environment
@@ -58,10 +55,8 @@ while getopts ":hsflt:" option; do
    esac
 done
 
-# Parse environment name. There are exactly two environments, one per type, each holding
-# both simulation packages, so the type fully determines the name.
+# Parse environment name. There is one environment, holding both simulation packages.
 env_name=$(basename "`pwd`")
-env_name+="_$env_type"
 branch_name=$(git rev-parse --abbrev-ref HEAD)
 
 # Pull repo to get latest changes from remote if remote exists
@@ -91,7 +86,7 @@ if [[ "$use_shared" == "yes" ]]; then
   if [[ ! -d "$venv_path" ]] || [[ "$make_new" == "yes" ]]; then
     # Venv doesn't exist or user requested force rebuild
     echo "Creating venv for shared environment in $venv_path"
-    make build-shared-env type=$env_type force=yes
+    make build-shared-env force=yes
   fi
   echo "Activating shared environment venv $env_name"
   source ".venv/$env_name/bin/activate"
@@ -120,7 +115,7 @@ else
   fi
 
   need_to_build="yes"
-  env_info=$(conda info --envs | grep $env_name | head -n 1)
+  env_info=$(conda info --envs | awk -v name="$env_name" '$1 == name' | head -n 1)
   
   if [[ "$env_info" != "" ]]; then
     # Environment exists
@@ -145,7 +140,7 @@ else
       conda deactivate
     fi
     echo "Creating conda environment '$env_name'"
-    make build-env type=$env_type name=$env_name force=yes $lfs_flag
+    make build-env name=$env_name force=yes $lfs_flag
   fi
   echo "Activating conda environment '$env_name'"
   conda activate $env_name
