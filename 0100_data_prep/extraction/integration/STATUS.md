@@ -61,6 +61,10 @@ Places where the GF defaults did **not** use GF's number, by a rule in `build_ex
 - India Rice Folate: baseline: share fortified. output 0.71; literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 37; marked not for use in model)
 - India Rice Iron: baseline: share fortified. output 0.71; literature: 26.0 % from GFDx (literature workbook 'MN baseline fortification' row 34; marked not for use in model)
 
+## India Salt
+
+Nothing open.
+
 ## India Wheat
 
 **Decisions in effect**

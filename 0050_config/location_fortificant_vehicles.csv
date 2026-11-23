@@ -1,10 +1,10 @@
 location,fortificant,vehicle,run_through
-india,iron,salt,none
+india,iron,salt,results
 india,all,rice,results
 india,all,wheat,results
-nigeria,folate,salt,results
-nigeria,all,bouillon,results
-nigeria,all,rice,results
-nigeria,all,wheat,results
-ethiopia,folate,salt,results
-ethiopia,folate,wheat,results
+nigeria,folate,salt,data_prep
+nigeria,all,bouillon,data_prep
+nigeria,all,rice,data_prep
+nigeria,all,wheat,data_prep
+ethiopia,folate,salt,data_prep
+ethiopia,folate,wheat,data_prep
