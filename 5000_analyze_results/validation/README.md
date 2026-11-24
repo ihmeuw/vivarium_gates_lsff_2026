@@ -2,32 +2,49 @@
 
 Tracks the research V&V list against what the validation lib can actually check.
 Notebooks live in `notebooks/` (this tracker's automated V&V), with the hand-written
-checks in `child_model/` and `pregnancy_model_NO/`. Update the status column as things
-land.
+checks in `child_model/`, `pregnancy_model_NO/` and `non_simulation/`. Update the status
+column as things land.
 
 **What every notebook here reads.** The archived iteration named by
 `lsff_utils.paths.MODEL_NUMBER` — resolved through `paths.archive_root`, so no path or
-run timestamp is pasted into a notebook and none has to be updated after a rerun. Set
-`location` / `vehicle` in the first cell for the arm you want, and `model_number` to read
-a previous iteration; see "Reading an archived iteration" in the root `README.rst`. This
-means a notebook checks what `archive_last_run.sh` published, so **archive before
-validating** — a run still only in the working tree is not what these read.
+run timestamp is pasted into a notebook and none has to be updated after a rerun. To read a
+different iteration, set `data_source` in the `parameters` cell (a model number, or
+`"local"` for this working tree); see "Reading an archived iteration" in the root
+`README.rst`. A notebook checks what `archive_last_run.sh` published, so **archive before
+validating**. A run that is still only in the working tree is not what these notebooks read.
 
-**Commit executions with their cell outputs.** These notebooks carry version-free
-filenames and are rerun in place each iteration (`77aafea`), so the run-over-run diff is
-the git history. Which run an execution used was pinned by the literal path in its first
-cell; now that no path is written down, the pin is that cell's printed output —
+**Simulation notebooks** (`pregnancy_model_NO/`, `child_model/`):  The notebooks in these folders 
+are committed *without* outputs. Run every arm with `run_sim_validation.py`.
+From this directory, run
 
 ```
-model1.1.1 bouillon/nigeria
-  results:  /mnt/team/.../results/model1.1.1/child/bouillon/nigeria/2026_08_28_20_20_09
-  artifact: /mnt/team/.../artifacts/model1.1.1/child/bouillon/nigeria.hdf
+python run_sim_validation.py                            # MODEL_NUMBER
+python run_sim_validation.py --data-source model2.6.2   # a previous iteration
 ```
 
-— together with `MODEL_NUMBER` at that commit. Strip the outputs and the record of what
-was validated goes with them. `LSFF_model0_phase2_version_mat_dis_anemia.ipynb` is the
-exception to all of this: a frozen record of the model-0 comparison, pointed at the
-legacy `vivarium_gates_lsff_by_wealth_quintile` archive, and not rerun.
+It runs each notebook through papermill once per arm and writes the executed copy, with
+its outputs, to `{folder}/executed/{location}/{vehicle}/{notebook}.ipynb`. Arms are found
+from the runs that actually exist under the data source's maternal and child results, so an 
+iteration that is missing an arm skips it. Commit the executed copies: they are the record of 
+what was validated. The output of each one's setup cell pins
+the run it read:
+
+```
+model2.6.3 rice/nigeria
+  results:  /mnt/team/.../results/model2.6.3/maternal/rice/nigeria/2026_11_11_07_37_52/results
+  artifact: /mnt/team/.../artifacts/model2.6.3/maternal/rice/nigeria.hdf
+```
+
+The filenames don't change between iterations, so to compare a new model with the last
+one, diff the executed copies in git history. To check a single arm by hand, open the
+notebook and edit its `parameters` cell, but clear the outputs before committing.
+
+**Non-simulation notebooks (`non_simulation/`)** loop over every arm themselves, so each is
+a single notebook that is rerun in place and committed with its outputs.
+
+`pregnancy_model_NO/LSFF_model0_phase2_version_mat_dis_anemia.ipynb` is the exception to
+all of this. It is a frozen record of the model-0 comparison, points at the legacy
+`vivarium_gates_lsff_by_wealth_quintile` archive and not rerun.
 
 **Status key**
 
